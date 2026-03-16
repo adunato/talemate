@@ -557,6 +557,30 @@ class TTSWebsocketHandler(Plugin):
 
         await self.signal_operation_done()
 
+    async def handle_character_voice_config(self, data: dict):
+        """Return voice configuration for all characters (active + inactive)."""
+
+        scene: "Scene" = self.scene
+        if not scene:
+            await self.signal_operation_failed("No scene active")
+            return
+
+        characters = []
+
+        for character in scene.character_data.values():
+            characters.append({
+                "name": character.name,
+                "active": character.name in scene.active_characters,
+                "color": character.color,
+                "voice": character.voice.model_dump() if character.voice else None,
+            })
+
+        self.websocket_handler.queue_put({
+            "type": self.router,
+            "action": "character_voice_config",
+            "characters": characters,
+        })
+
     async def handle_stop_and_clear(self, data: dict):
         """Handle a request from the frontend to stop and clear the current TTS queue."""
 

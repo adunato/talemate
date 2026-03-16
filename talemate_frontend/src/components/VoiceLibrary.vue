@@ -49,9 +49,8 @@
             </v-tabs>
 
             <!-- Character Manager -->
-            <VoiceLibraryCharacterManager 
+            <VoiceLibraryCharacterManager
               v-if="scope === 'characters'"
-              :scene="scene"
               :app-busy="appBusy"
               :app-ready="appReady"
               :ready-apis="readyAPIs"

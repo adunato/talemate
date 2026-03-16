@@ -1,0 +1,3 @@
+0.37.0.dev:
+  fixes:
+  - Fixed crash in voice library character manager when a character was deactivated.

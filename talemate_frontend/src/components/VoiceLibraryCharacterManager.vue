@@ -119,10 +119,6 @@ export default {
     VoiceSelect,
   },
   props: {
-    scene: {
-      type: Object,
-      required: true,
-    },
     appBusy: {
       type: Boolean,
       default: false,
@@ -144,6 +140,7 @@ export default {
       autoAssigningAll: false,
       assignmentQueue: [],
       testing: false,
+      characters: [],
       headers: [
         { title: 'Character Name', value: 'name' },
         { title: 'Provider', value: 'provider' },
@@ -154,36 +151,17 @@ export default {
   },
   computed: {
     characterList() {
-      if (!this.scene || !this.scene.data) return [];
-      
-      // Combine active and inactive characters
-      const characters = [];
-      
-      // Add active characters (from scene.data.characters list)
-      if (this.scene.data.characters && Array.isArray(this.scene.data.characters)) {
-        this.scene.data.characters.forEach(character => {
-          characters.push({
-            ...character,
-            active: true,
-          });
-        });
-      }
-      
-      // Add inactive characters (from scene.data.inactive_characters object)
-      if (this.scene.data.inactive_characters) {
-        Object.values(this.scene.data.inactive_characters).forEach(character => {
-          characters.push({
-            ...character,
-            active: false,
-          });
-        });
-      }
-      
-      // Sort by name
-      return characters.sort((a, b) => a.name.localeCompare(b.name));
+      return [...this.characters].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     },
   },
   methods: {
+    requestCharacterVoiceConfig() {
+      this.getWebsocket().send(JSON.stringify({
+        type: 'tts',
+        action: 'character_voice_config',
+      }));
+    },
+
     getVoiceProvider(voiceId) {
       if (!voiceId) return '';
       // Voice ID format is "provider:provider_id"
@@ -270,43 +248,42 @@ export default {
       this.autoAssigningAll = false;
     },
 
+    handleDirectorAssignmentDone(message, characterName) {
+      this.autoAssigningCharacters.delete(characterName);
+      this.requestCharacterVoiceConfig();
+
+      // If this was part of bulk assignment, remove from queue and process next
+      if (this.autoAssigningAll && this.assignmentQueue.length > 0 && this.assignmentQueue[0] === characterName) {
+        this.assignmentQueue.shift();
+        this.processNextInQueue();
+      }
+    },
+
     handleMessage(message) {
       // Handle director agent responses
-      if (message.type === 'director') {
-        if (message.action === 'assign_voice_to_character_done') {
-          // Remove from auto-assigning set when done
-          if (message.character_name) {
-            this.autoAssigningCharacters.delete(message.character_name);
-            
-            // If this was part of bulk assignment, remove from queue and process next
-            if (this.autoAssigningAll && this.assignmentQueue.length > 0 && this.assignmentQueue[0] === message.character_name) {
-              this.assignmentQueue.shift(); // Remove completed character from front of queue
-              this.processNextInQueue(); // Process next character
-            }
-          }
-        } else if (message.action === 'assign_voice_to_character_failed') {
-          // Remove from auto-assigning set when failed
-          if (message.character_name) {
-            this.autoAssigningCharacters.delete(message.character_name);
-            
-            // If this was part of bulk assignment, remove from queue and process next
-            if (this.autoAssigningAll && this.assignmentQueue.length > 0 && this.assignmentQueue[0] === message.character_name) {
-              this.assignmentQueue.shift(); // Remove failed character from front of queue
-              this.processNextInQueue(); // Process next character
-            }
-          }
+      if (message.type === 'director' && message.character_name) {
+        if (message.action === 'assign_voice_to_character_done' || message.action === 'assign_voice_to_character_failed') {
+          this.handleDirectorAssignmentDone(message, message.character_name);
         }
       }
 
       if (message.type === 'tts') {
-        if (message.action === 'operation_done') {
+        if (message.action === 'character_voice_config') {
+          this.characters = message.characters || [];
+        } else if (message.action === 'operation_done') {
           this.testing = false;
         }
+      }
+
+      // Refresh after voice update via world state manager
+      if (message.type === 'world_state_manager' && message.action === 'operation_done') {
+        this.requestCharacterVoiceConfig();
       }
     },
   },
   created() {
     this.registerMessageHandler(this.handleMessage);
+    this.requestCharacterVoiceConfig();
   },
   unmounted() {
     this.unregisterMessageHandler(this.handleMessage);
