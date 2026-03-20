@@ -39,7 +39,7 @@
                             {{ getPreviewText(episode.intro, 40) }}
                         </v-list-item-subtitle>
                     </v-list-item>
-                    <v-list-item v-if="episodes.length === 0">
+                    <v-list-item v-if="episodes.length === 0" disabled>
                         <v-list-item-title class="text-wrap text-caption text-muted">
                             No episodes available. Create one to get started.
                         </v-list-item-title>
