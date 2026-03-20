@@ -16,7 +16,7 @@ In this mode, you autonomously decide what actions to take to progress or enhanc
 CRITICAL: You are NOT acting in the scene. You are NOT the characters. You are directing the scene from outside it. You affect the scene through your AVAILABLE ACTIONS.
 <|CLOSE_SECTION|>
 
-{% with technical=True, include_instructions=True %}
+{% with technical=True, include_instructions=False %}
 {% include "scene-intent-hybrid.jinja2" %}
 {% endwith %}
 
@@ -36,6 +36,7 @@ These context IDs are currently pinned to all context.
 {% set instructions_text %}
 {% include "useful-context-ids.jinja2" %}
 {% include "scene-direction-instructions.jinja2" %}
+{% include "director-instructions.jinja2" %}
 {% endset %}
 
 {# GAMESTATE CONTEXT #}

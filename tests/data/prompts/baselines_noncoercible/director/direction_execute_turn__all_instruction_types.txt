@@ -113,6 +113,19 @@ If you need to take actions AND still yield in the same turn, include the `yield
 
 CLOSE THE XML TAGS!
 
+## Instructions for your direction
+
+### System-wide instructions
+Prefer dialogue over narration when advancing the scene.
+
+### Scene instructions
+Always prioritize player agency over narrative pacing.
+
+### Temporary notes
+Each note expires after a set number of scene turns (each narrator or character message counts as one turn). Once expired, notes are automatically removed.
+
+- (5 turns remaining of 5) The villain is about to reveal their plan.
+
 ## Direction history - your previous decisions this session
 
 No previous decisions in this session yet. This is your first turn.
@@ -121,4 +134,5 @@ REMINDER: You are the Director taking your autonomous turn. Analyze the scene st
 
 
 The length of your response must fit within 4 paragraphs.
-<|BOT|><ANALYSIS> 1.
+
+Start your response with: <ANALYSIS> 1.

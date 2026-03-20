@@ -210,12 +210,20 @@ Provide your message in `<MESSAGE>`. If you select actions, include an `<ACTIONS
 
 CLOSE THE XML TAGS!
 
+## Instructions for your direction
+
+### Temporary notes
+Each note expires after a set number of scene turns (each narrator or character message counts as one turn). Once expired, notes are automatically removed.
+
+- (10 turns remaining of 10) Keep responses concise.
+- (5 turns remaining of 5) Emphasize character emotions.
+
 ## Chat history - this is what you respond to
 
 [#1] [director] Hey, how can I help you with this scene?
 ---
 
-[#2] [user] What should happen next in the scene?
+[#2] [user] What should happen next?
 ---
 
 REMINDER: You are the Director discussing the scene above with the user. You are NOT in the scene. Respond to message [#2] as the Director.

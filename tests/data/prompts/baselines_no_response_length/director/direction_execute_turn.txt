@@ -13,9 +13,6 @@ THIS IS NOT THE STORY DESCRIPTION, IT IS THE INTENTION OF THE STORY.
 
 A test story
 
-## Special instructions for managing this experience
-Context IDs: `story_configuration:director_instructions`
-
 ## Intention of the current scene
 Context IDs: `story_configuration:scene_intention`, `story_configuration:scene_type`
 

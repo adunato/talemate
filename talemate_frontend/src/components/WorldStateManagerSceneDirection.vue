@@ -43,18 +43,25 @@
                     </v-card-text>
                 </v-card>
 
-                
+                <!-- director instructions -->
+                <v-card class="my-2" variant="text">
+                    <v-card-title class="text-white">
+                        <v-icon color="primary" size="small" class="mr-2">mdi-note-text</v-icon>
+                        Director Instructions
+                    </v-card-title>
+                    <v-textarea
+                        v-model="sceneIntent.instructions"
+                        label="General"
+                        rows="3"
+                        auto-grow
+                        messages="Omnipresent instructions available to the director during automated scene direction and director chat."
+                        :color="dirty['instructions'] ? 'dirty' : ''"
+                        @update:model-value="setFieldDirty('instructions')"
+                        @blur="updateSceneIntent()"
+                    ></v-textarea>
 
-                <v-textarea
-                    v-model="sceneIntent.instructions"
-                    label="Director Instructions"
-                    rows="4"
-                    auto-grow
-                    messages="Omnipresent instructions available to the director during automated scene direction and director chat."
-                    :color="dirty['instructions'] ? 'dirty' : ''"
-                    @update:model-value="setFieldDirty('instructions')"
-                    @blur="updateSceneIntent()"
-                ></v-textarea>
+                    <DirectorNotes />
+                </v-card>
 
                 <!-- overall intention -->
                 <v-card-title>
@@ -341,6 +348,7 @@
 <script>
 import ConfirmActionInline from './ConfirmActionInline.vue';
 import ContextualGenerate from './ContextualGenerate.vue';
+import DirectorNotes from './DirectorNotes.vue';
 import { MAX_CONTENT_WIDTH } from '@/constants';
 
 const BLANK_SCENE_TYPE = {
@@ -353,7 +361,8 @@ export default {
     name: 'WorldStateManagerSceneDirection',
     components: {
         ConfirmActionInline,
-        ContextualGenerate
+        ContextualGenerate,
+        DirectorNotes,
     },
     props: {
         immutableScene: Object,

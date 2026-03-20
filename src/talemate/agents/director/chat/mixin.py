@@ -446,6 +446,7 @@ class DirectorChatMixin:
         extra_vars = {
             "chat_enable_analysis": self.chat_enable_analysis,
             "custom_instructions": self.chat_custom_instructions,
+            "director_notes": self.notes_for_prompt(),
             "mode": mode,
             "director_history_trim": action_utils.reverse_trim_history,
         }

@@ -113,12 +113,18 @@ If you need to take actions AND still yield in the same turn, include the `yield
 
 CLOSE THE XML TAGS!
 
+## Instructions for your direction
+
+### Temporary notes
+Each note expires after a set number of scene turns (each narrator or character message counts as one turn). Once expired, notes are automatically removed.
+
+- (15 turns remaining of 15) Maintain dramatic tension.
+- (8 turns remaining of 8) Focus on the approaching storm.
+
 ## Direction history - your previous decisions this session
 
 No previous decisions in this session yet. This is your first turn.
 
 REMINDER: You are the Director taking your autonomous turn. Analyze the scene state and decide what action(s) to take to progress or enhance the experience. If your last action in the history was `yield_to_user`, this means the user has already responded or the system has prompted you to take another turn—do NOT yield to the user again immediately; instead, take actions to progress the story or describe the consequences of the user's action.
 
-
-The length of your response must fit within 4 paragraphs.
 <|BOT|><ANALYSIS> 1.

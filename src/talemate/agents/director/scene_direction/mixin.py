@@ -628,6 +628,7 @@ class SceneDirectionMixin:
         extra_vars = {
             "direction_enable_analysis": self.direction_enable_analysis,
             "custom_instructions": self.direction_custom_instructions,
+            "director_notes": self.notes_for_prompt(),
             "direction_history_trim": action_utils.reverse_trim_history,
             "turn_balance": turn_balance,
             "maintain_turn_balance": self.direction_maintain_turn_balance,

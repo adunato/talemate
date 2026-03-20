@@ -26,6 +26,7 @@ from .websocket_handler import DirectorWebsocketHandler
 from .chat.mixin import DirectorChatMixin
 from .character_management import CharacterManagementMixin
 from .scene_direction.mixin import SceneDirectionMixin
+from .notes import DirectorNotesMixin
 import talemate.agents.director.nodes  # noqa: F401
 
 if TYPE_CHECKING:
@@ -38,6 +39,7 @@ log = structlog.get_logger("talemate.agent.director")
 class DirectorAgent(
     DirectorChatMixin,
     SceneDirectionMixin,
+    DirectorNotesMixin,
     GuideSceneMixin,
     MemoryRAGMixin,
     GenerateChoicesMixin,

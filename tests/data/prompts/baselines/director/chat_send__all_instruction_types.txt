@@ -210,14 +210,29 @@ Provide your message in `<MESSAGE>`. If you select actions, include an `<ACTIONS
 
 CLOSE THE XML TAGS!
 
+## Instructions for your direction
+
+### System-wide instructions
+Keep answers brief and actionable.
+
+### Scene instructions
+Always prioritize player agency over narrative pacing.
+
+### Temporary notes
+Each note expires after a set number of scene turns (each narrator or character message counts as one turn). Once expired, notes are automatically removed.
+
+- (5 turns remaining of 5) The villain is about to reveal their plan.
+
 ## Chat history - this is what you respond to
 
 [#1] [director] Hey, how can I help you with this scene?
 ---
 
-[#2] [user] What should happen next in the scene?
+[#2] [user] What should the villain do next?
 ---
 
 REMINDER: You are the Director discussing the scene above with the user. You are NOT in the scene. Respond to message [#2] as the Director.
 
+
+The length of your response must fit within 4 paragraphs.
 <|BOT|><ANALYSIS> 1.

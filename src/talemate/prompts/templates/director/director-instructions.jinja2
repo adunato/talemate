@@ -1,0 +1,21 @@
+{% set _intent_instructions = scene.intent_state.instructions if scene.intent_state and scene.intent_state.instructions else "" %}
+{% if _intent_instructions or custom_instructions or director_notes %}
+<|SECTION:Instructions for your direction|>
+{% if custom_instructions %}
+### System-wide instructions
+{{ custom_instructions }}
+{% endif %}
+{% if _intent_instructions %}
+### Scene instructions
+{{ _intent_instructions }}
+{% endif %}
+{% if director_notes %}
+### Temporary notes
+Each note expires after a set number of scene turns (each narrator or character message counts as one turn). Once expired, notes are automatically removed.
+
+{% for note in director_notes -%}
+- ({{ note.turns_remaining }} turn{{ "s" if note.turns_remaining != 1 else "" }} remaining of {{ note.turns_initial }}{% if note.turns_elapsed %}, set {{ note.turns_elapsed }} turn{{ "s" if note.turns_elapsed != 1 else "" }} ago{% endif %}) {{ note.text }}
+{% endfor %}
+{% endif %}
+<|CLOSE_SECTION|>
+{% endif %}

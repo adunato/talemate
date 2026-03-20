@@ -107,6 +107,23 @@ class AnchorExtractorBase(Extractor):
 
         return positions
 
+    def _extract_close_ended(self, text: str) -> str | None:
+        """
+        Extract content from start of text to the last closing tag.
+
+        Used as fallback when no opening tag is found.
+        """
+        close_positions = self._find_all_markers(text, self.right)
+
+        if not close_positions:
+            return None
+
+        # Use the last closing tag
+        last_close = close_positions[-1]
+        content = text[:last_close]
+
+        return content if content.strip() else None
+
 
 class AnchorExtractor(AnchorExtractorBase):
     """
@@ -208,7 +225,12 @@ class AnchorExtractor(AnchorExtractorBase):
         if open_ended is not None:
             return self._apply_trim(open_ended)
 
-        # Step 3: If fallback_to_full is enabled, return the full response
+        # Step 3: Try close-ended extraction (no opening tag)
+        close_ended = self._extract_close_ended(text)
+        if close_ended is not None:
+            return self._apply_trim(close_ended)
+
+        # Step 4: If fallback_to_full is enabled, return the full response
         if self.fallback_to_full:
             return self._apply_trim(text)
 
@@ -424,7 +446,12 @@ class ComplexAnchorExtractor(AnchorExtractorBase):
         if open_ended is not None:
             return self._apply_trim(open_ended)
 
-        # Step 3: If fallback_to_full is enabled, return the full response
+        # Step 3: Try close-ended extraction (no opening tag)
+        close_ended = self._extract_close_ended(text)
+        if close_ended is not None:
+            return self._apply_trim(close_ended)
+
+        # Step 4: If fallback_to_full is enabled, return the full response
         if self.fallback_to_full:
             return self._apply_trim(text)
 
