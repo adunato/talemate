@@ -11,7 +11,7 @@
 {% endif %}
 {% if director_notes %}
 ### Temporary notes
-Each note expires after a set number of scene turns (each narrator or character message counts as one turn). Once expired, notes are automatically removed.
+Time-limited instructions from the user. Each note expires after a set number of scene turns (each narrator or character message counts as one turn). Once expired, notes are automatically removed. Only apply notes that are relevant to your current task — not every note will apply to every situation.
 
 {% for note in director_notes -%}
 - ({{ note.turns_remaining }} turn{{ "s" if note.turns_remaining != 1 else "" }} remaining of {{ note.turns_initial }}{% if note.turns_elapsed %}, set {{ note.turns_elapsed }} turn{{ "s" if note.turns_elapsed != 1 else "" }} ago{% endif %}) {{ note.text }}

@@ -1,8 +1,8 @@
 0.37.0.dev:
   features:
-  - "Director Notes: Temporary, time-limited instructions for the director that automatically expire after a configurable number of scene turns. Managed via World Editor > Scene > Direction."
+  - "Director Notes: Temporary, time-limited instructions for the director that automatically expire after a configurable number of scene turns. Notes are available to scene direction, director chat, and actor/narrator guidance. Managed via World Editor > Scene > Direction."
+  - "Consolidated all director instruction types (system-wide, scene, and temporary notes) into a unified prompt section for better coherence."
   fixes:
-  - "Consolidated all director instruction types (system-wide, scene, and temporary notes) into a single section in the director's prompt for better coherence."
   - Fixed crash in voice library character manager when a character was deactivated.
   - Fixed blank page on some Windows 10 systems where JavaScript files were served with incorrect MIME type (text/plain), causing Chromium-based browsers to reject module scripts.
   - Fixed "No episodes available" placeholder being selectable in the episode list.

@@ -219,7 +219,7 @@ Keep answers brief and actionable.
 Always prioritize player agency over narrative pacing.
 
 ### Temporary notes
-Each note expires after a set number of scene turns (each narrator or character message counts as one turn). Once expired, notes are automatically removed.
+Time-limited instructions from the user. Each note expires after a set number of scene turns (each narrator or character message counts as one turn). Once expired, notes are automatically removed. Only apply notes that are relevant to your current task — not every note will apply to every situation.
 
 - (5 turns remaining of 5) The villain is about to reveal their plan.
 
