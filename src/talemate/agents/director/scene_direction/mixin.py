@@ -306,9 +306,7 @@ class SceneDirectionMixin:
         Emit a websocket passthrough event for newly appended direction messages.
         """
         try:
-            visible_new_messages = [
-                m for m in (new_messages or []) if m.type != "user_interaction"
-            ]
+            visible_new_messages = new_messages or []
             if not visible_new_messages:
                 return
             emit(
@@ -564,7 +562,6 @@ class SceneDirectionMixin:
         | None = None,
         always_on: bool = False,
         max_actions: int | None = None,
-        instructions: str = "",
     ) -> tuple[list[SceneDirectionActionResultMessage], bool]:
         """
         Execute a scene direction turn - analyze the scene and perform any needed actions.
@@ -573,7 +570,6 @@ class SceneDirectionMixin:
             on_action_complete: Optional callback for each action completed
             always_on: If True, override enabled check and always execute
             max_actions: Optional override for max actions per turn (None = use agent config)
-            instructions: One-off instructions for this turn only (not persisted)
 
         Returns:
             tuple: (actions_taken, yield_to_user)
@@ -592,7 +588,6 @@ class SceneDirectionMixin:
             return await self._direction_generate(
                 on_action_complete=on_action_complete,
                 max_actions=max_actions,
-                instructions=instructions,
             )
         finally:
             ctx = scene_direction_context.get()
@@ -606,7 +601,6 @@ class SceneDirectionMixin:
         ]
         | None = None,
         max_actions: int | None = None,
-        instructions: str = "",
     ) -> tuple[list[SceneDirectionActionResultMessage], bool]:
         """
         Internal: Generate a scene direction response and execute actions.
@@ -614,7 +608,6 @@ class SceneDirectionMixin:
         Args:
             on_action_complete: Optional callback for each action completed
             max_actions: Optional override for max actions per turn (None = use agent config)
-            instructions: One-off instructions for this turn only (not persisted)
 
         Returns:
             tuple: (actions_taken, yield_to_user)
@@ -634,8 +627,6 @@ class SceneDirectionMixin:
         extra_vars = {
             "direction_enable_analysis": self.direction_enable_analysis,
             "custom_instructions": self.direction_custom_instructions,
-            "turn_instructions": instructions,
-            "director_notes": self.notes_for_prompt(),
             "direction_history_trim": action_utils.reverse_trim_history,
             "turn_balance": turn_balance,
             "maintain_turn_balance": self.direction_maintain_turn_balance,

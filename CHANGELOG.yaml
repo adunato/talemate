@@ -1,7 +1,5 @@
 0.37.0.dev:
   features:
-  - "Director Notes: Temporary, time-limited instructions for the director that automatically expire after a configurable number of scene turns. Notes are available to scene direction, director chat, and actor/narrator guidance. Managed via World Editor > Scene > Direction."
-  - "Consolidated all director instruction types (system-wide, scene, and temporary notes) into a unified prompt section for better coherence."
   - "Manual Scene Direction Turn: Added a button to the director scene tools menu to manually trigger a scene direction turn. Useful when scene direction is enabled but auto progression is off. Supports optional one-off instructions via Ctrl+click."
   fixes:
   - Fixed crash in voice library character manager when a character was deactivated.

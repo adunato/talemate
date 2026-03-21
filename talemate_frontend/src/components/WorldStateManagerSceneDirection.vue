@@ -60,7 +60,6 @@
                         @blur="updateSceneIntent()"
                     ></v-textarea>
 
-                    <DirectorNotes />
                 </v-card>
 
                 <!-- overall intention -->
@@ -348,7 +347,6 @@
 <script>
 import ConfirmActionInline from './ConfirmActionInline.vue';
 import ContextualGenerate from './ContextualGenerate.vue';
-import DirectorNotes from './DirectorNotes.vue';
 import { MAX_CONTENT_WIDTH } from '@/constants';
 
 const BLANK_SCENE_TYPE = {
@@ -362,7 +360,6 @@ export default {
     components: {
         ConfirmActionInline,
         ContextualGenerate,
-        DirectorNotes,
     },
     props: {
         immutableScene: Object,

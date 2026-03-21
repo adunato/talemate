@@ -14,6 +14,7 @@ from .action_core.gating import (
 from talemate.context import interaction, handle_generation_cancelled
 from talemate.status import set_loading
 from talemate.exceptions import GenerationCancelled
+from .scene_direction.schema import UserInteractionMessage
 
 if TYPE_CHECKING:
     from talemate.tale_mate import Scene
@@ -23,21 +24,6 @@ __all__ = [
 ]
 
 log = structlog.get_logger("talemate.server.director")
-
-
-class NotePayload(pydantic.BaseModel):
-    text: str
-    turns: int
-
-
-class NoteUpdatePayload(pydantic.BaseModel):
-    note_id: str
-    text: str | None = None
-    turns: int | None = None
-
-
-class NoteDeletePayload(pydantic.BaseModel):
-    note_id: str
 
 
 class InstructionPayload(pydantic.BaseModel):
@@ -106,11 +92,14 @@ class DirectorWebsocketHandler(DirectorChatWebsocketMixin, Plugin):
     async def handle_scene_direction_turn(self, data: dict):
         """
         Manually trigger a scene direction turn.
+        If instructions are provided, they are inserted as a user message
+        in the scene direction history before executing.
         """
         payload = InstructionPayload(**data)
-        await self.director.direction_execute_turn(
-            instructions=payload.instructions,
-        )
+        if payload.instructions:
+            message = UserInteractionMessage(user_input=payload.instructions, is_direction=True)
+            await self.director.direction_append_message(message)
+        await self.director.direction_execute_turn()
 
     @set_loading("Generating dynamic actions", cancellable=True, as_async=True)
     async def handle_request_dynamic_choices(self, data: dict):
@@ -437,69 +426,3 @@ class DirectorWebsocketHandler(DirectorChatWebsocketMixin, Plugin):
             }
         )
 
-    # ------------------------------------------------------------------
-    # Director Notes CRUD
-    # ------------------------------------------------------------------
-
-    def _emit_notes_list(self):
-        """Send the full notes list to the frontend."""
-        notes = self.director.notes_for_prompt()
-        self.websocket_handler.queue_put(
-            {
-                "type": self.router,
-                "action": "notes_list",
-                "notes": notes,
-            }
-        )
-
-    async def handle_notes_list(self, data: dict):
-        """Return all active director notes."""
-        if not self.director:
-            return
-        self._emit_notes_list()
-
-    async def handle_notes_add(self, data: dict):
-        """Add a new director note."""
-        if not self.director:
-            return
-        try:
-            payload = NotePayload(**data)
-        except pydantic.ValidationError as e:
-            log.error("director.notes_add.validation_error", error=e)
-            return
-
-        self.director.notes_add(text=payload.text, turns=payload.turns)
-        self._emit_notes_list()
-
-    async def handle_notes_update(self, data: dict):
-        """Update an existing director note."""
-        if not self.director:
-            return
-        try:
-            payload = NoteUpdatePayload(**data)
-        except pydantic.ValidationError as e:
-            log.error("director.notes_update.validation_error", error=e)
-            return
-
-        from .notes import _SENTINEL
-
-        turns = payload.turns if "turns" in data else _SENTINEL
-        self.director.notes_update(
-            note_id=payload.note_id,
-            text=payload.text,
-            turns=turns,
-        )
-        self._emit_notes_list()
-
-    async def handle_notes_remove(self, data: dict):
-        """Remove a director note."""
-        if not self.director:
-            return
-        try:
-            payload = NoteDeletePayload(**data)
-        except pydantic.ValidationError as e:
-            log.error("director.notes_remove.validation_error", error=e)
-            return
-
-        self.director.notes_remove(note_id=payload.note_id)
-        self._emit_notes_list()

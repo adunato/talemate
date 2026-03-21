@@ -304,7 +304,6 @@ class GuideSceneMixin:
                 "character": character,
                 "response_length": response_length,
                 "max_tokens": self.client.max_token_length,
-                "director_notes": self.notes_for_prompt(),
             },
             response_spec=GUIDANCE_SPEC,
         )
@@ -343,7 +342,6 @@ class GuideSceneMixin:
                 "scene": self.scene,
                 "response_length": response_length,
                 "max_tokens": self.client.max_token_length,
-                "director_notes": self.notes_for_prompt(),
             },
             response_spec=GUIDANCE_SPEC,
         )
