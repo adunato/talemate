@@ -102,6 +102,16 @@ class DirectorWebsocketHandler(DirectorChatWebsocketMixin, Plugin):
     def director(self):
         return get_agent("director")
 
+    @set_loading("Executing scene direction", cancellable=True, as_async=True)
+    async def handle_scene_direction_turn(self, data: dict):
+        """
+        Manually trigger a scene direction turn.
+        """
+        payload = InstructionPayload(**data)
+        await self.director.direction_execute_turn(
+            instructions=payload.instructions,
+        )
+
     @set_loading("Generating dynamic actions", cancellable=True, as_async=True)
     async def handle_request_dynamic_choices(self, data: dict):
         """

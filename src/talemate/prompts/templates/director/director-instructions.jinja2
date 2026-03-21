@@ -1,5 +1,6 @@
 {% set _intent_instructions = scene.intent_state.instructions if scene.intent_state and scene.intent_state.instructions else "" %}
-{% if _intent_instructions or custom_instructions or director_notes %}
+{% set _turn_instructions = turn_instructions if turn_instructions is defined and turn_instructions else "" %}
+{% if _intent_instructions or custom_instructions or director_notes or _turn_instructions %}
 <|SECTION:Instructions for your direction|>
 {% if custom_instructions %}
 ### System-wide instructions
@@ -16,6 +17,11 @@ Time-limited instructions from the user. Each note expires after a set number of
 {% for note in director_notes -%}
 - ({{ note.turns_remaining }} turn{{ "s" if note.turns_remaining != 1 else "" }} remaining of {{ note.turns_initial }}{% if note.turns_elapsed %}, set {{ note.turns_elapsed }} turn{{ "s" if note.turns_elapsed != 1 else "" }} ago{% endif %}) {{ note.text }}
 {% endfor %}
+{% endif %}
+{% if _turn_instructions %}
+### Instructions for this turn
+The user has provided specific instructions for this direction turn. Prioritize these instructions for your current actions.
+{{ _turn_instructions }}
 {% endif %}
 <|CLOSE_SECTION|>
 {% endif %}

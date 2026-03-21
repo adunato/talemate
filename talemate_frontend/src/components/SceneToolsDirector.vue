@@ -8,13 +8,23 @@
         <v-list>
             <v-list-subheader>Director Actions</v-list-subheader>
             <!-- Generate dynamic choices  -->
-            <v-list-item 
+            <v-list-item
                 density="compact"
-                @click="actionRequestDynamicChoices" 
+                @click="actionRequestDynamicChoices"
                 prepend-icon="mdi-tournament"
             >
                 <v-list-item-title>Generate dynamic actions<v-chip variant="text" color="highlight5" class="ml-1" size="x-small">Ctrl: Provide direction</v-chip></v-list-item-title>
                 <v-list-item-subtitle>{{ getActAsCharacterName() }}</v-list-item-subtitle>
+            </v-list-item>
+            <!-- Trigger scene direction turn -->
+            <v-list-item
+                density="compact"
+                @click="actionSceneDirectionTurn"
+                prepend-icon="mdi-movie-play"
+                :disabled="!sceneDirectionEnabled"
+            >
+                <v-list-item-title>Scene direction turn<v-chip variant="text" color="highlight5" class="ml-1" size="x-small">Ctrl: Provide direction</v-chip></v-list-item-title>
+                <v-list-item-subtitle>Manually trigger a scene direction turn</v-list-item-subtitle>
             </v-list-item>
         </v-list>
     </v-menu>
@@ -37,10 +47,16 @@ export default {
     props: {
         npcCharacters: Array,
         disabled: Boolean,
+        agentStatus: Object,
     },
     inject: ['getWebsocket', 'getActAsCharacterName'],
     data() {
         return {}
+    },
+    computed: {
+        sceneDirectionEnabled() {
+            return this.agentStatus?.director?.actions?.scene_direction?.enabled || false;
+        },
     },
     methods: {
 
@@ -78,6 +94,28 @@ export default {
                     action: 'request_dynamic_choices',
                     instructions: instructions || "",
                     character: this.getActAsCharacterName(),
+                }
+            ));
+        },
+
+        /**
+         * Manually trigger a scene direction turn
+         * @method actionSceneDirectionTurn
+         * @param {string} instructions - One-off instructions for this turn
+         */
+
+        actionSceneDirectionTurn(ev, instructions="") {
+
+            if (ev.ctrlKey) {
+                this.requestDirection({action: 'SceneDirectionTurn'});
+                return;
+            }
+
+            this.getWebsocket().send(JSON.stringify(
+                {
+                    type: 'director',
+                    action: 'scene_direction_turn',
+                    instructions: instructions || "",
                 }
             ));
         },

@@ -161,7 +161,7 @@
 
                 <!-- director actions -->
 
-                <SceneToolsDirector :disabled="appBusy || !appReady" ref="directorTools" :npc-characters="npc_characters" />
+                <SceneToolsDirector :disabled="appBusy || !appReady" ref="directorTools" :npc-characters="npc_characters" :agent-status="agentStatus" />
 
                 <!-- advance time -->
 
