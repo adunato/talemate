@@ -265,4 +265,3 @@ class TestDirectorBaselines:
         baseline_checker(
             capture_prompt(director), AGENT, "detect_characters_from_texts"
         )
-

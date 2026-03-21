@@ -97,7 +97,9 @@ class DirectorWebsocketHandler(DirectorChatWebsocketMixin, Plugin):
         """
         payload = InstructionPayload(**data)
         if payload.instructions:
-            message = UserInteractionMessage(user_input=payload.instructions, is_direction=True)
+            message = UserInteractionMessage(
+                user_input=payload.instructions, is_direction=True
+            )
             await self.director.direction_append_message(message)
         await self.director.direction_execute_turn()
 
@@ -425,4 +427,3 @@ class DirectorWebsocketHandler(DirectorChatWebsocketMixin, Plugin):
                 "token_total": sum(util.count_tokens(str(m)) for m in messages),
             }
         )
-
