@@ -40,17 +40,24 @@
                 <v-list-item-title>Visualize Scene (Background)</v-list-item-title>
                 <v-list-item-subtitle>Generate a purely environmental image of the scene</v-list-item-subtitle>
             </v-list-item>
-            <!-- characters -->
-            <v-list-item v-for="character_name in characters" :key="character_name"
-                @click="(event) => handleVisualize(character_name, event, 'CHARACTER_CARD')" prepend-icon="mdi-brush">
-                <v-list-item-title>Visualize {{ character_name }} (Card)</v-list-item-title>
-                <v-list-item-subtitle>Generate a cover image portrait of {{ character_name }}</v-list-item-subtitle>
-            </v-list-item>
-            <v-list-item v-for="character_name in characters" :key="character_name"
-                @click="(event) => handleVisualize(character_name, event, 'CHARACTER_PORTRAIT')" prepend-icon="mdi-brush">
-                <v-list-item-title>Visualize {{ character_name }} (Portrait)</v-list-item-title>
-                <v-list-item-subtitle>Generate an image of {{ character_name }}'s face</v-list-item-subtitle>
-            </v-list-item>
+            <!-- character submenus -->
+            <v-menu v-for="character_name in characters" :key="character_name" open-on-hover location="end">
+                <template v-slot:activator="{ props }">
+                    <v-list-item v-bind="props" @click.stop :prepend-icon="character_name === playerCharacter ? 'mdi-account-tie' : 'mdi-account'" append-icon="mdi-chevron-right">
+                        <v-list-item-title>{{ character_name }}</v-list-item-title>
+                    </v-list-item>
+                </template>
+                <v-list>
+                    <v-list-item @click="(event) => handleVisualize(character_name, event, 'CHARACTER_CARD')" prepend-icon="mdi-brush">
+                        <v-list-item-title>Card</v-list-item-title>
+                        <v-list-item-subtitle>Generate a cover image portrait</v-list-item-subtitle>
+                    </v-list-item>
+                    <v-list-item @click="(event) => handleVisualize(character_name, event, 'CHARACTER_PORTRAIT')" prepend-icon="mdi-brush">
+                        <v-list-item-title>Portrait</v-list-item-title>
+                        <v-list-item-subtitle>Generate an image of {{ character_name }}'s face</v-list-item-subtitle>
+                    </v-list-item>
+                </v-list>
+            </v-menu>
             <!-- scene illustration -->
             <v-list-item @click="(event) => handleVisualize(null, event, 'SCENE_ILLUSTRATION')" prepend-icon="mdi-image-filter-hdr">
                 <v-list-item-title>Visualize Moment (Illustration)</v-list-item-title>
