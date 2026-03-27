@@ -92,7 +92,6 @@
                       <v-select label="Inference Presets" :items="availablePresets" v-model="client.preset_group">
                       </v-select>
 
-                      <v-select label="Structured Data Format" :items="dataManageFormatChoices" v-model="client.data_format" messages="Which formatting to use for data structure communication such as function calling or general data management."></v-select>
                     </v-col>
                     <v-col cols="8"
                       v-if="!typeEditable() && client.data && client.data.prompt_template_example !== null && client.model_name && clientMeta().requires_prompt_template && !client.data.api_handles_prompt_template">
@@ -122,6 +121,15 @@
                         </template>
                       </v-checkbox>
 
+                    </v-col>
+                  </v-row>
+                  <!-- DATA FORMAT & SECTION FORMAT -->
+                  <v-row>
+                    <v-col cols="6">
+                      <v-select label="Structured Data Format" :items="dataManageFormatChoices" v-model="client.data_format" messages="Which formatting to use for data structure communication such as function calling or general data management."></v-select>
+                    </v-col>
+                    <v-col cols="6">
+                      <v-select label="Section Format" :items="sectionFormatChoices" v-model="client.section_format" messages="How prompt sections are formatted. Markdown uses ## headings, XML uses paired tags like <SECTION>...</SECTION>."></v-select>
                     </v-col>
                   </v-row>
                   <!-- RATE LIMIT -->
@@ -372,6 +380,11 @@ export default {
         { title: 'JSON', value: 'json' },
         { title: 'YAML', value: 'yaml' },
       ],
+      sectionFormatChoices: [
+        { title: 'Talemate decides', value: null},
+        { title: 'Markdown', value: 'markdown' },
+        { title: 'XML', value: 'xml' },
+      ],
       tabs: {
         general: {
           title: 'General',
@@ -543,6 +556,7 @@ export default {
         this.client.double_coercion = defaults.double_coercion || null;
         this.client.rate_limit = defaults.rate_limit || null;
         this.client.data_format = defaults.data_format || null;
+        this.client.section_format = defaults.section_format || null;
         this.client.preset_group = defaults.preset_group || '';
         this.client.reason_enabled = defaults.reason_enabled || false;
         this.client.reason_tokens = defaults.reason_tokens || 0;

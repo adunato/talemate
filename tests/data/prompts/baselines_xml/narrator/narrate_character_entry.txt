@@ -1,0 +1,37 @@
+<CLASSIFICATION>
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+</CLASSIFICATION>
+
+Scenario Premise:
+A peaceful clearing in the heart of an ancient forest.
+
+<INTENTION_OF_THIS_STORY>
+The overarching intention of this story. Use it to guide your decisions in the scene.
+
+<Mock name='mock.intent_state.intent' id='NORMALIZED'>
+</INTENTION_OF_THIS_STORY>
+
+<ELENA>
+name: Elena
+
+A test character.
+</ELENA>
+
+<SCENE>
+Elena: Hello there, traveler.
+The sun filters through the leaves above.
+Marcus: What brings you to these woods?
+</SCENE>
+
+<TASK>
+Narrate the entrance of Elena into the scene. 
+
+Directions for new narration: She enters dramatically
+
+These are directions and the events described have not happened yet, you are writing new narration based on the
+directions.
+
+The length of your response must fit within 2 paragraphs.
+</TASK>

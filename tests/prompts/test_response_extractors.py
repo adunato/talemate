@@ -1414,3 +1414,312 @@ class TestTemplateExtractorInJinja2:
 
         assert extracted["message"] is not None
         assert "All good here" in extracted["message"]
+
+    def test_complex_extractor_spurious_tracked_tag_in_analysis_text(self):
+        """Test that literal tracked tag mentions in analysis text don't break nesting.
+
+        Regression test: when the LLM mentions a tracked tag literally in its
+        analysis (e.g. 'No <ACTIONS> are required'), the regex picks it up as
+        an opening tag, increments nesting depth, and then </ANALYSIS> only
+        decrements by 1 — leaving nesting_depth > 0. This causes the <MESSAGE>
+        block to be treated as nested and skipped.
+
+        The close-ended fallback (_extract_close_ended) then returns everything
+        from the start of text to </MESSAGE>, including the analysis content.
+        """
+        extractor = ComplexAnchorExtractor(
+            left="<MESSAGE>",
+            right="</MESSAGE>",
+            tracked_tags=["ANALYSIS", "MESSAGE", "DECISION", "ACTIONS"],
+        )
+        response = (
+            "<ANALYSIS> 1. The user has just said \"hello,\" which is an opening greeting.\n"
+            "2. No <ACTIONS> are required yet as I don't have a specific task.\n"
+            "3. I will ask the user how they would like to proceed.\n"
+            "</ANALYSIS>\n\n"
+            "<MESSAGE>\n"
+            "Hello! I'm the Director for **Infinity Quest**.\n"
+            "How would you like to kick things off?\n"
+            "</MESSAGE>\n\n"
+            "<DECISION>\n"
+            "I will wait for the user's input.\n"
+            "</DECISION>"
+        )
+        result = extractor.extract(response)
+        assert result is not None
+        # Should extract ONLY the message content, not the analysis
+        assert "I'm the Director" in result
+        assert "kick things off" in result
+        assert "opening greeting" not in result
+        assert "<ANALYSIS>" not in result
+        assert "</ANALYSIS>" not in result
+
+    @pytest.mark.asyncio
+    async def test_spurious_tracked_tag_in_analysis_full_flow(self, mock_client):
+        """Test the full prompt flow when LLM mentions tracked tags in analysis text.
+
+        End-to-end regression test: the LLM response contains literal <ACTIONS>
+        in the analysis text. After prepending the prepared response, the
+        extraction should still correctly isolate the <MESSAGE> content.
+        """
+        from talemate.prompts.base import Prompt
+
+        # LLM returns response where analysis mentions <ACTIONS> literally
+        mock_client.send_prompt.return_value = (
+            "<ANALYSIS>\n"
+            "1. The user said hello.\n"
+            "2. No <ACTIONS> are required yet.\n"
+            "3. I am ready to discuss.\n"
+            "</ANALYSIS>\n\n"
+            "<MESSAGE>\n"
+            "Hello! I'm the Director.\n"
+            "</MESSAGE>\n\n"
+            "<DECISION>\n"
+            "Waiting for input.\n"
+            "</DECISION>"
+        )
+
+        prompt = Prompt.from_text("Test prompt")
+        prompt.set_prepared_response("<ANALYSIS> 1.", fallback="<ANALYSIS>")
+
+        spec = ResponseSpec(
+            extractors={
+                "message": ComplexAnchorExtractor(
+                    left="<MESSAGE>",
+                    right="</MESSAGE>",
+                    tracked_tags=["ANALYSIS", "MESSAGE", "DECISION", "ACTIONS"],
+                ),
+            },
+            required=[],
+        )
+
+        response, extracted = await prompt.send(
+            mock_client, kind="create", response_spec=spec
+        )
+
+        assert extracted["message"] is not None
+        assert "I'm the Director" in extracted["message"]
+        assert "No <ACTIONS>" not in extracted["message"]
+        assert "user said hello" not in extracted["message"]
+
+
+# ============================================================================
+# Tests for parse_data feature
+# ============================================================================
+
+
+class TestParseData:
+    """Tests for the parse_data extractor feature."""
+
+    def test_parse_data_default_false(self):
+        """Test that parse_data defaults to False on all extractors."""
+        assert AnchorExtractor(left="<A>", right="</A>").parse_data is False
+        assert ComplexAnchorExtractor(left="<A>", right="</A>").parse_data is False
+        assert AsIsExtractor().parse_data is False
+        assert AfterAnchorExtractor(start="X").parse_data is False
+        assert RegexExtractor(pattern=".*").parse_data is False
+        assert StripPrefixExtractor(pattern=".*").parse_data is False
+        assert CodeBlockExtractor(left="<A>", right="</A>").parse_data is False
+        assert ComplexCodeBlockExtractor(left="<A>", right="</A>").parse_data is False
+
+    def test_parse_data_can_be_set(self):
+        """Test that parse_data can be set to True."""
+        extractor = AnchorExtractor(left="<A>", right="</A>", parse_data=True)
+        assert extractor.parse_data is True
+
+    def test_extract_all_without_parse_data_returns_string(self):
+        """Test that extract_all returns raw string when parse_data is False."""
+        spec = ResponseSpec(
+            extractors={
+                "data": AnchorExtractor(left="<DATA>", right="</DATA>"),
+            }
+        )
+        text = '<DATA>[{"key": "value"}]</DATA>'
+        result = spec.extract_all(text)
+        assert isinstance(result["data"], str)
+        assert result["data"] == '[{"key": "value"}]'
+
+    def test_set_anchor_extractor_parse_data(self):
+        """Test that set_anchor_extractor passes parse_data to the extractor."""
+        from talemate.prompts.base import Prompt
+
+        prompt = Prompt.from_text("Test")
+        prompt.set_anchor_extractor(
+            "data", "<DATA>", "</DATA>", parse_data=True,
+        )
+
+        extractor = prompt._template_extractors["data"]
+        assert isinstance(extractor, AnchorExtractor)
+        assert extractor.parse_data is True
+
+    def test_set_anchor_extractor_parse_data_with_tracked_tags(self):
+        """Test that parse_data works with tracked_tags (ComplexAnchorExtractor)."""
+        from talemate.prompts.base import Prompt
+
+        prompt = Prompt.from_text("Test")
+        prompt.set_anchor_extractor(
+            "data", "<DATA>", "</DATA>",
+            tracked_tags=["ANALYSIS", "DATA"],
+            parse_data=True,
+        )
+
+        extractor = prompt._template_extractors["data"]
+        assert isinstance(extractor, ComplexAnchorExtractor)
+        assert extractor.parse_data is True
+
+    def test_set_code_block_extractor_parse_data(self):
+        """Test that set_code_block_extractor passes parse_data to the extractor."""
+        from talemate.prompts.base import Prompt
+
+        prompt = Prompt.from_text("Test")
+        prompt.set_code_block_extractor(
+            "data", "<DATA>", "</DATA>", parse_data=True,
+        )
+
+        extractor = prompt._template_extractors["data"]
+        assert isinstance(extractor, CodeBlockExtractor)
+        assert extractor.parse_data is True
+
+
+class TestParseDataIntegration:
+    """Integration tests for parse_data with Prompt.send()."""
+
+    @pytest.fixture
+    def mock_client(self):
+        """Create a mock client for testing."""
+        from unittest.mock import Mock, AsyncMock
+
+        client = Mock()
+        client.max_token_length = 4096
+        client.decensor_enabled = False
+        client.can_be_coerced = True
+        client.data_format = "json"
+        client.model_name = "test-model"
+        client.send_prompt = AsyncMock()
+        return client
+
+    @pytest.mark.asyncio
+    async def test_parse_data_json_list(self, mock_client):
+        """Test that parse_data parses a JSON list from anchored content."""
+        from talemate.prompts.base import Prompt
+
+        mock_client.send_prompt.return_value = (
+            '<DATA>\n```json\n[{"type": "narration", "description": "The sun rises."}]\n```\n</DATA>'
+        )
+
+        prompt = Prompt.from_text("Test")
+        prompt._template_extractors["data"] = AnchorExtractor(
+            left="<DATA>", right="</DATA>", parse_data=True,
+        )
+
+        response, extracted = await prompt.send(mock_client, kind="create")
+
+        assert isinstance(extracted["data"], list)
+        assert len(extracted["data"]) == 1
+        assert extracted["data"][0]["type"] == "narration"
+
+    @pytest.mark.asyncio
+    async def test_parse_data_json_object(self, mock_client):
+        """Test that parse_data parses a JSON object from anchored content."""
+        from talemate.prompts.base import Prompt
+
+        mock_client.send_prompt.return_value = (
+            '<DATA>\n```json\n{"name": "test", "value": 42}\n```\n</DATA>'
+        )
+
+        prompt = Prompt.from_text("Test")
+        prompt._template_extractors["data"] = AnchorExtractor(
+            left="<DATA>", right="</DATA>", parse_data=True,
+        )
+
+        response, extracted = await prompt.send(mock_client, kind="create")
+
+        assert isinstance(extracted["data"], dict)
+        assert extracted["data"]["name"] == "test"
+        assert extracted["data"]["value"] == 42
+
+    @pytest.mark.asyncio
+    async def test_parse_data_yaml(self, mock_client):
+        """Test that parse_data parses YAML content."""
+        from talemate.prompts.base import Prompt
+
+        mock_client.data_format = "yaml"
+        mock_client.send_prompt.return_value = (
+            "<DATA>\n```yaml\n- type: narration\n  description: The sun rises.\n```\n</DATA>"
+        )
+
+        prompt = Prompt.from_text("Test")
+        prompt._template_extractors["data"] = AnchorExtractor(
+            left="<DATA>", right="</DATA>", parse_data=True,
+        )
+
+        response, extracted = await prompt.send(mock_client, kind="create")
+
+        assert isinstance(extracted["data"], list)
+        assert len(extracted["data"]) == 1
+        assert extracted["data"][0]["type"] == "narration"
+
+    @pytest.mark.asyncio
+    async def test_parse_data_leaves_unparseable_as_string(self, mock_client):
+        """Test that parse_data leaves content as string when parsing fails."""
+        from talemate.prompts.base import Prompt
+
+        mock_client.send_prompt.return_value = (
+            "<DATA>This is just plain text, not JSON or YAML.</DATA>"
+        )
+
+        prompt = Prompt.from_text("Test")
+        prompt._template_extractors["data"] = AnchorExtractor(
+            left="<DATA>", right="</DATA>", parse_data=True,
+        )
+
+        response, extracted = await prompt.send(mock_client, kind="create")
+
+        # Should remain as string since it's not parseable
+        assert isinstance(extracted["data"], str)
+        assert "plain text" in extracted["data"]
+
+    @pytest.mark.asyncio
+    async def test_parse_data_mixed_extractors(self, mock_client):
+        """Test that parse_data only applies to extractors with it enabled."""
+        from talemate.prompts.base import Prompt
+
+        mock_client.send_prompt.return_value = (
+            '<OUTLINE>\n```json\n[{"beat": 1}]\n```\n</OUTLINE>\n'
+            "<PERSPECTIVE>Third person limited</PERSPECTIVE>"
+        )
+
+        prompt = Prompt.from_text("Test")
+        prompt._template_extractors["outline"] = AnchorExtractor(
+            left="<OUTLINE>", right="</OUTLINE>", parse_data=True,
+        )
+        prompt._template_extractors["perspective"] = AnchorExtractor(
+            left="<PERSPECTIVE>", right="</PERSPECTIVE>", parse_data=False,
+        )
+
+        response, extracted = await prompt.send(mock_client, kind="create")
+
+        # outline should be parsed
+        assert isinstance(extracted["outline"], list)
+        assert extracted["outline"][0]["beat"] == 1
+
+        # perspective should remain as string
+        assert isinstance(extracted["perspective"], str)
+        assert extracted["perspective"] == "Third person limited"
+
+    @pytest.mark.asyncio
+    async def test_parse_data_with_none_value_skipped(self, mock_client):
+        """Test that parse_data is skipped when extracted value is None."""
+        from talemate.prompts.base import Prompt
+
+        mock_client.send_prompt.return_value = "No data tags here"
+
+        prompt = Prompt.from_text("Test")
+        prompt._template_extractors["data"] = AnchorExtractor(
+            left="<DATA>", right="</DATA>", parse_data=True,
+        )
+
+        response, extracted = await prompt.send(mock_client, kind="create")
+
+        # Should be None, not crash
+        assert extracted["data"] is None

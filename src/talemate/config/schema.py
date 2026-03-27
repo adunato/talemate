@@ -48,6 +48,9 @@ class Client(pydantic.BaseModel):
     # expected data structure format in responses
     data_format: Literal["json", "yaml"] | None = None
 
+    # prompt section format (how section headers are rendered)
+    section_format: Literal["markdown", "xml"] | None = None
+
     enabled: bool = True
 
     # whether or not to enable reasoning

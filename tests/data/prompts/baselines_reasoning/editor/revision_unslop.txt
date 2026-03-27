@@ -283,6 +283,8 @@ A fantasy adventure story.
 ## Classification
 Content Classification: Fantasy adventure story
 
+Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+
 ## Task
 Fix bad AI writing by making it simpler, shorter, and more natural. 
 

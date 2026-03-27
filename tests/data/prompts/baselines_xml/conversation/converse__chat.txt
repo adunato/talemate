@@ -1,0 +1,57 @@
+<CHARACTERS>
+### Hero
+name: Hero
+
+A test character.
+
+### Elena
+name: Elena
+
+A test character.
+</CHARACTERS>
+
+<SCENE_DESCRIPTION>
+A peaceful clearing in the heart of an ancient forest.
+</SCENE_DESCRIPTION>
+<CLASSIFICATION>
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+</CLASSIFICATION>
+
+<TASK>
+This is a roleplaying session between Hero and Elena.
+
+Continue the dialogue and respond as the character of Elena. ONLY ACT AS ELENA.
+
+Portray the characters exactly as defined without holding back. You are an actor and you have the creative freedom to fill in gaps and flesh out Elena's details if needed.
+
+You may chose to have Elena respond to the conversation, or you may chose to have Elena perform a new action that is in line with Elena's character.
+
+Start your contribution to the conversation with the character's name followed by a colon indicating the character's turn. Then write the character's dialogue and actions. Spoken words MUST be enclosed in quotation marks. For example:
+
+``` example
+Elena: Hello there.
+```
+
+``` example
+Elena: How are you?
+```
+</TASK>
+
+The length of your response must fit within 4 paragraphs.
+
+**TENSE**: Examine the existing conversation history and maintain the EXACT same tense (past/present) used in previous messages. **NEVER switch tenses mid-conversation**.
+**PERSPECTIVE**: Match the narrative perspective of the existing story. If the story uses third person ("he walked", "she said"), write Elena's actions and thoughts in third person. If the story uses first person ("I walked"), maintain that viewpoint. The character whose turn it is does NOT automatically become the first-person narrator.
+
+<SCENE>
+(Broad character guidance for Elena: Speaks normally. )
+
+Elena: Hello there, traveler.
+
+The sun filters through the leaves above.
+
+Marcus: What brings you to these woods?
+</SCENE>
+
+<|BOT|>Elena:

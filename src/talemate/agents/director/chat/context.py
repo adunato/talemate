@@ -20,6 +20,7 @@ director_chat_context = contextvars.ContextVar("director_chat_context", default=
 class DirectorChatContext(pydantic.BaseModel):
     chat_id: str
     confirm_write_actions: bool = True
+    plan_id: str | None = None
     token: str | None = None
     _context_id_collector: OpenContextIDScanCollector | None = None
 

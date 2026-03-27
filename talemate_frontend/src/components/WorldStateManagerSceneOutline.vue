@@ -30,6 +30,21 @@
                     </v-col>
                 </v-row>
                 <v-row>
+                    <v-col cols="12" md="8" lg="6" xl="6">
+                        <v-text-field
+                            v-model="scene.data.perspective"
+                            label="Perspective"
+                            hint="The narrative perspective and tense for the story (e.g., 'Third person limited, past tense, focused on character's POV')."
+                            :color="dirty['perspective'] ? 'dirty' : ''"
+                            :disabled="busy['perspective']"
+                            :loading="busy['perspective']"
+                            @update:model-value="setFieldDirty('perspective')"
+                            @blur="update(true)"
+                            placeholder="e.g., Third person limited, past tense"
+                        ></v-text-field>
+                    </v-col>
+                </v-row>
+                <v-row>
                     <!-- scene description -->
                     <v-col cols="12">
                         <v-textarea
@@ -194,6 +209,7 @@ export default {
                 action: 'update_scene_outline',
                 title: this.scene.data.title,
                 context: this.scene.data.context,
+                perspective: this.scene.data.perspective,
                 intro: this.scene.data.intro,
                 description: this.scene.data.description,
             }));

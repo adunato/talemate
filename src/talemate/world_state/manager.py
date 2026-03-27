@@ -1062,12 +1062,14 @@ class WorldStateManager:
         description: str | None = None,
         intro: str | None = None,
         context: str | None = None,
+        perspective: str | None = None,
     ) -> "Scene":
         scene = self.scene
         scene.title = title
         scene.description = description
         scene.intro = intro
         scene.context = context
+        scene.perspective = perspective or ""
 
         return scene
 

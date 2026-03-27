@@ -45,6 +45,7 @@
     {% if other_character.name != character_name %}
 <|SECTION:{{ other_character.name }}|>
 {{ other_character.description|condensed }}
+<|CLOSE_SECTION|>
     {% endif %}
   {% endfor %}
 {% endif %}

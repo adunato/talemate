@@ -2,8 +2,13 @@
   features:
   - "Manual Scene Direction Turn: Added a button to the director scene tools menu to manually trigger a scene direction turn. Useful when scene direction is enabled but auto progression is off. Supports optional one-off instructions via Ctrl+click."
   - "Visual Scene Tools: Organized the visual tools menu into per-character submenus, matching the world scene tools pattern."
+  - "Section Format: Per-client setting to control how prompt sections are formatted. Choose between Markdown (## headings) and XML (<SECTION>...</SECTION> tags). Found in the client configuration next to the data format setting."
+  - "Director Planning: The director can now plan and autonomously generate multi-beat scene arcs from a set of instructions. Includes outline creation, critique, and beat-by-beat execution with configurable dialogue ratio and pacing."
+  - "Scene Perspective: Added a perspective field to the scene outline editor, allowing users to view and set the narrative perspective and tense (e.g., 'Third person limited, past tense'). Also exposed as a context ID (story_configuration:perspective)."
+  - "Prompt Logging: Set TALEMATE_LOG_PROMPTS=1 to write full prompt+response data to logs/prompt_log.jsonl for debugging and analysis."
   fixes:
   - Fixed crash in voice library character manager when a character was deactivated.
   - Fixed blank page on some Windows 10 systems where JavaScript files were served with incorrect MIME type (text/plain), causing Chromium-based browsers to reject module scripts.
   - Fixed "No episodes available" placeholder being selectable in the episode list.
   - Fixed response extraction failing when only a closing anchor tag was present in the LLM response (e.g., `</PHASE_INTENT>` without `<PHASE_INTENT>`).
+  - "Director actions: Removed redundant fix_instructions LLM call from direct_scene actor path. The FOCAL callback metadata already prevents verbatim dialogue in director instructions."

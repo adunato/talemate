@@ -194,6 +194,7 @@ Analyze chat history for message [#2] context.
 
 `<DECISION>` FINAL ACTION CHOICE:
 Actions this turn + which ones + why/why not
+
 You must never do more than asked.
 
 If you have executed an action, process the result in your response.

@@ -146,6 +146,8 @@ A fantasy adventure story.
 ## Classification
 Content Classification: Fantasy adventure story
 
+Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+
 ## Task
 Fix overwritten descriptions by making them cleaner and more readable while maintaining their descriptive purpose.
 

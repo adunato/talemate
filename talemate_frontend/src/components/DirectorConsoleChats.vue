@@ -20,6 +20,7 @@
 
     <v-card class="chat-card">
         <v-card-text>
+            <DirectorConsoleChatPlanBanner :plan="activePlan" />
             <DirectorConsoleChatMessages
                 :messages="chatMessages"
                 :confirming="confirming"
@@ -68,9 +69,10 @@ import ConfirmActionPrompt from './ConfirmActionPrompt.vue';
 import DirectorConsoleChatsToolbar from './DirectorConsoleChatsToolbar.vue';
 import DirectorConsoleChatMessages from './DirectorConsoleChatMessages.vue';
 import DirectorConsoleChatInput from './DirectorConsoleChatInput.vue';
+import DirectorConsoleChatPlanBanner from './DirectorConsoleChatPlanBanner.vue';
 export default {
     name: 'DirectorConsoleChats',
-    components: { ConfirmActionPrompt, DirectorConsoleChatsToolbar, DirectorConsoleChatMessages, DirectorConsoleChatInput },
+    components: { ConfirmActionPrompt, DirectorConsoleChatsToolbar, DirectorConsoleChatMessages, DirectorConsoleChatInput, DirectorConsoleChatPlanBanner },
     inject: [
         'getWebsocket',
         'registerMessageHandler',
@@ -99,6 +101,7 @@ export default {
             confirming: {},
             currentChatMode: 'normal',
             confirmWriteActions: true,
+            activePlan: null,
         }
     },
     methods: {
@@ -110,6 +113,7 @@ export default {
             this.tokenTotal = null;
             this.isProcessing = false;
             this.currentChatMode = 'normal';
+            this.activePlan = null;
             this.requestChatList();
         },
         updateChatMode(newMode) {
@@ -253,6 +257,7 @@ export default {
             this.activeChatId = chatId;
             this.chatMessages = [];
             this.tokenTotal = null;
+            this.activePlan = null;
             this.getWebsocket().send(JSON.stringify({
                 type: 'director',
                 action: 'chat_select',
@@ -446,6 +451,12 @@ export default {
             if(message.action === 'chat_require_sync') {
                 if(message.chat_id === this.activeChatId) {
                     this.onSelectChat();
+                }
+                return;
+            }
+            if(message.action === 'plan_updated') {
+                if(message.chat_id === this.activeChatId) {
+                    this.activePlan = message.plan || null;
                 }
                 return;
             }

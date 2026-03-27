@@ -1,5 +1,12 @@
 <template>
     <div class="d-flex align-center ga-2 px-4 w-100">
+        <v-tooltip location="top" text="Interrupt the current generation(s)" max-width="300px">
+            <template v-slot:activator="{ props }">
+                <v-btn v-bind="props" @click="$emit('interrupt')" :disabled="!processing" color="primary" icon>
+                    <v-icon>mdi-stop-circle-outline</v-icon>
+                </v-btn>
+            </template>
+        </v-tooltip>
         <v-textarea
             :model-value="modelValue"
             @update:model-value="$emit('update:modelValue', $event)"
@@ -13,13 +20,6 @@
             auto-grow
             @keydown.enter="onEnterKey"
         ></v-textarea>
-        <v-tooltip v-if="processing" location="top" text="Interrupt the current generation(s)" max-width="300px">
-            <template v-slot:activator="{ props }">
-                <v-btn class="mr-2" v-bind="props" @click="$emit('interrupt')" color="primary" icon>
-                    <v-icon>mdi-stop-circle-outline</v-icon>
-                </v-btn>
-            </template>
-        </v-tooltip>
         <v-btn color="primary" :disabled="!active || !modelValue || processing || appBusy || !appReady" @click="$emit('send')" prepend-icon="mdi-send">Send</v-btn>
     </div>
 </template>

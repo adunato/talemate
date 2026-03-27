@@ -16,6 +16,8 @@ Test deep analysis context content.
 ## Classification
 Content Classification: Fantasy adventure story
 
+Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+
 ## Scene
 Elena: Hello there, traveler.
 

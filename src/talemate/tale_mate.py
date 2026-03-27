@@ -176,6 +176,7 @@ class Scene(Emitter):
         self.immutable_save = False
 
         self.context = ""
+        self.perspective = ""
         self.commands = commands.Manager(self)
         self.environment = "scene"
         self.world_state = WorldState()
@@ -1267,6 +1268,7 @@ class Scene(Emitter):
                 "explicit_player_character": self.player_character_exists,
                 "inactive_characters": list(self.inactive_characters.keys()),
                 "context": self.context,
+                "perspective": self.perspective,
                 "assets": self.assets.dict(),
                 "characters": [actor.character.model_dump() for actor in self.actors],
                 "character_colors": {

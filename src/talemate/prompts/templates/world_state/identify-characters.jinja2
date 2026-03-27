@@ -16,6 +16,8 @@ Override example:
 {{ scene_context }}
 {% endfor %}
 {% endif %}
+<|CLOSE_SECTION|>
 <|SECTION:TASK|>
 Identify all main characters by name respond with a json object in the format of {"characters":[{"name": "John" , "description": "Information about the character" }]}
+<|CLOSE_SECTION|>
 {{ set_data_response({"characters":[""]}) }}

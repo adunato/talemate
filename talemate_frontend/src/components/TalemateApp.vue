@@ -851,6 +851,7 @@ export default {
         });
       },
       callAgentTool: (actionName, args) => this.callAgentTool(actionName, args),
+      openDirectorConsole: () => this.toggleNavigation('directorConsole', true),
     };
   },
   methods: {

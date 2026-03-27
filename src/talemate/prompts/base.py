@@ -152,6 +152,12 @@ nest_asyncio.apply()
 SECTIONING_HANDLERS = {}
 DEFAULT_SECTIONING_HANDLER = "titles"
 
+# Maps client-facing section_format names to internal sectioning handler names
+SECTION_FORMAT_TO_HANDLER = {
+    "markdown": "titles",
+    "xml": "xml",
+}
+
 
 class register_sectioning_handler:
     def __init__(self, name):
@@ -245,7 +251,7 @@ class Prompt:
 
     client: Any = None
 
-    sectioning_hander: str = dataclasses.field(
+    sectioning_handler: str = dataclasses.field(
         default_factory=lambda: DEFAULT_SECTIONING_HANDLER
     )
 
@@ -492,7 +498,7 @@ class Prompt:
         else:
             raise ValueError(f"Unsupported loader type for template '{name}'")
 
-    def render(self, force: bool = False) -> str:
+    def render(self, force: bool = False, apply_sectioning: bool = True) -> str:
         """
         Render the prompt using jinja2.
 
@@ -610,18 +616,19 @@ class Prompt:
                 self.agent_type, self.name, active_scene.get()
             )
 
-        sectioning_handler = SECTIONING_HANDLERS.get(self.sectioning_hander)
+        sectioning_handler = SECTIONING_HANDLERS.get(self.sectioning_handler)
 
         try:
             self.prompt = template.render(ctx)
-            if not sectioning_handler:
-                log.warning(
-                    "prompt.render",
-                    prompt=self.name,
-                    warning=f"Sectioning handler `{self.sectioning_hander}` not found",
-                )
-            else:
-                self.prompt = sectioning_handler(self)
+            if apply_sectioning:
+                if not sectioning_handler:
+                    log.warning(
+                        "prompt.render",
+                        prompt=self.name,
+                        warning=f"Sectioning handler `{self.sectioning_handler}` not found",
+                    )
+                else:
+                    self.prompt = sectioning_handler(self)
         except jinja2.exceptions.TemplateError as e:
             log.error("prompt.render", prompt=self.name, error=traceback.format_exc())
             emit(
@@ -1212,6 +1219,7 @@ class Prompt:
         trim: bool = True,
         fallback_to_full: bool = False,
         tracked_tags: list[str] | None = None,
+        parse_data: bool = False,
     ) -> str:
         """
         Register an anchor extractor that overrides Python default.
@@ -1222,6 +1230,9 @@ class Prompt:
         For nesting awareness, use tracked_tags:
             {{ set_anchor_extractor("message", "<MESSAGE>", "</MESSAGE>", tracked_tags=["ANALYSIS", "MESSAGE", "ACTIONS"]) }}
 
+        For automatic JSON/YAML parsing of extracted content:
+            {{ set_anchor_extractor("data", "<DATA>", "</DATA>", parse_data=True) }}
+
         Args:
             name: The field name this extractor is for
             left: Left anchor (e.g., "<MESSAGE>")
@@ -1230,6 +1241,7 @@ class Prompt:
             fallback_to_full: If True, return full response when anchors not found
             tracked_tags: List of tag names to track for nesting awareness.
                 If provided, uses ComplexAnchorExtractor for nesting-aware extraction.
+            parse_data: If True, automatically parse extracted text as JSON/YAML
 
         Returns:
             Empty string (no output in template)
@@ -1241,6 +1253,7 @@ class Prompt:
                 trim=trim,
                 fallback_to_full=fallback_to_full,
                 tracked_tags=tracked_tags,
+                parse_data=parse_data,
             )
         else:
             self._template_extractors[name] = AnchorExtractor(
@@ -1248,6 +1261,7 @@ class Prompt:
                 right=right,
                 trim=trim,
                 fallback_to_full=fallback_to_full,
+                parse_data=parse_data,
             )
         return ""
 
@@ -1312,6 +1326,7 @@ class Prompt:
         validate_structured: bool = True,
         trim: bool = True,
         tracked_tags: list[str] | None = None,
+        parse_data: bool = False,
     ) -> str:
         """
         Register a code block extractor for JSON/YAML content.
@@ -1322,6 +1337,9 @@ class Prompt:
         For nesting awareness, use tracked_tags:
             {{ set_code_block_extractor("actions", "<ACTIONS>", "</ACTIONS>", tracked_tags=["ANALYSIS", "MESSAGE", "ACTIONS"]) }}
 
+        For automatic JSON/YAML parsing of extracted content:
+            {{ set_code_block_extractor("data", "<DATA>", "</DATA>", parse_data=True) }}
+
         Args:
             name: The field name this extractor is for
             left: Left anchor (e.g., "<ACTIONS>")
@@ -1330,6 +1348,7 @@ class Prompt:
             trim: Whether to trim whitespace from extracted content
             tracked_tags: List of tag names to track for nesting awareness.
                 If provided, uses ComplexCodeBlockExtractor for nesting-aware extraction.
+            parse_data: If True, automatically parse extracted text as JSON/YAML
 
         Returns:
             Empty string (no output in template)
@@ -1341,6 +1360,7 @@ class Prompt:
                 validate_structured=validate_structured,
                 trim=trim,
                 tracked_tags=tracked_tags,
+                parse_data=parse_data,
             )
         else:
             self._template_extractors[name] = CodeBlockExtractor(
@@ -1348,6 +1368,7 @@ class Prompt:
                 right=right,
                 validate_structured=validate_structured,
                 trim=trim,
+                parse_data=parse_data,
             )
         return ""
 
@@ -1406,6 +1427,13 @@ class Prompt:
         """
 
         self.client = client
+
+        # Apply client's section format preference if set
+        client_section_format = getattr(client, "section_format", None)
+        if client_section_format:
+            handler = SECTION_FORMAT_TO_HANDLER.get(client_section_format)
+            if handler:
+                self.sectioning_handler = handler
 
         # Ensure template is rendered before sending (render() is a no-op
         # if already rendered, but must happen here while context like
@@ -1499,6 +1527,12 @@ class Prompt:
         )
 
         extracted = effective_spec.extract_all(response)
+
+        # Post-process parse_data fields using extract_data_auto
+        if any(ext.parse_data for ext in effective_spec.extractors.values()):
+            extracted = await effective_spec.parse_data_fields(
+                extracted, client, Prompt,
+            )
 
         # Emit template_rendered signal for tracking
         if self.uid and self._source_group:
@@ -1650,11 +1684,13 @@ def titles_prompt_sectioning(prompt: Prompt) -> str:
     )
 
 
-@register_sectioning_handler("html")
-def html_prompt_sectioning(prompt: Prompt) -> str:
+@register_sectioning_handler("xml")
+def xml_prompt_sectioning(prompt: Prompt) -> str:
+    def _to_tag(section_name: str) -> str:
+        return section_name.upper().replace(" ", "_")
     return _prompt_sectioning(
         prompt,
-        lambda section_name: f"<{section_name.capitalize().replace(' ', '')}>",
-        lambda section_name: f"</{section_name.capitalize().replace(' ', '')}>",
+        lambda section_name: f"<{_to_tag(section_name)}>",
+        lambda section_name: f"</{_to_tag(section_name)}>",
         strip_empty_lines=True,
     )

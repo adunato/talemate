@@ -26,6 +26,7 @@ from talemate.game.engine.context_id import (
 )
 from talemate.game.engine.context_id.story_configuration import (
     DirectorInstructionsContextID,
+    ScenePerspectiveContextID,
     StoryConfigurationContext,
     StoryConfigurationContextItem,
 )
@@ -1036,6 +1037,7 @@ def mock_scene_story_config():
     scene.intro = "This is the story introduction."
     scene.intent_state.intent = "Overall story intention"
     scene.intent_state.instructions = "Director instructions for managing the scene"
+    scene.perspective = "Third person limited, past tense"
     return scene
 
 
@@ -1193,6 +1195,145 @@ async def test_director_instructions_with_none_value(mock_scene_story_config):
     assert context_item is not None
     value = await context_item.get(mock_scene_story_config)
     assert value is None
+
+
+# Tests for Scene Perspective Context ID
+
+
+def test_scene_perspective_context_id_creation():
+    """Test ScenePerspectiveContextID creation."""
+    context_id = ScenePerspectiveContextID.make()
+    assert context_id.key == "perspective"
+    assert context_id.path == ["perspective"]
+    assert context_id.context_type == "story_configuration"
+    assert context_id.path_to_str == "story_configuration:perspective"
+
+
+def test_scene_perspective_context_id_properties():
+    """Test ScenePerspectiveContextID properties."""
+    context_id = ScenePerspectiveContextID.make()
+    assert str(context_id) == "story_configuration:perspective"
+    assert context_id.id == "story_configuration:perspective"
+
+
+@pytest.mark.asyncio
+async def test_scene_perspective_context_item_get(mock_scene_story_config):
+    """Test getting perspective through context item."""
+    handler = StoryConfigurationContext.instance_from_path(
+        ["perspective"], mock_scene_story_config
+    )
+
+    item = await handler.context_id_item_from_path(
+        "story_configuration",
+        ["perspective"],
+        "story_configuration:perspective",
+        mock_scene_story_config,
+    )
+
+    assert item is not None
+    assert item.context_type == "perspective"
+    assert item.name == "perspective"
+    assert item.value == "Third person limited, past tense"
+
+    value = await item.get(mock_scene_story_config)
+    assert value == "Third person limited, past tense"
+
+
+@pytest.mark.asyncio
+async def test_scene_perspective_context_item_set(mock_scene_story_config):
+    """Test setting perspective through context item."""
+    handler = StoryConfigurationContext.instance_from_path(
+        ["perspective"], mock_scene_story_config
+    )
+
+    item = await handler.context_id_item_from_path(
+        "story_configuration",
+        ["perspective"],
+        "story_configuration:perspective",
+        mock_scene_story_config,
+    )
+
+    new_value = "First person, present tense"
+    await item.set(mock_scene_story_config, new_value)
+    assert mock_scene_story_config.perspective == new_value
+
+    # Setting to None should result in empty string
+    await item.set(mock_scene_story_config, None)
+    assert mock_scene_story_config.perspective == ""
+
+
+@pytest.mark.asyncio
+async def test_scene_perspective_context_id_from_path(mock_scene_story_config):
+    """Test getting ScenePerspectiveContextID from path."""
+    handler = StoryConfigurationContext.instance_from_path(
+        ["perspective"], mock_scene_story_config
+    )
+
+    context_id = await handler.context_id_from_path(
+        "story_configuration",
+        ["perspective"],
+        "story_configuration:perspective",
+        mock_scene_story_config,
+    )
+
+    assert context_id is not None
+    assert isinstance(context_id, ScenePerspectiveContextID)
+    assert context_id.path == ["perspective"]
+
+
+def test_scene_perspective_context_item_properties():
+    """Test ScenePerspectiveContextID item properties."""
+    item = StoryConfigurationContextItem(
+        context_type="perspective",
+        name="perspective",
+        value="Third person omniscient",
+    )
+
+    context_id = item.context_id
+    assert isinstance(context_id, ScenePerspectiveContextID)
+    assert item.human_id == "Narrative Perspective"
+
+
+@pytest.mark.asyncio
+async def test_scene_perspective_integration_flow(mock_scene_story_config):
+    """Test complete integration flow for perspective context ID."""
+    context_id_str = "story_configuration:perspective"
+
+    context_item = await context_id_item_from_string(
+        context_id_str, mock_scene_story_config
+    )
+    assert context_item is not None
+    assert context_item.context_type == "perspective"
+    assert context_item.value == "Third person limited, past tense"
+
+    context_id = await context_id_from_string(context_id_str, mock_scene_story_config)
+    assert context_id is not None
+    assert isinstance(context_id, ScenePerspectiveContextID)
+
+    original_value = await context_item.get(mock_scene_story_config)
+    assert original_value == "Third person limited, past tense"
+
+    new_value = "First person, present tense, from Kaira's perspective"
+    await context_item.set(mock_scene_story_config, new_value)
+
+    updated_value = await context_item.get(mock_scene_story_config)
+    assert updated_value == new_value
+    assert mock_scene_story_config.perspective == new_value
+
+
+@pytest.mark.asyncio
+async def test_scene_perspective_with_empty_value(mock_scene_story_config):
+    """Test perspective context ID when perspective is empty."""
+    mock_scene_story_config.perspective = ""
+
+    context_id_str = "story_configuration:perspective"
+    context_item = await context_id_item_from_string(
+        context_id_str, mock_scene_story_config
+    )
+
+    assert context_item is not None
+    value = await context_item.get(mock_scene_story_config)
+    assert value == ""
 
 
 # Tests for character names containing dots (e.g., "M.A.R.V.I.N.")

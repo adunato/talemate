@@ -55,11 +55,12 @@ Other major characters:
 Line {{ loop.index }}: {{ to_str(scene_context)|condensed }}
 ---
 {% endfor -%}
+<|CLOSE_SECTION|>
 {% if not scene.history -%}
 <|SECTION:DIALOGUE|>
 No dialogue so far
-{% endif -%}
 <|CLOSE_SECTION|>
+{% endif -%}
 <|SECTION:TASK|>
 Create {{ data_format_type() }} data for the world state that reflects the scene progression so far.
 
@@ -81,5 +82,6 @@ item keys must be reader friendly, so "Item name" instead of "item_name".
 Don't overthink it.
 
 <|CLOSE_SECTION|>
-<|SECTION:UPDATED WORLD STATE|>
+
+## Updated world state
 {{ set_data_response(dict(characters={"name":{}}), cutoff=3) }}

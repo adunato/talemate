@@ -1,0 +1,105 @@
+{{ set_anchor_extractor("response", "<REVISED_OUTLINE>", "</REVISED_OUTLINE>", parse_data=True) }}
+{{ set_anchor_extractor("changes_made", "<CHANGES>", "</CHANGES>") }}
+{% set context_content -%}
+<|SECTION:CONTEXT|>
+You are a scene planner reviewing and refining a beat-by-beat outline for an interactive narrative scene.
+
+Content Classification: {{ scene.context }}
+
+{% if characters %}
+Active characters: {{ characters | map(attribute="name") | join(", ") }}
+{% for character in characters %}
+- {{ character.name }}: {{ character.description[:200] if character.description else "No description" }}
+{% endfor %}
+{% endif %}
+<|CLOSE_SECTION|>
+{% endset -%}
+{% set task_content -%}
+<|SECTION:TASK|>
+Review and improve the following scene outline. The outline was generated from these instructions:
+
+```instructions
+{{ outline_instructions }}
+```
+
+Perspective: {{ perspective }}
+
+Current outline ({{ outline | length }} beats):
+
+{% for beat in outline %}
+Beat {{ loop.index }} [{{ beat.type }}] (pacing: {{ beat.pacing }}, tension: {{ beat.tension }})
+  Characters: {{ beat.characters | join(", ") if beat.characters else "none" }}
+  {{ beat.description }}
+
+{% endfor %}
+
+Evaluate the outline against these criteria and revise beats that have problems:
+
+**Redundancy and merging:** Do any beats describe the same event, image, or emotional state as another beat? Each beat must introduce something genuinely NEW — a new event, a new piece of information, a new character action, or a new environmental change. Beats that "set the mood" or "establish atmosphere" without advancing the story should be reworked into beats that DO something. If two consecutive non-dialogue beats cover similar narrative ground at similar tension levels, MERGE their content into one beat and use the freed slot for a dialogue or character-agency beat instead. Only merge beats that are genuinely redundant — preserve beats with different pacing or tension purposes.
+
+**Character agency:** Do characters make decisions that affect what happens next? At least 2-3 beats should involve a character choosing, deciding, refusing, or acting — not just witnessing or reacting. If a beat says a character "notices" or "feels" something, ask: what do they DO about it?
+
+**Pacing and tension shape:** Tension should not be a straight line up. There should be at least one valley — a beat where tension drops before rising again. Check that the `tension` values actually vary and that early beats start low (0.1-0.3).
+
+**Beat descriptions as writer directions:** Each beat description will be given to a writer as their ONLY instruction. The description must be specific enough to write from. "The tension builds" is useless. "Elmer discovers the airlock controls are responding in reverse — open reads as closed" is writable. Every beat description must specify a concrete EVENT or ACTION — something that happens, changes, or is decided. Do NOT write beats that are purely atmospheric ("the shadows deepen", "the air grows heavy"). The writer will produce atmosphere naturally as part of telling the story; dedicated atmosphere beats produce redundant, re-descriptive prose.
+
+**Structural completeness:** The final beat MUST involve a character making a choice, taking an action, or facing a consequence — not just witnessing a revelation or spectacle. If the last beat is purely "they see something terrifying/beautiful," rewrite it so the character DOES something in response that closes or pivots the arc. The arc needs somewhere to land, and that landing must involve character agency.
+
+{% set dialogue_pct = (agent_config("director.chat.generate_arc_dialogue_ratio") * 100) | int -%}
+**Dialogue ratio:** Approximately {{ dialogue_pct }}% of beats should be `dialogue` type. Characters need to speak, argue, and reveal information through conversation — not just act and observe. If the outline is heavily skewed toward narration, convert some beats to dialogue.
+
+**Perspective consistency:** All beat descriptions should be compatible with the stated perspective ({{ perspective }}). If the perspective is limited to one character, beats should not describe another character's internal thoughts.
+
+---
+
+If any beats need revision, output the COMPLETE revised outline (all {{ outline | length }} beats, including unchanged ones) inside `<REVISED_OUTLINE>` tags using {{ data_format_type() }} format.
+
+If the outline is already strong and no changes are needed, output `<NO_CHANGES/>` instead.
+
+Also output a brief summary of what you changed inside `<CHANGES>` tags — one line per changed beat.
+
+Do NOT change the number of beats. Do NOT change beat types unless there is a clear structural reason. Focus on improving descriptions, adjusting tension values, and strengthening character agency.
+
+{% if data_format_type() == "json" %}
+Example format:
+```json
+[
+  {"type": "narration", "description": "...", "characters": [], "pacing": "slow", "tension": 0.2},
+  {"type": "dialogue", "description": "...", "characters": ["Librarian"], "pacing": "moderate", "tension": 0.4}
+]
+```
+{% else %}
+Example format:
+```yaml
+- type: narration
+  description: "..."
+  characters: []
+  pacing: slow
+  tension: 0.2
+
+- type: dialogue
+  description: "..."
+  characters: ["Librarian"]
+  pacing: moderate
+  tension: 0.4
+```
+{% endif %}
+<|CLOSE_SECTION|>
+{% endset -%}
+{# Budget: subtract context + task from max tokens, give the rest to scene history #}
+{% set reserved_tokens = count_tokens(context_content) + count_tokens(task_content) -%}
+{% set scene_context = scene.context_history(budget=max_tokens-300-reserved_tokens, min_dialogue=15, sections=False) -%}
+{% set scene_history_content -%}
+{% if scene_context %}
+<|SECTION:SCENE HISTORY|>
+{% for scene_line in scene_context -%}
+{{ scene_line }}
+
+{% endfor %}
+<|CLOSE_SECTION|>
+{% endif %}
+{% endset -%}
+{# Render #}
+{{ context_content }}
+{{ scene_history_content }}
+{{ task_content }}

@@ -11,10 +11,16 @@ from __future__ import annotations
 import json
 import re
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
+
+from talemate.util.data import extract_data_auto
+
+if TYPE_CHECKING:
+    from talemate.client.base import ClientBase
+    from talemate.prompts.base import Prompt as PromptBase
 
 
 __all__ = [
@@ -45,6 +51,7 @@ class Extractor(BaseModel, ABC):
     model_config = ConfigDict(frozen=False)
 
     trim: bool = True
+    parse_data: bool = False
 
     @abstractmethod
     def extract(self, text: str) -> Union[str, list[str], None]:
@@ -422,6 +429,37 @@ class ComplexAnchorExtractor(AnchorExtractorBase):
 
         return content if content.strip() else None
 
+    def _extract_simple(self, text: str) -> str | None:
+        """
+        Fall back to simple (non-nesting-aware) extraction.
+
+        Used when nesting-aware extraction fails but the target tags exist
+        in the text — typically because spurious tracked-tag mentions in
+        content broke the nesting depth counter.
+        """
+        open_positions = self._find_all_markers(text, self.left)
+        close_positions = self._find_all_markers(text, self.right)
+
+        if not open_positions:
+            return None
+
+        if close_positions:
+            # Find the last complete block by matching last open before last close
+            last_close = close_positions[-1]
+            # Find the latest open that comes before the last close
+            best_open = None
+            for pos in open_positions:
+                if pos < last_close:
+                    best_open = pos
+            if best_open is not None:
+                content = text[best_open + len(self.left):last_close]
+                return content if content.strip() else None
+
+        # Open-ended: last opening tag to end
+        last_open = open_positions[-1]
+        content = text[last_open + len(self.left):]
+        return content if content.strip() else None
+
     def extract(self, text: str) -> str | None:
         """
         Extract content between anchor tags with nesting awareness.
@@ -446,12 +484,19 @@ class ComplexAnchorExtractor(AnchorExtractorBase):
         if open_ended is not None:
             return self._apply_trim(open_ended)
 
-        # Step 3: Try close-ended extraction (no opening tag)
+        # Step 3: If the target tag exists but nesting-aware extraction
+        # failed (e.g. spurious tracked-tag mentions in content broke the
+        # depth counter), fall back to simple positional extraction.
+        simple = self._extract_simple(text)
+        if simple is not None:
+            return self._apply_trim(simple)
+
+        # Step 4: Try close-ended extraction (no opening tag)
         close_ended = self._extract_close_ended(text)
         if close_ended is not None:
             return self._apply_trim(close_ended)
 
-        # Step 4: If fallback_to_full is enabled, return the full response
+        # Step 5: If fallback_to_full is enabled, return the full response
         if self.fallback_to_full:
             return self._apply_trim(text)
 
@@ -846,6 +891,37 @@ class ResponseSpec(BaseModel):
                 raise ExtractionError(f"Required field '{name}' not found in response")
             result[name] = value
         return result
+
+    async def parse_data_fields(
+        self,
+        extracted: dict,
+        client: "ClientBase",
+        prompt_cls: "PromptBase",
+    ) -> dict:
+        """
+        Post-process extracted fields that have parse_data=True using extract_data_auto.
+
+        Call this after extract_all() when a client is available.
+        Modifies and returns the extracted dict in-place.
+        """
+        schema_format = (client.data_format or "json").lower()
+
+        for name, extractor in self.extractors.items():
+            if not extractor.parse_data:
+                continue
+            value = extracted.get(name)
+            if not isinstance(value, str):
+                continue
+            try:
+                items = await extract_data_auto(
+                    value, client, prompt_cls, schema_format=schema_format,
+                )
+            except Exception:
+                continue
+            if items:
+                extracted[name] = items[0] if len(items) == 1 else items
+
+        return extracted
 
     @classmethod
     def simple(

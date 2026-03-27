@@ -168,6 +168,7 @@ class SceneOutlinePayload(pydantic.BaseModel):
     description: str | None = None
     intro: str | None = None
     context: str | None = None
+    perspective: str | None = None
 
 
 class SceneSettingsPayload(pydantic.BaseModel):

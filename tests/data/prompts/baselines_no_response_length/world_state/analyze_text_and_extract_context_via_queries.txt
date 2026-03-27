@@ -3,6 +3,8 @@
 ## Classification
 Content Classification: Fantasy adventure story
 
+Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+
 ## Scene
 The sorcerer's tower loomed over the ancient forest.
 

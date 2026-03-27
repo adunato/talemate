@@ -39,6 +39,11 @@ class ChatRemoveMessagePayload(pydantic.BaseModel):
     message_id: str
 
 
+class ChatCreateGenerateArcPayload(pydantic.BaseModel):
+    instructions: str
+    beat_count: int = 8
+
+
 class ChatRegeneratePayload(pydantic.BaseModel):
     chat_id: str
 
@@ -51,7 +56,7 @@ class ConfirmActionPayload(pydantic.BaseModel):
 
 class ChatUpdateModePayload(pydantic.BaseModel):
     chat_id: str
-    mode: Literal["normal", "decisive", "nospoilers"]
+    mode: Literal["normal", "decisive", "nospoilers", "generate_arc"]
 
 
 class ChatUpdateConfirmWriteActionsPayload(pydantic.BaseModel):
@@ -437,3 +442,49 @@ class DirectorChatWebsocketMixin:
         if chat:
             chat.confirm_write_actions = payload.confirm_write_actions
             self.director._chat_save(chat)
+
+    async def handle_chat_create_generate_arc(self, data: dict):
+        payload = ChatCreateGenerateArcPayload(**data)
+
+        chat = self.director.chat_create_generate_arc(
+            payload.instructions,
+            payload.beat_count,
+        )
+
+        # Notify frontend of new chat and its initial history
+        self.websocket_handler.queue_put(
+            {
+                "type": "director",
+                "action": "chat_created",
+                "chat_id": chat.id,
+                "chat_list": self._chat_list_payload(),
+            }
+        )
+        self.websocket_handler.queue_put(
+            {
+                "type": "director",
+                "action": "chat_history",
+                "chat_id": chat.id,
+                "messages": [m.model_dump() for m in chat.messages],
+                "mode": chat.mode,
+                "confirm_write_actions": chat.confirm_write_actions,
+                "title": chat.title,
+            }
+        )
+
+        _on_update, _on_done, _on_compacting, _on_compacted, _on_title_generated = (
+            self._make_generation_callbacks(chat.id)
+        )
+
+        task = create_task_with_chat_context(
+            self.director.chat_start_generate_arc,
+            chat.id,
+            chat.id,
+            on_update=_on_update,
+            on_done=_on_done,
+            on_compacting=_on_compacting,
+            on_compacted=_on_compacted,
+            on_title_generated=_on_title_generated,
+            confirm_write_actions=False,
+        )
+        self._attach_task_done_callback(task, chat.id)

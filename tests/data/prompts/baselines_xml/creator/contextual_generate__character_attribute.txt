@@ -1,0 +1,59 @@
+<CLASSIFICATION>
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+</CLASSIFICATION>
+
+Scenario Premise:
+A peaceful clearing in the heart of an ancient forest.
+
+<CHARACTERS>
+### Hero
+name: Hero
+
+A test character.
+</CHARACTERS>
+
+<INTENTION_OF_THIS_STORY>
+The overarching intention of this story. Use it to guide your decisions in the scene.
+
+<Mock name='mock.intent_state.intent' id='NORMALIZED'>
+</INTENTION_OF_THIS_STORY>
+
+<INTENTION_OF_THE_CURRENT_SCENE>
+<Mock name='mock.intent_state.current_scene_type.description' id='NORMALIZED'>
+
+<Mock name='mock.intent_state.phase.intent' id='NORMALIZED'>
+</INTENTION_OF_THE_CURRENT_SCENE>
+
+<HERO>
+A test character.
+</HERO>
+
+<SCENE>
+Elena: Hello there, traveler.
+
+The sun filters through the leaves above.
+
+Marcus: What brings you to these woods?
+</SCENE>
+
+<ELENA>
+A test character.
+
+name: Elena
+</ELENA>
+
+<TASK>
+
+Generate the "occupation" attribute for Elena. This must be a general description or specific value (depending on the attribute) and not a continuation of the current narrative. Keep it short and concise.
+
+YOU MUST NOT USE MARKDOWN IN YOUR RESPONSE.
+
+Output the attribute value wrapped in <ATTRIBUTE></ATTRIBUTE> tags:
+<ATTRIBUTE>the attribute value</ATTRIBUTE>
+</TASK>
+
+
+The length of your response must fit within 4 paragraphs.
+<|BOT|><ATTRIBUTE>

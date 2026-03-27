@@ -11,6 +11,8 @@ from talemate.agents.director.action_core.exceptions import (
 )
 
 from talemate.prompts import Prompt
+from talemate.agents.director.plan.util import get_plan
+from .context import director_chat_context
 
 from .response_specs import CHAT_TITLE_SPEC
 from .schema import (
@@ -106,6 +108,25 @@ class DirectorChatMixin:
                     description="Custom instructions to add to the director chat.",
                     value="",
                 ),
+                "generate_arc_iterations_limit": AgentActionConfig(
+                    type="number",
+                    label="Arc generation iteration limit",
+                    description="Maximum iterations for autonomous arc generation. Should be high enough to complete all beats.",
+                    value=200,
+                    step=10,
+                    min=20,
+                    max=500,
+                    title="Arc Generation",
+                ),
+                "generate_arc_dialogue_ratio": AgentActionConfig(
+                    type="number",
+                    label="Dialogue beat ratio",
+                    description="Target fraction of beats that should be dialogue during arc generation. 0.4 = 40% dialogue beats.",
+                    value=0.4,
+                    step=0.1,
+                    min=0.0,
+                    max=1.0,
+                ),
             },
         )
 
@@ -120,12 +141,20 @@ class DirectorChatMixin:
         return int(self.actions["chat"].config["auto_iterations_limit"].value)
 
     @property
+    def chat_generate_arc_iterations_limit(self) -> int:
+        return int(self.actions["chat"].config["generate_arc_iterations_limit"].value)
+
+    @property
     def chat_response_length(self) -> int:
         return int(self.actions["chat"].config["response_length"].value)
 
     @property
     def chat_scene_context_ratio(self) -> float:
         return self.actions["chat"].config["scene_context_ratio"].value
+
+    @property
+    def chat_dialogue_ratio(self) -> float:
+        return self.actions["chat"].config["generate_arc_dialogue_ratio"].value
 
     @property
     def chat_enable_analysis(self) -> bool:
@@ -163,6 +192,26 @@ class DirectorChatMixin:
     def chat_set_last_active_id(self, chat_id: str | None):
         """Set the last active chat id."""
         self.set_scene_states(**{self.LAST_ACTIVE_CHAT_KEY: chat_id})
+
+    @property
+    def active_chat_plan_id(self) -> str | None:
+        """Return the plan_id linked to the active chat, or None."""
+        chat_id = self.chat_get_last_active_id()
+        if not chat_id:
+            return None
+        chat = self.chat_get(chat_id)
+        return chat.plan_id if chat else None
+
+    @active_chat_plan_id.setter
+    def active_chat_plan_id(self, plan_id: str | None):
+        """Set the plan_id on the active chat."""
+        chat_id = self.chat_get_last_active_id()
+        if not chat_id:
+            return
+        chat = self.chat_get(chat_id)
+        if chat:
+            chat.plan_id = plan_id
+            self._chat_save(chat)
 
     def _chat_save(self, chat: DirectorChat):
         """Persist a single chat back into the chats collection."""
@@ -231,6 +280,33 @@ class DirectorChatMixin:
                     source="director",
                 ),
             ]
+        )
+        self._chat_save(chat)
+        self.chat_set_last_active_id(chat.id)
+        return chat
+
+    def chat_create_generate_arc(self, instructions: str, beat_count: int = 8) -> DirectorChat:
+        """Create a new chat in generate_arc mode with planning instructions as initial user message."""
+        chat = DirectorChat(
+            # XXX: needs to support director persona openings
+            messages=[
+                DirectorChatMessage(
+                    message=(
+                        "I'm ready to plan and generate your scene. "
+                        "I'll create an outline, then execute each beat to produce the actual scene content."
+                    ),
+                    source="director",
+                ),
+                DirectorChatMessage(
+                    message=(
+                        f"Plan and generate a scene with {beat_count} beats using the following instructions:\n\n"
+                        f"{instructions}"
+                    ),
+                    source="user",
+                ),
+            ],
+            mode="generate_arc",
+            confirm_write_actions=False,
         )
         self._chat_save(chat)
         self.chat_set_last_active_id(chat.id)
@@ -450,7 +526,20 @@ class DirectorChatMixin:
             "director_history_trim": action_utils.reverse_trim_history,
         }
 
+        def _sync_plan_to_context():
+            """Inject active plan into extra_vars for the prompt template."""
+            chat_ctx = director_chat_context.get()
+            plan_id = (chat_ctx.plan_id if chat_ctx else None) or (chat.plan_id if chat else None)
+            if plan_id:
+                if chat and not chat.plan_id:
+                    chat.plan_id = plan_id
+                extra_vars["scene_plan"] = get_plan(self.scene, plan_id)
+            else:
+                extra_vars.pop("scene_plan", None)
+
         while True:
+            _sync_plan_to_context()
+
             actions_selected: list[dict] | None
             if pending_actions is None:
                 kind = f"direction_{self.chat_response_length}"
@@ -546,6 +635,8 @@ class DirectorChatMixin:
                     on_update=on_update,
                 )
 
+            _sync_plan_to_context()
+
             # Follow-up request
             try:
                 budgets = self._create_chat_budgets()
@@ -584,7 +675,17 @@ class DirectorChatMixin:
                 )
 
             iterations_done += 1
-            if iterations_done >= max(1, self.chat_auto_iterations_limit):
+
+            # generate_arc mode: unlocked iteration (up to hard safety limit)
+            # normal modes: respect the configured auto-iteration limit
+            if mode == "generate_arc":
+                if iterations_done >= self.chat_generate_arc_iterations_limit:
+                    log.warning("director.chat.generate_arc.hard_limit_reached")
+                    break
+                if hasattr(self, "scene") and not self.scene.active:
+                    log.warning("director.chat.generate_arc.scene_inactive")
+                    break
+            elif iterations_done >= max(1, self.chat_auto_iterations_limit):
                 break
 
             pending_actions = follow_actions
@@ -818,6 +919,41 @@ class DirectorChatMixin:
         await self.chat_append_message(
             chat_id, DirectorChatMessage(message=message, source="user")
         )
+        return await self.chat_generate_next(
+            chat_id,
+            on_update=on_update,
+            on_done=on_done,
+            on_compacting=on_compacting,
+            on_compacted=on_compacted,
+            on_title_generated=on_title_generated,
+        )
+
+    @set_processing
+    async def chat_start_generate_arc(
+        self,
+        chat_id: str,
+        on_update: Callable[
+            [str, list[DirectorChatMessage | DirectorChatActionResultMessage]],
+            Awaitable[None],
+        ]
+        | None = None,
+        on_done: Callable[[str, DirectorChatBudgets | None], Awaitable[None]]
+        | None = None,
+        on_compacting: Callable[[str], Awaitable[None]] | None = None,
+        on_compacted: Callable[
+            [
+                str,
+                list[DirectorChatMessage | DirectorChatActionResultMessage],
+            ],
+            Awaitable[None],
+        ]
+        | None = None,
+        on_title_generated: Callable[[str, str], Awaitable[None]] | None = None,
+    ) -> DirectorChat:
+        """
+        Start arc generation. Like chat_generate_next but with @set_processing
+        to ensure active_agent context is available.
+        """
         return await self.chat_generate_next(
             chat_id,
             on_update=on_update,

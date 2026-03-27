@@ -46,6 +46,7 @@ __all__ = [
     "SceneIntentionContextID",
     "DirectorInstructionsContextID",
     "SceneTypeContextID",
+    "ScenePerspectiveContextID",
     "StoryConfigurationContextItem",
     "StoryConfigurationContext",
     # scene types inspector
@@ -102,6 +103,11 @@ register_context_id_meta(
             ContextIDMeta(
                 context_id="story_configuration:scene_type",
                 description="The type of scene that is currently being played. This allows to differentiate between, for example `roleplay` or `combat` scenes.",
+                permanent=True,
+            ),
+            ContextIDMeta(
+                context_id="story_configuration:perspective",
+                description="The narrative perspective and tense for the story (e.g., 'Third person limited, past tense').",
                 permanent=True,
             ),
             ContextIDMeta(
@@ -188,6 +194,10 @@ class DirectorInstructionsContextID(StoryConfigurationContextID):
     key: ClassVar[str] = "director_instructions"
 
 
+class ScenePerspectiveContextID(StoryConfigurationContextID):
+    key: ClassVar[str] = "perspective"
+
+
 class CharacterListContextID(StoryConfigurationContextID):
     key: ClassVar[str] = "character_list"
 
@@ -205,6 +215,7 @@ class StoryConfigurationContextItem(ContextIDItem):
         "scene_intention",
         "director_instructions",
         "scene_type",
+        "perspective",
         "character_list",
     ]
     name: str
@@ -221,6 +232,7 @@ class StoryConfigurationContextItem(ContextIDItem):
         | SceneIntentionContextID
         | DirectorInstructionsContextID
         | SceneTypeContextID
+        | ScenePerspectiveContextID
         | CharacterListContextID
     ):
         if self.context_type == "title":
@@ -239,6 +251,8 @@ class StoryConfigurationContextItem(ContextIDItem):
             return DirectorInstructionsContextID.make()
         if self.context_type == "scene_type":
             return SceneTypeContextID.make()
+        if self.context_type == "perspective":
+            return ScenePerspectiveContextID.make()
         if self.context_type == "character_list":
             return CharacterListContextID.make()
 
@@ -253,6 +267,7 @@ class StoryConfigurationContextItem(ContextIDItem):
             "scene_intention": "Current Scene Intention",
             "director_instructions": "Director Instructions",
             "scene_type": "Current Scene Type",
+            "perspective": "Narrative Perspective",
             "character_list": "List of All Characters (active and inactive)",
         }
         return mapping.get(self.context_type, self.name)
@@ -279,6 +294,8 @@ class StoryConfigurationContextItem(ContextIDItem):
                 return scene.intent_state.current_scene_type.id
             except Exception:
                 return None
+        if self.context_type == "perspective":
+            return scene.perspective
         if self.context_type == "character_list":
             characters = await list_characters(scene)
             return json.dumps([item.model_dump() for item in characters])
@@ -320,7 +337,8 @@ class StoryConfigurationContextItem(ContextIDItem):
             else:
                 scene.intent_state.phase.scene_type = scene_type_id
             intent_changed = True
-
+        elif self.context_type == "perspective":
+            scene.perspective = value or ""
         elif self.context_type == "character_list":
             raise ContextIDItemReadOnly(self.context_id.path_to_str)
 
@@ -556,6 +574,12 @@ class StoryConfigurationContext(ContextIDHandler):
                     if scene.intent_state and scene.intent_state.phase
                     else None
                 ),
+            )
+        if key == "perspective":
+            return StoryConfigurationContextItem(
+                context_type="perspective",
+                name="perspective",
+                value=scene.perspective,
             )
         if key == "character_list":
             return StoryConfigurationContextItem(

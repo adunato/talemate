@@ -3,6 +3,8 @@
 ## Classification
 Content Classification: Fantasy adventure story
 
+Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+
 Elena's description: A test character.
 
 ## Potentially relevant information

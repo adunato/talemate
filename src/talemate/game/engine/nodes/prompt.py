@@ -686,13 +686,20 @@ class GenerateResponse(Node):
         else:
             data_obj = None
 
-        # Handle response extraction if response_spec is provided
+        # Handle response extraction
+        # Priority: response_spec socket > template-defined extractors (in data_obj)
         response_spec: ResponseSpec | None = self.normalized_input_value(
             "response_spec"
         )
         extracted = None
         if response_spec is not None:
             extracted = response_spec.extract_all(response)
+            if any(ext.parse_data for ext in response_spec.extractors.values()):
+                extracted = await response_spec.parse_data_fields(
+                    extracted, agent.client, Prompt,
+                )
+        elif isinstance(data_obj, dict):
+            extracted = data_obj
 
         self.set_output_values(
             {

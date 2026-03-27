@@ -1,0 +1,28 @@
+<CLASSIFICATION>
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+</CLASSIFICATION>
+
+Scenario Premise:
+A peaceful clearing in the heart of an ancient forest.
+
+<INTENTION_OF_THIS_STORY>
+The overarching intention of this story. Use it to guide your decisions in the scene.
+
+<Mock name='mock.intent_state.intent' id='NORMALIZED'>
+</INTENTION_OF_THIS_STORY>
+
+<SCENE>
+Elena: Hello there, traveler.
+The sun filters through the leaves above.
+Marcus: What brings you to these woods?
+</SCENE>
+<TASK>
+Paraphrase the following text to fit the narrative thus far. Keep the information and the meaning the same, but change the wording and sentence structure.
+
+Text to paraphrase:
+
+"The warrior drew his sword and prepared for battle."
+</TASK>
+The length of your response must fit within 4 paragraphs.

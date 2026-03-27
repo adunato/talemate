@@ -161,7 +161,7 @@
 
                 <!-- director actions -->
 
-                <SceneToolsDirector :disabled="appBusy || !appReady" ref="directorTools" :npc-characters="npc_characters" :agent-status="agentStatus" />
+                <SceneToolsDirector :disabled="appBusy || !appReady" ref="directorTools" :npc-characters="npc_characters" :scene-characters="scene_characters" :agent-status="agentStatus" />
 
                 <!-- advance time -->
 
@@ -304,6 +304,7 @@ export default {
             sceneExperimental: false,
             canAutoSave: false,
             npc_characters: [],
+            scene_characters: [],
             agentMessages: {},
             messageHighlights: {},
             pendingDirectedRegen: null,
@@ -485,6 +486,7 @@ export default {
 
                 // collect npc characters
                 this.npc_characters = [];
+                this.scene_characters = data.data.characters || [];
                 for (let character of data.data.characters) {
                     if (!character.is_player) {
                         this.npc_characters.push(character.name);

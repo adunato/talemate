@@ -81,6 +81,8 @@ Your response must follow this format:
 ANALYSIS: <brief analysis the cross over point from previous chapters to {{ summary_target }}. How does {{ summary_target }} start and what should be in the summary.>
 {% if scene and scene.writing_style %}WRITING STYLE: <brief understanding of the writing style requirements and the story intention. Note at least one example where you will apply it.>{% endif %}
 SUMMARY: <summary of {{ summary_target }} based on analysis.{{ max_length }}>
+{% include "response-length.jinja2" %}
 <|CLOSE_SECTION|>
-<|SECTION:SUMMARY OF {{ summary_target.upper() }}|>
+
+## Summary of {{ summary_target }}
 {{ set_prepared_response("ANALYSIS:") }}
