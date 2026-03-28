@@ -50,6 +50,7 @@ from .chatterbox import ChatterboxMixin
 from .websocket_handler import TTSWebsocketHandler
 from .f5tts import F5TTSMixin
 from .pocket_tts import PocketTTSMixin
+from .openai_compatible import OpenAICompatibleMixin
 from .audio_tags import AudioTagsMixin
 from .util import parse_chunks, rejoin_chunks
 
@@ -79,6 +80,7 @@ class TTSAgent(
     AudioTagsMixin,
     ElevenLabsMixin,
     OpenAIMixin,
+    OpenAICompatibleMixin,
     GoogleMixin,
     KokoroMixin,
     ChatterboxMixin,
@@ -214,6 +216,7 @@ class TTSAgent(
         GoogleMixin.add_actions(actions)
         ElevenLabsMixin.add_actions(actions)
         OpenAIMixin.add_actions(actions)
+        OpenAICompatibleMixin.add_actions(actions)
         F5TTSMixin.add_actions(actions)
         PocketTTSMixin.add_actions(actions)
 

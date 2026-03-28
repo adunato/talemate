@@ -189,7 +189,7 @@
                       v-model="editVoice.provider_id"
                       label="Voice ID"
                     />
-                    <v-select v-model="editVoice.provider_model" label="Model Override" v-if="selectedProvider?.allow_model_override" hint="Allows you override the model used for this voice" :items="selectedProviderModelChoices" item-title="label" item-value="value" />
+                    <v-combobox v-model="editVoice.provider_model" label="Model Override" v-if="selectedProvider?.allow_model_override" hint="Allows you override the model used for this voice" :items="selectedProviderModelChoices" item-title="label" item-value="value" />
                     <v-combobox
                       v-model="editVoice.tags"
                       :items="tagOptions"

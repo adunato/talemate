@@ -4,6 +4,7 @@
   - "Visual Scene Tools: Organized the visual tools menu into per-character submenus, matching the world scene tools pattern."
   - "Section Format: Per-client setting to control how prompt sections are formatted. Choose between Markdown (## headings) and XML (<SECTION>...</SECTION> tags). Found in the client configuration next to the data format setting."
   - "Director Planning: The director can now plan and autonomously generate multi-beat scene arcs from a set of instructions. Includes outline creation, critique, and beat-by-beat execution with configurable dialogue ratio and pacing."
+  - "OpenAI Compatible TTS: Added a new TTS backend that connects to any service exposing an OpenAI-compatible /v1/audio/speech endpoint (e.g. vLLM). Configurable base URL, API key, and model. Voices are added manually via the voice library."
   - "Scene Perspective: Added a perspective field to the scene outline editor, allowing users to view and set the narrative perspective and tense (e.g., 'Third person limited, past tense'). Also exposed as a context ID (story_configuration:perspective)."
   - "Prompt Logging: Set TALEMATE_LOG_PROMPTS=1 to write full prompt+response data to logs/prompt_log.jsonl for debugging and analysis."
   fixes:
