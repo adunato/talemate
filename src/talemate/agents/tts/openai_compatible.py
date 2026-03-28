@@ -4,7 +4,7 @@ import structlog
 from openai import AsyncOpenAI
 from talemate.ux.schema import Action
 from talemate.agents.base import AgentAction, AgentActionConfig, AgentDetail
-from .schema import Voice, VoiceLibrary, Chunk, GenerationContext, INFO_CHUNK_SIZE
+from .schema import VoiceLibrary, Chunk, GenerationContext, INFO_CHUNK_SIZE
 
 log = structlog.get_logger("talemate.agents.tts.openai_compatible")
 

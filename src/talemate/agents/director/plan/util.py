@@ -6,7 +6,7 @@ import structlog
 
 from talemate.emit import emit
 
-from .schema import Beat, Plan, PlanStatus
+from .schema import Beat, Plan
 
 log = structlog.get_logger("talemate.agents.director.plan.util")
 
