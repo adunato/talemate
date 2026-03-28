@@ -8,6 +8,8 @@
   - "Scene Perspective: Added a perspective field to the scene outline editor, allowing users to view and set the narrative perspective and tense (e.g., 'Third person limited, past tense'). Also exposed as a context ID (story_configuration:perspective)."
   - "Prompt Logging: Set TALEMATE_LOG_PROMPTS=1 to write full prompt+response data to logs/prompt_log.jsonl for debugging and analysis."
   fixes:
+  - "Anthropic Client: Fixed generation error caused by missing required max_tokens parameter when response length capping is disabled. Now defaults to the model's API output token limit."
+  - "Anthropic Client: Cleaned up supported models list, removing outdated dated model IDs."
   - Fixed crash in voice library character manager when a character was deactivated.
   - Fixed blank page on some Windows 10 systems where JavaScript files were served with incorrect MIME type (text/plain), causing Chromium-based browsers to reject module scripts.
   - Fixed "No episodes available" placeholder being selectable in the episode list.

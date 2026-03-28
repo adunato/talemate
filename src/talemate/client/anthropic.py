@@ -31,12 +31,6 @@ log = structlog.get_logger("talemate")
 
 # Edit this to add new models / remove old models
 SUPPORTED_MODELS = [
-    "claude-sonnet-4-20250514",
-    "claude-sonnet-4-5-20250929",
-    "claude-opus-4-20250514",
-    "claude-opus-4-1-20250805",
-    "claude-opus-4-5-20251101",
-    "claude-haiku-4-5-20251001",
     "claude-haiku-4-5",
     "claude-sonnet-4-5",
     "claude-sonnet-4-6",
@@ -49,8 +43,6 @@ DEFAULT_MODEL = "claude-haiku-4-5"
 MIN_THINKING_TOKENS = 1024
 
 LIMITED_PARAM_MODELS = [
-    "claude-sonnet-4-5-20250929",
-    "claude-opus-4-1-20250805",
     "claude-haiku-4-5",
     "claude-sonnet-4-5",
     "claude-opus-4-1",
@@ -60,6 +52,22 @@ LIMITED_PARAM_MODELS = [
 ADAPTIVE_THINKING_MODELS = [
     "claude-opus-4-6",
 ]
+
+# Maximum output tokens per model family, matching Anthropic API limits.
+# Used as the max_tokens value when response length capping is disabled.
+MAX_OUTPUT_TOKENS = {
+    "claude-opus-4-6": 128000,
+    "claude-sonnet-4-6": 64000,
+    "claude-opus-4-5": 64000,
+    "claude-sonnet-4-5": 64000,
+    "claude-opus-4-1": 32000,
+    "claude-opus-4": 32000,
+    "claude-sonnet-4": 64000,
+    "claude-haiku-4-5": 64000,
+}
+
+# Fallback when model isn't in the lookup
+DEFAULT_MAX_OUTPUT_TOKENS = 32000
 
 
 class Defaults(EndpointOverride, CommonDefaults, pydantic.BaseModel):
@@ -135,6 +143,15 @@ class AnthropicClient(ConcurrentInferenceMixin, EndpointOverrideMixin, ClientBas
     @property
     def anthropic_api_key(self):
         return self.config.anthropic.api_key
+
+    @property
+    def api_max_output_tokens(self) -> int:
+        """Returns the Anthropic API's max output token limit for the current model."""
+        # Check longest prefixes first to avoid e.g. "claude-opus-4" matching "claude-opus-4-6"
+        for prefix in sorted(MAX_OUTPUT_TOKENS, key=len, reverse=True):
+            if self.model_name.startswith(prefix):
+                return MAX_OUTPUT_TOKENS[prefix]
+        return DEFAULT_MAX_OUTPUT_TOKENS
 
     @property
     def supported_parameters(self):
@@ -286,6 +303,11 @@ class AnthropicClient(ConcurrentInferenceMixin, EndpointOverrideMixin, ClientBas
             parameters.pop("temperature", None)
             parameters.pop("top_p", None)
             parameters.pop("top_k", None)
+
+        # Anthropic API always requires max_tokens, even when response length
+        # capping is disabled. Use the model's API limit as the default.
+        if "max_tokens" not in parameters:
+            parameters["max_tokens"] = self.api_max_output_tokens
 
         self.log.debug(
             "generate",
