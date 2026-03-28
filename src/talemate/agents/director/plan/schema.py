@@ -52,6 +52,7 @@ class PlanStatus(str, Enum):
 
 class Task(pydantic.BaseModel):
     """Generic task within a plan."""
+
     id: str = pydantic.Field(default_factory=lambda: str(uuid.uuid4())[:8])
     description: str = ""
     status: Literal["pending", "executing", "completed", "skipped"] = "pending"
@@ -64,7 +65,10 @@ class Task(pydantic.BaseModel):
 
 class Beat(Task):
     """A beat — a specialized task for arc generation with narrative metadata."""
-    type: Literal["narration", "dialogue", "action", "transition", "reveal"] = "narration"
+
+    type: Literal["narration", "dialogue", "action", "transition", "reveal"] = (
+        "narration"
+    )
     characters: list[str] = pydantic.Field(default_factory=list)
     pacing: Literal["slow", "moderate", "fast"] = "moderate"
     tension: float = 0.5
@@ -82,7 +86,9 @@ class Beat(Task):
         wpt = words_per_token()
         narration_words = narration_tokens * wpt
         dialogue_words = dialogue_tokens * dialogue_characters * wpt
-        words_per_beat = (narration_words * narration_ratio) + (dialogue_words * dialogue_ratio)
+        words_per_beat = (narration_words * narration_ratio) + (
+            dialogue_words * dialogue_ratio
+        )
         return max(1, round(beat_count * words_per_beat))
 
     def as_text(self) -> str:
@@ -98,6 +104,7 @@ class Beat(Task):
 
 class Plan(pydantic.BaseModel):
     """A plan with an ordered list of tasks."""
+
     id: str = pydantic.Field(default_factory=lambda: str(uuid.uuid4())[:10])
     instructions: str = ""
     status: PlanStatus = PlanStatus.planning
@@ -122,7 +129,10 @@ class Plan(pydantic.BaseModel):
 
     @property
     def all_tasks_done(self) -> bool:
-        return all(t.status in ("completed", "skipped") for t in self.tasks) and len(self.tasks) > 0
+        return (
+            all(t.status in ("completed", "skipped") for t in self.tasks)
+            and len(self.tasks) > 0
+        )
 
     def complete_task(self, task_id: str) -> Task | None:
         """Mark a task as completed. Returns the task, or None if not found."""
@@ -155,10 +165,14 @@ class Plan(pydantic.BaseModel):
             lines.append(f"Perspective: {perspective}")
         if estimated_words:
             reading_minutes = estimated_words / READING_SPEED_WPM
-            lines.append(f"Estimated: ~{estimated_words} words, ~{reading_minutes:.0f} min reading time")
+            lines.append(
+                f"Estimated: ~{estimated_words} words, ~{reading_minutes:.0f} min reading time"
+            )
 
         if next_task:
-            lines.append(f"Next: [{next_task.id}] task {next_task.order} - {next_task.description[:100]}")
+            lines.append(
+                f"Next: [{next_task.id}] task {next_task.order} - {next_task.description[:100]}"
+            )
 
         if self.tasks:
             lines.append("\nTasks:")

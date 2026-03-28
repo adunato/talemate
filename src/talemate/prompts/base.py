@@ -1531,7 +1531,9 @@ class Prompt:
         # Post-process parse_data fields using extract_data_auto
         if any(ext.parse_data for ext in effective_spec.extractors.values()):
             extracted = await effective_spec.parse_data_fields(
-                extracted, client, Prompt,
+                extracted,
+                client,
+                Prompt,
             )
 
         # Emit template_rendered signal for tracking
@@ -1688,6 +1690,7 @@ def titles_prompt_sectioning(prompt: Prompt) -> str:
 def xml_prompt_sectioning(prompt: Prompt) -> str:
     def _to_tag(section_name: str) -> str:
         return section_name.upper().replace(" ", "_")
+
     return _prompt_sectioning(
         prompt,
         lambda section_name: f"<{_to_tag(section_name)}>",

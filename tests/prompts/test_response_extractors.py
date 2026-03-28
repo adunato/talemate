@@ -1433,7 +1433,7 @@ class TestTemplateExtractorInJinja2:
             tracked_tags=["ANALYSIS", "MESSAGE", "DECISION", "ACTIONS"],
         )
         response = (
-            "<ANALYSIS> 1. The user has just said \"hello,\" which is an opening greeting.\n"
+            '<ANALYSIS> 1. The user has just said "hello," which is an opening greeting.\n'
             "2. No <ACTIONS> are required yet as I don't have a specific task.\n"
             "3. I will ask the user how they would like to proceed.\n"
             "</ANALYSIS>\n\n"
@@ -1545,7 +1545,10 @@ class TestParseData:
 
         prompt = Prompt.from_text("Test")
         prompt.set_anchor_extractor(
-            "data", "<DATA>", "</DATA>", parse_data=True,
+            "data",
+            "<DATA>",
+            "</DATA>",
+            parse_data=True,
         )
 
         extractor = prompt._template_extractors["data"]
@@ -1558,7 +1561,9 @@ class TestParseData:
 
         prompt = Prompt.from_text("Test")
         prompt.set_anchor_extractor(
-            "data", "<DATA>", "</DATA>",
+            "data",
+            "<DATA>",
+            "</DATA>",
             tracked_tags=["ANALYSIS", "DATA"],
             parse_data=True,
         )
@@ -1573,7 +1578,10 @@ class TestParseData:
 
         prompt = Prompt.from_text("Test")
         prompt.set_code_block_extractor(
-            "data", "<DATA>", "</DATA>", parse_data=True,
+            "data",
+            "<DATA>",
+            "</DATA>",
+            parse_data=True,
         )
 
         extractor = prompt._template_extractors["data"]
@@ -1603,13 +1611,13 @@ class TestParseDataIntegration:
         """Test that parse_data parses a JSON list from anchored content."""
         from talemate.prompts.base import Prompt
 
-        mock_client.send_prompt.return_value = (
-            '<DATA>\n```json\n[{"type": "narration", "description": "The sun rises."}]\n```\n</DATA>'
-        )
+        mock_client.send_prompt.return_value = '<DATA>\n```json\n[{"type": "narration", "description": "The sun rises."}]\n```\n</DATA>'
 
         prompt = Prompt.from_text("Test")
         prompt._template_extractors["data"] = AnchorExtractor(
-            left="<DATA>", right="</DATA>", parse_data=True,
+            left="<DATA>",
+            right="</DATA>",
+            parse_data=True,
         )
 
         response, extracted = await prompt.send(mock_client, kind="create")
@@ -1629,7 +1637,9 @@ class TestParseDataIntegration:
 
         prompt = Prompt.from_text("Test")
         prompt._template_extractors["data"] = AnchorExtractor(
-            left="<DATA>", right="</DATA>", parse_data=True,
+            left="<DATA>",
+            right="</DATA>",
+            parse_data=True,
         )
 
         response, extracted = await prompt.send(mock_client, kind="create")
@@ -1644,13 +1654,13 @@ class TestParseDataIntegration:
         from talemate.prompts.base import Prompt
 
         mock_client.data_format = "yaml"
-        mock_client.send_prompt.return_value = (
-            "<DATA>\n```yaml\n- type: narration\n  description: The sun rises.\n```\n</DATA>"
-        )
+        mock_client.send_prompt.return_value = "<DATA>\n```yaml\n- type: narration\n  description: The sun rises.\n```\n</DATA>"
 
         prompt = Prompt.from_text("Test")
         prompt._template_extractors["data"] = AnchorExtractor(
-            left="<DATA>", right="</DATA>", parse_data=True,
+            left="<DATA>",
+            right="</DATA>",
+            parse_data=True,
         )
 
         response, extracted = await prompt.send(mock_client, kind="create")
@@ -1670,7 +1680,9 @@ class TestParseDataIntegration:
 
         prompt = Prompt.from_text("Test")
         prompt._template_extractors["data"] = AnchorExtractor(
-            left="<DATA>", right="</DATA>", parse_data=True,
+            left="<DATA>",
+            right="</DATA>",
+            parse_data=True,
         )
 
         response, extracted = await prompt.send(mock_client, kind="create")
@@ -1691,10 +1703,14 @@ class TestParseDataIntegration:
 
         prompt = Prompt.from_text("Test")
         prompt._template_extractors["outline"] = AnchorExtractor(
-            left="<OUTLINE>", right="</OUTLINE>", parse_data=True,
+            left="<OUTLINE>",
+            right="</OUTLINE>",
+            parse_data=True,
         )
         prompt._template_extractors["perspective"] = AnchorExtractor(
-            left="<PERSPECTIVE>", right="</PERSPECTIVE>", parse_data=False,
+            left="<PERSPECTIVE>",
+            right="</PERSPECTIVE>",
+            parse_data=False,
         )
 
         response, extracted = await prompt.send(mock_client, kind="create")
@@ -1716,7 +1732,9 @@ class TestParseDataIntegration:
 
         prompt = Prompt.from_text("Test")
         prompt._template_extractors["data"] = AnchorExtractor(
-            left="<DATA>", right="</DATA>", parse_data=True,
+            left="<DATA>",
+            right="</DATA>",
+            parse_data=True,
         )
 
         response, extracted = await prompt.send(mock_client, kind="create")

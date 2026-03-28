@@ -452,12 +452,12 @@ class ComplexAnchorExtractor(AnchorExtractorBase):
                 if pos < last_close:
                     best_open = pos
             if best_open is not None:
-                content = text[best_open + len(self.left):last_close]
+                content = text[best_open + len(self.left) : last_close]
                 return content if content.strip() else None
 
         # Open-ended: last opening tag to end
         last_open = open_positions[-1]
-        content = text[last_open + len(self.left):]
+        content = text[last_open + len(self.left) :]
         return content if content.strip() else None
 
     def extract(self, text: str) -> str | None:
@@ -914,7 +914,10 @@ class ResponseSpec(BaseModel):
                 continue
             try:
                 items = await extract_data_auto(
-                    value, client, prompt_cls, schema_format=schema_format,
+                    value,
+                    client,
+                    prompt_cls,
+                    schema_format=schema_format,
                 )
             except Exception:
                 continue

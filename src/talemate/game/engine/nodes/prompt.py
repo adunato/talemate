@@ -696,7 +696,9 @@ class GenerateResponse(Node):
             extracted = response_spec.extract_all(response)
             if any(ext.parse_data for ext in response_spec.extractors.values()):
                 extracted = await response_spec.parse_data_fields(
-                    extracted, agent.client, Prompt,
+                    extracted,
+                    agent.client,
+                    Prompt,
                 )
         elif isinstance(data_obj, dict):
             extracted = data_obj

@@ -285,7 +285,9 @@ class DirectorChatMixin:
         self.chat_set_last_active_id(chat.id)
         return chat
 
-    def chat_create_generate_arc(self, instructions: str, beat_count: int = 8) -> DirectorChat:
+    def chat_create_generate_arc(
+        self, instructions: str, beat_count: int = 8
+    ) -> DirectorChat:
         """Create a new chat in generate_arc mode with planning instructions as initial user message."""
         chat = DirectorChat(
             # XXX: needs to support director persona openings
@@ -529,7 +531,9 @@ class DirectorChatMixin:
         def _sync_plan_to_context():
             """Inject active plan into extra_vars for the prompt template."""
             chat_ctx = director_chat_context.get()
-            plan_id = (chat_ctx.plan_id if chat_ctx else None) or (chat.plan_id if chat else None)
+            plan_id = (chat_ctx.plan_id if chat_ctx else None) or (
+                chat.plan_id if chat else None
+            )
             if plan_id:
                 if chat and not chat.plan_id:
                     chat.plan_id = plan_id

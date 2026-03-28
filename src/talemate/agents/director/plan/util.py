@@ -90,7 +90,13 @@ def complete_task(scene, task_id: str, plan_id: str | None = None) -> str:
 
 def parse_beats(data) -> list[Beat]:
     """Parse beat list from extracted data (list of dicts or dict with 'beats' key)."""
-    items = data if isinstance(data, list) else data.get("beats", []) if isinstance(data, dict) else []
+    items = (
+        data
+        if isinstance(data, list)
+        else data.get("beats", [])
+        if isinstance(data, dict)
+        else []
+    )
     beats = []
     for i, item in enumerate(items):
         if not isinstance(item, dict):

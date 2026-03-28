@@ -217,11 +217,15 @@ class TestDictWalking:
             }
         }
         encrypt_sensitive_values(data)
-        inner = data["agents"]["tts"]["actions"]["openai_compatible"]["config"]["api_key"]["value"]
+        inner = data["agents"]["tts"]["actions"]["openai_compatible"]["config"][
+            "api_key"
+        ]["value"]
         assert inner.startswith(ENC_PREFIX)
 
         decrypt_sensitive_values(data)
-        inner = data["agents"]["tts"]["actions"]["openai_compatible"]["config"]["api_key"]["value"]
+        inner = data["agents"]["tts"]["actions"]["openai_compatible"]["config"][
+            "api_key"
+        ]["value"]
         assert inner == "sk-real-secret-key"
 
     def test_agent_action_config_empty_api_key_not_touched(self, fresh_fernet):
@@ -230,9 +234,7 @@ class TestDictWalking:
             "agents": {
                 "tts": {
                     "actions": {
-                        "openai_compatible": {
-                            "config": {"api_key": {"value": ""}}
-                        }
+                        "openai_compatible": {"config": {"api_key": {"value": ""}}}
                     }
                 }
             }
@@ -290,14 +292,12 @@ class TestDictWalking:
         # None stays None
         assert data["clients"]["c2"]["api_key"] is None
         # Dict-type api_key inner values are encrypted
-        assert (
-            data["agents"]["tts"]["actions"]["elevenlabs"]["config"]["api_key"]["value"]
-            .startswith(ENC_PREFIX)
-        )
-        assert (
-            data["agents"]["tts"]["actions"]["openai_compatible"]["config"]["api_key"]["value"]
-            .startswith(ENC_PREFIX)
-        )
+        assert data["agents"]["tts"]["actions"]["elevenlabs"]["config"]["api_key"][
+            "value"
+        ].startswith(ENC_PREFIX)
+        assert data["agents"]["tts"]["actions"]["openai_compatible"]["config"][
+            "api_key"
+        ]["value"].startswith(ENC_PREFIX)
 
         decrypt_sensitive_values(data)
         assert data["openai"]["api_key"] == "sk-openai-123"
@@ -310,7 +310,9 @@ class TestDictWalking:
             == "elevenlabs.api_key"
         )
         assert (
-            data["agents"]["tts"]["actions"]["openai_compatible"]["config"]["api_key"]["value"]
+            data["agents"]["tts"]["actions"]["openai_compatible"]["config"]["api_key"][
+                "value"
+            ]
             == "sk-real-key"
         )
 

@@ -844,8 +844,12 @@ class ClientBase:
         """Append a prompt+response to the JSON-lines prompt log file."""
         if ClientBase._prompt_log_file is None:
             LOGS_DIR.mkdir(parents=True, exist_ok=True)
-            ClientBase._prompt_log_file = open(LOGS_DIR / "prompt_log.jsonl", "a", encoding="utf-8")
-        ClientBase._prompt_log_file.write(json.dumps(prompt_data.model_dump(), default=str) + "\n")
+            ClientBase._prompt_log_file = open(
+                LOGS_DIR / "prompt_log.jsonl", "a", encoding="utf-8"
+            )
+        ClientBase._prompt_log_file.write(
+            json.dumps(prompt_data.model_dump(), default=str) + "\n"
+        )
         ClientBase._prompt_log_file.flush()
 
     def emit_status(self, processing: bool = None):

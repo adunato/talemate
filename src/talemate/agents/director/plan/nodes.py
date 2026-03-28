@@ -23,7 +23,14 @@ from talemate.instance import get_agent
 from talemate.context import active_scene
 from talemate.agents.director.chat.context import director_chat_context
 
-from .schema import Beat, Plan, PlanStatus, Task, READING_SPEED_WPM, NARRATION_BEAT_RATIO
+from .schema import (
+    Beat,
+    Plan,
+    PlanStatus,
+    Task,
+    READING_SPEED_WPM,
+    NARRATION_BEAT_RATIO,
+)
 from .util import save_plan, complete_task, emit_plan_updated, get_plan
 
 log = structlog.get_logger("talemate.agents.director.plan.nodes")
@@ -130,11 +137,13 @@ class CreatePlan(Node):
 
         emit_plan_updated(plan, chat_id=chat_id)
 
-        self.set_output_values({
-            "state": input_state,
-            "plan_id": plan.id,
-            "result": plan.status_summary(),
-        })
+        self.set_output_values(
+            {
+                "state": input_state,
+                "plan_id": plan.id,
+                "result": plan.status_summary(),
+            }
+        )
 
 
 @register("agents/director/plan/EstimateWords")
@@ -179,17 +188,22 @@ class EstimateWords(Node):
         dialogue_characters = len(list(scene.character_names))
 
         estimated_words = Beat.estimate_words(
-            beat_count, narration_tokens, dialogue_tokens, dialogue_characters,
+            beat_count,
+            narration_tokens,
+            dialogue_tokens,
+            dialogue_characters,
             narration_ratio=NARRATION_BEAT_RATIO,
         )
         estimated_reading = estimated_words / READING_SPEED_WPM
 
-        self.set_output_values({
-            "state": input_state,
-            "beat_count": beat_count,
-            "estimated_words": estimated_words,
-            "estimated_reading_minutes": round(estimated_reading, 1),
-        })
+        self.set_output_values(
+            {
+                "state": input_state,
+                "beat_count": beat_count,
+                "estimated_words": estimated_words,
+                "estimated_reading_minutes": round(estimated_reading, 1),
+            }
+        )
 
 
 @register("agents/director/plan/GetActiveChatPlanId")
@@ -214,11 +228,13 @@ class GetActiveChatPlanId(Node):
         chat_ctx = director_chat_context.get()
         plan_id = chat_ctx.plan_id if chat_ctx else None
 
-        self.set_output_values({
-            "state": input_state,
-            "plan_id": plan_id or "",
-            "has_plan": plan_id is not None,
-        })
+        self.set_output_values(
+            {
+                "state": input_state,
+                "plan_id": plan_id or "",
+                "has_plan": plan_id is not None,
+            }
+        )
 
 
 @register("agents/director/plan/CompleteTask")
