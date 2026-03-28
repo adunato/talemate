@@ -57,6 +57,33 @@ async def update_config(other_config: Config | dict):
     await config.set_dirty()
 
 
+def _strip_unified_api_key_configs(config: dict):
+    """
+    Remove unified_api_key entries from agent action configs before saving.
+
+    These are static reference pointers (e.g., 'openai.api_key') defined in
+    agent code — they never change and should not be persisted.
+    """
+    from talemate.instance import AGENTS
+
+    for agent_name, agent_data in config.get("agents", {}).items():
+        agent = AGENTS.get(agent_name)
+        if not agent or not getattr(agent, "actions", None):
+            continue
+
+        actions = agent_data.get("actions", {})
+        for action_key, action_data in actions.items():
+            runtime_action = agent.actions.get(action_key)
+            if not runtime_action or not runtime_action.config:
+                continue
+
+            saved_config = action_data.get("config", {})
+            for config_key in list(saved_config.keys()):
+                runtime_cfg = runtime_action.config.get(config_key)
+                if runtime_cfg and runtime_cfg.type == "unified_api_key":
+                    del saved_config[config_key]
+
+
 def save_config():
     """
     Save the config file to the given path.
@@ -106,6 +133,8 @@ def save_config():
                 f"Client {client['name']} references non-existent preset group {client['preset_group']}, setting to default"
             )
             client["preset_group"] = ""
+
+    _strip_unified_api_key_configs(config)
 
     encrypt_sensitive_values(config)
 

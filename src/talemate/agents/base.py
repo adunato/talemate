@@ -628,6 +628,7 @@ class Agent(ABC):
                             value=config_obj.value
                         )
                         for config_key, config_obj in action.config.items()
+                        if config_obj.type != "unified_api_key"
                     },
                 )
                 for action_key, action in self.actions.items()
