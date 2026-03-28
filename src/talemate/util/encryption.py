@@ -331,8 +331,18 @@ def _walk_and_transform(node, transform_fn):
     """
     if isinstance(node, dict):
         for key, value in node.items():
-            if key in _SENSITIVE_FIELD_NAMES and isinstance(value, str):
-                node[key] = transform_fn(value)
+            if key in _SENSITIVE_FIELD_NAMES:
+                if isinstance(value, str):
+                    node[key] = transform_fn(value)
+                elif (
+                    isinstance(value, dict)
+                    and "value" in value
+                    and isinstance(value["value"], str)
+                ):
+                    # AgentActionConfig style: {"value": "sk-...", ...}
+                    value["value"] = transform_fn(value["value"])
+                elif isinstance(value, (dict, list)):
+                    _walk_and_transform(value, transform_fn)
             elif isinstance(value, (dict, list)):
                 _walk_and_transform(value, transform_fn)
     elif isinstance(node, list):

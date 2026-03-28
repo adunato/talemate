@@ -203,14 +203,35 @@ class TestDictWalking:
             data["clients"]["Proxy"]["override_base_url"] == "https://proxy.example.com"
         )
 
-    def test_agent_action_config_api_key_not_touched(self, fresh_fernet):
-        """AgentActionConfig api_key values are dicts, not strings — must be skipped."""
+    def test_agent_action_config_api_key_encrypted(self, fresh_fernet):
+        """AgentActionConfig api_key values (dicts with 'value') are encrypted."""
         data = {
             "agents": {
                 "tts": {
                     "actions": {
-                        "elevenlabs": {
-                            "config": {"api_key": {"value": "elevenlabs.api_key"}}
+                        "openai_compatible": {
+                            "config": {"api_key": {"value": "sk-real-secret-key"}}
+                        }
+                    }
+                }
+            }
+        }
+        encrypt_sensitive_values(data)
+        inner = data["agents"]["tts"]["actions"]["openai_compatible"]["config"]["api_key"]["value"]
+        assert inner.startswith(ENC_PREFIX)
+
+        decrypt_sensitive_values(data)
+        inner = data["agents"]["tts"]["actions"]["openai_compatible"]["config"]["api_key"]["value"]
+        assert inner == "sk-real-secret-key"
+
+    def test_agent_action_config_empty_api_key_not_touched(self, fresh_fernet):
+        """AgentActionConfig api_key with empty value stays empty."""
+        data = {
+            "agents": {
+                "tts": {
+                    "actions": {
+                        "openai_compatible": {
+                            "config": {"api_key": {"value": ""}}
                         }
                     }
                 }
@@ -250,7 +271,10 @@ class TestDictWalking:
                     "actions": {
                         "elevenlabs": {
                             "config": {"api_key": {"value": "elevenlabs.api_key"}}
-                        }
+                        },
+                        "openai_compatible": {
+                            "config": {"api_key": {"value": "sk-real-key"}}
+                        },
                     }
                 }
             },
@@ -265,10 +289,14 @@ class TestDictWalking:
         assert data["clients"]["c1"]["override_api_key"].startswith(ENC_PREFIX)
         # None stays None
         assert data["clients"]["c2"]["api_key"] is None
-        # Dict-type api_key untouched
+        # Dict-type api_key inner values are encrypted
         assert (
             data["agents"]["tts"]["actions"]["elevenlabs"]["config"]["api_key"]["value"]
-            == "elevenlabs.api_key"
+            .startswith(ENC_PREFIX)
+        )
+        assert (
+            data["agents"]["tts"]["actions"]["openai_compatible"]["config"]["api_key"]["value"]
+            .startswith(ENC_PREFIX)
         )
 
         decrypt_sensitive_values(data)
@@ -280,6 +308,10 @@ class TestDictWalking:
         assert (
             data["agents"]["tts"]["actions"]["elevenlabs"]["config"]["api_key"]["value"]
             == "elevenlabs.api_key"
+        )
+        assert (
+            data["agents"]["tts"]["actions"]["openai_compatible"]["config"]["api_key"]["value"]
+            == "sk-real-key"
         )
 
 

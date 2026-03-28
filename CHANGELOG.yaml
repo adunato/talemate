@@ -15,3 +15,4 @@
   - Fixed "No episodes available" placeholder being selectable in the episode list.
   - Fixed response extraction failing when only a closing anchor tag was present in the LLM response (e.g., `</PHASE_INTENT>` without `<PHASE_INTENT>`).
   - "Director actions: Removed redundant fix_instructions LLM call from direct_scene actor path. The FOCAL callback metadata already prevents verbatim dialogue in director instructions."
+  - "Encryption: Fixed API keys in agent action configs (e.g., OpenAI-compatible TTS, visual backends) being stored in plaintext. The encryption walker now handles the nested AgentActionConfig structure where the key is wrapped in a {value: ...} dict."
