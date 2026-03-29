@@ -35,6 +35,7 @@ __all__ = [
     "StripPrefixExtractor",
     "CodeBlockExtractor",
     "ComplexCodeBlockExtractor",
+    "BlockListExtractor",
     "ResponseSpec",
 ]
 
@@ -863,6 +864,102 @@ class ComplexCodeBlockExtractor(ComplexAnchorExtractor, CodeBlockExtractorMixin)
                 return self._apply_trim(content)
 
         return None
+
+
+class BlockListExtractor(Extractor):
+    """
+    Extract tagged blocks from text and return them as a structured list.
+
+    Block tags are configurable — the template defines which tags to look for.
+    Tags can have a ``name`` attribute (e.g., ``<CHARACTER name="Kaira">``).
+
+    Each extracted block is a dict::
+
+        {"type": "tag_name_lowercase", "name": str|None, "content": str}
+
+    Consecutive blocks of the same type and name are merged.
+
+    When a block has a ``name`` attribute, the extractor strips a leading
+    name prefix from content if the LLM echoed it.
+
+    Tag matching is case-insensitive.
+    """
+
+    tags: list[str] = []
+
+    _NAME_ATTR_PATTERN: re.Pattern = re.compile(
+        r'name\s*=\s*"([^"]*)"',
+        re.IGNORECASE,
+    )
+
+    def _build_pattern(self) -> re.Pattern:
+        """Build regex from configured tag names."""
+        tag_alts = "|".join(re.escape(t) for t in self.tags)
+        return re.compile(
+            rf"<({tag_alts})\b([^>]*)>(.*?)</\1>",
+            re.IGNORECASE | re.DOTALL,
+        )
+
+    def _parse_name_attr(self, attrs: str) -> str | None:
+        """Extract the name attribute value from a tag's attribute string."""
+        match = self._NAME_ATTR_PATTERN.search(attrs)
+        return match.group(1) if match else None
+
+    def _strip_name_prefix(self, content: str, name: str) -> str:
+        """Strip leading name prefix from content if present."""
+        stripped = content.lstrip()
+        if stripped.lower().startswith(name.lower()):
+            after = stripped[len(name):]
+            if after and (after[0] in " \t:"):
+                return after.lstrip(" \t:").lstrip()
+            if not after:
+                return ""
+        return content
+
+    def extract(self, text: str) -> list[dict]:
+        """
+        Extract blocks from text.
+
+        Returns:
+            List of block dicts. Empty list if no valid blocks found.
+        """
+        if not text or not self.tags:
+            return []
+
+        pattern = self._build_pattern()
+        blocks: list[dict] = []
+
+        for match in pattern.finditer(text):
+            tag_name = match.group(1).lower()
+            attrs = match.group(2)
+            content = match.group(3)
+
+            if self.trim:
+                content = content.strip()
+
+            name = self._parse_name_attr(attrs)
+            if name and content:
+                content = self._strip_name_prefix(content, name)
+
+            blocks.append({
+                "type": tag_name,
+                "name": name,
+                "content": content,
+            })
+
+        # Merge consecutive same-type/same-name blocks
+        if not blocks:
+            return []
+
+        merged: list[dict] = [blocks[0]]
+        for block in blocks[1:]:
+            prev = merged[-1]
+            if prev["type"] == block["type"] and prev["name"] == block["name"]:
+                prev["content"] = prev["content"] + "\n" + block["content"]
+            else:
+                merged.append(block)
+
+        return merged
 
 
 class ResponseSpec(BaseModel):

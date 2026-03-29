@@ -47,6 +47,7 @@ from talemate.prompts.response import (
     ResponseSpec,
     AsIsExtractor,
     AnchorExtractor,
+    BlockListExtractor,
     ComplexAnchorExtractor,
     CodeBlockExtractor,
     ComplexCodeBlockExtractor,
@@ -596,6 +597,7 @@ class Prompt:
         env.globals["set_as_is_extractor"] = self.set_as_is_extractor
         env.globals["set_after_anchor_extractor"] = self.set_after_anchor_extractor
         env.globals["set_code_block_extractor"] = self.set_code_block_extractor
+        env.globals["set_block_list_extractor"] = self.set_block_list_extractor
         env.filters["condensed"] = condensed
         env.filters["no_chapters"] = no_chapters
         ctx.update(self.vars)
@@ -1370,6 +1372,24 @@ class Prompt:
                 trim=trim,
                 parse_data=parse_data,
             )
+        return ""
+
+    def set_block_list_extractor(self, name: str, tags: list[str] = None, trim: bool = True) -> str:
+        """
+        Register a block list extractor that parses tagged blocks.
+
+        Can be called from Jinja2 templates:
+            {{ set_block_list_extractor("response", tags=["NARRATOR", "CHARACTER"]) }}
+
+        Args:
+            name: The field name this extractor is for
+            tags: List of tag names to look for (case-insensitive)
+            trim: Whether to trim whitespace from extracted content
+
+        Returns:
+            Empty string (no output in template)
+        """
+        self._template_extractors[name] = BlockListExtractor(tags=tags or [], trim=trim)
         return ""
 
     def random(self, min: int, max: int):
