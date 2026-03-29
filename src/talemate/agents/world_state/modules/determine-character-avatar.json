@@ -486,12 +486,13 @@
       "id": "d7de567a-9158-4de2-b77c-8ca9bfb2869b",
       "properties": {
         "asset_id": "",
-        "return_bool": false
+        "return_bool": false,
+        "allow_partial": false
       },
       "x": 253,
       "y": 3305,
       "width": 210,
-      "height": 102,
+      "height": 126,
       "collapsed": false,
       "inherited": false,
       "registry": "assets/AssetExists",
@@ -576,7 +577,7 @@
       "x": -40,
       "y": 2662,
       "width": 363,
-      "height": 866,
+      "height": 906,
       "collapsed": true,
       "inherited": false,
       "registry": "agents/director/Settings",
@@ -731,7 +732,7 @@
       "x": 793,
       "y": 201,
       "width": 363,
-      "height": 866,
+      "height": 906,
       "collapsed": true,
       "inherited": false,
       "registry": "agents/director/Settings",
@@ -879,22 +880,6 @@
       "collapsed": false,
       "inherited": false,
       "registry": "state/GetState",
-      "base_type": "core/Node"
-    },
-    "805e7c26-5aef-4a0f-9e95-ffd06672ebe4": {
-      "title": "Asset Exists",
-      "id": "805e7c26-5aef-4a0f-9e95-ffd06672ebe4",
-      "properties": {
-        "asset_id": "",
-        "return_bool": true
-      },
-      "x": 273,
-      "y": 2435,
-      "width": 210,
-      "height": 102,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "assets/AssetExists",
       "base_type": "core/Node"
     },
     "1d97e9e1-34b9-4799-a998-4da9c8b96263": {
@@ -1145,7 +1130,7 @@
       "x": 1401,
       "y": 192,
       "width": 363,
-      "height": 866,
+      "height": 906,
       "collapsed": true,
       "inherited": false,
       "registry": "agents/director/Settings",
@@ -1411,12 +1396,13 @@
       "id": "3bbc63b0-5a70-409c-9d1a-287e7d9dece1",
       "properties": {
         "asset_id": "",
-        "return_bool": false
+        "return_bool": false,
+        "allow_partial": false
       },
       "x": 380,
       "y": 3990,
       "width": 210,
-      "height": 102,
+      "height": 126,
       "collapsed": false,
       "inherited": false,
       "registry": "assets/AssetExists",
@@ -1775,6 +1761,23 @@
       "inherited": false,
       "registry": "core/Switch",
       "base_type": "core/Node"
+    },
+    "805e7c26-5aef-4a0f-9e95-ffd06672ebe4": {
+      "title": "Asset Exists",
+      "id": "805e7c26-5aef-4a0f-9e95-ffd06672ebe4",
+      "properties": {
+        "asset_id": "",
+        "return_bool": true,
+        "allow_partial": true
+      },
+      "x": 273,
+      "y": 2435,
+      "width": 210,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "assets/AssetExists",
+      "base_type": "core/Node"
     }
   },
   "edges": {
@@ -1939,9 +1942,6 @@
     "7e3b4973-4ce1-4f45-a362-f22753b97c50.value": [
       "805e7c26-5aef-4a0f-9e95-ffd06672ebe4.asset_id"
     ],
-    "805e7c26-5aef-4a0f-9e95-ffd06672ebe4.no": [
-      "dec5a122-5b72-4566-ba02-07edb649b482.a"
-    ],
     "1d97e9e1-34b9-4799-a998-4da9c8b96263.value": [
       "c9876d78-59d7-41a7-8a9e-a347ed5c87b7.state_d"
     ],
@@ -2092,6 +2092,9 @@
     ],
     "74ddcb8b-032a-4cdc-ad38-39c8ee89a982.no": [
       "362f7e67-32a3-4e1f-b358-19411f3a2756.c"
+    ],
+    "805e7c26-5aef-4a0f-9e95-ffd06672ebe4.no": [
+      "dec5a122-5b72-4566-ba02-07edb649b482.a"
     ]
   },
   "groups": [

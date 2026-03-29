@@ -71,6 +71,7 @@
         <v-tab v-for="tab in availableTabs" :key="tab" :value="tab.value" @click.stop="tab.click">
           <v-icon class="mr-1">{{ tab.icon() }}</v-icon>
           {{ tab.title() }}
+          <v-icon v-if="tab.alert && tab.alert()" size="x-small" color="warning" class="ml-1">mdi-alert</v-icon>
         </v-tab>
       </v-tabs>
   
@@ -512,6 +513,7 @@ export default {
           title: () => { return 'Prompts' },
           condition: () => { return true },
           icon: () => { return 'mdi-file-code-outline' },
+          alert: () => { return this.promptsOutdatedCount > 0 },
           click: () => {
             // Prompts tab clicked
           },
@@ -596,6 +598,8 @@ export default {
       recentTemplates: [],
       // Synced tab state between PromptsMenu and PromptsView
       promptsMainTab: 'prompts',
+      // Count of outdated prompt template overrides
+      promptsOutdatedCount: 0,
       // Flag to ensure new-scene navigation only happens once per scene load
       newSceneNavigationPending: false,
     }
@@ -936,6 +940,7 @@ export default {
         this.connecting = false;
         this.requestAppConfig();
         this.requestWorldStateTemplates();
+        this.requestPromptOutdatedCheck();
       };
       this.websocket.onclose = (event) => {
         console.log('WebSocket connection closed', event);
@@ -984,6 +989,12 @@ export default {
         return;
       }
 
+      // Track outdated prompt template overrides
+      if (data.type === 'prompts' && data.action === 'list_templates') {
+        const templates = data.data?.templates || [];
+        this.promptsOutdatedCount = templates.filter(t => t.is_outdated).length;
+      }
+
       // Scene loaded
       if (data.type === "system") {
         if (data.id === 'scene.loaded') {
@@ -997,6 +1008,7 @@ export default {
           this.clearPrompts(); // Clear prompts when loading a new scene
           this.requestAppConfig();
           this.requestWorldStateTemplates();
+          this.requestPromptOutdatedCheck();
           this.$nextTick(() => {
             this.tab = 'main';
             debounce(this.onNodeEditorContainerResize, 500)();
@@ -1341,9 +1353,15 @@ export default {
     },
 
     requestWorldStateTemplates() {
-      this.websocket.send(JSON.stringify({ 
+      this.websocket.send(JSON.stringify({
         type: 'world_state_manager',
         action: 'get_templates'
+      }));
+    },
+    requestPromptOutdatedCheck() {
+      this.websocket.send(JSON.stringify({
+        type: 'prompts',
+        action: 'list_templates'
       }));
     },
 

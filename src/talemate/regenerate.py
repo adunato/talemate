@@ -189,6 +189,15 @@ async def regenerate_message(
     return messages
 
 
+def _emit_restored_message(message: SceneMessage, scene: "Scene"):
+    """Re-emit a message to the UI after restoring it to history."""
+    if isinstance(message, CharacterMessage):
+        character = scene.get_character(message.character_name)
+        emit("character", message=message, character=character)
+    else:
+        emit(message.typ, message=message)
+
+
 async def regenerate(scene: "Scene", idx: int = -1) -> list[SceneMessage]:
     """
     Regenerate the most recent AI response, remove their previous message from the history,
@@ -236,13 +245,20 @@ async def regenerate(scene: "Scene", idx: int = -1) -> list[SceneMessage]:
 
     scene.history.pop()
     emit("remove_message", "", id=message.id)
-    new_messages = await regenerate_message(message, scene)
+
+    try:
+        new_messages = await regenerate_message(message, scene)
+    except Exception as e:
+        log.error("regenerate: Exception during regeneration", message=message, error=e)
+        new_messages = None
 
     if not new_messages:
-        log.error("No new messages generated", message=message)
+        log.error("No new messages generated, restoring original", message=message)
         await scene.push_history(message)
-        for message in reversed(popped_reinforcement_messages):
-            await scene.push_history(message)
+        _emit_restored_message(message, scene)
+        emit("status", message="Could not regenerate message, original restored.", status="error")
+        for reinforcement_message in reversed(popped_reinforcement_messages):
+            await scene.push_history(reinforcement_message)
         return regenerated_messages
 
     if new_messages:

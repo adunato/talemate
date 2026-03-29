@@ -24,6 +24,7 @@
                 <v-tab value="templates">
                     <v-icon start>mdi-file-document-multiple-outline</v-icon>
                     Template Files
+                    <v-icon v-if="outdatedCount > 0" size="x-small" color="warning" class="ml-1">mdi-alert</v-icon>
                 </v-tab>
                 <v-tab :disabled="!sceneLoaded" value="context-review">
                     <v-icon start>mdi-view-split-horizontal</v-icon>
@@ -296,6 +297,9 @@ export default {
             return this.groups.filter(g =>
                 g.name !== 'scene' && g.name !== 'default'
             );
+        },
+        outdatedCount() {
+            return this.templates.filter(t => t.is_outdated).length;
         }
     },
     watch: {

@@ -355,6 +355,12 @@ class AssetExists(Node):
             type="bool",
             default=False,
         )
+        allow_partial = PropertyField(
+            name="allow_partial",
+            description="If True, match assets whose ID starts with the given asset_id",
+            type="bool",
+            default=False,
+        )
 
     def __init__(self, title="Asset Exists", **kwargs):
         super().__init__(title=title, **kwargs)
@@ -364,6 +370,7 @@ class AssetExists(Node):
 
         self.set_property("asset_id", "")
         self.set_property("return_bool", False)
+        self.set_property("allow_partial", False)
 
         self.add_output("yes")
         self.add_output("no")
@@ -372,9 +379,15 @@ class AssetExists(Node):
         scene: "Scene" = active_scene.get()
         asset_id = self.require_input("asset_id")
         return_bool = self.get_property("return_bool")
+        allow_partial = self.get_property("allow_partial")
 
         # Check if asset exists
-        asset_exists = asset_id in scene.assets.assets
+        if allow_partial:
+            asset_exists = any(
+                key.startswith(asset_id) for key in scene.assets.assets
+            )
+        else:
+            asset_exists = asset_id in scene.assets.assets
 
         # Determine the value to return based on return_bool
         if return_bool:
