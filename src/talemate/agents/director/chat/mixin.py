@@ -1,7 +1,9 @@
 import structlog
 from typing import Any, TYPE_CHECKING, Callable, Awaitable
 
+import talemate.instance as instance
 from talemate.agents.base import set_processing, AgentAction, AgentActionConfig
+from talemate.emit import emit
 from talemate.game.engine.nodes.core import GraphState
 
 from talemate.agents.director.action_core import utils as action_utils
@@ -957,12 +959,23 @@ class DirectorChatMixin:
         """
         Start arc generation. Like chat_generate_next but with @set_processing
         to ensure active_agent context is available.
+
+        Suppresses automatic TTS generation while arcs are being generated to
+        avoid noisy voice synthesis during long multi-step planning.
         """
-        return await self.chat_generate_next(
-            chat_id,
-            on_update=on_update,
-            on_done=on_done,
-            on_compacting=on_compacting,
-            on_compacted=on_compacted,
-            on_title_generated=on_title_generated,
-        )
+        tts_agent = instance.get_agent("tts")
+        if tts_agent.enabled and tts_agent.has_auto_generation:
+            emit(
+                "status",
+                "Automatic voice generation is paused during multi-turn generation.",
+                status="info",
+            )
+        with tts_agent.suppress_auto_generation():
+            return await self.chat_generate_next(
+                chat_id,
+                on_update=on_update,
+                on_done=on_done,
+                on_compacting=on_compacting,
+                on_compacted=on_compacted,
+                on_title_generated=on_title_generated,
+            )

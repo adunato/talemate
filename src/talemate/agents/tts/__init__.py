@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import traceback
 import uuid
 from collections import deque
@@ -226,6 +227,7 @@ class TTSAgent(
         self.is_enabled = False  # tts agent is disabled by default
         self.actions = TTSAgent.init_actions()
         self.playback_done_event = asyncio.Event()
+        self._suppress_auto_generation: int = 0
 
         # Queue management for voice generation
         # Each queue instance gets a unique id so it can later be referenced
@@ -240,6 +242,19 @@ class TTSAgent(
         self._queue_id: str | None = None
         self._queue_task: asyncio.Task | None = None
         self._queue_lock = asyncio.Lock()
+
+    @contextlib.contextmanager
+    def suppress_auto_generation(self):
+        """Context manager to suppress automatic TTS generation.
+
+        While active, reactive generation triggered by game_loop_new_message
+        is skipped. Explicit calls to generate() still work.
+        """
+        self._suppress_auto_generation += 1
+        try:
+            yield
+        finally:
+            self._suppress_auto_generation -= 1
 
     # general helpers
 
@@ -282,6 +297,15 @@ class TTSAgent(
         return (
             self.actions["_config"].config["generate_for_context_investigation"].value
         )
+
+    @property
+    def has_auto_generation(self) -> bool:
+        return any([
+            self.generate_for_npc,
+            self.generate_for_player,
+            self.generate_for_narration,
+            self.generate_for_context_investigation,
+        ])
 
     @property
     def speaker_separation(self) -> str:
@@ -467,6 +491,9 @@ class TTSAgent(
         """
         Called when a conversation is generated
         """
+
+        if self._suppress_auto_generation:
+            return
 
         if self.scene.environment == "creative":
             return
