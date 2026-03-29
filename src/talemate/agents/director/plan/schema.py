@@ -5,7 +5,7 @@ Generic planning system with Beat as a specialized task type for arc generation.
 """
 
 from enum import Enum
-from typing import Literal
+from typing import Annotated, Literal, Union
 import uuid
 
 import pydantic
@@ -53,6 +53,7 @@ class PlanStatus(str, Enum):
 class Task(pydantic.BaseModel):
     """Generic task within a plan."""
 
+    type: Literal["task"] = "task"
     id: str = pydantic.Field(default_factory=lambda: str(uuid.uuid4())[:8])
     description: str = ""
     status: Literal["pending", "executing", "completed", "skipped"] = "pending"
@@ -102,13 +103,17 @@ class Beat(Task):
         )
 
 
+# Discriminated union: Beat before Task (more specific first)
+TaskType = Annotated[Union[Beat, Task], pydantic.Field(discriminator="type")]
+
+
 class Plan(pydantic.BaseModel):
     """A plan with an ordered list of tasks."""
 
     id: str = pydantic.Field(default_factory=lambda: str(uuid.uuid4())[:10])
     instructions: str = ""
     status: PlanStatus = PlanStatus.planning
-    tasks: list[Task] = pydantic.Field(default_factory=list)
+    tasks: list[TaskType] = pydantic.Field(default_factory=list)
     meta: dict = pydantic.Field(default_factory=dict)
 
     def get_task(self, task_id: str) -> Task | None:
