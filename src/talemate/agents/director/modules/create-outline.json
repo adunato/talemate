@@ -377,33 +377,6 @@
       "registry": "prompt/TemplateVariables",
       "base_type": "core/Node"
     },
-    "6bb81c40-cff1-42e6-a471-001985e57e5c": {
-      "title": "Dict Collector",
-      "id": "6bb81c40-cff1-42e6-a471-001985e57e5c",
-      "properties": {},
-      "x": 639,
-      "y": 1146,
-      "width": 140,
-      "height": 121,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "data/DictCollector",
-      "dynamic_inputs": [
-        {
-          "name": "item0",
-          "type": "*"
-        },
-        {
-          "name": "item1",
-          "type": "*"
-        },
-        {
-          "name": "item2",
-          "type": "*"
-        }
-      ],
-      "base_type": "core/DynamicSocketNodeBase"
-    },
     "f50e95f8-21ac-4018-a5cd-a351d646bebd": {
       "title": "GET local.summary",
       "id": "f50e95f8-21ac-4018-a5cd-a351d646bebd",
@@ -605,6 +578,53 @@
       "inherited": false,
       "registry": "core/Input",
       "base_type": "core/Node"
+    },
+    "6bb81c40-cff1-42e6-a471-001985e57e5c": {
+      "title": "Dict Collector",
+      "id": "6bb81c40-cff1-42e6-a471-001985e57e5c",
+      "properties": {},
+      "x": 640,
+      "y": 1150,
+      "width": 140,
+      "height": 141,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/DictCollector",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        },
+        {
+          "name": "item2",
+          "type": "*"
+        },
+        {
+          "name": "item3",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "1a5053b8-6cb9-449e-a52c-acb44b79ab14": {
+      "title": "GET local.instructions",
+      "id": "1a5053b8-6cb9-449e-a52c-acb44b79ab14",
+      "properties": {
+        "name": "instructions",
+        "scope": "local"
+      },
+      "x": 360,
+      "y": 1360,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
     }
   },
   "edges": {
@@ -666,11 +686,6 @@
     "34f29d9b-828c-4450-86ce-7163a9ffd2e0.variables": [
       "d5a28d38-c91d-443a-82f3-bbccee1d84e6.variables"
     ],
-    "6bb81c40-cff1-42e6-a471-001985e57e5c.dict": [
-      "517d4bb8-38aa-4b11-8ba9-f569a6a45338.value",
-      "0bf06241-b92b-4f0f-bc67-0789fe061c18.dict",
-      "34f29d9b-828c-4450-86ce-7163a9ffd2e0.merge_with"
-    ],
     "f50e95f8-21ac-4018-a5cd-a351d646bebd.value": [
       "8641d43d-c5d7-471e-870b-27fcaf4b4564.value"
     ],
@@ -720,6 +735,14 @@
     ],
     "7d565eb9-f156-4a92-9723-e27964dfe759.value": [
       "f06086ba-6253-4da2-ad37-d12b4f64443c.value"
+    ],
+    "6bb81c40-cff1-42e6-a471-001985e57e5c.dict": [
+      "517d4bb8-38aa-4b11-8ba9-f569a6a45338.value",
+      "0bf06241-b92b-4f0f-bc67-0789fe061c18.dict",
+      "34f29d9b-828c-4450-86ce-7163a9ffd2e0.merge_with"
+    ],
+    "1a5053b8-6cb9-449e-a52c-acb44b79ab14.value": [
+      "6bb81c40-cff1-42e6-a471-001985e57e5c.item3"
     ]
   },
   "groups": [
