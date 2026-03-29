@@ -1,0 +1,83 @@
+{#-
+Extractors:
+  - response: BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+-#}
+{{ set_block_list_extractor("response", tags=["NARRATOR", "CHARACTER"]) }}
+{% include "narrate-context.jinja2" %}
+
+{# Character context — dialogue instructions, example dialogue, character sheets #}
+{% with include_dialogue_instructions=True %}
+{% include "character-context.jinja2" %}
+{% endwith %}
+
+{% if director_notes %}
+<|SECTION:DIRECTOR NOTES|>
+{{ director_notes }}
+<|CLOSE_SECTION|>
+{% endif %}
+
+<|SECTION:TASK|>
+Write scene prose from the beat descriptions below.
+
+Perspective: {{ perspective }}
+
+{% if preceding_text %}
+**Story so far** (continue from here — do NOT repeat anything from this):
+```
+{{ preceding_text }}
+```
+{% endif %}
+
+**Beats to write:**
+{% for beat in beats %}
+Beat {{ beat.order }} [{{ beat.type }}] (pacing: {{ beat.pacing }}, tension: {{ beat.tension }})
+{% if beat.characters %}  Characters: {{ beat.characters | join(", ") }}{% endif %}
+  {{ beat.description }}
+
+{% endfor %}
+
+{% if following_beats %}
+**Upcoming beats** (do NOT write these, just be aware for pacing):
+{% for beat in following_beats[:2] %}
+Beat {{ beat.order }} [{{ beat.type }}]: {{ beat.description[:100] }}...
+{% endfor %}
+{% endif %}
+
+**OUTPUT FORMAT (mandatory):**
+
+Your response MUST be a sequence of `<NARRATOR>` and `<CHARACTER name="Name">` blocks. No prose outside of blocks.
+
+- Narration/action/transition/reveal beats → `<NARRATOR>` blocks (1-3 paragraphs of prose)
+- Dialogue beats → `<CHARACTER name="CharacterName">` blocks (action + body language + dialogue as one unit)
+
+Structure:
+
+```
+<NARRATOR>
+... narration prose here (1-3 paragraphs) ...
+</NARRATOR>
+
+<CHARACTER name="Kaira">
+... physical action, body language, and dialogue together as one unit ...
+</CHARACTER>
+
+<NARRATOR>
+... more narration prose ...
+</NARRATOR>
+
+<CHARACTER name="Elmer">
+... his actions and dialogue as one unit ...
+</CHARACTER>
+```
+
+**Writing rules:**
+- `<CHARACTER>` blocks are complete character moments: physical action, body language, AND dialogue together. Not just a quoted line.
+- ONE strong image per paragraph. Do not stack similes or metaphors.
+- Do NOT repeat sensory details from the "Story so far" section.
+- Vary sentence length. Mix short and long.
+- Dialogue: contractions, fragments, how real people talk. No speeches.
+- Show emotion through action, not narration. "His hands shook" not "he felt terror."
+- Low-tension beats: short sentences, plain language, breathing room.
+- Do NOT start CHARACTER block content with the character's name — the tag already identifies them.
+<|CLOSE_SECTION|>
+{{ set_prepared_response("<NARRATOR>") }}
