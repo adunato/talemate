@@ -62,10 +62,22 @@
                     :min="3"
                     :max="24"
                     :step="1"
-                    thumb-label
+                    thumb-label="always"
                     color="primary"
                     class="mt-4"
                 ></v-slider>
+                <v-slider
+                    v-model="scenePlanDialogueRatio"
+                    label="Dialogue ratio"
+                    :min="0"
+                    :max="100"
+                    :step="10"
+                    thumb-label="always"
+                    color="primary"
+                    class="mt-4"
+                >
+                    <template v-slot:thumb-label="{ modelValue }">{{ modelValue }}%</template>
+                </v-slider>
 
                 <!-- Warning: narrator progress_story generation length too low -->
                 <v-alert
@@ -130,6 +142,7 @@ export default {
             scenePlanDialog: false,
             scenePlanInstructions: '',
             scenePlanBeats: 8,
+            scenePlanDialogueRatio: 40,
             minRecommendedNarratorLength: 1024,
         }
     },
@@ -213,6 +226,7 @@ export default {
         openScenePlanDialog() {
             this.scenePlanInstructions = '';
             this.scenePlanBeats = 8;
+            this.scenePlanDialogueRatio = Math.round((this.agentStatus?.director?.actions?.chat?.config?.generate_arc_dialogue_ratio?.value ?? 0.4) * 100);
             this.scenePlanDialog = true;
         },
 
@@ -223,6 +237,7 @@ export default {
                 action: 'chat_create_generate_arc',
                 instructions: this.scenePlanInstructions,
                 beat_count: this.scenePlanBeats,
+                dialogue_ratio: this.scenePlanDialogueRatio / 100,
             }));
             this.openDirectorConsole();
         },

@@ -42,6 +42,7 @@ class ChatRemoveMessagePayload(pydantic.BaseModel):
 class ChatCreateGenerateArcPayload(pydantic.BaseModel):
     instructions: str
     beat_count: int = 8
+    dialogue_ratio: float | None = None
 
 
 class ChatRegeneratePayload(pydantic.BaseModel):
@@ -445,6 +446,9 @@ class DirectorChatWebsocketMixin:
 
     async def handle_chat_create_generate_arc(self, data: dict):
         payload = ChatCreateGenerateArcPayload(**data)
+
+        if payload.dialogue_ratio is not None:
+            self.director.actions["chat"].config["generate_arc_dialogue_ratio"].value = payload.dialogue_ratio
 
         chat = self.director.chat_create_generate_arc(
             payload.instructions,
