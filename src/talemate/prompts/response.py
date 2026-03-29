@@ -868,42 +868,34 @@ class ComplexCodeBlockExtractor(ComplexAnchorExtractor, CodeBlockExtractorMixin)
 
 class BlockListExtractor(Extractor):
     """
-    Extract tagged blocks from text and return them as a structured list.
+    Extract tagged blocks from text using configurable anchor patterns.
 
-    Block tags are configurable — the template defines which tags to look for.
-    Tags can have a ``name`` attribute (e.g., ``<CHARACTER name="Kaira">``).
+    Each block definition is a tuple of ``(type_name, left_regex, right_string)``.
+    The left pattern is a regex that can contain named capture groups which
+    will be included in the block dict. The right pattern is matched literally
+    (case-insensitive).
+
+    Example block definitions::
+
+        blocks = [
+            ("narrator", r"<NARRATOR>", "</NARRATOR>"),
+            ("character", r'<CHARACTER name="(?P<name>[^"]*)">', "</CHARACTER>"),
+        ]
 
     Each extracted block is a dict::
 
-        {"type": "tag_name_lowercase", "name": str|None, "content": str}
+        {"type": "narrator", "content": "..."}
+        {"type": "character", "name": "Kaira", "content": "..."}
 
-    Consecutive blocks of the same type and name are merged.
-
-    When a block has a ``name`` attribute, the extractor strips a leading
+    Named groups from the left regex are added to the dict automatically.
+    When a ``name`` group is captured, the extractor strips a leading
     name prefix from content if the LLM echoed it.
 
+    Consecutive blocks of the same type and named groups are merged.
     Tag matching is case-insensitive.
     """
 
-    tags: list[str] = []
-
-    _NAME_ATTR_PATTERN: re.Pattern = re.compile(
-        r'name\s*=\s*"([^"]*)"',
-        re.IGNORECASE,
-    )
-
-    def _build_pattern(self) -> re.Pattern:
-        """Build regex from configured tag names."""
-        tag_alts = "|".join(re.escape(t) for t in self.tags)
-        return re.compile(
-            rf"<({tag_alts})\b([^>]*)>(.*?)</\1>",
-            re.IGNORECASE | re.DOTALL,
-        )
-
-    def _parse_name_attr(self, attrs: str) -> str | None:
-        """Extract the name attribute value from a tag's attribute string."""
-        match = self._NAME_ATTR_PATTERN.search(attrs)
-        return match.group(1) if match else None
+    blocks: list[tuple[str, str, str]] = []
 
     def _strip_name_prefix(self, content: str, name: str) -> str:
         """Strip leading name prefix from content if present."""
@@ -923,38 +915,58 @@ class BlockListExtractor(Extractor):
         Returns:
             List of block dicts. Empty list if no valid blocks found.
         """
-        if not text or not self.tags:
+        if not text or not self.blocks:
             return []
 
-        pattern = self._build_pattern()
-        blocks: list[dict] = []
+        # Find all block matches with their positions for ordering
+        found: list[tuple[int, dict]] = []
+        text_lower = text.lower()
 
-        for match in pattern.finditer(text):
-            tag_name = match.group(1).lower()
-            attrs = match.group(2)
-            content = match.group(3)
+        for block_type, left_pattern, right_literal in self.blocks:
+            right_lower = right_literal.lower()
 
-            if self.trim:
-                content = content.strip()
+            for left_match in re.finditer(left_pattern, text, re.IGNORECASE):
+                content_start = left_match.end()
 
-            name = self._parse_name_attr(attrs)
-            if name and content:
-                content = self._strip_name_prefix(content, name)
+                # Find the closing anchor (case-insensitive) after this opening
+                right_pos = text_lower.find(right_lower, content_start)
+                if right_pos < 0:
+                    continue
 
-            blocks.append({
-                "type": tag_name,
-                "name": name,
-                "content": content,
-            })
+                content = text[content_start:right_pos]
+                if self.trim:
+                    content = content.strip()
 
-        # Merge consecutive same-type/same-name blocks
+                # Build block dict with type and content
+                block = {"type": block_type, "content": content}
+
+                # Add any named capture groups from the left regex
+                named_groups = left_match.groupdict()
+                block.update(named_groups)
+
+                # Strip name prefix from content if a "name" group was captured
+                if named_groups.get("name") and content:
+                    block["content"] = self._strip_name_prefix(
+                        content, named_groups["name"]
+                    )
+
+                found.append((left_match.start(), block))
+
+        # Sort by position in text
+        found.sort(key=lambda x: x[0])
+        blocks = [b for _, b in found]
+
+        # Merge consecutive blocks with same type and same named groups
         if not blocks:
             return []
 
         merged: list[dict] = [blocks[0]]
         for block in blocks[1:]:
             prev = merged[-1]
-            if prev["type"] == block["type"] and prev["name"] == block["name"]:
+            # Same type and same values for all keys except content
+            prev_key = {k: v for k, v in prev.items() if k != "content"}
+            block_key = {k: v for k, v in block.items() if k != "content"}
+            if prev_key == block_key:
                 prev["content"] = prev["content"] + "\n" + block["content"]
             else:
                 merged.append(block)

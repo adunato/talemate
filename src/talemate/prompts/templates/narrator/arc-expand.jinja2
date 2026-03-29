@@ -1,8 +1,11 @@
 {#-
 Extractors:
-  - response: BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+  - response: BlockListExtractor(blocks=[("narrator", ...), ("character", ...)])
 -#}
-{{ set_block_list_extractor("response", tags=["NARRATOR", "CHARACTER"]) }}
+{{ set_block_list_extractor("response", blocks=[
+    ("narrator", "<NARRATOR>", "</NARRATOR>"),
+    ("character", '<CHARACTER name="(?P<name>[^"]*)">', "</CHARACTER>"),
+]) }}
 {% include "narrate-context.jinja2" %}
 
 {# Character context — dialogue instructions, example dialogue, character sheets #}

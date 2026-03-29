@@ -1749,21 +1749,27 @@ class TestParseDataIntegration:
 # ============================================================================
 
 
+STANDARD_BLOCKS = [
+    ("narrator", r"<NARRATOR>", "</NARRATOR>"),
+    ("character", r'<CHARACTER name="(?P<name>[^"]*)">', "</CHARACTER>"),
+]
+
+
 class TestBlockListExtractor:
     """Tests for the BlockListExtractor class."""
 
     def test_basic_narrator_block(self):
         """Test extracting a single narrator block."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = "<NARRATOR>The sun set over the hills.</NARRATOR>"
         result = extractor.extract(text)
         assert result == [
-            {"type": "narrator", "name": None, "content": "The sun set over the hills."},
+            {"type": "narrator", "content": "The sun set over the hills."},
         ]
 
     def test_character_block_with_name(self):
         """Test extracting a single character block with name attribute."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = '<CHARACTER name="Kaira">Hello there!</CHARACTER>'
         result = extractor.extract(text)
         assert result == [
@@ -1772,7 +1778,7 @@ class TestBlockListExtractor:
 
     def test_mixed_narrator_and_character_blocks(self):
         """Test extracting mixed narrator and character blocks."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = (
             "<NARRATOR>The door creaked open.</NARRATOR>\n"
             '<CHARACTER name="Kaira">Who goes there?</CHARACTER>\n'
@@ -1780,13 +1786,13 @@ class TestBlockListExtractor:
         )
         result = extractor.extract(text)
         assert len(result) == 3
-        assert result[0] == {"type": "narrator", "name": None, "content": "The door creaked open."}
+        assert result[0] == {"type": "narrator", "content": "The door creaked open."}
         assert result[1] == {"type": "character", "name": "Kaira", "content": "Who goes there?"}
-        assert result[2] == {"type": "narrator", "name": None, "content": "Silence followed."}
+        assert result[2] == {"type": "narrator", "content": "Silence followed."}
 
     def test_merge_consecutive_narrator_blocks(self):
         """Test that consecutive narrator blocks are merged."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = (
             "<NARRATOR>The wind howled.</NARRATOR>\n"
             "<NARRATOR>Rain began to fall.</NARRATOR>"
@@ -1798,7 +1804,7 @@ class TestBlockListExtractor:
 
     def test_merge_consecutive_same_character_blocks(self):
         """Test that consecutive blocks from the same character are merged."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = (
             '<CHARACTER name="Kaira">Hello.</CHARACTER>\n'
             '<CHARACTER name="Kaira">How are you?</CHARACTER>'
@@ -1811,7 +1817,7 @@ class TestBlockListExtractor:
 
     def test_no_merge_different_characters(self):
         """Test that consecutive blocks from different characters are not merged."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = (
             '<CHARACTER name="Kaira">Hello.</CHARACTER>\n'
             '<CHARACTER name="Borin">Greetings.</CHARACTER>'
@@ -1823,21 +1829,21 @@ class TestBlockListExtractor:
 
     def test_character_name_stripping(self):
         """Test that character name prefix is stripped from content."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = '<CHARACTER name="Kaira">Kaira says hello to everyone.</CHARACTER>'
         result = extractor.extract(text)
         assert result[0]["content"] == "says hello to everyone."
 
     def test_character_name_stripping_with_colon(self):
         """Test that character name prefix with colon is stripped."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = '<CHARACTER name="Kaira">Kaira: Hello there!</CHARACTER>'
         result = extractor.extract(text)
         assert result[0]["content"] == "Hello there!"
 
     def test_character_name_not_stripped_mid_word(self):
         """Test that character name is not stripped when it's part of another word."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = '<CHARACTER name="Kai">Kaira speaks softly.</CHARACTER>'
         result = extractor.extract(text)
         # "Kai" should not be stripped from "Kaira" since it's part of a longer word
@@ -1845,7 +1851,7 @@ class TestBlockListExtractor:
 
     def test_case_insensitive_tags(self):
         """Test that tag matching is case-insensitive."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = (
             "<narrator>The room was dark.</narrator>\n"
             '<character name="Kaira">I can barely see.</character>'
@@ -1857,7 +1863,7 @@ class TestBlockListExtractor:
 
     def test_mixed_case_tags(self):
         """Test extraction with mixed-case opening and closing tags."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = "<Narrator>Quiet evening.</Narrator>"
         result = extractor.extract(text)
         assert len(result) == 1
@@ -1866,33 +1872,33 @@ class TestBlockListExtractor:
 
     def test_empty_text_returns_empty_list(self):
         """Test that empty text returns an empty list."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         assert extractor.extract("") == []
         assert extractor.extract(None) == []
 
     def test_no_valid_blocks_returns_empty_list(self):
         """Test that text with no valid blocks returns an empty list."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         result = extractor.extract("Just some plain text with no blocks.")
         assert result == []
 
     def test_content_trimming(self):
         """Test that content is trimmed by default."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = "<NARRATOR>  Some spaced content.  </NARRATOR>"
         result = extractor.extract(text)
         assert result[0]["content"] == "Some spaced content."
 
     def test_no_trimming_when_disabled(self):
         """Test that content is not trimmed when trim=False."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"], trim=False)
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS, trim=False)
         text = "<NARRATOR>  Some spaced content.  </NARRATOR>"
         result = extractor.extract(text)
         assert result[0]["content"] == "  Some spaced content.  "
 
     def test_story_wrapper_ignored(self):
         """Test that STORY wrapper does not interfere with extraction."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = (
             "<STORY>\n"
             "<NARRATOR>Inside the story.</NARRATOR>\n"
@@ -1907,7 +1913,7 @@ class TestBlockListExtractor:
 
     def test_multiline_block_content(self):
         """Test blocks with multiline content."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = (
             "<NARRATOR>\n"
             "The forest was silent.\n"
@@ -1919,7 +1925,7 @@ class TestBlockListExtractor:
 
     def test_merge_preserves_order(self):
         """Test that merging preserves the order of blocks."""
-        extractor = BlockListExtractor(tags=["NARRATOR", "CHARACTER"])
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = (
             "<NARRATOR>First.</NARRATOR>\n"
             '<CHARACTER name="A">Hi.</CHARACTER>\n'
@@ -1929,8 +1935,8 @@ class TestBlockListExtractor:
         )
         result = extractor.extract(text)
         assert len(result) == 4
-        assert result[0] == {"type": "narrator", "name": None, "content": "First."}
+        assert result[0] == {"type": "narrator", "content": "First."}
         assert result[1] == {"type": "character", "name": "A", "content": "Hi."}
         # Second and Third narrator blocks should be merged
-        assert result[2] == {"type": "narrator", "name": None, "content": "Second.\nThird."}
+        assert result[2] == {"type": "narrator", "content": "Second.\nThird."}
         assert result[3] == {"type": "character", "name": "A", "content": "Bye."}

@@ -1374,22 +1374,29 @@ class Prompt:
             )
         return ""
 
-    def set_block_list_extractor(self, name: str, tags: list[str] = None, trim: bool = True) -> str:
+    def set_block_list_extractor(self, name: str, blocks: list[tuple] | None = None, trim: bool = True) -> str:
         """
         Register a block list extractor that parses tagged blocks.
 
-        Can be called from Jinja2 templates:
-            {{ set_block_list_extractor("response", tags=["NARRATOR", "CHARACTER"]) }}
+        Each block definition is a tuple of (type_name, left_regex, right_string).
+        The left pattern is a regex that can contain named capture groups.
+
+        Can be called from Jinja2 templates::
+
+            {{ set_block_list_extractor("response", blocks=[
+                ("narrator", "<NARRATOR>", "</NARRATOR>"),
+                ("character", '<CHARACTER name="(?P<name>[^"]*)">', "</CHARACTER>"),
+            ]) }}
 
         Args:
             name: The field name this extractor is for
-            tags: List of tag names to look for (case-insensitive)
+            blocks: List of (type_name, left_regex, right_string) tuples
             trim: Whether to trim whitespace from extracted content
 
         Returns:
             Empty string (no output in template)
         """
-        self._template_extractors[name] = BlockListExtractor(tags=tags or [], trim=trim)
+        self._template_extractors[name] = BlockListExtractor(blocks=blocks or [], trim=trim)
         return ""
 
     def random(self, min: int, max: int):
