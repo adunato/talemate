@@ -70,7 +70,7 @@ class DirectorChat(pydantic.BaseModel):
     messages: list["DirectorChatMessage | DirectorChatActionResultMessage"]
     id: str = pydantic.Field(default_factory=lambda: str(uuid.uuid4())[:10])
     title: str | None = None
-    mode: Literal["normal", "decisive", "nospoilers", "generate_arc"] = "normal"
+    mode: Literal["normal", "decisive", "nospoilers", "generate_arc", "generate_arc_expand"] = "normal"
     confirm_write_actions: bool = True
     created_at: float = pydantic.Field(default_factory=time.time)
     plan_id: str | None = None
@@ -83,7 +83,7 @@ class DirectorChatListEntry(pydantic.BaseModel):
 
     id: str
     title: str | None = None
-    mode: Literal["normal", "decisive", "nospoilers", "generate_arc"] = "normal"
+    mode: Literal["normal", "decisive", "nospoilers", "generate_arc", "generate_arc_expand"] = "normal"
     created_at: float = 0.0
 
 

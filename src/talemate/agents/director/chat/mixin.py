@@ -1,5 +1,5 @@
 import structlog
-from typing import Any, TYPE_CHECKING, Callable, Awaitable
+from typing import Any, Literal, TYPE_CHECKING, Callable, Awaitable
 
 import talemate.instance as instance
 from talemate.agents.base import set_processing, AgentAction, AgentActionConfig
@@ -288,7 +288,7 @@ class DirectorChatMixin:
         return chat
 
     def chat_create_generate_arc(
-        self, instructions: str, beat_count: int = 8
+        self, instructions: str, beat_count: int = 8, mode: Literal["generate_arc", "generate_arc_expand"] = "generate_arc"
     ) -> DirectorChat:
         """Create a new chat in generate_arc mode with planning instructions as initial user message."""
         chat = DirectorChat(
@@ -309,7 +309,7 @@ class DirectorChatMixin:
                     source="user",
                 ),
             ],
-            mode="generate_arc",
+            mode=mode,
             confirm_write_actions=False,
         )
         self._chat_save(chat)
@@ -684,7 +684,7 @@ class DirectorChatMixin:
 
             # generate_arc mode: unlocked iteration (up to hard safety limit)
             # normal modes: respect the configured auto-iteration limit
-            if mode == "generate_arc":
+            if mode in ("generate_arc", "generate_arc_expand"):
                 if iterations_done >= self.chat_generate_arc_iterations_limit:
                     log.warning("director.chat.generate_arc.hard_limit_reached")
                     break

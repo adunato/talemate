@@ -108,8 +108,30 @@
                     </div>
                 </v-alert>
 
+                <v-btn-toggle
+                    v-model="scenePlanMode"
+                    mandatory
+                    density="compact"
+                    color="primary"
+                    class="mb-4"
+                >
+                    <v-btn value="generate_arc" size="small">
+                        <v-icon start>mdi-directions-fork</v-icon>
+                        Turn by turn
+                    </v-btn>
+                    <v-btn value="generate_arc_expand" size="small">
+                        <v-icon start>mdi-lightning-bolt</v-icon>
+                        Expand (fast)
+                    </v-btn>
+                </v-btn-toggle>
+
                 <v-alert variant="outlined" density="compact" color="primary" class="mb-3">
-                    <div class="text-muted">This may generate actions and dialogue for player controlled characters as well. Generation may take a long time (several minutes) depending on the number of turns and the complexity of the scene.</div>
+                    <div class="text-muted" v-if="scenePlanMode === 'generate_arc'">Turn by turn mode: the director executes each beat individually through the narrator and conversation agents. Slower but uses full per-turn context.</div>
+                    <div class="text-muted" v-else>Expand mode: beats are expanded into prose in chunks. Much faster but with less per-turn context injection.</div>
+                </v-alert>
+
+                <v-alert variant="outlined" density="compact" color="primary" class="mb-3">
+                    <div class="text-muted">This may generate actions and dialogue for player controlled characters as well.</div>
                 </v-alert>
             </v-card-text>
             <v-card-actions>
@@ -143,6 +165,7 @@ export default {
             scenePlanInstructions: '',
             scenePlanBeats: 8,
             scenePlanDialogueRatio: 40,
+            scenePlanMode: 'generate_arc',
             minRecommendedNarratorLength: 1024,
         }
     },
@@ -226,6 +249,7 @@ export default {
         openScenePlanDialog() {
             this.scenePlanInstructions = '';
             this.scenePlanBeats = 8;
+            this.scenePlanMode = 'generate_arc';
             this.scenePlanDialogueRatio = Math.round((this.agentStatus?.director?.actions?.chat?.config?.generate_arc_dialogue_ratio?.value ?? 0.4) * 100);
             this.scenePlanDialog = true;
         },
@@ -238,6 +262,7 @@ export default {
                 instructions: this.scenePlanInstructions,
                 beat_count: this.scenePlanBeats,
                 dialogue_ratio: this.scenePlanDialogueRatio / 100,
+                mode: this.scenePlanMode,
             }));
             this.openDirectorConsole();
         },

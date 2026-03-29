@@ -6,3 +6,4 @@ The director creates plans with tasks, then uses existing actions to execute the
 
 from .schema import Task, Beat, Plan, PlanStatus  # noqa: F401
 from .util import get_plan, save_plan, delete_plan, complete_task, parse_beats  # noqa: F401
+from .expand import expand_beats  # noqa: F401

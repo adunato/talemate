@@ -43,6 +43,7 @@ class ChatCreateGenerateArcPayload(pydantic.BaseModel):
     instructions: str
     beat_count: int = 8
     dialogue_ratio: float | None = None
+    mode: Literal["generate_arc", "generate_arc_expand"] = "generate_arc"
 
 
 class ChatRegeneratePayload(pydantic.BaseModel):
@@ -57,7 +58,7 @@ class ConfirmActionPayload(pydantic.BaseModel):
 
 class ChatUpdateModePayload(pydantic.BaseModel):
     chat_id: str
-    mode: Literal["normal", "decisive", "nospoilers", "generate_arc"]
+    mode: Literal["normal", "decisive", "nospoilers", "generate_arc", "generate_arc_expand"]
 
 
 class ChatUpdateConfirmWriteActionsPayload(pydantic.BaseModel):
@@ -453,6 +454,7 @@ class DirectorChatWebsocketMixin:
         chat = self.director.chat_create_generate_arc(
             payload.instructions,
             payload.beat_count,
+            mode=payload.mode,
         )
 
         # Notify frontend of new chat and its initial history

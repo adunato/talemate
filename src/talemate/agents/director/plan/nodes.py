@@ -4,6 +4,7 @@ Plan graph nodes.
 - CreatePlan: creates a plan with tasks and saves to agent state
 - EstimateWords: estimates word count for a given number of beats
 - CompleteTask: marks a task as completed in a plan
+- ExpandStoryArc: expands beats into prose via the arc-expand pipeline
 
 Beat execution is handled by the existing `direct_scene` FOCAL action.
 Plan state is injected into the chat context when a plan exists.
@@ -32,6 +33,7 @@ from .schema import (
     NARRATION_BEAT_RATIO,
 )
 from .util import save_plan, complete_task, emit_plan_updated, get_plan
+from .expand import expand_beats
 
 log = structlog.get_logger("talemate.agents.director.plan.nodes")
 
@@ -237,6 +239,49 @@ class GetActiveChatPlanId(Node):
         )
 
 
+@register("agents/director/plan/GetActivePlan")
+class GetActivePlan(Node):
+    """
+    Returns the plan linked to the currently active director chat.
+    Outputs the full plan object, plan ID, perspective, and beat list.
+    """
+
+    def __init__(self, title="Get Active Plan", **kwargs):
+        super().__init__(title=title, **kwargs)
+
+    def setup(self):
+        self.add_input("state")
+        self.add_output("state")
+        self.add_output("plan_id", socket_type="str")
+        self.add_output("plan", socket_type="any")
+        self.add_output("beats", socket_type="list")
+        self.add_output("perspective", socket_type="str")
+        self.add_output("has_plan", socket_type="bool")
+
+    async def run(self, state: GraphState):
+        input_state = self.require_input("state")
+
+        chat_ctx = director_chat_context.get()
+        plan_id = chat_ctx.plan_id if chat_ctx else None
+        plan = get_plan(active_scene.get(), plan_id) if plan_id else None
+
+        perspective = ""
+        beats = []
+
+        if plan:
+            perspective = plan.meta.get("perspective", "")
+            beats = [t for t in plan.tasks if isinstance(t, Beat)]
+
+        self.set_output_values({
+            "state": input_state,
+            "plan_id": plan_id or "",
+            "plan": plan,
+            "perspective": perspective,
+            "beats": beats,
+            "has_plan": plan is not None,
+        })
+
+
 @register("agents/director/plan/CompleteTask")
 class CompleteTask(AgentNode):
     """
@@ -273,3 +318,81 @@ class CompleteTask(AgentNode):
                 emit_plan_updated(plan, chat_id=chat_id)
 
         self.set_output_values({"state": input_state, "result": result})
+
+
+@register("agents/director/plan/ExpandStoryArc")
+class ExpandStoryArc(AgentNode):
+    """
+    Expands a plan's beats into full prose and pushes them to scene history.
+
+    Delegates to expand_beats() which handles chunking, template calls,
+    revision, emission, and task completion.
+    """
+
+    _agent_name: ClassVar[str] = "narrator"
+
+    class Fields:
+        chunk_size = PropertyField(
+            name="chunk_size",
+            type="int",
+            description="Number of beats per expansion chunk",
+            default=3,
+        )
+
+    def __init__(self, title="Expand Story Arc", **kwargs):
+        super().__init__(title=title, **kwargs)
+
+    def setup(self):
+        self.add_input("state")
+        self.add_input("plan_id", socket_type="str")
+        self.add_input("beats", socket_type="list")
+        self.add_input("perspective", socket_type="str")
+        self.add_input("director_notes", socket_type="str", optional=True)
+
+        self.set_property("chunk_size", 3)
+
+        self.add_output("state")
+        self.add_output("result", socket_type="str")
+        self.add_output("word_count", socket_type="int")
+
+    async def run(self, state: GraphState):
+        input_state = self.require_input("state")
+        plan_id = self.require_input("plan_id")
+        beats = self.require_input("beats")
+        perspective = self.require_input("perspective")
+        director_notes = self.normalized_input_value("director_notes") or ""
+        chunk_size = int(self.get_property("chunk_size"))
+
+        scene = active_scene.get()
+        narrator = get_agent("narrator")
+
+        if not beats:
+            self.set_output_values({
+                "state": input_state,
+                "result": "No beats to expand",
+                "word_count": 0,
+            })
+            return
+
+        chat_ctx = director_chat_context.get()
+        chat_id = chat_ctx.chat_id if chat_ctx else None
+
+        total_blocks, total_words = await expand_beats(
+            scene=scene,
+            narrator=narrator,
+            beats=beats,
+            plan_id=plan_id,
+            perspective=perspective,
+            director_notes=director_notes,
+            chunk_size=chunk_size,
+            chat_id=chat_id,
+        )
+
+        result = f"Generated {total_blocks} blocks, {total_words} words from {len(beats)} beats"
+        log.info("expand_story_arc.done", result=result)
+
+        self.set_output_values({
+            "state": input_state,
+            "result": result,
+            "word_count": total_words,
+        })
