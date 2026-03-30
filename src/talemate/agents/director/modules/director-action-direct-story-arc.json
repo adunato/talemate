@@ -108,21 +108,6 @@
       "registry": "state/GetState",
       "base_type": "core/Node"
     },
-    "a30b01b3-84da-46c0-8783-785660b85ccb": {
-      "title": "Expand Story Arc",
-      "id": "a30b01b3-84da-46c0-8783-785660b85ccb",
-      "properties": {
-        "chunk_size": 3
-      },
-      "x": 575,
-      "y": 329,
-      "width": 212,
-      "height": 138,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/director/plan/ExpandStoryArc",
-      "base_type": "core/Node"
-    },
     "b6079126-1364-4fcf-b98b-08dbb79f9615": {
       "title": "true",
       "id": "b6079126-1364-4fcf-b98b-08dbb79f9615",
@@ -175,6 +160,62 @@
       "inherited": false,
       "registry": "agents/director/chat/DirectorChatSubAction",
       "base_type": "core/Node"
+    },
+    "a30b01b3-84da-46c0-8783-785660b85ccb": {
+      "title": "Expand Story Arc",
+      "id": "a30b01b3-84da-46c0-8783-785660b85ccb",
+      "properties": {
+        "chunk_size": 5
+      },
+      "x": 570,
+      "y": 320,
+      "width": 212,
+      "height": 158,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/plan/ExpandStoryArc",
+      "base_type": "core/Node"
+    },
+    "dc9bff13-a1bb-46a7-9159-090287494766": {
+      "title": "Director Settings",
+      "id": "dc9bff13-a1bb-46a7-9159-090287494766",
+      "properties": {},
+      "x": 10,
+      "y": 760,
+      "width": 363,
+      "height": 926,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "agents/director/Settings",
+      "base_type": "core/Node"
+    },
+    "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061": {
+      "title": "chat_generate_arc_expand_chunk_size",
+      "id": "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061",
+      "properties": {},
+      "x": 200,
+      "y": 760,
+      "width": 294,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Watch",
+      "base_type": "core/Node"
+    },
+    "9b188432-1182-4fe0-82d4-28ad012a7a9a": {
+      "title": "As Number",
+      "id": "9b188432-1182-4fe0-82d4-28ad012a7a9a",
+      "properties": {
+        "number_type": "int"
+      },
+      "x": 530,
+      "y": 770,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "data/number/AsNumber",
+      "base_type": "core/Node"
     }
   },
   "edges": {
@@ -193,23 +234,32 @@
     "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.plan_id": [
       "a30b01b3-84da-46c0-8783-785660b85ccb.plan_id"
     ],
-    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.perspective": [
-      "a30b01b3-84da-46c0-8783-785660b85ccb.perspective"
-    ],
     "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.beats": [
       "a30b01b3-84da-46c0-8783-785660b85ccb.beats"
     ],
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.perspective": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.perspective"
+    ],
     "32f0b1c1-537e-4f65-a462-afa169d494d7.value": [
       "a30b01b3-84da-46c0-8783-785660b85ccb.director_notes"
-    ],
-    "a30b01b3-84da-46c0-8783-785660b85ccb.result": [
-      "b12ebc94-8767-4ce4-9d97-1f8adfa8ae66.value"
     ],
     "b6079126-1364-4fcf-b98b-08dbb79f9615.value": [
       "f6183662-351c-4251-874c-8ea593df1551.state"
     ],
     "f6183662-351c-4251-874c-8ea593df1551.state": [
       "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.state"
+    ],
+    "a30b01b3-84da-46c0-8783-785660b85ccb.result": [
+      "b12ebc94-8767-4ce4-9d97-1f8adfa8ae66.value"
+    ],
+    "dc9bff13-a1bb-46a7-9159-090287494766.chat_generate_arc_expand_chunk_size": [
+      "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061.value"
+    ],
+    "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061.value": [
+      "9b188432-1182-4fe0-82d4-28ad012a7a9a.value"
+    ],
+    "9b188432-1182-4fe0-82d4-28ad012a7a9a.value": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.chunk_size"
     ]
   },
   "groups": [
@@ -227,8 +277,8 @@
       "title": "Process",
       "x": -2,
       "y": 226,
-      "width": 1061,
-      "height": 473,
+      "width": 1051,
+      "height": 574,
       "color": "#3f789e",
       "font_size": 24,
       "inherited": false
@@ -240,28 +290,28 @@
   "inputs": [],
   "outputs": [
     {
-      "id": "a55bee38-3f5d-42d6-950a-7c3a5b37f312",
+      "id": "3d11a687-076d-4645-9bfc-43e63daf0739",
       "name": "fn",
       "optional": false,
       "group": null,
       "socket_type": "function"
     },
     {
-      "id": "834b47ff-aa31-42d9-9abb-f6df172e7326",
+      "id": "0901e75e-4235-484a-a5ed-3bdf1bd83e52",
       "name": "name",
       "optional": false,
       "group": null,
       "socket_type": "str"
     },
     {
-      "id": "5368add5-b845-4b1b-8e3c-9801b7771a67",
+      "id": "728a9946-813f-4125-bffb-153eeaa3e2fb",
       "name": "allow_multiple_calls",
       "optional": false,
       "group": null,
       "socket_type": "bool"
     },
     {
-      "id": "1de64fae-43ae-4199-b6b6-6855238905fb",
+      "id": "26402d15-3605-4ae7-aa5a-c909b2e13825",
       "name": "ai_callback",
       "optional": false,
       "group": null,

@@ -129,6 +129,15 @@ class DirectorChatMixin:
                     min=0.0,
                     max=1.0,
                 ),
+                "generate_arc_expand_chunk_size": AgentActionConfig(
+                    type="number",
+                    label="Expand chunk size",
+                    description="Number of beats per expansion chunk in expand mode. Larger chunks produce more cohesive prose but use more context.",
+                    value=5,
+                    step=1,
+                    min=3,
+                    max=12,
+                ),
             },
         )
 

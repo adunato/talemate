@@ -25,7 +25,7 @@ Target parameters:
 
 Each beat should specify:
 - `type`: one of `narration`, `dialogue`, `action`, `transition`, `reveal`
-- `description`: what happens in this beat (2-3 sentences, detailed enough to direct a writer)
+- `description`: what happens in this beat (2-4 sentences). Include: what the character DOES (physical action), what CHANGES as a result, and any specific sensory or environmental detail that makes this beat distinct. The description must be detailed enough that a writer can produce 150-250 words from it without inventing new plot.
 - `characters`: list of character names involved (empty for pure narration)
 - `pacing`: `slow`, `moderate`, or `fast`
 - `tension`: float 0.0 to 1.0 representing tension level
@@ -34,11 +34,11 @@ Guidelines:
 
 **Story structure:**
 - Every beat must ADVANCE the story — introduce something new, change something, or force a decision. Never create a beat that merely re-describes the current situation from another angle.
-- Include at least one beat where a character makes a meaningful choice that changes the trajectory of events. Characters should have agency, not just witness spectacle.
-- Plan for character development: if a character has a defining trait (e.g., denial, fear), that trait must evolve over the scene. It should crack, deepen, or transform — not repeat identically.{% if beat_count >= 12 %} With {{ beat_count }} beats, plan multiple stages of evolution — the trait should shift noticeably at least 3-4 times across the arc.{% endif %}
+- At least {{ (beat_count * 0.3) | round(0, 'ceil') | int }} of the {{ beat_count }} beats must have a character making a meaningful choice that changes the trajectory of events. Characters must have agency, not just witness spectacle.
+- Plan for character development: if a character has a defining trait (e.g., denial, fear), that trait must evolve over the scene. It must crack, deepen, or transform — not repeat identically.{% if beat_count >= 12 %} With {{ beat_count }} beats, plan multiple stages of evolution — the trait must shift noticeably at least 3-4 times across the arc.{% endif %}
 - Build tension with valleys, not just peaks. Include quiet beats between intense ones — moments of reflection, conversation, or uneasy calm that make the intense beats hit harder.
 - The FINAL beat must involve a character making a choice, taking an action, or facing a consequence — not just witnessing a revelation or spectacle. Pure "and then they saw something amazing/terrifying" is not a valid ending. The character must DO something that closes or pivots the arc.
-- The `tension` value should reflect genuine escalation. Early beats should have LOW tension (0.1-0.3). Save high tension (0.7+) for the latter portion. Do not start at high intensity.
+- The `tension` value must reflect genuine escalation. Early beats must have LOW tension (0.1-0.3). Save high tension (0.7+) for the latter portion. Do not start at high intensity.
 
 **Beat construction:**
 {% set dialogue_pct = (agent_config("director.chat.generate_arc_dialogue_ratio") * 100) | int -%}
@@ -46,13 +46,14 @@ Guidelines:
 - Vary beat types for engaging pacing (don't stack 5 dialogue beats in a row)
 - Use `transition` beats for time/location changes
 - Use `reveal` beats for key information drops
-- **Dialogue beats focus on ONE character.** List only the speaking/acting character in `characters`. The beat description should specify what that character says or does, including how others react. If two characters need dialogue focus, use two separate dialogue beats — one per character.
+- **Dialogue beats focus on ONE character.** List only the speaking/acting character in `characters`. The beat description must specify what that character says or does, including how others react. If two characters need dialogue focus, use two separate dialogue beats — one per character.
 - Use `narration` beats (not `dialogue`) for scenes where multiple characters' actions need equal weight
 - Every beat description must specify a concrete EVENT or ACTION — something that happens, changes, or is decided. Do NOT write purely atmospheric beats ("the shadows deepen", "the air grows heavy"). The writer produces atmosphere naturally; dedicated atmosphere beats create redundant prose.
 - "Elmer discovers the door has vanished" is a good beat. "Elmer feels dread about the situation" is not.
+- **No two beats may have the same character doing the same type of action.** If a character already has a beat where they explain something, their next beat must be a different action — questioning, physically intervening, making a decision, arguing, breaking down, taking charge, etc. Review your beats before finalizing: if two beats could be summarized the same way ("Character X explains Y"), rewrite one of them.
 
 Before the outline, specify the narrative perspective AND tense for this scene inside `<PERSPECTIVE>` tags.
-This should be a short, clear instruction for writers to follow consistently across all beats.
+This must be a short, clear instruction for writers to follow consistently across all beats.
 Choose based on the scene's tone, the user's instructions, and what best serves the story.
 If the user's instructions don't specify, default to third person limited, past tense.
 

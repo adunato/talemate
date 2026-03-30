@@ -336,7 +336,9 @@ class ExpandStoryArc(AgentNode):
             name="chunk_size",
             type="int",
             description="Number of beats per expansion chunk",
-            default=3,
+            default=5,
+            min=3,
+            max=12,
         )
 
     def __init__(self, title="Expand Story Arc", **kwargs):
@@ -348,8 +350,9 @@ class ExpandStoryArc(AgentNode):
         self.add_input("beats", socket_type="list")
         self.add_input("perspective", socket_type="str")
         self.add_input("director_notes", socket_type="str", optional=True)
+        self.add_input("chunk_size", socket_type="int", optional=True)
 
-        self.set_property("chunk_size", 3)
+        self.set_property("chunk_size", 5)
 
         self.add_output("state")
         self.add_output("result", socket_type="str")
@@ -361,7 +364,7 @@ class ExpandStoryArc(AgentNode):
         beats = self.require_input("beats")
         perspective = self.require_input("perspective")
         director_notes = self.normalized_input_value("director_notes") or ""
-        chunk_size = int(self.get_property("chunk_size"))
+        chunk_size = self.normalized_input_value("chunk_size") or int(self.get_property("chunk_size"))
 
         scene = active_scene.get()
         narrator = get_agent("narrator")

@@ -2,6 +2,7 @@
 Arc expansion — expands plan beats into prose and pushes to scene history.
 """
 
+import re
 import structlog
 
 from talemate.emit import emit
@@ -14,6 +15,10 @@ from .schema import Beat
 from .util import complete_task, emit_plan_updated, get_plan
 
 log = structlog.get_logger("talemate.agents.director.plan.expand")
+
+# Matches any opening block tag leaked into content
+# XXX: this can't hardcode the tag style or names -- the template defines it
+_LEAKED_TAG_RE = re.compile(r"</?(?:NARRATOR|CHARACTER)\b", re.IGNORECASE)
 
 
 async def revise_narrator_content(narrator, content: str) -> str:
@@ -73,36 +78,60 @@ async def expand_beats(
     for i in range(0, len(beats), chunk_size):
         chunk_beats = beats[i:i + chunk_size]
         following_beats = beats[i + chunk_size:i + chunk_size + 2]
+        chunk_num = i // chunk_size + 1
 
         log.info(
             "expand.chunk",
-            chunk=i // chunk_size + 1,
+            chunk=chunk_num,
             beats=f"{i + 1}-{i + len(chunk_beats)}",
             total=len(beats),
         )
 
-        # Call the expansion template
-        response, extracted = await Prompt.request(
-            "narrator.arc-expand",
-            narrator.client,
-            "narrate_4096",
-            vars={
-                "scene": scene,
-                "max_tokens": narrator.client.max_token_length,
-                "beats": chunk_beats,
-                "following_beats": following_beats,
-                "preceding_text": preceding_text[-2000:] if preceding_text else "",
-                "perspective": perspective,
-                "director_notes": director_notes,
-                "extra_instructions": narrator.extra_instructions,
-                "response_length": 4096,
-            },
-        )
+        # Call the expansion template with retry on malformed output
+        max_attempts = 3
+        blocks = []
+        prompt_vars = {
+            "scene": scene,
+            "max_tokens": narrator.client.max_token_length,
+            "beats": chunk_beats,
+            "following_beats": following_beats,
+            "preceding_text": preceding_text[-2000:] if preceding_text else "",
+            "perspective": perspective,
+            "director_notes": director_notes,
+            "extra_instructions": narrator.extra_instructions,
+            "response_length": 4096,
+        }
 
-        blocks = extracted.get("response", [])
+        for attempt in range(1, max_attempts + 1):
+            response, extracted = await Prompt.request(
+                "narrator.arc-expand",
+                narrator.client,
+                "narrate_4096",
+                vars=prompt_vars,
+            )
+
+            blocks = extracted.get("response", [])
+            if not blocks:
+                log.warning("expand.no_blocks", chunk=chunk_num, attempt=attempt)
+                continue
+
+            # Validate: check for leaked block tags in content
+            has_leaked_tags = any(
+                _LEAKED_TAG_RE.search(b.get("content", "")) for b in blocks
+            )
+            if not has_leaked_tags:
+                break
+
+            log.warning("expand.leaked_tags", chunk=chunk_num, attempt=attempt)
+            blocks = []
+
         if not blocks:
-            log.warning("expand.no_blocks", chunk=i // chunk_size + 1)
-            continue
+            raise RuntimeError(
+                f"Expansion failed for chunk {chunk_num} after {max_attempts} attempts. "
+                f"The model produced malformed output with leaked block tags. "
+                f"This may indicate the model is too weak for structured generation — "
+                f"consider using a more capable model."
+            )
 
         # Push blocks to scene history and emit to frontend
         for block in blocks:
