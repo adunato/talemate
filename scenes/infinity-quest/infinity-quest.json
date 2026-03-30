@@ -101,16 +101,17 @@
       "color": "red",
       "example_dialogue": [
         "Kaira: \"The readings are contradictory.\" She didn't look up from the scanner, her fingers adjusting the calibration with small, precise movements. \"Thermal says the corridor is empty. Motion says it isn't. One of them is wrong and I need to know which before we open that door.\"",
-        "Kaira: She pulled up the star chart and rotated it with a flick of her wrist. \"We are here.\" A pause. \"Or we were here, six hours ago. The navigation computer cannot reconcile our current position with any known coordinate system. I have checked the math three times.\"",
         "Kaira: \"That is not what I said.\" Her voice was flat, precise. \"I said the artifact is emitting a signal. I did not say it is communicating. Those are different things. Do not assume intent where there is only data.\"",
         "Kaira: She was quiet for a long time, watching the viewport. When she spoke, her voice was softer than usual. \"On Altrusia, we have a word for the space between stars. It translates roughly as 'the patient dark.' My people believe it is waiting for something.\" She glanced at him. \"I am starting to think they were right.\"",
-        "Kaira: \"Captain.\" The single word carried the weight of everything she wasn't saying. She held up the scanner so he could see the display. The numbers were impossible. \"We need to leave. Now. I will explain once we are moving.\""
+        "Kaira: She grabbed his arm hard enough to leave bruises. \"Stop. Stop fixing it.\" Her voice was raw, stripped of its usual precision. \"Every time you touch the hardware it gets worse. Do you understand? You are feeding it.\"",
+        "Kaira: \"Elmer.\" Just his name, no rank. She was already moving, pulling him by the collar. \"Do not look at the wall. Do not look. Move your feet. Now.\"",
+        "Kaira: She stared at the impossible readings for a long moment, then switched off the scanner with a deliberate click. \"I believe the human expression is 'that is above my pay grade.'\" A pause. \"I do not receive a pay grade. But if I did, this would be above it.\""
       ],
       "history_events": [],
       "is_player": false,
       "cover_image": "2a2d07de2e420983bf68fbb5190d1a3ef4087fc111d708026bc0cb40f0e7711f",
       "avatar": "057d62081bf0aadbb9c818f8a019964caaa0ddfbbe6042a151324e8cf6f9cebb",
-      "dialogue_instructions": "Kaira speaks with precise, measured diction — no contractions, minimal slang. She leads with data and corrects imprecise language. Her sentences are structured and complete, even under duress. She does not raise her voice; when alarmed, she gets flatter and more clinical. She uses Altrusian loanwords occasionally for concepts that have no human equivalent. She addresses Elmer as 'Captain' in professional contexts and by name only when the situation is personal. Example register: \"The readings are contradictory. I have checked the math three times.\""
+      "dialogue_instructions": "Kaira speaks with precise, measured diction — no contractions, minimal slang. She leads with data and corrects imprecise language. Her sentences are structured and complete. She uses Altrusian loanwords occasionally for concepts that have no human equivalent. She addresses Elmer as 'Captain' in professional contexts and by name only when the situation is personal.\n\nUnder normal pressure she gets quieter and more focused. But when pushed past her threshold — when the data stops making sense, when her instruments betray her — her composure cracks. She becomes terse, urgent, even sharp. She may snap at Elmer, issue commands instead of observations, or go silent when words fail. Her fear shows not through panic but through the breakdown of her precision: shorter sentences, incomplete thoughts, physical urgency replacing analytical calm."
     }
   },
   "immutable_save": true,
