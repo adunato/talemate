@@ -5,6 +5,7 @@ Arc expansion — expands plan beats into prose and pushes to scene history.
 import re
 import structlog
 
+import pydantic
 from talemate.emit import emit
 import talemate.emit.async_signals
 from talemate.agents.narrator import NarratorAgentEmission
@@ -17,8 +18,128 @@ from .util import complete_task, emit_plan_updated, get_plan
 log = structlog.get_logger("talemate.agents.director.plan.expand")
 
 # Matches any opening block tag leaked into content
-# XXX: this can't hardcode the tag style or names -- the template defines it
+# TODO: this can't hardcode the tag style or names -- the template defines it
 _LEAKED_TAG_RE = re.compile(r"</?(?:NARRATOR|CHARACTER)\b", re.IGNORECASE)
+
+# Minimum beats per chunk when splitting at tension valleys
+MIN_CHUNK_BEATS = 3
+
+
+class ChunkArcInfo(pydantic.BaseModel):
+    """Arc metadata for a single expansion chunk."""
+    position: str  # "opening", "rising", "climax", "resolution"
+    chunk_index: int
+    total_chunks: int
+    tension_range: tuple[float, float]  # (min, max) tension in this chunk
+    has_peak: bool  # whether the arc's highest-tension beat is in this chunk
+    guidance: str  # prose guidance for the template
+
+
+def compute_chunks(beats: list[Beat], max_chunk_size: int) -> list[list[Beat]]:
+    """
+    Split beats into chunks at tension valleys, respecting max_chunk_size.
+
+    Prefers splitting where tension drops (natural scene breaks) over
+    arbitrary even splits. Falls back to max_chunk_size if no valleys found.
+    """
+    if len(beats) <= max_chunk_size:
+        return [beats]
+
+    chunks: list[list[Beat]] = []
+    current: list[Beat] = []
+
+    for i, beat in enumerate(beats):
+        current.append(beat)
+
+        if len(current) < MIN_CHUNK_BEATS:
+            continue
+
+        # Check if we must split (hit max size)
+        if len(current) >= max_chunk_size:
+            chunks.append(current)
+            current = []
+            continue
+
+        # Check for tension valley: current beat's tension > next beat's tension
+        # and we have enough beats accumulated
+        if i + 1 < len(beats) and beat.tension > beats[i + 1].tension:
+            # Only split if remaining beats can form a valid chunk
+            remaining = len(beats) - (i + 1)
+            if remaining >= MIN_CHUNK_BEATS:
+                chunks.append(current)
+                current = []
+
+    if current:
+        # If the leftover is too small, merge with the last chunk
+        if chunks and len(current) < MIN_CHUNK_BEATS:
+            chunks[-1].extend(current)
+        else:
+            chunks.append(current)
+
+    return chunks
+
+
+def compute_arc_info(
+    chunks: list[list[Beat]], all_beats: list[Beat]
+) -> list[ChunkArcInfo]:
+    """Derive arc-position metadata for each chunk."""
+    total_chunks = len(chunks)
+    peak_tension = max(b.tension for b in all_beats)
+
+    infos: list[ChunkArcInfo] = []
+    for idx, chunk in enumerate(chunks):
+        tensions = [b.tension for b in chunk]
+        t_min, t_max = min(tensions), max(tensions)
+        has_peak = t_max >= peak_tension - 0.05  # within 0.05 of the global peak
+
+        # Determine position
+        if total_chunks == 1:
+            position = "full"
+        elif idx == 0:
+            position = "opening"
+        elif has_peak:
+            position = "climax"
+        elif idx == total_chunks - 1:
+            position = "resolution"
+        else:
+            position = "rising"
+
+        # Generate guidance
+        if position == "opening":
+            guidance = (
+                "You are writing the OPENING of the story. Establish the world and "
+                "characters, build tension gradually. Do not peak yet — save the "
+                "most intense moments for later."
+            )
+        elif position == "rising":
+            guidance = (
+                "You are writing the RISING ACTION. Tension is building. Escalate "
+                "steadily but leave room for the climax ahead."
+            )
+        elif position == "climax":
+            guidance = (
+                "You are writing the CLIMAX — the dramatic high point. Commit fully "
+                "to the peak intensity. This is where the biggest moments happen."
+            )
+        elif position == "resolution":
+            guidance = (
+                "You are writing the RESOLUTION. The peak has passed. Land the "
+                "consequences, close the arc, and let the characters process what "
+                "happened."
+            )
+        else:
+            guidance = ""
+
+        infos.append(ChunkArcInfo(
+            position=position,
+            chunk_index=idx,
+            total_chunks=total_chunks,
+            tension_range=(t_min, t_max),
+            has_peak=has_peak,
+            guidance=guidance,
+        ))
+
+    return infos
 
 
 async def revise_narrator_content(narrator, content: str) -> str:
@@ -69,22 +190,39 @@ async def expand_beats(
     """
     Expand beats into prose in chunks and push to scene history.
 
+    Chunks are split at tension valleys when possible (deliberate chunking),
+    falling back to max chunk_size. Each chunk receives arc-position metadata
+    to guide pacing.
+
     Returns (total_blocks, total_words).
     """
     total_words = 0
     total_blocks = 0
     preceding_text = ""
 
-    for i in range(0, len(beats), chunk_size):
-        chunk_beats = beats[i:i + chunk_size]
-        following_beats = beats[i + chunk_size:i + chunk_size + 2]
-        chunk_num = i // chunk_size + 1
+    # Compute chunks and arc metadata
+    chunks = compute_chunks(beats, chunk_size)
+    arc_infos = compute_arc_info(chunks, beats)
+
+    # Build a flat index to find following beats across chunk boundaries
+    beat_offset = 0
+
+    for chunk_num, (chunk_beats, arc_info) in enumerate(
+        zip(chunks, arc_infos), start=1
+    ):
+        # Following beats: first 2 beats from the next chunk
+        following_beats = []
+        next_offset = beat_offset + len(chunk_beats)
+        if next_offset < len(beats):
+            following_beats = beats[next_offset:next_offset + 2]
 
         log.info(
             "expand.chunk",
             chunk=chunk_num,
-            beats=f"{i + 1}-{i + len(chunk_beats)}",
+            beats=f"{beat_offset + 1}-{beat_offset + len(chunk_beats)}",
             total=len(beats),
+            position=arc_info.position,
+            tension=f"{arc_info.tension_range[0]:.1f}-{arc_info.tension_range[1]:.1f}",
         )
 
         # Call the expansion template with retry on malformed output
@@ -100,6 +238,7 @@ async def expand_beats(
             "director_notes": director_notes,
             "extra_instructions": narrator.extra_instructions,
             "response_length": 4096,
+            "arc_info": arc_info,
         }
 
         for attempt in range(1, max_attempts + 1):
@@ -152,5 +291,7 @@ async def expand_beats(
         plan = get_plan(scene, plan_id)
         if plan:
             emit_plan_updated(plan, chat_id=chat_id)
+
+        beat_offset += len(chunk_beats)
 
     return total_blocks, total_words

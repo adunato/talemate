@@ -22,7 +22,10 @@ Extractors:
 <|SECTION:TASK|>
 Write scene prose from the beat descriptions below.
 
-Perspective: {{ perspective }}
+{% if arc_info and arc_info.total_chunks > 1 %}
+**Arc position:** {{ arc_info.position | upper }} (chunk {{ arc_info.chunk_index + 1 }} of {{ arc_info.total_chunks }}, tension {{ "%.1f"|format(arc_info.tension_range[0]) }}–{{ "%.1f"|format(arc_info.tension_range[1]) }})
+{{ arc_info.guidance }}
+{% endif %}
 
 {% if preceding_text %}
 **Story so far** (continue from here):
