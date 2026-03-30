@@ -24,7 +24,17 @@ Write scene prose from the beat descriptions below.
 
 {% if arc_info and arc_info.total_chunks > 1 %}
 **Arc position:** {{ arc_info.position | upper }} (chunk {{ arc_info.chunk_index + 1 }} of {{ arc_info.total_chunks }}, tension {{ "%.1f"|format(arc_info.tension_range[0]) }}–{{ "%.1f"|format(arc_info.tension_range[1]) }})
-{{ arc_info.guidance }}
+{% if arc_info.position == "opening" %}
+You are writing the OPENING of the story. Establish the world and characters, build tension gradually. Do not peak yet — save the most intense moments for later.
+{% elif arc_info.position == "rising" %}
+You are writing the RISING ACTION. Tension is building. Escalate steadily but leave room for the climax ahead.
+{% elif arc_info.position == "climax" %}
+You are writing the CLIMAX — the dramatic high point. Commit fully to the peak intensity. This is where the biggest moments happen.
+{% elif arc_info.position == "climax_and_resolution" %}
+You are writing the CLIMAX and RESOLUTION. Build to the dramatic peak, then wind down. The final beats must land the consequences and let the characters process what happened — do not end at maximum intensity.
+{% elif arc_info.position == "resolution" %}
+You are writing the RESOLUTION. The peak has passed. Land the consequences, close the arc, and let the characters process what happened.
+{% endif %}
 {% endif %}
 
 {% if preceding_text %}

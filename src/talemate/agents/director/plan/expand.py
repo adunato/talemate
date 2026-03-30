@@ -27,12 +27,11 @@ MIN_CHUNK_BEATS = 3
 
 class ChunkArcInfo(pydantic.BaseModel):
     """Arc metadata for a single expansion chunk."""
-    position: str  # "opening", "rising", "climax", "resolution"
+    position: str  # "opening", "rising", "climax", "climax_and_resolution", "resolution", "full"
     chunk_index: int
     total_chunks: int
     tension_range: tuple[float, float]  # (min, max) tension in this chunk
     has_peak: bool  # whether the arc's highest-tension beat is in this chunk
-    guidance: str  # prose guidance for the template
 
 
 def compute_chunks(beats: list[Beat], max_chunk_size: int) -> list[list[Beat]]:
@@ -92,11 +91,16 @@ def compute_arc_info(
         t_min, t_max = min(tensions), max(tensions)
         has_peak = t_max >= peak_tension - 0.05  # within 0.05 of the global peak
 
+        # Check if tension trends downward at the end of this chunk
+        winds_down = len(tensions) >= 3 and tensions[-1] < t_max - 0.15
+
         # Determine position
         if total_chunks == 1:
             position = "full"
         elif idx == 0:
             position = "opening"
+        elif has_peak and winds_down:
+            position = "climax_and_resolution"
         elif has_peak:
             position = "climax"
         elif idx == total_chunks - 1:
@@ -104,39 +108,12 @@ def compute_arc_info(
         else:
             position = "rising"
 
-        # Generate guidance
-        if position == "opening":
-            guidance = (
-                "You are writing the OPENING of the story. Establish the world and "
-                "characters, build tension gradually. Do not peak yet — save the "
-                "most intense moments for later."
-            )
-        elif position == "rising":
-            guidance = (
-                "You are writing the RISING ACTION. Tension is building. Escalate "
-                "steadily but leave room for the climax ahead."
-            )
-        elif position == "climax":
-            guidance = (
-                "You are writing the CLIMAX — the dramatic high point. Commit fully "
-                "to the peak intensity. This is where the biggest moments happen."
-            )
-        elif position == "resolution":
-            guidance = (
-                "You are writing the RESOLUTION. The peak has passed. Land the "
-                "consequences, close the arc, and let the characters process what "
-                "happened."
-            )
-        else:
-            guidance = ""
-
         infos.append(ChunkArcInfo(
             position=position,
             chunk_index=idx,
             total_chunks=total_chunks,
             tension_range=(t_min, t_max),
             has_peak=has_peak,
-            guidance=guidance,
         ))
 
     return infos
