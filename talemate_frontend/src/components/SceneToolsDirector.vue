@@ -49,6 +49,9 @@
             <v-card-title><v-icon class="mr-2">mdi-movie-open</v-icon>Generate Long Progress</v-card-title>
             <v-card-text>
                 <div class="text-muted mb-4">Automatically plans and generates multiple turns of narrative progress based on your instructions. The director will create an outline and then execute each turn sequentially.</div>
+                <v-alert variant="outlined" density="compact" color="warning" class="mb-3">
+                    <div class="text-muted">This feature requires a strong LLM (100B+ parameters). Smaller local models typically cannot follow the structured generation pipeline reliably.</div>
+                </v-alert>
                 <v-textarea
                     v-model="scenePlanInstructions"
                     label="Scene instructions"
