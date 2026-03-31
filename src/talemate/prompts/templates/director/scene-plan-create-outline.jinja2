@@ -41,7 +41,7 @@ Guidelines:
 - The `tension` value must reflect genuine escalation. Early beats must have LOW tension (0.1-0.3). Save high tension (0.7+) for the latter portion. Do not start at high intensity.
 
 **Beat construction:**
-{% set dialogue_pct = (agent_config("director.chat.generate_arc_dialogue_ratio") * 100) | int -%}
+{% set dialogue_pct = (agent_config("director.plan.dialogue_ratio") * 100) | int -%}
 - Approximately {{ dialogue_pct }}% of beats should be `dialogue` type — characters need to speak, not just act and observe
 - Vary beat types for engaging pacing (don't stack 5 dialogue beats in a row)
 - Use `transition` beats for time/location changes

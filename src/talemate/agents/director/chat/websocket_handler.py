@@ -44,6 +44,8 @@ class ChatCreateGenerateArcPayload(pydantic.BaseModel):
     beat_count: int = 8
     dialogue_ratio: float | None = None
     mode: Literal["generate_arc", "generate_arc_expand"] = "generate_arc"
+    outline_critique: bool | None = None
+    expand_critique: bool | None = None
 
 
 class ChatRegeneratePayload(pydantic.BaseModel):
@@ -451,9 +453,19 @@ class DirectorChatWebsocketMixin:
         payload = ChatCreateGenerateArcPayload(**data)
 
         if payload.dialogue_ratio is not None:
-            self.director.actions["chat"].config[
-                "generate_arc_dialogue_ratio"
+            self.director.actions["plan"].config[
+                "dialogue_ratio"
             ].value = payload.dialogue_ratio
+
+        if payload.outline_critique is not None:
+            self.director.actions["plan"].config[
+                "outline_critique"
+            ].value = payload.outline_critique
+
+        if payload.expand_critique is not None:
+            self.director.actions["plan"].config[
+                "expand_critique"
+            ].value = payload.expand_critique
 
         chat = self.director.chat_create_generate_arc(
             payload.instructions,

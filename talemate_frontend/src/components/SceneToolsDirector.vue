@@ -130,6 +130,28 @@
                     <div class="text-muted" v-else>Expand mode: beats are expanded into prose in chunks. Much faster but with less per-turn context injection.</div>
                 </v-alert>
 
+                <div class="d-flex ga-4 mb-4">
+                    <v-checkbox
+                        v-model="scenePlanOutlineCritique"
+                        label="Outline critique"
+                        hint="Critique and refine the outline before expansion"
+                        persistent-hint
+                        density="compact"
+                        hide-details="auto"
+                        color="primary"
+                    ></v-checkbox>
+                    <v-checkbox
+                        v-model="scenePlanExpandCritique"
+                        label="Expansion critique"
+                        hint="Post-expansion pass to fix redundancy"
+                        persistent-hint
+                        density="compact"
+                        hide-details="auto"
+                        color="primary"
+                        v-if="scenePlanMode === 'generate_arc_expand'"
+                    ></v-checkbox>
+                </div>
+
                 <v-alert variant="outlined" density="compact" color="primary" class="mb-3">
                     <div class="text-muted">This may generate actions and dialogue for player controlled characters as well.</div>
                 </v-alert>
@@ -166,6 +188,8 @@ export default {
             scenePlanBeats: 8,
             scenePlanDialogueRatio: 40,
             scenePlanMode: 'generate_arc',
+            scenePlanOutlineCritique: true,
+            scenePlanExpandCritique: true,
             minRecommendedNarratorLength: 1024,
         }
     },
@@ -250,7 +274,9 @@ export default {
             this.scenePlanInstructions = '';
             this.scenePlanBeats = 8;
             this.scenePlanMode = 'generate_arc';
-            this.scenePlanDialogueRatio = Math.round((this.agentStatus?.director?.actions?.chat?.config?.generate_arc_dialogue_ratio?.value ?? 0.4) * 100);
+            this.scenePlanDialogueRatio = Math.round((this.agentStatus?.director?.actions?.plan?.config?.dialogue_ratio?.value ?? 0.4) * 100);
+            this.scenePlanOutlineCritique = this.agentStatus?.director?.actions?.plan?.config?.outline_critique?.value ?? true;
+            this.scenePlanExpandCritique = this.agentStatus?.director?.actions?.plan?.config?.expand_critique?.value ?? true;
             this.scenePlanDialog = true;
         },
 
@@ -263,6 +289,8 @@ export default {
                 beat_count: this.scenePlanBeats,
                 dialogue_ratio: this.scenePlanDialogueRatio / 100,
                 mode: this.scenePlanMode,
+                outline_critique: this.scenePlanOutlineCritique,
+                expand_critique: this.scenePlanExpandCritique,
             }));
             this.openDirectorConsole();
         },

@@ -33,7 +33,6 @@ from .schema import (
     NARRATION_BEAT_RATIO,
 )
 from .util import save_plan, complete_task, emit_plan_updated, get_plan
-from .expand import expand_beats
 
 log = structlog.get_logger("talemate.agents.director.plan.nodes")
 
@@ -327,8 +326,8 @@ class ExpandStoryArc(AgentNode):
     """
     Expands a plan's beats into full prose and pushes them to scene history.
 
-    Delegates to expand_beats() which handles chunking, template calls,
-    revision, emission, and task completion.
+    Delegates to the director's PlanMixin.expand_beats() which handles
+    chunking, template calls, revision, emission, and task completion.
     """
 
     _agent_name: ClassVar[str] = "narrator"
@@ -353,6 +352,7 @@ class ExpandStoryArc(AgentNode):
         self.add_input("perspective", socket_type="str")
         self.add_input("director_notes", socket_type="str", optional=True)
         self.add_input("chunk_size", socket_type="int", optional=True)
+        self.add_input("expand_critique", socket_type="bool", optional=True)
 
         self.set_property("chunk_size", 5)
 
@@ -369,9 +369,10 @@ class ExpandStoryArc(AgentNode):
         chunk_size = self.normalized_input_value("chunk_size") or int(
             self.get_property("chunk_size")
         )
+        expand_critique = self.normalized_input_value("expand_critique")
 
         scene = active_scene.get()
-        narrator = get_agent("narrator")
+        director = get_agent("director")
 
         if not beats:
             self.set_output_values(
@@ -386,15 +387,16 @@ class ExpandStoryArc(AgentNode):
         chat_ctx = director_chat_context.get()
         chat_id = chat_ctx.chat_id if chat_ctx else None
 
-        total_blocks, total_words = await expand_beats(
+        total_blocks, total_words = await director.plan_expand_beats(
             scene=scene,
-            narrator=narrator,
+            narrator=get_agent("narrator"),
             beats=beats,
             plan_id=plan_id,
             perspective=perspective,
             director_notes=director_notes,
             chunk_size=chunk_size,
             chat_id=chat_id,
+            critique=expand_critique,
         )
 
         result = f"Generated {total_blocks} blocks, {total_words} words from {len(beats)} beats"

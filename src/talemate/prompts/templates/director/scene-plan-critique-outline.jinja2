@@ -52,7 +52,7 @@ Every beat description must specify a concrete EVENT or ACTION — something tha
 
 **Structural completeness:** The final beat MUST involve a character making a choice, taking an action, or facing a consequence — not just witnessing a revelation or spectacle. If the last beat is purely "they see something terrifying/beautiful," rewrite it so the character DOES something in response that closes or pivots the arc. The arc needs somewhere to land, and that landing must involve character agency.
 
-{% set dialogue_pct = (agent_config("director.chat.generate_arc_dialogue_ratio") * 100) | int -%}
+{% set dialogue_pct = (agent_config("director.plan.dialogue_ratio") * 100) | int -%}
 **Dialogue ratio:** Approximately {{ dialogue_pct }}% of beats should be `dialogue` type. Characters need to speak, argue, and reveal information through conversation — not just act and observe. If the outline is heavily skewed toward narration, convert some beats to dialogue.
 
 **Perspective consistency:** All beat descriptions must be compatible with the stated perspective ({{ perspective }}). If the perspective is limited to one character, beats must not describe another character's internal thoughts.

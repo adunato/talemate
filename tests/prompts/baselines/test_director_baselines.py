@@ -12,6 +12,8 @@ import talemate.emit.async_signals
 from talemate.agents.base import DynamicInstruction
 
 from talemate.agents.director.chat.schema import DirectorChatMessage
+from talemate.agents.director.plan.schema import Beat
+from talemate.agents.director.plan.expand import ChunkArcInfo
 
 from ..conftest import mock_llm_client  # noqa: F401
 from ..test_director_templates import (  # noqa: F401
@@ -28,7 +30,7 @@ from ..test_director_templates import (  # noqa: F401
     active_context,
     MockCharacter,
 )
-from .conftest import capture_prompt
+from .conftest import capture_prompt, capture_all_prompts
 
 AGENT = "director"
 
@@ -265,3 +267,166 @@ class TestDirectorBaselines:
         baseline_checker(
             capture_prompt(director), AGENT, "detect_characters_from_texts"
         )
+
+
+def _make_test_beats() -> list[Beat]:
+    """Create a small set of beats for testing expand templates."""
+    return [
+        Beat(
+            description="The protagonist discovers the door is locked from the inside.",
+            order=1, tension=0.3, pacing="slow", type="narration",
+            characters=["Elena"],
+        ),
+        Beat(
+            description="Elena confronts Hero about what happened last night, demanding answers.",
+            order=2, tension=0.5, pacing="moderate", type="dialogue",
+            characters=["Elena"],
+        ),
+        Beat(
+            description="A sudden noise from the basement forces both characters to investigate together.",
+            order=3, tension=0.7, pacing="fast", type="action",
+            characters=["Hero", "Elena"],
+        ),
+    ]
+
+
+class TestPlanExpandBaselines:
+    """Baseline tests for plan expand templates (arc-expand, arc-expand-critique)."""
+
+    @pytest.mark.asyncio
+    async def test_arc_expand(self, active_context, baseline_checker):
+        """Test the arc-expand template renders correctly with beats and arc info."""
+        from talemate.prompts import Prompt
+        from talemate.agents.base import ActiveAgent
+
+        director = active_context
+        from talemate.instance import AGENTS
+        narrator = AGENTS.get("narrator")
+        narrator.agent_type = "narrator"
+        narrator.client = director.client
+        narrator.extra_instructions = ""
+        narrator.content_use_writing_style = False
+        narrator.action_response_length = Mock(return_value=4096)
+
+        beats = _make_test_beats()
+        arc_info = ChunkArcInfo(
+            position="opening",
+            chunk_index=0,
+            total_chunks=2,
+            tension_range=(0.3, 0.7),
+            has_peak=False,
+        )
+
+        director.client.send_prompt = AsyncMock(
+            return_value="<NARRATOR>Test narration.</NARRATOR>"
+        )
+
+        with ActiveAgent(narrator, lambda: None):
+            await Prompt.request(
+                "narrator.arc-expand",
+                narrator.client,
+                "narrate_4096",
+                vars={
+                    "scene": director.scene,
+                    "max_tokens": 8192,
+                    "beats": beats,
+                    "following_beats": [],
+                    "preceding_text": "",
+                    "perspective": "Third person limited, past tense.",
+                    "director_notes": "Focus on building tension.",
+                    "extra_instructions": "",
+                    "response_length": 4096,
+                    "arc_info": arc_info,
+                },
+            )
+
+        baseline_checker(capture_prompt(director), AGENT, "arc_expand")
+
+    @pytest.mark.asyncio
+    async def test_arc_expand__with_preceding_text(
+        self, active_context, baseline_checker
+    ):
+        """Test arc-expand with preceding text context."""
+        from talemate.prompts import Prompt
+        from talemate.agents.base import ActiveAgent
+
+        director = active_context
+        from talemate.instance import AGENTS
+        narrator = AGENTS.get("narrator")
+        narrator.agent_type = "narrator"
+        narrator.client = director.client
+        narrator.extra_instructions = ""
+        narrator.content_use_writing_style = False
+        narrator.action_response_length = Mock(return_value=4096)
+
+        beats = _make_test_beats()[1:]  # beats 2-3
+        arc_info = ChunkArcInfo(
+            position="climax",
+            chunk_index=1,
+            total_chunks=2,
+            tension_range=(0.5, 0.7),
+            has_peak=True,
+        )
+
+        director.client.send_prompt = AsyncMock(
+            return_value="<NARRATOR>More narration.</NARRATOR>"
+        )
+
+        with ActiveAgent(narrator, lambda: None):
+            await Prompt.request(
+                "narrator.arc-expand",
+                narrator.client,
+                "narrate_4096",
+                vars={
+                    "scene": director.scene,
+                    "max_tokens": 8192,
+                    "beats": beats,
+                    "following_beats": [],
+                    "preceding_text": "The door creaked open, revealing an empty room. Elena stepped inside cautiously.",
+                    "perspective": "Third person limited, past tense.",
+                    "director_notes": "",
+                    "extra_instructions": "",
+                    "response_length": 4096,
+                    "arc_info": arc_info,
+                },
+            )
+
+        baseline_checker(
+            capture_prompt(director), AGENT, "arc_expand__with_preceding_text"
+        )
+
+    @pytest.mark.asyncio
+    async def test_arc_expand_critique(self, active_context, baseline_checker):
+        """Test the arc-expand-critique template renders correctly."""
+        from talemate.prompts import Prompt
+        from talemate.agents.base import ActiveAgent
+
+        director = active_context
+        narrator = Mock()
+        narrator.client = director.client
+        narrator.extra_instructions = ""
+        narrator.content_use_writing_style = False
+
+        blocks = [
+            {"type": "narrator", "content": "The room was dark and cold. A chill ran down her spine."},
+            {"type": "character", "name": "Elena", "content": "She stepped forward, her hands trembling. \"Who's there?\" she whispered."},
+            {"type": "narrator", "content": "A chill ran through the room. The darkness pressed in from all sides."},
+        ]
+
+        director.client.send_prompt = AsyncMock(
+            return_value="<NARRATOR>Revised narration.</NARRATOR>"
+        )
+
+        with ActiveAgent(narrator, lambda: None):
+            await Prompt.request(
+                "narrator.arc-expand-critique",
+                narrator.client,
+                "narrate_4096",
+                vars={
+                    "blocks": blocks,
+                    "max_tokens": 8192,
+                    "response_length": 4096,
+                },
+            )
+
+        baseline_checker(capture_prompt(director), AGENT, "arc_expand_critique")

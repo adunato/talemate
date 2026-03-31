@@ -1,0 +1,104 @@
+## Context
+
+## Classification
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+
+Scenario Premise:
+A peaceful clearing in the heart of an ancient forest.
+
+## Intention of this story
+The overarching intention of this story. Use it to guide your decisions in the scene.
+
+A test story
+
+## Scene
+
+Elena: Hello there, traveler.
+The sun filters through the leaves above.
+Marcus: What brings you to these woods?
+
+## Characters
+
+### Hero
+name: Hero
+
+A test character.
+
+#### General character guide for Hero
+Speaks normally.
+
+### Elena
+name: Elena
+
+A test character.
+
+#### General character guide for Elena
+Speaks normally.
+
+## Director notes
+Focus on building tension.
+
+## Writing style
+
+## Task
+Write scene prose from the beat descriptions below.
+
+**Arc position:** OPENING (chunk 1 of 2, tension 0.3–0.7)
+
+You are writing the OPENING of the story. Establish the world and characters, build tension gradually. Do not peak yet — save the most intense moments for later.
+
+**Beats to write:**
+
+Beat 1 [narration] (pacing: slow, tension: 0.3)
+  Characters: Elena
+  The protagonist discovers the door is locked from the inside.
+
+Beat 2 [dialogue] (pacing: moderate, tension: 0.5)
+  Characters: Elena
+  Elena confronts Hero about what happened last night, demanding answers.
+
+Beat 3 [action] (pacing: fast, tension: 0.7)
+  Characters: Hero, Elena
+  A sudden noise from the basement forces both characters to investigate together.
+
+**OUTPUT FORMAT (mandatory):**
+
+Your response MUST be a sequence of `<NARRATOR>` and `<CHARACTER name="Name">` blocks. No prose outside of blocks.
+
+- Narration/action/transition/reveal beats → `<NARRATOR>` blocks (1-3 paragraphs of prose)
+- Dialogue beats → `<CHARACTER name="CharacterName">` blocks (action + body language + dialogue as one unit)
+
+Structure:
+
+```
+<NARRATOR>
+... narration prose here (1-3 paragraphs) ...
+</NARRATOR>
+
+<CHARACTER name="Kaira">
+... physical action, body language, and dialogue together as one unit ...
+</CHARACTER>
+
+<NARRATOR>
+... more narration prose ...
+</NARRATOR>
+
+<CHARACTER name="Elmer">
+... his actions and dialogue as one unit ...
+</CHARACTER>
+```
+
+**Writing rules:**
+- `<CHARACTER>` blocks must be complete character moments: physical action, body language, AND dialogue together. Not just a quoted line.
+- ONE strong image per paragraph. Develop it — let the reader sit with it before introducing the next. Do not stack multiple phenomena in rapid succession.
+- Do NOT repeat sensory details or character descriptions already established in the "Story so far" section.
+- Vary sentence length. Mix short and long.
+- Show emotion through action, not narration. "His hands shook" not "he felt terror."
+- Low-tension beats must use short sentences, plain language, breathing room.
+- Do NOT start CHARACTER block content with the character's name — the tag already identifies them.
+- **Dialogue variety:** Each character's dialogue must serve a DIFFERENT function across beats. Vary between: questioning, arguing, joking, commanding, confessing, deflecting, comforting, provoking. A character must NOT deliver the same type of speech twice. If a character made a philosophical declaration in one beat, their next line must be a question, a joke, or a pragmatic instruction — anything except another declaration.
+
+The length of your response must fit within 4 paragraphs.
+<|BOT|><NARRATOR>

@@ -118,25 +118,6 @@ class DirectorChatMixin:
                     step=10,
                     min=20,
                     max=500,
-                    title="Arc Generation",
-                ),
-                "generate_arc_dialogue_ratio": AgentActionConfig(
-                    type="number",
-                    label="Dialogue beat ratio",
-                    description="Target fraction of beats that should be dialogue during arc generation. 0.4 = 40% dialogue beats.",
-                    value=0.4,
-                    step=0.1,
-                    min=0.0,
-                    max=1.0,
-                ),
-                "generate_arc_expand_chunk_size": AgentActionConfig(
-                    type="number",
-                    label="Expand chunk size",
-                    description="Number of beats per expansion chunk in expand mode. Larger chunks produce more cohesive prose but use more context.",
-                    value=5,
-                    step=1,
-                    min=3,
-                    max=12,
                 ),
             },
         )
@@ -162,10 +143,6 @@ class DirectorChatMixin:
     @property
     def chat_scene_context_ratio(self) -> float:
         return self.actions["chat"].config["scene_context_ratio"].value
-
-    @property
-    def chat_dialogue_ratio(self) -> float:
-        return self.actions["chat"].config["generate_arc_dialogue_ratio"].value
 
     @property
     def chat_enable_analysis(self) -> bool:

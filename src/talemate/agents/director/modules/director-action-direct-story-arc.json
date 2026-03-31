@@ -169,28 +169,15 @@
       },
       "x": 570,
       "y": 320,
-      "width": 212,
-      "height": 158,
+      "width": 220,
+      "height": 178,
       "collapsed": false,
       "inherited": false,
       "registry": "agents/director/plan/ExpandStoryArc",
       "base_type": "core/Node"
     },
-    "dc9bff13-a1bb-46a7-9159-090287494766": {
-      "title": "Director Settings",
-      "id": "dc9bff13-a1bb-46a7-9159-090287494766",
-      "properties": {},
-      "x": 10,
-      "y": 760,
-      "width": 363,
-      "height": 926,
-      "collapsed": true,
-      "inherited": false,
-      "registry": "agents/director/Settings",
-      "base_type": "core/Node"
-    },
     "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061": {
-      "title": "chat_generate_arc_expand_chunk_size",
+      "title": "plan_expand_chunk_size",
       "id": "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061",
       "properties": {},
       "x": 200,
@@ -215,6 +202,47 @@
       "collapsed": true,
       "inherited": false,
       "registry": "data/number/AsNumber",
+      "base_type": "core/Node"
+    },
+    "08c18906-862b-4450-a1b1-71937b095717": {
+      "title": "plan_expand_critique",
+      "id": "08c18906-862b-4450-a1b1-71937b095717",
+      "properties": {},
+      "x": 230,
+      "y": 850,
+      "width": 168,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Watch",
+      "base_type": "core/Node"
+    },
+    "673c3bef-fe28-409e-8f3a-1be74aa33780": {
+      "title": "As Bool",
+      "id": "673c3bef-fe28-409e-8f3a-1be74aa33780",
+      "properties": {
+        "default": false
+      },
+      "x": 450,
+      "y": 870,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/AsBool",
+      "base_type": "core/Node"
+    },
+    "dc9bff13-a1bb-46a7-9159-090287494766": {
+      "title": "Director Settings",
+      "id": "dc9bff13-a1bb-46a7-9159-090287494766",
+      "properties": {},
+      "x": 10,
+      "y": 770,
+      "width": 363,
+      "height": 986,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "agents/director/Settings",
       "base_type": "core/Node"
     }
   },
@@ -252,14 +280,23 @@
     "a30b01b3-84da-46c0-8783-785660b85ccb.result": [
       "b12ebc94-8767-4ce4-9d97-1f8adfa8ae66.value"
     ],
-    "dc9bff13-a1bb-46a7-9159-090287494766.chat_generate_arc_expand_chunk_size": [
-      "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061.value"
-    ],
     "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061.value": [
       "9b188432-1182-4fe0-82d4-28ad012a7a9a.value"
     ],
     "9b188432-1182-4fe0-82d4-28ad012a7a9a.value": [
       "a30b01b3-84da-46c0-8783-785660b85ccb.chunk_size"
+    ],
+    "08c18906-862b-4450-a1b1-71937b095717.value": [
+      "673c3bef-fe28-409e-8f3a-1be74aa33780.value"
+    ],
+    "673c3bef-fe28-409e-8f3a-1be74aa33780.value": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.expand_critique"
+    ],
+    "dc9bff13-a1bb-46a7-9159-090287494766.plan_expand_chunk_size": [
+      "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061.value"
+    ],
+    "dc9bff13-a1bb-46a7-9159-090287494766.plan_expand_critique": [
+      "08c18906-862b-4450-a1b1-71937b095717.value"
     ]
   },
   "groups": [
@@ -277,8 +314,8 @@
       "title": "Process",
       "x": -2,
       "y": 226,
-      "width": 1051,
-      "height": 574,
+      "width": 1050,
+      "height": 675,
       "color": "#3f789e",
       "font_size": 24,
       "inherited": false
@@ -290,28 +327,28 @@
   "inputs": [],
   "outputs": [
     {
-      "id": "3d11a687-076d-4645-9bfc-43e63daf0739",
+      "id": "37499312-00a2-4f6f-862e-63372a020be1",
       "name": "fn",
       "optional": false,
       "group": null,
       "socket_type": "function"
     },
     {
-      "id": "0901e75e-4235-484a-a5ed-3bdf1bd83e52",
+      "id": "deea07dc-3fde-475f-b6f1-db7a4e723862",
       "name": "name",
       "optional": false,
       "group": null,
       "socket_type": "str"
     },
     {
-      "id": "728a9946-813f-4125-bffb-153eeaa3e2fb",
+      "id": "235121d0-ddca-48e0-828c-e4f8c0fe1602",
       "name": "allow_multiple_calls",
       "optional": false,
       "group": null,
       "socket_type": "bool"
     },
     {
-      "id": "26402d15-3605-4ae7-aa5a-c909b2e13825",
+      "id": "bcbb8f4e-0ad8-48ae-b874-3d7615c4d3a1",
       "name": "ai_callback",
       "optional": false,
       "group": null,

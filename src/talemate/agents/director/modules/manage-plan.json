@@ -149,8 +149,8 @@
         "typ": "int",
         "instructions": "The exact number of beats to generate. Each beat represents one narrator or conversation generation turn."
       },
-      "x": -1367,
-      "y": 747,
+      "x": -1722,
+      "y": 642,
       "width": 210,
       "height": 106,
       "collapsed": false,
@@ -166,8 +166,8 @@
         "typ": "str",
         "instructions": "What the scene outline should cover. Include the setting, characters involved, tone, themes, and any specific events or arcs."
       },
-      "x": -1367,
-      "y": 587,
+      "x": -1722,
+      "y": 482,
       "width": 210,
       "height": 106,
       "collapsed": false,
@@ -191,8 +191,8 @@
           }
         ]
       },
-      "x": -560,
-      "y": 650,
+      "x": -546,
+      "y": 542,
       "width": 244,
       "height": 82,
       "collapsed": false,
@@ -306,21 +306,6 @@
       "collapsed": false,
       "inherited": false,
       "registry": "agents/director/chat/DirectorChatSubAction",
-      "base_type": "core/Node"
-    },
-    "506d845f-e842-4e95-9285-2ad407a2146e": {
-      "title": "DEF create_outline",
-      "id": "506d845f-e842-4e95-9285-2ad407a2146e",
-      "properties": {
-        "name": "create_outline"
-      },
-      "x": -270,
-      "y": 650,
-      "width": 210,
-      "height": 78,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/DefineFunction",
       "base_type": "core/Node"
     },
     "32c778ed-68e4-4039-9b95-03726c146323": {
@@ -861,46 +846,12 @@
       "registry": "focal/Argument",
       "base_type": "core/Node"
     },
-    "651a5f02-fd36-4da3-8e6a-80d18c415f22": {
-      "title": "Create Outline",
-      "id": "651a5f02-fd36-4da3-8e6a-80d18c415f22",
-      "properties": {},
-      "x": -1053,
-      "y": 646,
-      "width": 212,
-      "height": 106,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/director/plan/CreateOutline",
-      "base_type": "core/Graph"
-    },
-    "b52af225-f7f7-4466-b27e-3a96b591eb26": {
-      "title": "Jinja2 Format",
-      "id": "b52af225-f7f7-4466-b27e-3a96b591eb26",
-      "properties": {
-        "template": "Plan ID: {{ plan_id }}"
-      },
-      "x": -970,
-      "y": 800,
-      "width": 210,
-      "height": 153,
-      "collapsed": true,
-      "inherited": false,
-      "registry": "prompt/Jinja2Format",
-      "dynamic_inputs": [
-        {
-          "name": "item0",
-          "type": "*"
-        }
-      ],
-      "base_type": "core/DynamicSocketNodeBase"
-    },
     "ce9a5ea3-57cf-4323-8c61-b32a47c310f6": {
       "title": "Return",
       "id": "ce9a5ea3-57cf-4323-8c61-b32a47c310f6",
       "properties": {},
-      "x": -780,
-      "y": 680,
+      "x": -766,
+      "y": 542,
       "width": 140,
       "height": 26,
       "collapsed": false,
@@ -932,6 +883,81 @@
       },
       "x": -990,
       "y": 1300,
+      "width": 210,
+      "height": 153,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "prompt/Jinja2Format",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "506d845f-e842-4e95-9285-2ad407a2146e": {
+      "title": "DEF create_outline",
+      "id": "506d845f-e842-4e95-9285-2ad407a2146e",
+      "properties": {
+        "name": "create_outline"
+      },
+      "x": -256,
+      "y": 542,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "651a5f02-fd36-4da3-8e6a-80d18c415f22": {
+      "title": "Create Outline",
+      "id": "651a5f02-fd36-4da3-8e6a-80d18c415f22",
+      "properties": {},
+      "x": -1206,
+      "y": 542,
+      "width": 212,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/plan/CreateOutline",
+      "base_type": "core/Graph"
+    },
+    "50a06e8b-0b1f-4794-ac11-5b76b6d0a341": {
+      "title": "plan_outline_critique",
+      "id": "50a06e8b-0b1f-4794-ac11-5b76b6d0a341",
+      "properties": {},
+      "x": -1446,
+      "y": 722,
+      "width": 176,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Watch",
+      "base_type": "core/Node"
+    },
+    "0680094e-85a3-4704-a2c5-2a6b9c60085d": {
+      "title": "Director Settings",
+      "id": "0680094e-85a3-4704-a2c5-2a6b9c60085d",
+      "properties": {},
+      "x": -1722,
+      "y": 832,
+      "width": 363,
+      "height": 986,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "agents/director/Settings",
+      "base_type": "core/Node"
+    },
+    "b52af225-f7f7-4466-b27e-3a96b591eb26": {
+      "title": "Jinja2 Format",
+      "id": "b52af225-f7f7-4466-b27e-3a96b591eb26",
+      "properties": {
+        "template": "Plan ID: {{ plan_id }}"
+      },
+      "x": -933,
+      "y": 542,
       "width": 210,
       "height": 153,
       "collapsed": true,
@@ -1094,12 +1120,6 @@
       "c9309352-4080-401f-8e7a-8f82d4cb0cd1.state",
       "c9309352-4080-401f-8e7a-8f82d4cb0cd1.task_id"
     ],
-    "651a5f02-fd36-4da3-8e6a-80d18c415f22.plan_id": [
-      "b52af225-f7f7-4466-b27e-3a96b591eb26.item0"
-    ],
-    "b52af225-f7f7-4466-b27e-3a96b591eb26.result": [
-      "ce9a5ea3-57cf-4323-8c61-b32a47c310f6.value"
-    ],
     "ce9a5ea3-57cf-4323-8c61-b32a47c310f6.value": [
       "1f391a2f-a696-44fd-8dbb-951f6612d627.state"
     ],
@@ -1111,15 +1131,27 @@
     ],
     "acfef6ab-44e3-4a82-8fef-ff6428374181.result": [
       "bb0aaccf-8d2e-4b7a-9536-ac729b8e02dc.value"
+    ],
+    "651a5f02-fd36-4da3-8e6a-80d18c415f22.plan_id": [
+      "b52af225-f7f7-4466-b27e-3a96b591eb26.item0"
+    ],
+    "50a06e8b-0b1f-4794-ac11-5b76b6d0a341.value": [
+      "651a5f02-fd36-4da3-8e6a-80d18c415f22.critique"
+    ],
+    "0680094e-85a3-4704-a2c5-2a6b9c60085d.plan_outline_critique": [
+      "50a06e8b-0b1f-4794-ac11-5b76b6d0a341.value"
+    ],
+    "b52af225-f7f7-4466-b27e-3a96b591eb26.result": [
+      "ce9a5ea3-57cf-4323-8c61-b32a47c310f6.value"
     ]
   },
   "groups": [
     {
       "title": "Function",
-      "x": -1388,
-      "y": 521,
-      "width": 1366,
-      "height": 365,
+      "x": -1747,
+      "y": 402,
+      "width": 1726,
+      "height": 484,
       "color": "#b06634",
       "font_size": 24,
       "inherited": false
@@ -1191,28 +1223,28 @@
   "inputs": [],
   "outputs": [
     {
-      "id": "e6602099-1ace-47f3-9f17-bbc3c7dea5f6",
+      "id": "161139d1-8eb6-4a7d-89d4-00cefc247065",
       "name": "fn",
       "optional": false,
       "group": null,
       "socket_type": "function"
     },
     {
-      "id": "353a9c7c-4b64-4273-ba85-0461105f7d56",
+      "id": "03903a3d-5342-4b07-859f-70cb10384b7d",
       "name": "name",
       "optional": false,
       "group": null,
       "socket_type": "str"
     },
     {
-      "id": "c5e18533-c2a3-4d0e-a927-0c7f11db3d99",
+      "id": "1c5b36f4-cd45-4b3b-9fdc-0602f0a76330",
       "name": "allow_multiple_calls",
       "optional": false,
       "group": null,
       "socket_type": "bool"
     },
     {
-      "id": "8f932bf2-9c66-4ec9-8d91-a0ec166364f9",
+      "id": "b632a9f9-c4ae-4157-ae24-d0a8490de4b9",
       "name": "ai_callback",
       "optional": false,
       "group": null,
