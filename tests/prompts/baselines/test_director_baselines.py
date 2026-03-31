@@ -30,7 +30,7 @@ from ..test_director_templates import (  # noqa: F401
     active_context,
     MockCharacter,
 )
-from .conftest import capture_prompt, capture_all_prompts
+from .conftest import capture_prompt
 
 AGENT = "director"
 
@@ -274,17 +274,26 @@ def _make_test_beats() -> list[Beat]:
     return [
         Beat(
             description="The protagonist discovers the door is locked from the inside.",
-            order=1, tension=0.3, pacing="slow", type="narration",
+            order=1,
+            tension=0.3,
+            pacing="slow",
+            type="narration",
             characters=["Elena"],
         ),
         Beat(
             description="Elena confronts Hero about what happened last night, demanding answers.",
-            order=2, tension=0.5, pacing="moderate", type="dialogue",
+            order=2,
+            tension=0.5,
+            pacing="moderate",
+            type="dialogue",
             characters=["Elena"],
         ),
         Beat(
             description="A sudden noise from the basement forces both characters to investigate together.",
-            order=3, tension=0.7, pacing="fast", type="action",
+            order=3,
+            tension=0.7,
+            pacing="fast",
+            type="action",
             characters=["Hero", "Elena"],
         ),
     ]
@@ -301,6 +310,7 @@ class TestPlanExpandBaselines:
 
         director = active_context
         from talemate.instance import AGENTS
+
         narrator = AGENTS.get("narrator")
         narrator.agent_type = "narrator"
         narrator.client = director.client
@@ -352,6 +362,7 @@ class TestPlanExpandBaselines:
 
         director = active_context
         from talemate.instance import AGENTS
+
         narrator = AGENTS.get("narrator")
         narrator.agent_type = "narrator"
         narrator.client = director.client
@@ -408,9 +419,19 @@ class TestPlanExpandBaselines:
         narrator.content_use_writing_style = False
 
         blocks = [
-            {"type": "narrator", "content": "The room was dark and cold. A chill ran down her spine."},
-            {"type": "character", "name": "Elena", "content": "She stepped forward, her hands trembling. \"Who's there?\" she whispered."},
-            {"type": "narrator", "content": "A chill ran through the room. The darkness pressed in from all sides."},
+            {
+                "type": "narrator",
+                "content": "The room was dark and cold. A chill ran down her spine.",
+            },
+            {
+                "type": "character",
+                "name": "Elena",
+                "content": 'She stepped forward, her hands trembling. "Who\'s there?" she whispered.',
+            },
+            {
+                "type": "narrator",
+                "content": "A chill ran through the room. The darkness pressed in from all sides.",
+            },
         ]
 
         director.client.send_prompt = AsyncMock(

@@ -99,9 +99,7 @@ class PlanMixin:
     async def _plan_revise_narrator_content(self, narrator, content: str) -> str:
         """Send narrator generated signal so automatic revision can process the content."""
         emission = NarratorAgentEmission(agent=narrator, response=content)
-        await talemate.emit.async_signals.get("agent.narrator.generated").send(
-            emission
-        )
+        await talemate.emit.async_signals.get("agent.narrator.generated").send(emission)
         return emission.response
 
     async def _plan_push_and_emit_block(self, scene, block: dict, narrator) -> int:
@@ -153,7 +151,9 @@ class PlanMixin:
 
         revised = extracted.get("response", [])
         if not revised:
-            log.warning("expand.critique.no_blocks_returned", fallback="using originals")
+            log.warning(
+                "expand.critique.no_blocks_returned", fallback="using originals"
+            )
             return blocks
 
         log.info("expand.critique.done", original=len(blocks), revised=len(revised))
@@ -239,18 +239,14 @@ class PlanMixin:
 
                 blocks = extracted.get("response", [])
                 if not blocks:
-                    log.warning(
-                        "expand.no_blocks", chunk=chunk_num, attempt=attempt
-                    )
+                    log.warning("expand.no_blocks", chunk=chunk_num, attempt=attempt)
                     continue
 
                 # Validate: check for leaked block tags in content
                 if not has_leaked_tags(blocks):
                     break
 
-                log.warning(
-                    "expand.leaked_tags", chunk=chunk_num, attempt=attempt
-                )
+                log.warning("expand.leaked_tags", chunk=chunk_num, attempt=attempt)
                 blocks = []
 
             if not blocks:

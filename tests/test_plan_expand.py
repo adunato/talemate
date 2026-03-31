@@ -9,8 +9,7 @@ Tests cover:
 - Chat creation for generate_arc modes
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock
 
 from talemate.agents.director.plan.expand import (
     compute_chunks,
@@ -25,7 +24,7 @@ def _make_beats(tensions: list[float]) -> list[Beat]:
     """Helper to create Beat objects with given tension values."""
     return [
         Beat(
-            description=f"Beat {i+1}",
+            description=f"Beat {i + 1}",
             order=i + 1,
             tension=t,
             pacing="moderate",
