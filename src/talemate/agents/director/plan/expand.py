@@ -129,6 +129,35 @@ async def revise_narrator_content(narrator, content: str) -> str:
     return emission.response
 
 
+async def critique_expanded_blocks(
+    blocks: list[dict], narrator
+) -> list[dict]:
+    """
+    Run a post-expansion critique pass on all blocks to fix cross-beat
+    redundancy, intensity monotony, and repeated vocabulary.
+    """
+    log.info("expand.critique", block_count=len(blocks))
+
+    response, extracted = await Prompt.request(
+        "narrator.arc-expand-critique",
+        narrator.client,
+        "narrate_4096",
+        vars={
+            "blocks": blocks,
+            "max_tokens": narrator.client.max_token_length,
+            "response_length": 4096,
+        },
+    )
+
+    revised = extracted.get("response", [])
+    if not revised:
+        log.warning("expand.critique.no_blocks_returned, using originals")
+        return blocks
+
+    log.info("expand.critique.done", original=len(blocks), revised=len(revised))
+    return revised
+
+
 async def push_and_emit_block(scene, block: dict, narrator) -> int:
     """
     Push a single extracted block to scene history and emit to frontend.
@@ -179,6 +208,7 @@ async def expand_beats(
     total_words = 0
     total_blocks = 0
     preceding_text = ""
+    all_blocks: list[dict] = []
 
     # Compute chunks and arc metadata
     chunks = compute_chunks(beats, chunk_size)
@@ -252,26 +282,32 @@ async def expand_beats(
                 f"consider using a more capable model."
             )
 
-        # Push blocks to scene history and emit to frontend
-        for block in blocks:
-            words = await push_and_emit_block(scene, block, narrator)
-            if words:
-                total_blocks += 1
-                total_words += words
+        all_blocks.extend(blocks)
 
         # Accumulate preceding text for next chunk
         chunk_text = "\n\n".join(b.get("content", "") for b in blocks)
         preceding_text += "\n\n" + chunk_text
 
-        # Mark chunk's beats as completed
-        for beat in chunk_beats:
-            complete_task(scene, beat.id, plan_id=plan_id)
-
-        # Emit plan update
-        plan = get_plan(scene, plan_id)
-        if plan:
-            emit_plan_updated(plan, chat_id=chat_id)
-
         beat_offset += len(chunk_beats)
+
+    # Post-expansion critique pass
+    if len(chunks) > 1 and all_blocks:
+        all_blocks = await critique_expanded_blocks(all_blocks, narrator)
+
+    # Push all blocks to scene history and emit to frontend
+    for block in all_blocks:
+        words = await push_and_emit_block(scene, block, narrator)
+        if words:
+            total_blocks += 1
+            total_words += words
+
+    # Mark all beats as completed
+    for beat in beats:
+        complete_task(scene, beat.id, plan_id=plan_id)
+
+    # Emit plan update
+    plan = get_plan(scene, plan_id)
+    if plan:
+        emit_plan_updated(plan, chat_id=chat_id)
 
     return total_blocks, total_words

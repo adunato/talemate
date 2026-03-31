@@ -1,0 +1,46 @@
+{#-
+Post-expansion critique: reviews generated prose blocks for cross-beat
+redundancy, intensity monotony, and sensory repetition, then outputs
+a revised version.
+
+Extractors:
+  - response: BlockListExtractor(blocks=[("narrator", ...), ("character", ...)])
+-#}
+{{ set_block_list_extractor("response", blocks=[
+    ("narrator", "<NARRATOR>", "</NARRATOR>"),
+    ("character", '<CHARACTER name="(?P<name>[^"]*)">', "</CHARACTER>"),
+]) }}
+
+<|SECTION:TASK|>
+You are an editor reviewing the following scene prose. Your job is to revise it to fix these specific problems:
+
+1. **Repeated imagery/vocabulary:** If the same image, metaphor, or sensory detail appears in multiple blocks (e.g., "pulsing" used 5 times, "copper taste" in 3 blocks, the ship "dissolving" described identically twice), rewrite the later occurrences to use different language or cut them entirely.
+
+2. **Intensity monotony:** If every block is at maximum intensity with no breathing room, revise 1-2 blocks to be quieter — shorter sentences, less sensory detail, a moment of stillness or thought.
+
+3. **Repeated dialogue structure:** If a character delivers the same type of speech multiple times (e.g., two exposition monologues with the same structure), rewrite one to be shorter, more fragmented, or serve a different function.
+
+**Rules:**
+- Keep all plot events intact — do NOT change what happens, only how it's written.
+- Keep the same number of blocks in the same order.
+- Keep block types (NARRATOR/CHARACTER) and character names unchanged.
+- Your revisions must be subtle — polish, not rewrite. Cut redundant sentences, vary repeated words, adjust intensity. Do not add new plot elements.
+
+**Original prose:**
+
+{% for block in blocks %}
+{% if block.type == "narrator" %}
+<NARRATOR>
+{{ block.content }}
+</NARRATOR>
+{% elif block.type == "character" %}
+<CHARACTER name="{{ block.name }}">
+{{ block.content }}
+</CHARACTER>
+{% endif %}
+
+{% endfor %}
+
+Output the revised version using the same `<NARRATOR>` and `<CHARACTER name="Name">` block format. Every block from the original must appear in your output.
+<|CLOSE_SECTION|>
+{{ set_prepared_response("<NARRATOR>") }}
