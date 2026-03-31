@@ -115,19 +115,19 @@
                     color="primary"
                     class="mb-4"
                 >
-                    <v-btn value="generate_arc" size="small">
-                        <v-icon start>mdi-directions-fork</v-icon>
-                        Turn by turn
-                    </v-btn>
-                    <v-btn value="generate_arc_expand" size="small">
+                    <v-btn value="generate_arc_expand" size="small" variant="text">
                         <v-icon start>mdi-lightning-bolt</v-icon>
-                        Expand (fast)
+                        Expand
+                    </v-btn>
+                    <v-btn value="generate_arc" size="small" variant="text">
+                        <v-icon start>mdi-directions-fork</v-icon>
+                        Turn by turn (slower)
                     </v-btn>
                 </v-btn-toggle>
 
                 <v-alert variant="outlined" density="compact" color="primary" class="mb-3">
-                    <div class="text-muted" v-if="scenePlanMode === 'generate_arc'">Turn by turn mode: the director executes each beat individually through the narrator and conversation agents. Slower but uses full per-turn context.</div>
-                    <div class="text-muted" v-else>Expand mode: beats are expanded into prose in chunks. Much faster but with less per-turn context injection.</div>
+                    <div class="text-muted" v-if="scenePlanMode === 'generate_arc'">Turn by turn mode: the director executes each beat individually through the narrator and conversation agents. Slower, but the director can query context, create world entries, and adjust strategy between beats.</div>
+                    <div class="text-muted" v-else>Expand mode: beats are expanded into prose in chunks. Much faster, with automatic chunking and arc-aware pacing.</div>
                 </v-alert>
 
                 <div class="d-flex ga-4 mb-4">
@@ -187,7 +187,7 @@ export default {
             scenePlanInstructions: '',
             scenePlanBeats: 8,
             scenePlanDialogueRatio: 40,
-            scenePlanMode: 'generate_arc',
+            scenePlanMode: 'generate_arc_expand',
             scenePlanOutlineCritique: true,
             scenePlanExpandCritique: true,
             minRecommendedNarratorLength: 1024,
@@ -273,7 +273,7 @@ export default {
         openScenePlanDialog() {
             this.scenePlanInstructions = '';
             this.scenePlanBeats = 8;
-            this.scenePlanMode = 'generate_arc';
+            this.scenePlanMode = 'generate_arc_expand';
             this.scenePlanDialogueRatio = Math.round((this.agentStatus?.director?.actions?.plan?.config?.dialogue_ratio?.value ?? 0.4) * 100);
             this.scenePlanOutlineCritique = this.agentStatus?.director?.actions?.plan?.config?.outline_critique?.value ?? true;
             this.scenePlanExpandCritique = this.agentStatus?.director?.actions?.plan?.config?.expand_critique?.value ?? true;
