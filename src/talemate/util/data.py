@@ -504,7 +504,7 @@ async def extract_data_with_ai_fallback(
             _, extracted = await prompt_cls.request(
                 "focal.fix-data",
                 client,
-                "analyze_long",
+                "analyze_4096",
                 vars={
                     "text": text,
                 },
@@ -531,7 +531,7 @@ async def extract_data_with_ai_fallback(
             _, extracted = await prompt_cls.request(
                 "focal.fix-data",
                 client,
-                "analyze_long",
+                "analyze_4096",
                 vars={
                     "text": text,
                 },
