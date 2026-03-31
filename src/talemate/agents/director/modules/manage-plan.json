@@ -272,7 +272,8 @@
         "description_chat": "Create a beat-by-beat scene outline with perspective and pacing.",
         "description_scene_direction": "",
         "instruction_examples": [
-          "Create an 8-beat scene outline for a tense confrontation"
+          "Create an 8-beat scene outline for a tense confrontation",
+          "Create a 12-beat outline in third person limited, past tense, from the protagonist's perspective"
         ],
         "availability": "chat",
         "force_enabled": false
