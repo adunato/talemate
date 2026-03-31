@@ -58,7 +58,9 @@ class ConfirmActionPayload(pydantic.BaseModel):
 
 class ChatUpdateModePayload(pydantic.BaseModel):
     chat_id: str
-    mode: Literal["normal", "decisive", "nospoilers", "generate_arc", "generate_arc_expand"]
+    mode: Literal[
+        "normal", "decisive", "nospoilers", "generate_arc", "generate_arc_expand"
+    ]
 
 
 class ChatUpdateConfirmWriteActionsPayload(pydantic.BaseModel):
@@ -449,7 +451,9 @@ class DirectorChatWebsocketMixin:
         payload = ChatCreateGenerateArcPayload(**data)
 
         if payload.dialogue_ratio is not None:
-            self.director.actions["chat"].config["generate_arc_dialogue_ratio"].value = payload.dialogue_ratio
+            self.director.actions["chat"].config[
+                "generate_arc_dialogue_ratio"
+            ].value = payload.dialogue_ratio
 
         chat = self.director.chat_create_generate_arc(
             payload.instructions,

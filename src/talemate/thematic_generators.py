@@ -980,7 +980,9 @@ class ThematicGenerator:
 
     def beat_seeds(self, count: int) -> list[str]:
         """Generate unique beat seeds, avoiding repeated mechanisms."""
-        mechanisms = random.sample(dramatic_mechanisms, min(count, len(dramatic_mechanisms)))
+        mechanisms = random.sample(
+            dramatic_mechanisms, min(count, len(dramatic_mechanisms))
+        )
         registers = [random.choice(emotional_registers) for _ in range(count)]
         return [f"{m} / {r}" for m, r in zip(mechanisms, registers)]
 

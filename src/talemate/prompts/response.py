@@ -901,7 +901,7 @@ class BlockListExtractor(Extractor):
         """Strip leading name prefix from content if present."""
         stripped = content.lstrip()
         if stripped.lower().startswith(name.lower()):
-            after = stripped[len(name):]
+            after = stripped[len(name) :]
             if after and (after[0] in " \t:"):
                 return after.lstrip(" \t:").lstrip()
             if not after:

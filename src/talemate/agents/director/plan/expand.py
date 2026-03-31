@@ -27,6 +27,7 @@ MIN_CHUNK_BEATS = 3
 
 class ChunkArcInfo(pydantic.BaseModel):
     """Arc metadata for a single expansion chunk."""
+
     position: str  # "opening", "rising", "climax", "climax_and_resolution", "resolution", "full"
     chunk_index: int
     total_chunks: int
@@ -108,13 +109,15 @@ def compute_arc_info(
         else:
             position = "rising"
 
-        infos.append(ChunkArcInfo(
-            position=position,
-            chunk_index=idx,
-            total_chunks=total_chunks,
-            tension_range=(t_min, t_max),
-            has_peak=has_peak,
-        ))
+        infos.append(
+            ChunkArcInfo(
+                position=position,
+                chunk_index=idx,
+                total_chunks=total_chunks,
+                tension_range=(t_min, t_max),
+                has_peak=has_peak,
+            )
+        )
 
     return infos
 
@@ -191,7 +194,7 @@ async def expand_beats(
         following_beats = []
         next_offset = beat_offset + len(chunk_beats)
         if next_offset < len(beats):
-            following_beats = beats[next_offset:next_offset + 2]
+            following_beats = beats[next_offset : next_offset + 2]
 
         log.info(
             "expand.chunk",

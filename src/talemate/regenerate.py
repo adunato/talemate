@@ -256,7 +256,11 @@ async def regenerate(scene: "Scene", idx: int = -1) -> list[SceneMessage]:
         log.error("No new messages generated, restoring original", message=message)
         await scene.push_history(message)
         _emit_restored_message(message, scene)
-        emit("status", message="Could not regenerate message, original restored.", status="error")
+        emit(
+            "status",
+            message="Could not regenerate message, original restored.",
+            status="error",
+        )
         for reinforcement_message in reversed(popped_reinforcement_messages):
             await scene.push_history(reinforcement_message)
         return regenerated_messages

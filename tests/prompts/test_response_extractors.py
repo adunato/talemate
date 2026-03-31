@@ -1787,7 +1787,11 @@ class TestBlockListExtractor:
         result = extractor.extract(text)
         assert len(result) == 3
         assert result[0] == {"type": "narrator", "content": "The door creaked open."}
-        assert result[1] == {"type": "character", "name": "Kaira", "content": "Who goes there?"}
+        assert result[1] == {
+            "type": "character",
+            "name": "Kaira",
+            "content": "Who goes there?",
+        }
         assert result[2] == {"type": "narrator", "content": "Silence followed."}
 
     def test_merge_consecutive_narrator_blocks(self):
@@ -1915,10 +1919,7 @@ class TestBlockListExtractor:
         """Test blocks with multiline content."""
         extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
         text = (
-            "<NARRATOR>\n"
-            "The forest was silent.\n"
-            "Not a creature stirred.\n"
-            "</NARRATOR>"
+            "<NARRATOR>\nThe forest was silent.\nNot a creature stirred.\n</NARRATOR>"
         )
         result = extractor.extract(text)
         assert result[0]["content"] == "The forest was silent.\nNot a creature stirred."

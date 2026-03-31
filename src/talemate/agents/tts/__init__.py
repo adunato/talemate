@@ -300,12 +300,14 @@ class TTSAgent(
 
     @property
     def has_auto_generation(self) -> bool:
-        return any([
-            self.generate_for_npc,
-            self.generate_for_player,
-            self.generate_for_narration,
-            self.generate_for_context_investigation,
-        ])
+        return any(
+            [
+                self.generate_for_npc,
+                self.generate_for_player,
+                self.generate_for_narration,
+                self.generate_for_context_investigation,
+            ]
+        )
 
     @property
     def speaker_separation(self) -> str:

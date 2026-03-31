@@ -297,7 +297,10 @@ class DirectorChatMixin:
         return chat
 
     def chat_create_generate_arc(
-        self, instructions: str, beat_count: int = 8, mode: Literal["generate_arc", "generate_arc_expand"] = "generate_arc"
+        self,
+        instructions: str,
+        beat_count: int = 8,
+        mode: Literal["generate_arc", "generate_arc_expand"] = "generate_arc",
     ) -> DirectorChat:
         """Create a new chat in generate_arc mode with planning instructions as initial user message."""
         chat = DirectorChat(

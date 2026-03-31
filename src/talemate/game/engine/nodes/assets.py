@@ -383,9 +383,7 @@ class AssetExists(Node):
 
         # Check if asset exists
         if allow_partial:
-            asset_exists = any(
-                key.startswith(asset_id) for key in scene.assets.assets
-            )
+            asset_exists = any(key.startswith(asset_id) for key in scene.assets.assets)
         else:
             asset_exists = asset_id in scene.assets.assets
 

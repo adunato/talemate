@@ -272,14 +272,16 @@ class GetActivePlan(Node):
             perspective = plan.meta.get("perspective", "")
             beats = [t for t in plan.tasks if isinstance(t, Beat)]
 
-        self.set_output_values({
-            "state": input_state,
-            "plan_id": plan_id or "",
-            "plan": plan,
-            "perspective": perspective,
-            "beats": beats,
-            "has_plan": plan is not None,
-        })
+        self.set_output_values(
+            {
+                "state": input_state,
+                "plan_id": plan_id or "",
+                "plan": plan,
+                "perspective": perspective,
+                "beats": beats,
+                "has_plan": plan is not None,
+            }
+        )
 
 
 @register("agents/director/plan/CompleteTask")
@@ -364,17 +366,21 @@ class ExpandStoryArc(AgentNode):
         beats = self.require_input("beats")
         perspective = self.require_input("perspective")
         director_notes = self.normalized_input_value("director_notes") or ""
-        chunk_size = self.normalized_input_value("chunk_size") or int(self.get_property("chunk_size"))
+        chunk_size = self.normalized_input_value("chunk_size") or int(
+            self.get_property("chunk_size")
+        )
 
         scene = active_scene.get()
         narrator = get_agent("narrator")
 
         if not beats:
-            self.set_output_values({
-                "state": input_state,
-                "result": "No beats to expand",
-                "word_count": 0,
-            })
+            self.set_output_values(
+                {
+                    "state": input_state,
+                    "result": "No beats to expand",
+                    "word_count": 0,
+                }
+            )
             return
 
         chat_ctx = director_chat_context.get()
@@ -394,8 +400,10 @@ class ExpandStoryArc(AgentNode):
         result = f"Generated {total_blocks} blocks, {total_words} words from {len(beats)} beats"
         log.info("expand_story_arc.done", result=result)
 
-        self.set_output_values({
-            "state": input_state,
-            "result": result,
-            "word_count": total_words,
-        })
+        self.set_output_values(
+            {
+                "state": input_state,
+                "result": result,
+                "word_count": total_words,
+            }
+        )

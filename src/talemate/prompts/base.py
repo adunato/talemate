@@ -1374,7 +1374,9 @@ class Prompt:
             )
         return ""
 
-    def set_block_list_extractor(self, name: str, blocks: list[tuple] | None = None, trim: bool = True) -> str:
+    def set_block_list_extractor(
+        self, name: str, blocks: list[tuple] | None = None, trim: bool = True
+    ) -> str:
         """
         Register a block list extractor that parses tagged blocks.
 
@@ -1396,7 +1398,9 @@ class Prompt:
         Returns:
             Empty string (no output in template)
         """
-        self._template_extractors[name] = BlockListExtractor(blocks=blocks or [], trim=trim)
+        self._template_extractors[name] = BlockListExtractor(
+            blocks=blocks or [], trim=trim
+        )
         return ""
 
     def random(self, min: int, max: int):
