@@ -413,6 +413,8 @@ class KoboldCppClient(OpenAIVisionMixin, ClientBase):
         sse = sseclient.SSEClient(stream_response)
 
         for event in sse.events():
+            if event.data == "[DONE]":
+                break
             payload = json.loads(event.data)
             chunk = payload["token"]
             response += chunk
