@@ -59,7 +59,7 @@ Beat {{ beat.order }} [{{ beat.type }}] (pacing: {{ beat.pacing }}, tension: {{ 
 {% if following_beats %}
 **Upcoming beats** (do NOT write these, just be aware for pacing):
 {% for beat in following_beats[:2] %}
-Beat {{ beat.order }} [{{ beat.type }}]: {{ beat.description[:100] }}...
+Beat {{ beat.order }} [{{ beat.type }}]: {{ beat.description }}
 {% endfor %}
 {% endif %}
 
