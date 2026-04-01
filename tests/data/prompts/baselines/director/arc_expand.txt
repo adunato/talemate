@@ -70,23 +70,19 @@ Your response MUST be a sequence of `<NARRATOR>` and `<CHARACTER name="Name">` b
 - Narration/action/transition/reveal beats → `<NARRATOR>` blocks (1-3 paragraphs of prose)
 - Dialogue beats → `<CHARACTER name="CharacterName">` blocks (action + body language + dialogue as one unit)
 
-Structure:
+Structure (blocks can appear in any order and frequency — you do NOT need to alternate):
 
 ```
 <NARRATOR>
 ... narration prose here (1-3 paragraphs) ...
 </NARRATOR>
 
-<CHARACTER name="Kaira">
-... physical action, body language, and dialogue together as one unit ...
-</CHARACTER>
-
 <NARRATOR>
-... more narration prose ...
+... more narration if needed ...
 </NARRATOR>
 
-<CHARACTER name="Elmer">
-... his actions and dialogue as one unit ...
+<CHARACTER name="CharacterName">
+... physical action, body language, and dialogue together as one unit ...
 </CHARACTER>
 ```
 
