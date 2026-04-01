@@ -451,3 +451,71 @@ class TestPlanExpandBaselines:
             )
 
         baseline_checker(capture_prompt(director), AGENT, "arc_expand_critique")
+
+    @pytest.mark.asyncio
+    async def test_scene_plan_create_outline(self, active_context, baseline_checker):
+        """Test the scene-plan-create-outline template renders correctly."""
+        from talemate.prompts import Prompt
+        from talemate.agents.base import ActiveAgent
+
+        director = active_context
+        characters = list(director.scene.get_characters())
+
+        director.client.send_prompt = AsyncMock(
+            return_value='<PERSPECTIVE>Third person limited, past tense.</PERSPECTIVE>\n<OUTLINE>[{"type":"narration","description":"Test","characters":[],"pacing":"slow","tension":0.2}]</OUTLINE>'
+        )
+
+        with ActiveAgent(director, lambda: None):
+            await Prompt.request(
+                "director.scene-plan-create-outline",
+                director.client,
+                "scene_direction_4096",
+                vars={
+                    "scene": director.scene,
+                    "max_tokens": 8192,
+                    "characters": characters,
+                    "beat_count": 8,
+                    "instructions": "A tense confrontation between the characters in the library.",
+                    "estimated_words": 2000,
+                },
+            )
+
+        baseline_checker(
+            capture_prompt(director), AGENT, "scene_plan_create_outline"
+        )
+
+    @pytest.mark.asyncio
+    async def test_scene_plan_critique_outline(
+        self, active_context, baseline_checker
+    ):
+        """Test the scene-plan-critique-outline template renders correctly."""
+        from talemate.prompts import Prompt
+        from talemate.agents.base import ActiveAgent
+
+        director = active_context
+        characters = list(director.scene.get_characters())
+        beats = _make_test_beats()
+        outline = [b.model_dump() for b in beats]
+
+        director.client.send_prompt = AsyncMock(
+            return_value="<NO_CHANGES/>"
+        )
+
+        with ActiveAgent(director, lambda: None):
+            await Prompt.request(
+                "director.scene-plan-critique-outline",
+                director.client,
+                "scene_direction_4096",
+                vars={
+                    "scene": director.scene,
+                    "max_tokens": 8192,
+                    "characters": characters,
+                    "outline": outline,
+                    "outline_instructions": "A tense confrontation between the characters in the library.",
+                    "perspective": "Third person limited, past tense.",
+                },
+            )
+
+        baseline_checker(
+            capture_prompt(director), AGENT, "scene_plan_critique_outline"
+        )

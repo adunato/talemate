@@ -1,27 +1,27 @@
-{{ set_anchor_extractor("response", "<OUTLINE>", "</OUTLINE>", parse_data=True) }}
-{{ set_anchor_extractor("perspective", "<PERSPECTIVE>", "</PERSPECTIVE>") }}
-{% set context_content -%}
-<|SECTION:CONTEXT|>
+## Context
 You are a scene planner creating a beat-by-beat outline for an interactive narrative scene.
 
-Content Classification: {{ scene.context }}
+Content Classification: Fantasy adventure story
 
-{% if characters %}
-Active characters: {{ characters | map(attribute="name") | join(", ") }}
-{% endif %}
-<|CLOSE_SECTION|>
-{% endset -%}
-{% set task_content -%}
-<|SECTION:TASK|>
+Active characters: Hero, Elena
+
+## Scene history
+Elena: Hello there, traveler.
+
+The sun filters through the leaves above.
+
+Marcus: What brings you to these woods?
+
+## Task
 Create a scene outline based on the following instructions:
 
 ```instructions
-{{ instructions }}
+A tense confrontation between the characters in the library.
 ```
 
 Target parameters:
-- Beat count: EXACTLY {{ beat_count }} beats — no more, no less
-- Estimated word output: ~{{ estimated_words }} words
+- Beat count: EXACTLY 8 beats — no more, no less
+- Estimated word output: ~2000 words
 
 Each beat should specify:
 - `type`: one of `narration`, `dialogue`, `action`, `transition`, `reveal`
@@ -34,15 +34,14 @@ Guidelines:
 
 **Story structure:**
 - Every beat must ADVANCE the story — introduce something new, change something, or force a decision. Never create a beat that merely re-describes the current situation from another angle.
-- At least {{ (beat_count * 0.3) | round(0, 'ceil') | int }} of the {{ beat_count }} beats must have a character making a meaningful choice that changes the trajectory of events. Characters must have agency, not just witness spectacle.
-- Plan for character development: if a character has a defining trait (e.g., denial, fear), that trait must evolve over the scene. It must crack, deepen, or transform — not repeat identically.{% if beat_count >= 12 %} With {{ beat_count }} beats, plan multiple stages of evolution — the trait must shift noticeably at least 3-4 times across the arc.{% endif %}
+- At least 3 of the 8 beats must have a character making a meaningful choice that changes the trajectory of events. Characters must have agency, not just witness spectacle.
+- Plan for character development: if a character has a defining trait (e.g., denial, fear), that trait must evolve over the scene. It must crack, deepen, or transform — not repeat identically.
 - Build tension with valleys, not just peaks. Include quiet beats between intense ones — moments of reflection, conversation, or uneasy calm that make the intense beats hit harder.
 - The FINAL beat must involve a character making a choice, taking an action, or facing a consequence — not just witnessing a revelation or spectacle. Pure "and then they saw something amazing/terrifying" is not a valid ending. The character must DO something that closes or pivots the arc.
 - The `tension` value must reflect genuine escalation. Early beats must have LOW tension (0.1-0.3). Save high tension (0.7+) for the latter portion. Do not start at high intensity.
 
 **Beat construction:**
-{% set dialogue_pct = (agent_config("director.plan.dialogue_ratio") * 100) | int -%}
-- Approximately {{ dialogue_pct }}% of beats should be `dialogue` type — characters need to speak, not just act and observe
+- Approximately 40% of beats should be `dialogue` type — characters need to speak, not just act and observe
 - Vary beat types for engaging pacing (don't stack 5 dialogue beats in a row)
 - Use `transition` beats for time/location changes
 - Use `reveal` beats for key information drops
@@ -58,9 +57,8 @@ Your response must contain TWO separate blocks in this exact order:
 If the user's instructions don't specify, default to third person limited, past tense.
 Example: `<PERSPECTIVE>Write in third person limited, past tense, focused on the protagonist's point of view.</PERSPECTIVE>`
 
-**SECOND:** Output EXACTLY {{ beat_count }} beats as a {{ data_format_type() }} list inside `<OUTLINE>` tags. The outline must contain ONLY beat data — no perspective, no preamble.
+**SECOND:** Output EXACTLY 8 beats as a json list inside `<OUTLINE>` tags. The outline must contain ONLY beat data — no perspective, no preamble.
 
-{% if data_format_type() == "json" %}
 Full example of the expected response format:
 
 ```
@@ -73,45 +71,8 @@ Full example of the expected response format:
 ]
 </OUTLINE>
 ```
-{% else %}
-Full example of the expected response format:
 
-```
-<PERSPECTIVE>Write in third person limited, past tense, focused on the protagonist's point of view.</PERSPECTIVE>
+REMINDER: Generate exactly 8 beats. Count them as you write: beat 1, beat 2, ... beat 8. Stop after beat 8.
 
-<OUTLINE>
-- type: narration
-  description: "The morning sun filters through the dusty windows of the library as footsteps echo in the corridor."
-  characters: []
-  pacing: slow
-  tension: 0.2
-
-- type: dialogue
-  description: "The librarian greets the visitor with suspicion, questioning their reason for being here so early."
-  characters: ["Librarian"]
-  pacing: moderate
-  tension: 0.4
-</OUTLINE>
-```
-{% endif %}
-<|CLOSE_SECTION|>
-{% endset -%}
-{# Budget: subtract context + task from max tokens, give the rest to scene history #}
-{% set reserved_tokens = count_tokens(context_content) + count_tokens(task_content) -%}
-{% set scene_context = scene.context_history(budget=max_tokens-300-reserved_tokens, min_dialogue=15, sections=False) -%}
-{% set scene_history_content -%}
-{% if scene_context %}
-<|SECTION:SCENE HISTORY|>
-{% for scene_line in scene_context -%}
-{{ scene_line }}
-
-{% endfor %}
-<|CLOSE_SECTION|>
-{% endif %}
-{% endset -%}
-{# Render #}
-{{ context_content }}
-{{ scene_history_content }}
-{{ task_content }}
-REMINDER: Generate exactly {{ beat_count }} beats. Count them as you write: beat 1, beat 2, ... beat {{ beat_count }}. Stop after beat {{ beat_count }}.
-{{ set_prepared_response('<PERSPECTIVE>') }}
+The length of your response must fit within 4 paragraphs.
+<|BOT|><PERSPECTIVE>
