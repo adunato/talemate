@@ -10,24 +10,24 @@ You are an editor reviewing the following scene prose. Your job is to revise it 
 **Rules:**
 - Keep all plot events intact — do NOT change what happens, only how it's written.
 - Keep the same number of blocks in the same order.
-- Keep block types (NARRATOR/CHARACTER) and character names unchanged.
+- Keep block types (narrator/character) and character names unchanged.
 - Your revisions must be subtle — polish, not rewrite. Cut redundant sentences, vary repeated words, adjust intensity. Do not add new plot elements.
 
 **Original prose:**
 
-<NARRATOR>
-The room was dark and cold. A chill ran down her spine.
-</NARRATOR>
+```json
+[
 
-<CHARACTER name="Elena">
-She stepped forward, her hands trembling. "Who's there?" she whispered.
-</CHARACTER>
+  {"type": "narrator", "content": "The room was dark and cold. A chill ran down her spine."},
 
-<NARRATOR>
-A chill ran through the room. The darkness pressed in from all sides.
-</NARRATOR>
+  {"type": "character", "name": "Elena", "content": "She stepped forward, her hands trembling. \"Who\u0027s there?\" she whispered."},
 
-Output the revised version using the same `<NARRATOR>` and `<CHARACTER name="Name">` block format. Every block from the original must appear in your output.
+  {"type": "narrator", "content": "A chill ran through the room. The darkness pressed in from all sides."}
+
+]
+```
+
+Output the revised version as a json list inside `<BLOCKS>` tags using the same format. Every block from the original must appear in your output.
 
 The length of your response must fit within 4 paragraphs.
-<|BOT|><NARRATOR>
+<|BOT|><BLOCKS>

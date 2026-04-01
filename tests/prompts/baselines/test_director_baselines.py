@@ -328,7 +328,7 @@ class TestPlanExpandBaselines:
         )
 
         director.client.send_prompt = AsyncMock(
-            return_value="<NARRATOR>Test narration.</NARRATOR>"
+            return_value='<BLOCKS>\n[{"type": "narrator", "content": "Test narration."}]\n</BLOCKS>'
         )
 
         with ActiveAgent(narrator, lambda: None):
@@ -342,7 +342,6 @@ class TestPlanExpandBaselines:
                     "beats": beats,
                     "following_beats": [],
                     "preceding_text": "",
-                    "perspective": "Third person limited, past tense.",
                     "director_notes": "Focus on building tension.",
                     "extra_instructions": "",
                     "response_length": 4096,
@@ -380,7 +379,7 @@ class TestPlanExpandBaselines:
         )
 
         director.client.send_prompt = AsyncMock(
-            return_value="<NARRATOR>More narration.</NARRATOR>"
+            return_value='<BLOCKS>\n[{"type": "narrator", "content": "More narration."}]\n</BLOCKS>'
         )
 
         with ActiveAgent(narrator, lambda: None):
@@ -394,7 +393,6 @@ class TestPlanExpandBaselines:
                     "beats": beats,
                     "following_beats": [],
                     "preceding_text": "The door creaked open, revealing an empty room. Elena stepped inside cautiously.",
-                    "perspective": "Third person limited, past tense.",
                     "director_notes": "",
                     "extra_instructions": "",
                     "response_length": 4096,
@@ -435,7 +433,7 @@ class TestPlanExpandBaselines:
         ]
 
         director.client.send_prompt = AsyncMock(
-            return_value="<NARRATOR>Revised narration.</NARRATOR>"
+            return_value='<BLOCKS>\n[{"type": "narrator", "content": "Revised narration."}]\n</BLOCKS>'
         )
 
         with ActiveAgent(narrator, lambda: None):

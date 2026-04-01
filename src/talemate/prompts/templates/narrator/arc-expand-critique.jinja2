@@ -4,12 +4,9 @@ redundancy, intensity monotony, and sensory repetition, then outputs
 a revised version.
 
 Extractors:
-  - response: BlockListExtractor(blocks=[("narrator", ...), ("character", ...)])
+  - response: AnchorExtractor with parse_data for YAML/JSON list
 -#}
-{{ set_block_list_extractor("response", blocks=[
-    ("narrator", "<NARRATOR>", "</NARRATOR>"),
-    ("character", '<CHARACTER name="(?P<name>[^"]*)">', "</CHARACTER>"),
-]) }}
+{{ set_anchor_extractor("response", "<BLOCKS>", "</BLOCKS>", parse_data=True) }}
 
 <|SECTION:TASK|>
 You are an editor reviewing the following scene prose. Your job is to revise it to fix these specific problems:
@@ -23,24 +20,31 @@ You are an editor reviewing the following scene prose. Your job is to revise it 
 **Rules:**
 - Keep all plot events intact — do NOT change what happens, only how it's written.
 - Keep the same number of blocks in the same order.
-- Keep block types (NARRATOR/CHARACTER) and character names unchanged.
+- Keep block types (narrator/character) and character names unchanged.
 - Your revisions must be subtle — polish, not rewrite. Cut redundant sentences, vary repeated words, adjust intensity. Do not add new plot elements.
 
 **Original prose:**
 
+{% if data_format_type() == "json" %}
+```json
+[
 {% for block in blocks %}
-{% if block.type == "narrator" %}
-<NARRATOR>
-{{ block.content }}
-</NARRATOR>
-{% elif block.type == "character" %}
-<CHARACTER name="{{ block.name }}">
-{{ block.content }}
-</CHARACTER>
-{% endif %}
+  {"type": "{{ block.type }}", {% if block.name %}"name": "{{ block.name }}", {% endif %}"content": {{ block.content | tojson }}}{% if not loop.last %},{% endif %}
 
 {% endfor %}
+]
+```
+{% else %}
+```yaml
+{% for block in blocks %}
+- type: {{ block.type }}
+{% if block.name %}  name: {{ block.name }}
+{% endif %}  content: |
+    {{ block.content | replace('\n', '\n    ') }}
+{% endfor %}
+```
+{% endif %}
 
-Output the revised version using the same `<NARRATOR>` and `<CHARACTER name="Name">` block format. Every block from the original must appear in your output.
+Output the revised version as a {{ data_format_type() }} list inside `<BLOCKS>` tags using the same format. Every block from the original must appear in your output.
 <|CLOSE_SECTION|>
-{{ set_prepared_response("<NARRATOR>") }}
+{{ set_prepared_response("<BLOCKS>\n") }}
