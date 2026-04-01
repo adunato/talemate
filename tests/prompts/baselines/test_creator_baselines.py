@@ -238,6 +238,22 @@ class TestCreatorContextualGenerateBaselines:
             "contextual_generate__character_attribute_with_instructions",
         )
 
+    @pytest.mark.asyncio
+    async def test_contextual_generate__list(
+        self, active_context, mock_scene, baseline_checker
+    ):
+        creator = active_context
+        creator.client.send_prompt.return_value = '["sword", "shield", "potion"]'
+        generation_context = ContentGenerationContext(
+            context="list:Items in inventory",
+            instructions="Generate inventory items",
+            length=256,
+        )
+        await creator.contextual_generate(generation_context)
+        baseline_checker(
+            capture_prompt(creator), AGENT, "contextual_generate__list"
+        )
+
 
 class TestCreatorAutocompleteBaselines:
     """Baseline tests for creator autocomplete methods."""

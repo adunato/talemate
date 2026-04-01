@@ -243,6 +243,7 @@ class Prompt:
 
     prepared_response: str = ""
     prepare_response_fallback: str | None = None
+    rstrip_prepared_response: bool = False
 
     # Replace json_response with data_response and data_format_type
     data_response: bool = False
@@ -668,6 +669,12 @@ class Prompt:
         # multiple whitespace-only lines into one
         prompt_text = collapse_whitespace_lines(prompt_text)
 
+        # Handle <|BOT_RSTRIP|>: rstrip everything after the marker, then
+        # normalize to <|BOT|> so downstream code doesn't need changes.
+        if "<|BOT_RSTRIP|>" in prompt_text:
+            before, after = prompt_text.split("<|BOT_RSTRIP|>", 1)
+            prompt_text = f"{before}<|BOT|>{after.rstrip()}"
+
         return prompt_text
 
     def render_template(self, uid, **kwargs) -> "Prompt":
@@ -1064,17 +1071,20 @@ class Prompt:
         return ["\n\n".join(chunk) for chunk in chunks]
 
     def set_prepared_response(
-        self, response: str, prepend: str = "", fallback: str | None = None
+        self, response: str, prepend: str = "", fallback: str | None = None, rstrip: bool = False
     ):
         """
         Set the prepared response.
 
         Args:
             response (str): The prepared response.
+            rstrip (bool): If True, strip trailing whitespace from the coercion message.
         """
         self.prepared_response = response
         self.prepare_response_fallback = fallback or response
-        return f"<|BOT|>{prepend}{response}"
+        self.rstrip_prepared_response = rstrip
+        bot_marker = "<|BOT_RSTRIP|>" if rstrip else "<|BOT|>"
+        return f"{bot_marker}{prepend}{response}"
 
     def set_prepared_response_random(self, responses: list[str], prefix: str = ""):
         """

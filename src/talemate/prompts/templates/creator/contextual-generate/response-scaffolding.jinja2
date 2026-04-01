@@ -12,9 +12,9 @@
 {# List response preparation #}
 {% if context_typ == "list" and can_coerce %}
   {% if action_task == "Add to the existing" %}
-{{ set_prepared_response('additional items:\n1.') }}
+{{ set_prepared_response('additional items:\n1.', rstrip=true) }}
   {% else %}
-{{ set_prepared_response('items:\n1.') }}
+{{ set_prepared_response('items:\n1.', rstrip=true) }}
   {% endif %}
 
 {# Task template defined prefix (for anchor extraction) #}

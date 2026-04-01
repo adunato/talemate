@@ -21,5 +21,6 @@
   - "Unslop: Fixed a bug where the unslop revision could hallucinate extra content, adding duplication and redundancy from previous entries. Fixes that are substantially longer than the original text are now discarded."
   - "Encryption: Fixed API keys in agent action configs (e.g., OpenAI-compatible TTS, visual backends) being stored in plaintext. The encryption walker now handles the nested AgentActionConfig structure where the key is wrapped in a {value: ...} dict."
   - "Agent Config: Stopped persisting unified_api_key fields to config.yaml. These are static reference pointers (e.g., 'openai.api_key') defined in code and never change, so saving them was unnecessary."
+  - "Contextual Generate: Fixed list-type generation prefilling an empty line after '1.', which caused some LLMs to produce empty lists."
   improvements:
   - "Prompts Tab Alert: The top-level Prompts tab now shows a warning icon when any active template overrides are outdated, so you can spot them without opening the tab."
