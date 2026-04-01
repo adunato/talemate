@@ -178,6 +178,10 @@ class RevisionEmission(AgentTemplateEmission):
     issues: Issues = dataclasses.field(default_factory=Issues)
 
 
+# Maximum ratio of fix length to original length before discarding
+# the fix as hallucinated content. Unslop should trim, not expand.
+UNSLOP_MAX_LENGTH_RATIO = 1.25
+
 ## MIXIN
 
 
@@ -1170,6 +1174,17 @@ class RevisionMixin:
         fix = extracted["fix"]
         if fix is None:
             log.debug("revision_unslop: no <FIX> found in response", response=response)
+            return original_text
+
+        # Guard: if the fix is substantially longer than the original,
+        # the model likely hallucinated extra content — discard it
+        if len(fix) > len(text) * UNSLOP_MAX_LENGTH_RATIO:
+            log.warning(
+                "revision_unslop: fix is too long, discarding",
+                original_len=len(text),
+                fix_len=len(fix),
+                ratio=f"{len(fix)/len(text):.2f}",
+            )
             return original_text
 
         emission.response = fix
