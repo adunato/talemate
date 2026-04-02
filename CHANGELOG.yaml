@@ -8,6 +8,7 @@
   - "Scene Perspective: Added a perspective field to the scene outline editor, allowing users to view and set the narrative perspective and tense (e.g., 'Third person limited, past tense'). Also exposed as a context ID (story_configuration:perspective)."
   - "Prompt Logging: Set TALEMATE_LOG_PROMPTS=1 to write full prompt+response data to logs/prompt_log.jsonl for debugging and analysis."
   - "Asset Exists Node: Added an allow_partial option that enables startswith matching instead of exact asset ID matching."
+  - "Gemma 4 Prompt Template: Added a prompt template for Google's Gemma 4 model family, with support for toggling thinking mode via the reasoning tokens setting."
   fixes:
   - "Message Regeneration: Fixed a bug where regenerating a message that fails (e.g., missing agent or function) would permanently remove the original message from the scene. The original message is now restored to both history and UI on failure, and unhandled exceptions during regeneration are caught."
   - "Anthropic Client: Fixed generation error caused by missing required max_tokens parameter when response length capping is disabled. Now defaults to the model's API output token limit."
