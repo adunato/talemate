@@ -1,8 +1,13 @@
 import json
+import pytest
 from talemate.util.prompt import (
     clean_visible_response,
     auto_close_tags,
     collapse_whitespace_lines,
+    condensed,
+    condensed_for_dedupe,
+    expand_condensed,
+    CONDENSED_NEWLINE,
 )
 from talemate.prompts.response import (
     AnchorExtractor,
@@ -806,3 +811,93 @@ The dude.
         text = "\t\nFirst\n \n\t\n  \t  \nSecond"
         result = collapse_whitespace_lines(text)
         assert result == "First\n\nSecond"
+
+
+# --- condensed_for_dedupe / expand_condensed tests ---
+
+
+class TestCondensedForDedupe:
+    """Tests for the marker-based condensed function used by the |condensed jinja filter."""
+
+    def test_replaces_newlines_with_marker(self):
+        result = condensed_for_dedupe("Hello\nWorld")
+        assert result == f"Hello{CONDENSED_NEWLINE}World"
+        assert "\n" not in result
+
+    def test_strips_carriage_returns(self):
+        result = condensed_for_dedupe("Hello\r\nWorld")
+        assert "\r" not in result
+        assert result == f"Hello{CONDENSED_NEWLINE}World"
+
+    def test_collapses_whitespace_per_line(self):
+        result = condensed_for_dedupe("Hello   world\n  foo   bar  ")
+        assert result == f"Hello world{CONDENSED_NEWLINE} foo bar "
+
+    def test_no_newlines_passthrough(self):
+        """Text without newlines should just get whitespace collapsed."""
+        result = condensed_for_dedupe("Hello   world")
+        assert result == "Hello world"
+        assert CONDENSED_NEWLINE not in result
+
+    def test_non_string_passthrough(self):
+        assert condensed_for_dedupe(42) == 42
+        assert condensed_for_dedupe(None) is None
+
+    def test_empty_string(self):
+        assert condensed_for_dedupe("") == ""
+
+    def test_multiple_newlines(self):
+        result = condensed_for_dedupe("A\n\n\nB")
+        assert result == f"A{CONDENSED_NEWLINE}{CONDENSED_NEWLINE}{CONDENSED_NEWLINE}B"
+
+    def test_original_condensed_unchanged(self):
+        """The old condensed() function should be unaffected."""
+        assert condensed("Hello\nWorld") == "Hello World"
+        assert condensed("A\n\nB") == "A B"
+
+
+class TestExpandCondensed:
+    """Tests for restoring condensed markers back to newlines."""
+
+    def test_basic_expand(self):
+        text = f"Hello{CONDENSED_NEWLINE}World"
+        assert expand_condensed(text) == "Hello\nWorld"
+
+    def test_no_markers(self):
+        assert expand_condensed("Hello World") == "Hello World"
+
+    def test_multiple_markers(self):
+        text = f"A{CONDENSED_NEWLINE}B{CONDENSED_NEWLINE}C"
+        assert expand_condensed(text) == "A\nB\nC"
+
+    def test_empty_string(self):
+        assert expand_condensed("") == ""
+
+
+class TestCondensedRoundtrip:
+    """Tests that condensed_for_dedupe + expand_condensed preserves line structure."""
+
+    @pytest.mark.parametrize(
+        "original",
+        [
+            "Single line",
+            "Line one\nLine two",
+            "Line one\nLine two\nLine three",
+            "Paragraph one text here.\n\nParagraph two text here.",
+            "",
+        ],
+    )
+    def test_roundtrip_preserves_lines(self, original):
+        result = expand_condensed(condensed_for_dedupe(original))
+        # Whitespace within lines may be collapsed, but line structure is preserved
+        assert result.count("\n") == original.count("\n")
+
+    def test_roundtrip_multiline_context(self):
+        """Simulate a RAG context entry being condensed and expanded."""
+        original = "The character is tall and strong.\nThey wear a blue cloak.\nTheir eyes are green."
+        condensed_text = condensed_for_dedupe(original)
+        # Should be a single line (no real newlines)
+        assert "\n" not in condensed_text
+        # Should restore to 3 lines
+        expanded = expand_condensed(condensed_text)
+        assert expanded == original

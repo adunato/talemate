@@ -39,7 +39,7 @@ from talemate.util import (
     iso8601_diff_to_human,
 )
 from talemate.util.data import extract_data_auto, DataParsingError
-from talemate.util.prompt import condensed, no_chapters, collapse_whitespace_lines
+from talemate.util.prompt import condensed_for_dedupe, expand_condensed, no_chapters, collapse_whitespace_lines
 from talemate.agents.context import active_agent
 from talemate.prompts.extensions import CaptureContextExtension
 from talemate.prompts.groups import get_group_template_path, resolve_template
@@ -598,7 +598,7 @@ class Prompt:
         env.globals["set_after_anchor_extractor"] = self.set_after_anchor_extractor
         env.globals["set_code_block_extractor"] = self.set_code_block_extractor
         env.globals["set_block_list_extractor"] = self.set_block_list_extractor
-        env.filters["condensed"] = condensed
+        env.filters["condensed"] = condensed_for_dedupe
         env.filters["no_chapters"] = no_chapters
         ctx.update(self.vars)
 
@@ -651,6 +651,9 @@ class Prompt:
 
         if self.dedupe_enabled:
             prompt_text = dedupe_string(prompt_text, debug=False)
+
+        # Restore condensed newline markers back to real newlines
+        prompt_text = expand_condensed(prompt_text)
 
         prompt_text = remove_extra_linebreaks(prompt_text)
 

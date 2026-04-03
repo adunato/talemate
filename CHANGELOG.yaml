@@ -27,5 +27,6 @@
   - "Contextual Generate: Fixed list-type generation prefilling an empty line after '1.', which caused some LLMs to produce empty lists."
   - "Advance Time: Fixed toolbar time advancement being completely non-functional due to a missing websocket handler. Also fixed invalid ISO 8601 duration strings for the 1 week and 2 weeks options."
   improvements:
+  - "Context Formatting: The |condensed template filter no longer permanently compacts multi-line context (e.g., world info, memories, pins) into a single line when sending prompts to the LLM. Formatting is now only compacted temporarily for deduplication comparison and restored to its original multi-line structure afterwards."
   - "Client Config UX: Moved advanced settings (Inference Presets, Structured Data Format, Section Format, Response Length Enforcement, Prompt Caching, Rate Limit) into a dedicated Advanced tab to declutter the general view. A convenient link in the general tab provides quick access. Toggling Simple View on now resets to the General tab, and switching clients always starts on General."
   - "Prompts Tab Alert: The top-level Prompts tab now shows a warning icon when any active template overrides are outdated, so you can spot them without opening the tab."
