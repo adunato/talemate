@@ -1,5 +1,6 @@
 0.37.0.dev:
   features:
+  - "System Prompt Template Variable: Added {{ system_prompt }} template variable for system prompt overrides. Use it to include the default system prompt within a custom override, at both the app and client level."
   - "Manual Scene Direction Turn: Added a button to the director scene tools menu to manually trigger a scene direction turn. Useful when scene direction is enabled but auto progression is off. Supports optional one-off instructions via Ctrl+click."
   - "Visual Scene Tools: Organized the visual tools menu into per-character submenus, matching the world scene tools pattern."
   - "Section Format: Per-client setting to control how prompt sections are formatted. Choose between Markdown (## headings) and XML (<SECTION>...</SECTION> tags). Found in the client configuration next to the data format setting."
@@ -27,6 +28,7 @@
   - "Contextual Generate: Fixed list-type generation prefilling an empty line after '1.', which caused some LLMs to produce empty lists."
   - "Advance Time: Fixed toolbar time advancement being completely non-functional due to a missing websocket handler. Also fixed invalid ISO 8601 duration strings for the 1 week and 2 weeks options."
   improvements:
+  - "System Prompt Override Indicators: The system prompt override list now shows a pencil icon next to entries that have an active override, making it easy to see which prompts have been customized."
   - "Search Strictness: The distance_mod embedding preset value is now a float (was int) with a range of 0.1–2.0, allowing both tighter and looser similarity matching. A 'Search Strictness' slider is now available in the Context Database UI, letting users tune search sensitivity on the fly. Changes persist to the active embedding preset immediately."
   - "Embeddings Device Switching: Changing the embeddings device (e.g., CPU to CUDA) no longer requires a restart. The old model is properly released from ChromaDB's class-level cache and GPU memory is freed before loading the new model."
   - "Context Formatting: The |condensed template filter no longer permanently compacts multi-line context (e.g., world info, memories, pins) into a single line when sending prompts to the LLM. Formatting is now only compacted temporarily for deduplication comparison and restored to its original multi-line structure afterwards."

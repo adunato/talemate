@@ -13,6 +13,9 @@
                 <v-list selectable color="primary" v-model:selected="selected">
                     <v-list-item v-for="item in systemPromptKindList" :key="item.value" :value="item.value">
                         <v-list-item-title>{{ item.label }}</v-list-item-title>
+                        <template v-slot:append>
+                            <v-icon v-if="hasOverride(item.value)" size="x-small" color="highlight5">mdi-pencil</v-icon>
+                        </template>
                     </v-list-item>
                 </v-list>
             </v-list>
@@ -34,6 +37,9 @@
                         @blur="$emit('update', {system_prompts: config})"
                         :label="labelFromValue(selected[0], tab === 'decensor')"
                     ></v-textarea>
+                    <p class="text-caption text-grey mt-1">
+                        <v-icon size="x-small" class="mr-1">mdi-information-outline</v-icon>Use <code class="text-primary">{<!-- -->{ system_prompt }}</code> to include the default system prompt in your override.
+                    </p>
                 </v-card-text>
 
                 
@@ -106,9 +112,7 @@ export default {
             return this.tabs.filter(t => t.condition());
         },
         selectedKey() {
-            // selected[0] will hold the kind
-            // if tab is decensor, append _decensor
-            return this.selected.length > 0 ? this.selected[0]+(this.tab === 'decensor' ? '_decensor' : '') : null;
+            return this.selected.length > 0 ? this.buildKey(this.selected[0]) : null;
         }
     },
     data() {
@@ -146,6 +150,14 @@ export default {
             if(this.systemPromptDefaults && this.selectedKey in this.systemPromptDefaults) {
                 this.config[this.selectedKey] = this.systemPromptDefaults[this.selectedKey];
             }
+        },
+
+        buildKey(value) {
+            return value + (this.tab === 'decensor' ? '_decensor' : '');
+        },
+
+        hasOverride(value) {
+            return !!this.config[this.buildKey(value)];
         },
 
         labelFromValue(value, decensor=false) {
