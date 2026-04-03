@@ -76,6 +76,13 @@ class PromptFromTemplate(Node):
             default="",
         )
 
+        dedupe = PropertyField(
+            name="dedupe",
+            type="bool",
+            default=True,
+            description="Enable prompt deduplication",
+        )
+
     def __init__(self, title="Prompt From Template", **kwargs):
         super().__init__(title=title, **kwargs)
 
@@ -87,6 +94,7 @@ class PromptFromTemplate(Node):
         self.set_property("scope", "scene")
         self.set_property("template_file", "")
         self.set_property("template_text", "")
+        self.set_property("dedupe", True)
 
         self.add_output("prompt", socket_type="prompt")
 
@@ -122,6 +130,8 @@ class PromptFromTemplate(Node):
                 "template_file",
                 "Must provide either template_file or template_text",
             )
+
+        prompt.dedupe_enabled = self.get_property("dedupe")
 
         self.set_output_values({"prompt": prompt})
 
