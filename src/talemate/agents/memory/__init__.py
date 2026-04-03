@@ -968,7 +968,14 @@ class ChromaDBMemoryAgent(MemoryAgent):
             )
 
             try:
-                ef = embedding_functions.SentenceTransformerEmbeddingFunction(
+                # Evict cached model so device changes take effect without restart.
+                # ChromaDB caches models in a class-level dict keyed only by model name,
+                # ignoring device — so a device switch would silently reuse the old model.
+                ST = embedding_functions.SentenceTransformerEmbeddingFunction
+                if model_name in ST.models:
+                    self._release_embedding_model(ST.models.pop(model_name))
+
+                ef = ST(
                     model_name=model_name,
                     trust_remote_code=self.trust_remote_code,
                     device=device,
@@ -1042,6 +1049,18 @@ class ChromaDBMemoryAgent(MemoryAgent):
             self._remove_unsaved_memory()
 
         self.db = None
+
+    def _release_embedding_model(self, model):
+        """Release an embedding model and free GPU memory if applicable."""
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                model.to("cpu")
+                del model
+                torch.cuda.empty_cache()
+        except ImportError:
+            pass
 
     def _add(self, text, character=None, uid=None, ts: str = None, **kwargs):
         metadatas = []
