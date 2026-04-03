@@ -20,8 +20,6 @@ A test story
 <INTENTION_OF_THE_CURRENT_SCENE>
 Context IDs: `story_configuration:scene_intention`, `story_configuration:scene_type`
 
-Scene type: `` - 
-
 ### INTENTION OF THE CURRENT SCENE
 ---
 Test phase

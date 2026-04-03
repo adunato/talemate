@@ -12,41 +12,42 @@ There is NO overal intention / set of expectations for this experience.
 {% endif %}
 
 <|CLOSE_SECTION|>
-{% if include_instructions %}
+{% if include_instructions and scene.intent_state.instructions and scene.intent_state.instructions|trim %}
 <|SECTION:SPECIAL INSTRUCTIONS FOR MANAGING THIS EXPERIENCE|>
 {% if technical %}Context IDs: `story_configuration:director_instructions`{% endif %}
 {{ scene.intent_state.instructions }}
 <|CLOSE_SECTION|>
 {% endif %}
 
-{# Intention of the current scene (respect exclude_phase_intent; warn if missing) #}
-{% if not exclude_phase_intent %}
+{# Intention of the current scene (respect exclude_phase_intent; hide when no content) #}
+{% if not exclude_phase_intent and scene.intent_state.phase %}
+{% set scene_type = scene.intent_state.current_scene_type -%}
+{% set _has_scene_type = scene_type.id and scene_type.id|trim -%}
+{% set _has_scene_intent = scene.intent_state.phase.intent and scene.intent_state.phase.intent|trim -%}
+{% set _has_scene_instructions = scene_type.instructions and scene_type.instructions|trim -%}
+{% if _has_scene_type or _has_scene_intent or _has_scene_instructions %}
 <|SECTION:INTENTION OF THE CURRENT SCENE|>
 {% if technical %}Context IDs: `story_configuration:scene_intention`, `story_configuration:scene_type`{% endif %}
 
-{% if scene.intent_state.phase %}
-{% set scene_type = scene.intent_state.current_scene_type -%}
+{% if _has_scene_type %}
 Scene type: `{{ scene_type.id }}` - {{ scene_type.description }}
+{% endif %}
 
-{% if scene_type.instructions %}
+{% if _has_scene_instructions %}
 ### INSTRUCTIONS FOR THE CURRENT SCENE TYPE `{{ scene_type.id }}`
 ---
 {{ scene_type.instructions }}
 ---
 {% endif %}
 
-{% if scene.intent_state.phase.intent %}
+{% if _has_scene_intent %}
 ### INTENTION OF THE CURRENT SCENE
 ---
 {{ scene.intent_state.phase.intent }}
 ---
-{% else %}
-There is NO intention set for the current scene.
-{% endif %}
-{% else %}
-There is NO current scene type / phase set for the current scene playing out.
 {% endif %}
 <|CLOSE_SECTION|>
+{% endif %}
 {% endif %}
 
 <|SECTION:SCENE TYPES|>
