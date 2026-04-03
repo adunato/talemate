@@ -288,7 +288,7 @@ class EmbeddingFunctionPreset(pydantic.BaseModel):
     trust_remote_code: bool = False
     device: str = "cpu"
     distance: float = 1.5
-    distance_mod: int = 1
+    distance_mod: float = 1.0
     distance_function: str = "l2"
     fast: bool = True
     gpu_recommendation: bool = False

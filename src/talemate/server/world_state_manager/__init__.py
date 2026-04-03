@@ -13,6 +13,7 @@ from talemate.instance import get_agent
 from talemate.world_state.manager import WorldStateManager, Suggestion
 from talemate.status import set_loading
 import talemate.game.focal as focal
+from talemate.config import save_config
 from talemate.server.websocket_plugin import Plugin
 
 from .scene_intent import SceneIntentMixin
@@ -89,6 +90,10 @@ class SetWorldEntryReinforcementPayload(pydantic.BaseModel):
 class WorldEntryReinforcementPayload(pydantic.BaseModel):
     question: str
     reset: bool = False
+
+
+class UpdateDistanceModPayload(pydantic.BaseModel):
+    distance_mod: float = pydantic.Field(gt=0, le=2.0)
 
 
 class QueryContextDBPayload(pydantic.BaseModel):
@@ -212,6 +217,11 @@ class WorldStateManagerPlugin(
     @property
     def scene(self):
         return self.websocket_handler.scene
+
+    @property
+    def current_embeddings_config(self):
+        memory_agent = get_agent("memory")
+        return memory_agent.embeddings_config if memory_agent else None
 
     @property
     def world_state_manager(self):
@@ -655,15 +665,47 @@ class WorldStateManagerPlugin(
             payload.query, **payload.meta
         )
 
+        embeddings_config = self.current_embeddings_config
+
         self.websocket_handler.queue_put(
             {
                 "type": "world_state_manager",
                 "action": "context_db_result",
                 "data": context_db.model_dump(),
+                "distance_mod": embeddings_config.distance_mod if embeddings_config else 1.0,
             }
         )
 
         await self.signal_operation_done()
+
+    async def handle_get_distance_mod(self, data):
+        embeddings_config = self.current_embeddings_config
+
+        self.websocket_handler.queue_put(
+            {
+                "type": "world_state_manager",
+                "action": "distance_mod_updated",
+                "distance_mod": embeddings_config.distance_mod if embeddings_config else 1.0,
+            }
+        )
+
+    async def handle_update_distance_mod(self, data):
+        payload = UpdateDistanceModPayload(**data)
+
+        embeddings_config = self.current_embeddings_config
+        if not embeddings_config:
+            return
+
+        embeddings_config.distance_mod = payload.distance_mod
+        save_config()
+
+        self.websocket_handler.queue_put(
+            {
+                "type": "world_state_manager",
+                "action": "distance_mod_updated",
+                "distance_mod": payload.distance_mod,
+            }
+        )
 
     async def handle_update_context_db(self, data):
         payload = UpdateContextDBPayload(**data)
