@@ -142,23 +142,6 @@
       "registry": "core/MakeBool",
       "base_type": "core/Node"
     },
-    "d5a28d38-c91d-443a-82f3-bbccee1d84e6": {
-      "title": "Prompt From Template",
-      "id": "d5a28d38-c91d-443a-82f3-bbccee1d84e6",
-      "properties": {
-        "scope": "director",
-        "template_file": "scene-plan-create-outline",
-        "template_text": ""
-      },
-      "x": 1056,
-      "y": 1036,
-      "width": 210,
-      "height": 146,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "prompt/PromptFromTemplate",
-      "base_type": "core/Node"
-    },
     "becc58ac-1e13-44df-85d8-466c27935c5e": {
       "title": "true",
       "id": "becc58ac-1e13-44df-85d8-466c27935c5e",
@@ -884,6 +867,24 @@
       "inherited": false,
       "registry": "core/Input",
       "base_type": "core/Node"
+    },
+    "d5a28d38-c91d-443a-82f3-bbccee1d84e6": {
+      "title": "Prompt From Template",
+      "id": "d5a28d38-c91d-443a-82f3-bbccee1d84e6",
+      "properties": {
+        "scope": "director",
+        "template_file": "scene-plan-create-outline",
+        "template_text": "",
+        "dedupe": false
+      },
+      "x": 1110,
+      "y": 1060,
+      "width": 210,
+      "height": 170,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/PromptFromTemplate",
+      "base_type": "core/Node"
     }
   },
   "edges": {
@@ -901,9 +902,6 @@
     ],
     "d864bf7b-83ce-440b-8a9b-ac00f5ad496a.value": [
       "18339c3e-031b-471d-a317-efcd2c14a4e0.state"
-    ],
-    "d5a28d38-c91d-443a-82f3-bbccee1d84e6.prompt": [
-      "18339c3e-031b-471d-a317-efcd2c14a4e0.prompt"
     ],
     "becc58ac-1e13-44df-85d8-466c27935c5e.value": [
       "903af300-88b8-4a88-9200-1fc8a11f4100.state"
@@ -934,13 +932,13 @@
       "8641d43d-c5d7-471e-870b-27fcaf4b4564.value"
     ],
     "18339c3e-031b-471d-a317-efcd2c14a4e0.extracted": [
-      "944cd2b9-8d55-4353-a7a9-e3cd98882768.object",
-      "78cbb918-22da-4e99-87b4-e7a0a3c9da67.object"
+      "78cbb918-22da-4e99-87b4-e7a0a3c9da67.object",
+      "944cd2b9-8d55-4353-a7a9-e3cd98882768.object"
     ],
     "6bb81c40-cff1-42e6-a471-001985e57e5c.dict": [
       "517d4bb8-38aa-4b11-8ba9-f569a6a45338.value",
-      "0bf06241-b92b-4f0f-bc67-0789fe061c18.dict",
-      "34f29d9b-828c-4450-86ce-7163a9ffd2e0.merge_with"
+      "34f29d9b-828c-4450-86ce-7163a9ffd2e0.merge_with",
+      "0bf06241-b92b-4f0f-bc67-0789fe061c18.dict"
     ],
     "1a5053b8-6cb9-449e-a52c-acb44b79ab14.value": [
       "6bb81c40-cff1-42e6-a471-001985e57e5c.item3"
@@ -1022,8 +1020,8 @@
       "881ce23b-d561-4163-baa1-3d4b02d55c15.instructions"
     ],
     "ba9fb7b5-9945-4286-8a02-b5d97780986a.value": [
-      "881ce23b-d561-4163-baa1-3d4b02d55c15.tasks",
-      "881ce23b-d561-4163-baa1-3d4b02d55c15.state"
+      "881ce23b-d561-4163-baa1-3d4b02d55c15.state",
+      "881ce23b-d561-4163-baa1-3d4b02d55c15.tasks"
     ],
     "d119ebc0-f6d2-43d3-a38d-32f19cd27b2d.value": [
       "d7875776-8ae3-40dc-9b4b-3ce3aebee755.state"
@@ -1036,6 +1034,9 @@
     ],
     "c9775f83-e7bc-4dc5-959c-bc2182a0d10b.value": [
       "88f6f84d-c3ef-4efa-ad22-e079cc3f10e5.value"
+    ],
+    "d5a28d38-c91d-443a-82f3-bbccee1d84e6.prompt": [
+      "18339c3e-031b-471d-a317-efcd2c14a4e0.prompt"
     ]
   },
   "groups": [

@@ -340,36 +340,6 @@
       "registry": "agents/GetAgent",
       "base_type": "core/Node"
     },
-    "4c8ee4e7-865a-4d8d-84b7-2742862231ce": {
-      "title": "Template Variables",
-      "id": "4c8ee4e7-865a-4d8d-84b7-2742862231ce",
-      "properties": {},
-      "x": 655,
-      "y": 1128,
-      "width": 170,
-      "height": 46,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "prompt/TemplateVariables",
-      "base_type": "core/Node"
-    },
-    "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683": {
-      "title": "Prompt From Template",
-      "id": "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683",
-      "properties": {
-        "scope": "director",
-        "template_file": "scene-plan-critique-outline",
-        "template_text": ""
-      },
-      "x": 860,
-      "y": 970,
-      "width": 210,
-      "height": 146,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "prompt/PromptFromTemplate",
-      "base_type": "core/Node"
-    },
     "bc81179e-0fb0-426c-96f3-0b3d621fed43": {
       "title": "GET local.outline",
       "id": "bc81179e-0fb0-426c-96f3-0b3d621fed43",
@@ -591,6 +561,37 @@
       "inherited": false,
       "registry": "util/ModuleStyle",
       "base_type": "core/Node"
+    },
+    "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683": {
+      "title": "Prompt From Template",
+      "id": "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683",
+      "properties": {
+        "scope": "director",
+        "template_file": "scene-plan-critique-outline",
+        "template_text": "",
+        "dedupe": false
+      },
+      "x": 860,
+      "y": 970,
+      "width": 210,
+      "height": 170,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/PromptFromTemplate",
+      "base_type": "core/Node"
+    },
+    "4c8ee4e7-865a-4d8d-84b7-2742862231ce": {
+      "title": "Template Variables",
+      "id": "4c8ee4e7-865a-4d8d-84b7-2742862231ce",
+      "properties": {},
+      "x": 650,
+      "y": 1200,
+      "width": 170,
+      "height": 46,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/TemplateVariables",
+      "base_type": "core/Node"
     }
   },
   "edges": {
@@ -648,16 +649,6 @@
     "b8bcf7dd-bcca-43dd-b855-77555b626522.agent": [
       "4c8ee4e7-865a-4d8d-84b7-2742862231ce.agent"
     ],
-    "4c8ee4e7-865a-4d8d-84b7-2742862231ce.variables": [
-      "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683.variables"
-    ],
-    "4c8ee4e7-865a-4d8d-84b7-2742862231ce.agent": [
-      "6afa0a64-551b-4724-85f4-53a5bdebbac9.agent"
-    ],
-    "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683.prompt": [
-      "6afa0a64-551b-4724-85f4-53a5bdebbac9.state",
-      "6afa0a64-551b-4724-85f4-53a5bdebbac9.prompt"
-    ],
     "bc81179e-0fb0-426c-96f3-0b3d621fed43.value": [
       "62b71c3b-02ab-43bb-98ae-c1d4521c0f99.item1"
     ],
@@ -682,6 +673,16 @@
     ],
     "7686f35b-4635-405a-80f9-3021e1d8cb3b.value": [
       "c5703360-9be8-42dc-8a5f-6030faf9796c.value"
+    ],
+    "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683.prompt": [
+      "6afa0a64-551b-4724-85f4-53a5bdebbac9.state",
+      "6afa0a64-551b-4724-85f4-53a5bdebbac9.prompt"
+    ],
+    "4c8ee4e7-865a-4d8d-84b7-2742862231ce.variables": [
+      "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683.variables"
+    ],
+    "4c8ee4e7-865a-4d8d-84b7-2742862231ce.agent": [
+      "6afa0a64-551b-4724-85f4-53a5bdebbac9.agent"
     ]
   },
   "groups": [
