@@ -372,6 +372,9 @@ export default {
             if(message.action === 'chat_created') {
                 this.chats = message.chat_list || [];
                 this.activeChatId = message.chat_id;
+                this.chatMessages = [];
+                this.tokenTotal = null;
+                this.activePlan = null;
                 // Proactively request history to avoid any race ordering
                 this.onSelectChat();
                 return;
