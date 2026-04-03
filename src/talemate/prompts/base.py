@@ -39,7 +39,12 @@ from talemate.util import (
     iso8601_diff_to_human,
 )
 from talemate.util.data import extract_data_auto, DataParsingError
-from talemate.util.prompt import condensed_for_dedupe, expand_condensed, no_chapters, collapse_whitespace_lines
+from talemate.util.prompt import (
+    condensed_for_dedupe,
+    expand_condensed,
+    no_chapters,
+    collapse_whitespace_lines,
+)
 from talemate.agents.context import active_agent
 from talemate.prompts.extensions import CaptureContextExtension
 from talemate.prompts.groups import get_group_template_path, resolve_template

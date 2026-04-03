@@ -274,7 +274,9 @@ class GetActivePlan(Node):
         # Fall back to scene perspective or a sensible default
         if not perspective:
             scene = active_scene.get()
-            perspective = getattr(scene, "perspective", "") or "Third person, past tense."
+            perspective = (
+                getattr(scene, "perspective", "") or "Third person, past tense."
+            )
 
         self.set_output_values(
             {
@@ -369,7 +371,9 @@ class ExpandStoryArc(AgentNode):
         input_state = self.require_input("state")
         plan_id = self.require_input("plan_id")
         beats = self.require_input("beats")
-        perspective = self.normalized_input_value("perspective") or "Third person, past tense."
+        perspective = (
+            self.normalized_input_value("perspective") or "Third person, past tense."
+        )
         director_notes = self.normalized_input_value("director_notes") or ""
         chunk_size = self.normalized_input_value("chunk_size") or int(
             self.get_property("chunk_size")

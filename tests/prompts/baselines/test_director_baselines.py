@@ -478,14 +478,10 @@ class TestPlanExpandBaselines:
                 },
             )
 
-        baseline_checker(
-            capture_prompt(director), AGENT, "scene_plan_create_outline"
-        )
+        baseline_checker(capture_prompt(director), AGENT, "scene_plan_create_outline")
 
     @pytest.mark.asyncio
-    async def test_scene_plan_critique_outline(
-        self, active_context, baseline_checker
-    ):
+    async def test_scene_plan_critique_outline(self, active_context, baseline_checker):
         """Test the scene-plan-critique-outline template renders correctly."""
         from talemate.prompts import Prompt
         from talemate.agents.base import ActiveAgent
@@ -495,9 +491,7 @@ class TestPlanExpandBaselines:
         beats = _make_test_beats()
         outline = [b.model_dump() for b in beats]
 
-        director.client.send_prompt = AsyncMock(
-            return_value="<NO_CHANGES/>"
-        )
+        director.client.send_prompt = AsyncMock(return_value="<NO_CHANGES/>")
 
         with ActiveAgent(director, lambda: None):
             await Prompt.request(
@@ -514,6 +508,4 @@ class TestPlanExpandBaselines:
                 },
             )
 
-        baseline_checker(
-            capture_prompt(director), AGENT, "scene_plan_critique_outline"
-        )
+        baseline_checker(capture_prompt(director), AGENT, "scene_plan_critique_outline")

@@ -524,7 +524,10 @@ def test_dedupe_string_condensed_then_expand():
     expanded = expand_condensed(deduped)
     assert CONDENSED_NEWLINE not in expanded
     # The surviving entry should now be multiline
-    assert "The character is tall and strong.\nThey wear a blue cloak.\nTheir eyes are green." in expanded
+    assert (
+        "The character is tall and strong.\nThey wear a blue cloak.\nTheir eyes are green."
+        in expanded
+    )
 
 
 # Test cases for similarity_matches function

@@ -672,7 +672,9 @@ class WorldStateManagerPlugin(
                 "type": "world_state_manager",
                 "action": "context_db_result",
                 "data": context_db.model_dump(),
-                "distance_mod": embeddings_config.distance_mod if embeddings_config else 1.0,
+                "distance_mod": embeddings_config.distance_mod
+                if embeddings_config
+                else 1.0,
             }
         )
 
@@ -685,7 +687,9 @@ class WorldStateManagerPlugin(
             {
                 "type": "world_state_manager",
                 "action": "distance_mod_updated",
-                "distance_mod": embeddings_config.distance_mod if embeddings_config else 1.0,
+                "distance_mod": embeddings_config.distance_mod
+                if embeddings_config
+                else 1.0,
             }
         )
 

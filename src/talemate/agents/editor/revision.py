@@ -1183,7 +1183,7 @@ class RevisionMixin:
                 "revision_unslop: fix is too long, discarding",
                 original_len=len(text),
                 fix_len=len(fix),
-                ratio=f"{len(fix)/len(text):.2f}",
+                ratio=f"{len(fix) / len(text):.2f}",
             )
             return original_text
 

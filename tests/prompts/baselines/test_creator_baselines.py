@@ -250,9 +250,7 @@ class TestCreatorContextualGenerateBaselines:
             length=256,
         )
         await creator.contextual_generate(generation_context)
-        baseline_checker(
-            capture_prompt(creator), AGENT, "contextual_generate__list"
-        )
+        baseline_checker(capture_prompt(creator), AGENT, "contextual_generate__list")
 
 
 class TestCreatorAutocompleteBaselines:
