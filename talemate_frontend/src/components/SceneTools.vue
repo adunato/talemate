@@ -165,20 +165,7 @@
 
                 <!-- advance time -->
 
-                <v-menu>
-                    <template v-slot:activator="{ props }">
-                        <v-btn class="hotkey mx-1" v-bind="props" :disabled="appBusy || !appReady" color="primary" icon variant="text">
-                            <v-icon>mdi-clock</v-icon>
-                        </v-btn>
-                    </template>
-                    <v-list density="compact">
-                        <v-list-subheader>Advance Time</v-list-subheader>
-                        <v-list-item density="compact" v-for="(option, index) in advanceTimeOptions" :key="index"
-                            @click="advanceTime(option.value)">
-                            <v-list-item-title density="compact" class="text-capitalize">{{ option.title }}</v-list-item-title>
-                        </v-list-item>
-                    </v-list>
-                </v-menu>
+                <SceneToolsTime :disabled="appBusy || !appReady" />
 
                 <!-- world tools -->
                 <SceneToolsWorld 
@@ -234,6 +221,7 @@ import SceneToolsVisual from './SceneToolsVisual.vue';
 import SceneToolsWorld from './SceneToolsWorld.vue';
 import SceneToolsSettings from './SceneToolsSettings.vue';
 import SceneToolsSave from './SceneToolsSave.vue';
+import SceneToolsTime from './SceneToolsTime.vue';
 import RequestInput from './RequestInput.vue';
 export default {
 
@@ -247,6 +235,7 @@ export default {
         SceneToolsSave,
         SceneToolsWorld,
         SceneToolsSettings,
+        SceneToolsTime,
         RequestInput,
     },
     props: {
@@ -311,29 +300,6 @@ export default {
             quickSettings: [
                 {"value": "toggleAutoSave", "title": "Auto Save", "icon": "mdi-content-save", "description": "Automatically save after each game-loop", "status": () => { return this.canAutoSave ? this.autoSave : "Manually save scene for auto-save to be available"; }},
                 {"value": "toggleAutoProgress", "title": "Auto Progress", "icon": "mdi-robot", "description": "AI automatically progresses after player turn.", "status": () => { return this.autoProgress }},
-            ],
-            advanceTimeOptions: [
-                {"value" : "P10Y", "title": "10 years"},
-                {"value" : "P5Y", "title": "5 years"},
-                {"value" : "P3Y", "title": "3 years"},
-                {"value" : "P2Y", "title": "2 years"},
-                {"value" : "P1Y", "title": "1 year"},
-                {"value" : "P6M", "title": "6 months"},
-                {"value" : "P3M", "title": "3 months"},
-                {"value" : "P1M", "title": "1 month"},
-                {"value" : "P14D:2 Weeks later", "title": "2 weeks"},
-                {"value" : "P7D:1 Week later", "title": "1 week"},
-                {"value" : "P3D", "title": "3 days"},
-                {"value" : "P2D", "title": "2 days"},
-                {"value" : "P1D", "title": "1 day"},
-                {"value" : "PT12H", "title": "12 hours"},
-                {"value" : "PT8H", "title": "8 hours"},
-                {"value" : "PT4H", "title": "4 hours"},
-                {"value" : "PT2H", "title": "2 hours"},
-                {"value" : "PT1H", "title": "1 hour"},
-                {"value" : "PT30M", "title": "30 minutes"},
-                {"value" : "PT15M", "title": "15 minutes"},
-                {"value" : "PT5M", "title": "5 minutes"}
             ],
         }
     },
@@ -458,10 +424,6 @@ export default {
 
         cancelAudioQueue() {
             this.$emit('cancel-audio-queue');
-        },
-
-        advanceTime(duration) {
-            this.getWebsocket().send(JSON.stringify({ type: 'world_state_agent', action: 'advance_time', duration: duration }));
         },
 
         // Handle incoming messages
