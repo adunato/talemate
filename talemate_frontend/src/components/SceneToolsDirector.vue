@@ -49,9 +49,6 @@
             <v-card-title><v-icon class="mr-2">mdi-movie-open</v-icon>Generate Long Progress</v-card-title>
             <v-card-text>
                 <div class="text-muted mb-4">Automatically plans and generates multiple turns of narrative progress based on your instructions. The director will create an outline and then execute each turn sequentially.</div>
-                <v-alert variant="outlined" density="compact" color="warning" class="mb-3">
-                    <div class="text-muted">This feature requires a strong LLM (100B+ parameters). Smaller local models typically cannot follow the structured generation pipeline reliably.</div>
-                </v-alert>
                 <v-textarea
                     v-model="scenePlanInstructions"
                     label="Scene instructions"
@@ -59,105 +56,81 @@
                     rows="8"
                     auto-grow
                 ></v-textarea>
-                <v-slider
-                    v-model="scenePlanBeats"
-                    label="Number of turns"
-                    :min="3"
-                    :max="24"
-                    :step="1"
-                    thumb-label="always"
-                    color="primary"
-                    class="mt-4"
-                ></v-slider>
-                <v-slider
-                    v-model="scenePlanDialogueRatio"
-                    label="Dialogue ratio"
-                    :min="0"
-                    :max="100"
-                    :step="10"
-                    thumb-label="always"
-                    color="primary"
-                    class="mt-4"
-                >
-                    <template v-slot:thumb-label="{ modelValue }">{{ modelValue }}%</template>
-                </v-slider>
 
-                <!-- Warning: narrator progress_story generation length too low -->
-                <v-alert
-                    v-if="narratorProgressStoryLength < minRecommendedNarratorLength"
-                    variant="outlined"
-                    density="compact"
-                    color="warning"
-                    class="mb-3"
-                >
-                    <div class="text-muted">
-                        The narrator's <strong>Progress Story</strong> generation length is set to <strong>{{ narratorProgressStoryLength }}</strong> tokens. For best results with long progress generation, consider increasing it to at least <strong>{{ minRecommendedNarratorLength }}</strong>.
-                        <v-btn size="x-small" variant="text" color="warning" @click="openAgentSettings('narrator', 'generation_override')">Open narrator settings</v-btn>
-                    </div>
-                </v-alert>
+                <div class="d-flex ga-4 align-center mt-4">
+                    <v-slider
+                        v-model="scenePlanBeats"
+                        label="Number of turns"
+                        :min="3"
+                        :max="24"
+                        :step="1"
+                        thumb-label="always"
+                        color="primary"
+                        class="flex-grow-1"
+                    ></v-slider>
+                    <v-slider
+                        v-model="scenePlanDialogueRatio"
+                        label="Dialogue ratio"
+                        :min="0"
+                        :max="100"
+                        :step="10"
+                        thumb-label="always"
+                        color="primary"
+                        class="flex-grow-1"
+                    >
+                        <template v-slot:thumb-label="{ modelValue }">{{ modelValue }}%</template>
+                    </v-slider>
+                </div>
 
-                <!-- Warning: characters missing acting instructions -->
-                <v-alert
-                    v-if="charactersMissingActingInstructions.length > 0"
-                    variant="outlined"
-                    density="compact"
-                    color="warning"
-                    class="mb-3"
-                >
-                    <div class="text-muted">
-                        The following characters are missing <strong>Acting instructions</strong>:
-                        <strong>{{ charactersMissingActingInstructions.join(', ') }}</strong>.
-                        If the director calls on them to act, the quality of their dialogue and actions may be diminished.
-                    </div>
-                </v-alert>
-
-                <v-btn-toggle
-                    v-model="scenePlanMode"
-                    mandatory
-                    density="compact"
-                    color="primary"
-                    class="mb-4"
-                >
-                    <v-btn value="generate_arc_expand" size="small" variant="text">
-                        <v-icon start>mdi-lightning-bolt</v-icon>
-                        Expand
-                    </v-btn>
-                    <v-btn value="generate_arc" size="small" variant="text">
-                        <v-icon start>mdi-directions-fork</v-icon>
-                        Turn by turn (slower)
-                    </v-btn>
-                </v-btn-toggle>
-
-                <v-alert variant="outlined" density="compact" color="primary" class="mb-3">
-                    <div class="text-muted" v-if="scenePlanMode === 'generate_arc'">Turn by turn mode: the director executes each beat individually through the narrator and conversation agents. Slower, but the director can query context, create world entries, and adjust strategy between beats.</div>
-                    <div class="text-muted" v-else>Expand mode: beats are expanded into prose in chunks. Much faster, with automatic chunking and arc-aware pacing.</div>
-                </v-alert>
-
-                <div class="d-flex ga-4 mb-4">
+                <div class="d-flex align-center ga-4 mb-2">
+                    <v-btn-toggle
+                        v-model="scenePlanMode"
+                        mandatory
+                        density="compact"
+                        color="primary"
+                    >
+                        <v-btn value="generate_arc_expand" size="small" variant="text">
+                            <v-icon start>mdi-lightning-bolt</v-icon>
+                            Expand
+                        </v-btn>
+                        <v-btn value="generate_arc" size="small" variant="text">
+                            <v-icon start>mdi-directions-fork</v-icon>
+                            Turn by turn
+                        </v-btn>
+                    </v-btn-toggle>
                     <v-checkbox
                         v-model="scenePlanOutlineCritique"
                         label="Outline critique"
-                        hint="Critique and refine the outline before expansion"
-                        persistent-hint
                         density="compact"
-                        hide-details="auto"
+                        hide-details
                         color="primary"
                     ></v-checkbox>
                     <v-checkbox
                         v-model="scenePlanExpandCritique"
                         label="Expansion critique"
-                        hint="Post-expansion pass to fix redundancy"
-                        persistent-hint
                         density="compact"
-                        hide-details="auto"
+                        hide-details
                         color="primary"
                         v-if="scenePlanMode === 'generate_arc_expand'"
                     ></v-checkbox>
                 </div>
+                <div class="text-caption text-muted mb-4" v-if="scenePlanMode === 'generate_arc'">Each beat is executed individually through narrator and conversation agents. Slower, but the director can adjust strategy between beats.</div>
+                <div class="text-caption text-muted mb-4" v-else>Beats are expanded into prose in chunks. Much faster, with automatic chunking and arc-aware pacing.</div>
 
-                <v-alert variant="outlined" density="compact" color="primary" class="mb-3">
-                    <div class="text-muted">This may generate actions and dialogue for player controlled characters as well.</div>
-                </v-alert>
+                <!-- Warnings - compact format -->
+                <div v-if="narratorProgressStoryLength < minRecommendedNarratorLength" class="text-caption text-warning mb-1">
+                    <v-icon size="x-small" color="warning" class="mr-1">mdi-alert</v-icon>
+                    Narrator Progress Story length ({{ narratorProgressStoryLength }} tokens) is below recommended {{ minRecommendedNarratorLength }}.
+                    <v-btn size="x-small" variant="text" color="warning" @click="openAgentSettings('narrator', 'generation_override')">Fix</v-btn>
+                </div>
+                <div v-if="charactersMissingActingInstructions.length > 0" class="text-caption text-warning mb-1">
+                    <v-icon size="x-small" color="warning" class="mr-1">mdi-alert</v-icon>
+                    Missing acting instructions: <strong>{{ charactersMissingActingInstructions.join(', ') }}</strong>
+                </div>
+                <div class="text-caption text-muted mb-1">
+                    <v-icon size="x-small" class="mr-1">mdi-information-outline</v-icon>
+                    May generate actions and dialogue for player controlled characters. Requires a strong LLM (100B+ parameters).
+                </div>
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
