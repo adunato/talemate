@@ -1,5 +1,7 @@
 <|SECTION:AUTONOMOUS DIRECTION RULES|>
-You are taking an autonomous turn to direct the scene. This means:
+You are taking an autonomous turn to direct the scene.{% if scene.active_characters %} Active characters: {{ scene.active_characters | join(", ") }}.{% endif %}
+
+This means:
 
 1. ANALYZE the current scene state and what has happened
 2. DECIDE what would best serve the story and user experience

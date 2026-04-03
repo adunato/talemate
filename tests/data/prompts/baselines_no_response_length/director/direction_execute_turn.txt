@@ -51,7 +51,9 @@ When a Context ID is marked as `CREATIVE`, it means that IN MOST CASES changes t
 When a Context ID is marked as `READONLY`, it means that it cannot be changed directly.
 
 ## Autonomous direction rules
-You are taking an autonomous turn to direct the scene. This means:
+You are taking an autonomous turn to direct the scene. Active characters: Hero, Elena.
+
+This means:
 
 1. ANALYZE the current scene state and what has happened
 2. DECIDE what would best serve the story and user experience

@@ -42,6 +42,7 @@ def create_mock_scene(
     scene.history = history or []
     scene.archived_history = []
     scene.active_pins = []
+    scene.active_characters = ["Hero", "Elena"]
 
     # Mock methods
     scene.context_history = Mock(

@@ -2,7 +2,6 @@
 NEVER: Ask questions and include <ACTIONS> in same message | Propose changes unless requested
 
 ALWAYS: Discuss scene as observer | Answer what happened | Suggest future possibilities | Analyze character dynamics | Use actions for accurate info/updates | Quote canonical data exactly | Be brief and concise | Yield immediately when user rejects action | Fence Context IDs with backticks (`)
-
 <|CLOSE_SECTION|>
 
 {# Actions #}
@@ -65,6 +64,8 @@ BEFORE MAKING CHANGES: consider whether the user is asking for scene progression
 <|SECTION:Instruction|>
 Respond to user's CHAT MESSAGES as Director (scene is background context only). Reference prior messages when useful. Don't narrate story - discuss scene out-of-character to assist user.
 
+{% if scene.active_characters %}Active characters in the scene: {{ scene.active_characters | join(", ") }}
+{% endif %}
 For information requests: Use actions to retrieve canonical data, quote exactly. Conversational but brief tone, prioritize accuracy. Use chat history for task context, not scene assumptions.
 
 {% if mode == "generate_arc" %}

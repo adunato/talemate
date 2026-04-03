@@ -1,0 +1,49 @@
+## Classification
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+
+Scenario Premise:
+A peaceful clearing in the heart of an ancient forest.
+
+## Characters
+
+### Hero
+name: Hero
+
+A test character.
+
+### Elena
+name: Elena
+
+A test character.
+
+## Intention of this story
+The overarching intention of this story. Use it to guide your decisions in the scene.
+
+<Mock name='mock.intent_state.intent' id='NORMALIZED'>
+
+## Intention of the current scene
+<Mock name='mock.intent_state.current_scene_type.description' id='NORMALIZED'>
+
+<Mock name='mock.intent_state.phase.intent' id='NORMALIZED'>
+
+## Scene
+
+Elena: Hello there, traveler.
+
+The sun filters through the leaves above.
+
+Marcus: What brings you to these woods?
+
+## Task
+
+Generate the list of 20 items. The list MUST BE plain text numbered list with one item per line.
+
+### Editorial Instructions
+Generate inventory items
+
+
+The length of your final answer must fit within 4 paragraphs.
+
+After thinking about it, start your answer with: Items in inventory:

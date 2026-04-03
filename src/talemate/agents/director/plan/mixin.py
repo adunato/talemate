@@ -235,6 +235,7 @@ class PlanMixin:
                     narrator.client,
                     "narrate_4096",
                     vars=prompt_vars,
+                    dedupe_enabled=False,
                 )
 
                 blocks = extracted.get("response", [])
