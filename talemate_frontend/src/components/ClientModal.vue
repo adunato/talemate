@@ -87,11 +87,6 @@
                     <v-col cols="4">
                       <v-number-input v-model="client.max_token_length" v-if="requiresAPIUrl(client)"
                         label="Context Length" :rules="[rules.required]" :step="64"></v-number-input>
-
-
-                      <v-select label="Inference Presets" :items="availablePresets" v-model="client.preset_group">
-                      </v-select>
-
                     </v-col>
                     <v-col cols="8"
                       v-if="!typeEditable() && client.data && client.data.prompt_template_example !== null && client.model_name && clientMeta().requires_prompt_template && !client.data.api_handles_prompt_template">
@@ -123,53 +118,19 @@
 
                     </v-col>
                   </v-row>
-                  <!-- DATA FORMAT & SECTION FORMAT -->
-                  <v-row>
-                    <v-col cols="6">
-                      <v-select label="Structured Data Format" :items="dataManageFormatChoices" v-model="client.data_format" messages="Which formatting to use for data structure communication such as function calling or general data management."></v-select>
-                    </v-col>
-                    <v-col cols="6">
-                      <v-select label="Section Format" :items="sectionFormatChoices" v-model="client.section_format" messages="How prompt sections are formatted. Markdown uses ## headings, XML uses paired tags like <SECTION>...</SECTION>."></v-select>
-                    </v-col>
-                  </v-row>
-                  <!-- RATE LIMIT -->
-                  <v-row>
-                    <v-col cols="12">
-                      <v-slider v-model="client.rate_limit" label="Rate Limit" :min="0" :max="100" :step="1" :persistent-hint="true" hint="Requests per minute. (0 = no limit)" thumb-label="always"></v-slider>
-                    </v-col>
-                  </v-row>
-                  <!-- PROMPT CACHING & RESPONSE LENGTH ENFORCEMENT -->
-                  <v-row>
-                    <v-col cols="6">
-                      <v-checkbox v-model="client.optimize_prompt_caching" color="primary" label="Optimize for Prompt Caching" hint="Place volatile context after the scene history for better prompt caching. Recommended for remote API backends. May confuse weaker models." persistent-hint></v-checkbox>
-                    </v-col>
-                    <v-col cols="6">
-                      <v-select
-                        v-model="client.enforce_response_length"
-                        label="Response Length Enforcement"
-                        :items="enforceResponseLengthChoices"
-                        item-title="label"
-                        item-value="value"
-                        hint="Controls whether token limits and/or length instructions are sent with prompts."
-                        persistent-hint
-                      >
-                        <template v-slot:item="{ props, item }">
-                          <v-list-item v-bind="props" :title="item.raw.label" :subtitle="item.raw.help"></v-list-item>
-                        </template>
-                      </v-select>
-                      <v-alert
-                        v-if="client.enforce_response_length === 'uncapped'"
-                        color="warning"
-                        variant="text"
-                        density="compact"
-                        class="mt-1 text-caption"
-                        icon="mdi-alert"
-                      >
-                        Not recommended. Any generation length settings will be ignored when this is selected.
-                      </v-alert>
-                    </v-col>
-                  </v-row>
                   </template>
+                  <!-- Link to advanced options -->
+                  <v-btn
+                    v-if="!simpleView"
+                    variant="text"
+                    color="primary"
+                    size="small"
+                    class="mt-2"
+                    prepend-icon="mdi-cog-outline"
+                    @click.stop="tab = 'advanced'"
+                  >
+                    Advanced Options
+                  </v-btn>
 
                   <v-alert
                     v-if="simpleView"
@@ -280,6 +241,61 @@
                       <v-checkbox v-else-if="field.type === 'bool'" v-model="client[field.name]" :label="field.label" :hint="field.description" persistent-hint></v-checkbox>
                       <v-select v-else-if="field.type === 'select'" v-model="client[field.name]" :label="field.label" :hint="field.description" :items="field.choices" persistent-hint></v-select>
                       <v-alert v-if="field.note" :color="field.note.color" variant="text" density="compact" :icon="field.note.icon" class="mt-2 pre-wrap text-caption">{{ field.note.text.replace(/{client_type}/g, client.type) }}</v-alert>
+                    </v-col>
+                  </v-row>
+                </v-window-item>
+                <!-- ADVANCED -->
+                <v-window-item value="advanced">
+                  <!-- INFERENCE PRESETS -->
+                  <v-row>
+                    <v-col cols="6">
+                      <v-select label="Inference Presets" :items="availablePresets" v-model="client.preset_group"></v-select>
+                    </v-col>
+                  </v-row>
+                  <!-- DATA FORMAT & SECTION FORMAT -->
+                  <v-row>
+                    <v-col cols="6">
+                      <v-select label="Structured Data Format" :items="dataManageFormatChoices" v-model="client.data_format" messages="Which formatting to use for data structure communication such as function calling or general data management."></v-select>
+                    </v-col>
+                    <v-col cols="6">
+                      <v-select label="Section Format" :items="sectionFormatChoices" v-model="client.section_format" messages="How prompt sections are formatted. Markdown uses ## headings, XML uses paired tags like <SECTION>...</SECTION>."></v-select>
+                    </v-col>
+                  </v-row>
+                  <!-- RESPONSE LENGTH ENFORCEMENT -->
+                  <v-row>
+                    <v-col cols="6">
+                      <v-select
+                        v-model="client.enforce_response_length"
+                        label="Response Length Enforcement"
+                        :items="enforceResponseLengthChoices"
+                        item-title="label"
+                        item-value="value"
+                        hint="Controls whether token limits and/or length instructions are sent with prompts."
+                        persistent-hint
+                      >
+                        <template v-slot:item="{ props, item }">
+                          <v-list-item v-bind="props" :title="item.raw.label" :subtitle="item.raw.help"></v-list-item>
+                        </template>
+                      </v-select>
+                      <v-alert
+                        v-if="client.enforce_response_length === 'uncapped'"
+                        color="warning"
+                        variant="text"
+                        density="compact"
+                        class="mt-1 text-caption"
+                        icon="mdi-alert"
+                      >
+                        Not recommended. Any generation length settings will be ignored when this is selected.
+                      </v-alert>
+                    </v-col>
+                    <v-col cols="6">
+                      <v-checkbox v-model="client.optimize_prompt_caching" color="primary" label="Optimize for Prompt Caching" hint="Place volatile context after the scene history for better prompt caching. Recommended for remote API backends. May confuse weaker models." persistent-hint></v-checkbox>
+                    </v-col>
+                  </v-row>
+                  <!-- RATE LIMIT -->
+                  <v-row>
+                    <v-col cols="12">
+                      <v-slider v-model="client.rate_limit" label="Rate Limit" :min="0" :max="100" :step="1" :persistent-hint="true" hint="Requests per minute. (0 = no limit)" thumb-label="always"></v-slider>
                     </v-col>
                   </v-row>
                 </v-window-item>
@@ -398,6 +414,11 @@ export default {
           condition: () => {
             return this.client.can_be_coerced;
           },
+        },
+        advanced: {
+          title: 'Advanced',
+          value: 'advanced',
+          icon: 'mdi-cog-outline',
         },
         reasoning: {
           title: 'Reasoning',
@@ -518,8 +539,14 @@ export default {
       handler(newVal) {
         this.client = { ...newVal }; // Update client data property when currentClient changes
         this.simpleView = !!newVal._simpleMode;
+        this.tab = 'general';
         this.isInitializing = true;
         this.waitingForTemplateSelection = false;
+      }
+    },
+    simpleView(newVal) {
+      if (newVal) {
+        this.tab = 'general';
       }
     },
     'client.lock_template': {
