@@ -123,6 +123,28 @@ def emit_plan_for_chat(plan: Plan):
     emit_plan_updated(plan, chat_id=chat_id)
 
 
+def cleanup_orphaned_plans(scene, chats: dict) -> list[str]:
+    """Remove plans not referenced by any chat. Returns list of removed plan IDs."""
+    plans = scene.agent_state.get("director", {}).get(PLANS_STATE_KEY, {})
+    if not plans:
+        return []
+
+    referenced = set()
+    for chat_data in chats.values():
+        plan_id = chat_data.get("plan_id") if isinstance(chat_data, dict) else chat_data.plan_id
+        if plan_id:
+            referenced.add(plan_id)
+
+    orphaned = [pid for pid in plans if pid not in referenced]
+    for pid in orphaned:
+        delete_plan(scene, pid)
+
+    if orphaned:
+        log.info("plan.cleanup_orphaned", removed=orphaned, remaining=len(plans))
+
+    return orphaned
+
+
 def parse_beats(data) -> list[Beat]:
     """Parse beat list from extracted data (list of dicts or dict with 'beats' key)."""
     items = (

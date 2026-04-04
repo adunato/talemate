@@ -13,7 +13,7 @@ from talemate.agents.director.action_core.exceptions import (
 )
 
 from talemate.prompts import Prompt
-from talemate.agents.director.plan.util import get_plan
+from talemate.agents.director.plan.util import get_plan, cleanup_orphaned_plans
 from .context import director_chat_context
 
 from .response_specs import CHAT_TITLE_SPEC
@@ -271,6 +271,7 @@ class DirectorChatMixin:
         )
         self._chat_save(chat)
         self.chat_set_last_active_id(chat.id)
+        cleanup_orphaned_plans(self.scene, self.chat_get_all_chats())
         return chat
 
     def chat_create_generate_arc(
@@ -303,6 +304,7 @@ class DirectorChatMixin:
         )
         self._chat_save(chat)
         self.chat_set_last_active_id(chat.id)
+        cleanup_orphaned_plans(self.scene, self.chat_get_all_chats())
         return chat
 
     def chat_delete(self, chat_id: str) -> bool:
@@ -320,6 +322,7 @@ class DirectorChatMixin:
                 self.chat_set_last_active_id(remaining[0].id)
             else:
                 self.chat_set_last_active_id(None)
+        cleanup_orphaned_plans(self.scene, self.chat_get_all_chats())
         return True
 
     def chat_clear(self, chat_id: str) -> bool:
@@ -521,6 +524,9 @@ class DirectorChatMixin:
 
         def _sync_plan_to_context():
             """Inject active plan into extra_vars for the prompt template."""
+            nonlocal chat
+            # Re-fetch chat to avoid overwriting messages appended by other methods
+            chat = self.chat_get(chat_id) or chat
             chat_ctx = director_chat_context.get()
             plan_id = (chat_ctx.plan_id if chat_ctx else None) or (
                 chat.plan_id if chat else None
