@@ -26,6 +26,10 @@
                     Template Files
                     <v-icon v-if="outdatedCount > 0" size="x-small" color="warning" class="ml-1">mdi-alert</v-icon>
                 </v-tab>
+                <v-tab value="llm-templates">
+                    <v-icon start>mdi-code-braces</v-icon>
+                    LLM Prompt Templates
+                </v-tab>
                 <v-tab :disabled="!sceneLoaded" value="context-review">
                     <v-icon start>mdi-view-split-horizontal</v-icon>
                     Scene Context
@@ -158,6 +162,11 @@
                     </template>
                 </v-window-item>
 
+                <!-- LLM Prompt Templates Tab -->
+                <v-window-item value="llm-templates">
+                    <LLMTemplatesTab />
+                </v-window-item>
+
                 <!-- Context Review Tab -->
                 <v-window-item value="context-review">
                     <SceneContextReviewInline
@@ -224,6 +233,7 @@
 <script>
 import ActiveTab from './ActiveTab.vue';
 import GroupTab from './GroupTab.vue';
+import LLMTemplatesTab from './LLMTemplatesTab.vue';
 import PromptDetailView from './PromptDetailView.vue';
 import SceneContextReviewInline from '../SceneContextReviewInline.vue';
 
@@ -232,6 +242,7 @@ export default {
     components: {
         ActiveTab,
         GroupTab,
+        LLMTemplatesTab,
         PromptDetailView,
         SceneContextReviewInline,
     },

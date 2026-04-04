@@ -108,6 +108,8 @@
                         <v-card-actions v-if="!waitingForTemplateSelection">
                           <v-btn @click.stop="determineBestTemplate" prepend-icon="mdi-web-box">Determine via
                             HuggingFace</v-btn>
+                          <v-btn @click.stop="openLLMTemplates" prepend-icon="mdi-file-cog-outline">Manage
+                            Templates</v-btn>
                         </v-card-actions>
                       </v-card>
                       <v-checkbox v-model="client.lock_template" hint="If checked, the prompt template will not longer automatically update." density="compact" color="primary">
@@ -364,6 +366,7 @@ export default {
     'state',
     'getWebsocket',
     'registerMessageHandler',
+    'navigateToLLMTemplates',
   ],
   data() {
     return {
@@ -623,6 +626,10 @@ export default {
     },
     close() {
       this.$emit('update:dialog', false);
+    },
+    openLLMTemplates() {
+      this.close();
+      this.navigateToLLMTemplates();
     },
     save() {
 

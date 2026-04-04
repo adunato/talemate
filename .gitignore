@@ -17,6 +17,7 @@ logs/
 # uv
 .venv/
 templates/llm-prompt/user/*.jinja2
+templates/llm-prompt/std/user/
 templates/world-state/*.yaml
 tts/voice/piper/*.onnx
 tts/voice/piper/*.json

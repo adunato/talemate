@@ -12,6 +12,7 @@
   - "Prompt From Template Node: Added a dedupe property (default on) to control prompt deduplication. Useful for templates with structured repeated content like beat listings that should not be deduplicated."
   - "Gemma 4 Prompt Template: Added a prompt template for Google's Gemma 4 model family, with support for toggling thinking mode via the reasoning tokens setting."
   - "Advance Time: Moved time tools into a dedicated sub-component with grouped presets (Minutes, Hours, Days, Weeks, Months, Years) and a custom time dialog for arbitrary durations."
+  - "LLM Prompt Templates Manager: Added a dedicated UI tab for viewing, creating, editing, and deleting LLM prompt templates. Built-in templates are read-only and can be copied to user templates. User templates are stored in std/user/ and gitignored. GGUF/llama.cpp chat templates can be used directly."
   fixes:
   - "Message Regeneration: Fixed a bug where regenerating a message that fails (e.g., missing agent or function) would permanently remove the original message from the scene. The original message is now restored to both history and UI on failure, and unhandled exceptions during regeneration are caught."
   - "Anthropic Client: Fixed generation error caused by missing required max_tokens parameter when response length capping is disabled. Now defaults to the model's API output token limit."
@@ -26,6 +27,7 @@
   - "Encryption: Fixed API keys in agent action configs (e.g., OpenAI-compatible TTS, visual backends) being stored in plaintext. The encryption walker now handles the nested AgentActionConfig structure where the key is wrapped in a {value: ...} dict."
   - "Agent Config: Stopped persisting unified_api_key fields to config.yaml. These are static reference pointers (e.g., 'openai.api_key') defined in code and never change, so saving them was unnecessary."
   - "Contextual Generate: Fixed list-type generation prefilling an empty line after '1.', which caused some LLMs to produce empty lists."
+  - "Narrate Progress: Fixed narration sometimes generating screenplay-style dialogue entries instead of continuous narrative prose."
   - "Advance Time: Fixed toolbar time advancement being completely non-functional due to a missing websocket handler. Also fixed invalid ISO 8601 duration strings for the 1 week and 2 weeks options."
   improvements:
   - "System Prompt Override Indicators: The system prompt override list now shows a pencil icon next to entries that have an active override, making it easy to see which prompts have been customized."

@@ -856,6 +856,12 @@ export default {
       },
       callAgentTool: (actionName, args) => this.callAgentTool(actionName, args),
       openDirectorConsole: () => this.toggleNavigation('directorConsole', true),
+      navigateToLLMTemplates: () => {
+        this.tab = 'prompts';
+        this.$nextTick(() => {
+          this.promptsMainTab = 'llm-templates';
+        });
+      },
     };
   },
   methods: {

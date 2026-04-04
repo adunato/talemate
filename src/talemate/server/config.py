@@ -42,6 +42,15 @@ class DetermineLLMTemplatePayload(pydantic.BaseModel):
     client_name: str | None = None
 
 
+class SaveLLMTemplatePayload(pydantic.BaseModel):
+    name: str
+    content: str
+
+
+class DeleteLLMTemplatePayload(pydantic.BaseModel):
+    name: str
+
+
 class ToggleClientPayload(pydantic.BaseModel):
     name: str
     state: bool
@@ -139,6 +148,57 @@ class ConfigPlugin(Plugin):
                 "data": {
                     "templates": model_prompt.std_templates,
                 },
+            }
+        )
+
+    async def handle_list_llm_templates(self, data):
+        """List all std/ built-in and std/user/ templates with content."""
+        self.websocket_handler.queue_put(
+            {
+                "type": "config",
+                "action": "llm_templates_list",
+                "data": {
+                    "builtin": model_prompt.list_std_builtin_templates(),
+                    "user": model_prompt.list_std_user_templates(),
+                },
+            }
+        )
+
+    async def handle_save_llm_template(self, data):
+        """Save/create a user-supplied LLM prompt template in std/user/."""
+        payload = SaveLLMTemplatePayload(**data["data"])
+
+        try:
+            model_prompt.save_std_user_template(payload.name, payload.content)
+            log.info("Saved LLM template", name=payload.name)
+            self.websocket_handler.queue_put(
+                {
+                    "type": "config",
+                    "action": "save_llm_template_complete",
+                    "data": {"success": True, "name": payload.name},
+                }
+            )
+        except Exception as e:
+            log.error("Failed to save LLM template", name=payload.name, error=str(e))
+            self.websocket_handler.queue_put(
+                {
+                    "type": "config",
+                    "action": "save_llm_template_complete",
+                    "data": {"success": False, "error": str(e)},
+                }
+            )
+
+    async def handle_delete_llm_template(self, data):
+        """Delete a user-supplied LLM prompt template from std/user/."""
+        payload = DeleteLLMTemplatePayload(**data["data"])
+
+        deleted = model_prompt.delete_std_user_template(payload.name)
+        log.info("Deleted LLM template", name=payload.name, deleted=deleted)
+        self.websocket_handler.queue_put(
+            {
+                "type": "config",
+                "action": "delete_llm_template_complete",
+                "data": {"success": deleted, "name": payload.name},
             }
         )
 
