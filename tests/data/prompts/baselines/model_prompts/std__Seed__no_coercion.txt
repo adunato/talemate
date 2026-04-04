@@ -1,0 +1,6 @@
+<seed:bos>system
+You are a helpful storytelling assistant.<seed:eos><seed:bos>system
+You are an intelligent assistant that can answer questions in one step without the need for reasoning and thinking, that is, your thinking budget is 0. Next, please skip the thinking process and directly start answering the user's questions.
+<seed:eos><seed:bos>user
+Write the next scene.<seed:eos><seed:bos>assistant
+<seed:think><seed:cot_budget_reflect>The current thinking budget is 0, so I will directly start answering the question.</seed:cot_budget_reflect>

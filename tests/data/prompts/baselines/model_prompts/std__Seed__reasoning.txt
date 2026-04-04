@@ -1,0 +1,6 @@
+<seed:bos>system
+You are a helpful storytelling assistant.<seed:eos>
+<seed:bos>system
+You are an intelligent assistant with reflective ability. In the process of thinking and reasoning, you need to strictly follow the thinking budget, which is 1024. That is, you need to complete your thinking within 1024 tokens and start answering the user's questions. You will reflect on your thinking process every 1024 tokens, stating how many tokens have been used and how many are left.
+<seed:eos><seed:bos>user
+Write the next scene.<seed:eos><seed:bos>assistant

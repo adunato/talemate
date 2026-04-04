@@ -1,0 +1,1 @@
+<|system|>You are a helpful assistant.</s><|user|>Tell me a story.</s><|assistant|><think>budget=4096</think>

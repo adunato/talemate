@@ -84,12 +84,10 @@ class ModelPrompt:
 
     @property
     def std_templates(self) -> list[str]:
-        env = Environment(loader=FileSystemLoader(STD_TEMPLATE_PATH))
-        all_templates = env.list_templates()
-        # Built-in: everything not under user/ subdirectory
-        builtin = [t for t in all_templates if not t.startswith("user/")]
-        # User-supplied: explicitly from user/ subdir
-        user = [t for t in all_templates if t.startswith("user/")]
+        # Built-in templates from std/ (excluding user/ subdir)
+        builtin = [t["name"] for t in self.list_std_builtin_templates()]
+        # User-supplied templates from std/user/, prefixed with "user/"
+        user = [f"user/{t['name']}" for t in self.list_std_user_templates()]
         return sorted(builtin) + sorted(user)
 
     def __call__(
@@ -236,9 +234,7 @@ class ModelPrompt:
 
         if template_name.startswith("user/"):
             safe_name = os.path.basename(template_name[5:])
-            source_path = os.path.join(
-                STD_USER_TEMPLATE_PATH, safe_name + ".jinja2"
-            )
+            source_path = os.path.join(STD_USER_TEMPLATE_PATH, safe_name + ".jinja2")
         else:
             source_path = os.path.join(STD_TEMPLATE_PATH, template_name + ".jinja2")
 
@@ -269,6 +265,18 @@ class ModelPrompt:
     def list_std_user_templates(self) -> list[dict]:
         """List user-supplied templates in std/user/ with their content."""
         return self._list_templates_in_dir(STD_USER_TEMPLATE_PATH)
+
+    def get_std_template_content(self, template_name: str) -> str | None:
+        """Read content of a template from std/ or std/user/."""
+        safe_name = os.path.basename(template_name)
+        if template_name.startswith("user/"):
+            fpath = os.path.join(STD_USER_TEMPLATE_PATH, safe_name)
+        else:
+            fpath = os.path.join(STD_TEMPLATE_PATH, safe_name)
+        if not os.path.isfile(fpath):
+            return None
+        with open(fpath, "r", encoding="utf-8") as f:
+            return f.read()
 
     def save_std_user_template(self, template_name: str, content: str) -> str:
         """Save/create a template in std/user/. Returns the file path."""

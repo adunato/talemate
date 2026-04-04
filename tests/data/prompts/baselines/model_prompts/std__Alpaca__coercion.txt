@@ -1,0 +1,7 @@
+You are a helpful storytelling assistant.
+
+### Instruction:
+Write the next scene.
+
+### Response:
+Sure, here is
