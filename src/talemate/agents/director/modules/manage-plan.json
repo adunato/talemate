@@ -4,8 +4,8 @@
   "properties": {
     "name": "manage_plan",
     "description": "Allows you set up, track and update your current set of tasks. Use this to setup general plans or plans for creating multiple beats of content over a specific number of beats / turns.",
-    "instructions": "Manage your task plans. Pass plain text instructions describing what you want to do.\n\nTo create a scene outline: describe the scene and specify the beat count.\nTo create a general plan: describe the goal and list the tasks.\nTo complete a task: reference the task ID.\nTo edit a task: reference the task ID and describe changes.\nTo insert a task: describe the new task and where to place it.\nTo remove a task: reference the task ID to remove.\nTo delete the plan: state you want to delete/remove the plan.",
-    "example_json": "[{\"instructions\": \"Create a 6-beat scene outline: A tense encounter in the library where two strangers discover they're searching for the same book.\"}, {\"instructions\": \"Mark task a1b2c3d4 as completed\"}, {\"instructions\": \"Create a plan to investigate the strange signals: 1) Check the antenna array 2) Review the signal logs 3) Report findings to command\"}, {\"instructions\": \"Change task e7f3877a description to: Establish the new character's motivation\"}, {\"instructions\": \"Add a new task after e7f3877a: Have the party discuss their next move\"}, {\"instructions\": \"Remove task a1b2c3d4 from the plan\"}, {\"instructions\": \"Delete the current plan\"}]"
+    "instructions": "Manage your task plans. Pass plain text instructions describing what you want to do.\n\nTo create a scene outline: describe the scene and specify the beat count.\nTo create a general plan: describe the goal and list the tasks.\nTo complete a task: reference the task ID.\nTo delete the plan: state you want to delete/remove the plan.",
+    "example_json": "[{\"instructions\": \"Create a 6-beat scene outline: A tense encounter in the library where two strangers discover they're searching for the same book.\"}, {\"instructions\": \"Mark task a1b2c3d4 as completed\"}, {\"instructions\": \"Create a plan to investigate the strange signals: 1) Check the antenna array 2) Review the signal logs 3) Report findings to command\"}, {\"instructions\": \"Delete the current plan\"}]"
   },
   "x": 0,
   "y": 0,
@@ -70,8 +70,8 @@
       "properties": {
         "agent_name": "director"
       },
-      "x": 384,
-      "y": 357,
+      "x": 376,
+      "y": 349,
       "width": 210,
       "height": 58,
       "collapsed": true,
@@ -85,8 +85,8 @@
       "properties": {
         "value": true
       },
-      "x": 384,
-      "y": 317,
+      "x": 376,
+      "y": 309,
       "width": 210,
       "height": 58,
       "collapsed": true,
@@ -101,8 +101,8 @@
         "scope": "director",
         "name": "plan"
       },
-      "x": 34,
-      "y": 427,
+      "x": 26,
+      "y": 419,
       "width": 210,
       "height": 102,
       "collapsed": false,
@@ -132,8 +132,8 @@
         "response_length": 0,
         "technical": false
       },
-      "x": 565,
-      "y": 312,
+      "x": 557,
+      "y": 304,
       "width": 304,
       "height": 542,
       "collapsed": false,
@@ -219,8 +219,8 @@
       "properties": {
         "name": "create_outline"
       },
-      "x": 85,
-      "y": 1172,
+      "x": 77,
+      "y": 1164,
       "width": 210,
       "height": 78,
       "collapsed": false,
@@ -236,8 +236,8 @@
         "allow_multiple_calls": false,
         "allow_concurrent": false
       },
-      "x": 365,
-      "y": 1162,
+      "x": 357,
+      "y": 1154,
       "width": 210,
       "height": 126,
       "collapsed": false,
@@ -253,8 +253,8 @@
         "allow_multiple_calls": false,
         "allow_concurrent": false
       },
-      "x": 335,
-      "y": 1632,
+      "x": 327,
+      "y": 1624,
       "width": 210,
       "height": 126,
       "collapsed": false,
@@ -278,8 +278,8 @@
         "availability": "chat",
         "force_enabled": false
       },
-      "x": 625,
-      "y": 1162,
+      "x": 617,
+      "y": 1154,
       "width": 317,
       "height": 246,
       "collapsed": false,
@@ -300,8 +300,8 @@
         "availability": "chat",
         "force_enabled": false
       },
-      "x": 625,
-      "y": 1532,
+      "x": 617,
+      "y": 1524,
       "width": 317,
       "height": 246,
       "collapsed": false,
@@ -330,29 +330,13 @@
       "properties": {
         "name": "create_plan"
       },
-      "x": 75,
-      "y": 1642,
+      "x": 67,
+      "y": 1634,
       "width": 210,
       "height": 78,
       "collapsed": false,
       "inherited": false,
       "registry": "core/functions/GetFunction",
-      "base_type": "core/Node"
-    },
-    "6361c3ad-923a-4d61-a0cf-e452bc626c20": {
-      "title": "SET local.focal_calls",
-      "id": "6361c3ad-923a-4d61-a0cf-e452bc626c20",
-      "properties": {
-        "name": "focal_calls",
-        "scope": "local"
-      },
-      "x": 1724,
-      "y": 1927,
-      "width": 210,
-      "height": 122,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "state/SetState",
       "base_type": "core/Node"
     },
     "98aefe0d-3d3a-4f80-a2b7-9c20b881eb34": {
@@ -391,8 +375,8 @@
         "response_length": 1024,
         "max_concurrent": 3
       },
-      "x": 1431,
-      "y": 1920,
+      "x": 1412,
+      "y": 1412,
       "width": 228,
       "height": 274,
       "collapsed": false,
@@ -546,8 +530,8 @@
         "allow_multiple_calls": false,
         "allow_concurrent": false
       },
-      "x": 347,
-      "y": 1920,
+      "x": 339,
+      "y": 1912,
       "width": 210,
       "height": 126,
       "collapsed": false,
@@ -561,8 +545,8 @@
       "properties": {
         "name": "complete_task"
       },
-      "x": 70,
-      "y": 1949,
+      "x": 62,
+      "y": 1941,
       "width": 210,
       "height": 78,
       "collapsed": false,
@@ -630,8 +614,8 @@
       "title": "Return",
       "id": "88a9ad87-c278-4d7f-947a-ef732695f06c",
       "properties": {},
-      "x": -438,
-      "y": 1898,
+      "x": -430,
+      "y": 2141,
       "width": 140,
       "height": 26,
       "collapsed": false,
@@ -643,8 +627,8 @@
       "title": "Get Active Chat Plan ID",
       "id": "6c492296-3b43-4aa9-b1d5-fc3cbf5beea4",
       "properties": {},
-      "x": -898,
-      "y": 1888,
+      "x": -890,
+      "y": 2131,
       "width": 193,
       "height": 66,
       "collapsed": false,
@@ -658,8 +642,8 @@
       "properties": {
         "value": true
       },
-      "x": -1018,
-      "y": 1908,
+      "x": -1010,
+      "y": 2151,
       "width": 210,
       "height": 58,
       "collapsed": true,
@@ -673,8 +657,8 @@
       "properties": {
         "pass_through": false
       },
-      "x": -678,
-      "y": 1888,
+      "x": -670,
+      "y": 2131,
       "width": 210,
       "height": 78,
       "collapsed": false,
@@ -688,8 +672,8 @@
       "properties": {
         "name": "no_plan_exists"
       },
-      "x": -258,
-      "y": 1888,
+      "x": -250,
+      "y": 2131,
       "width": 210,
       "height": 78,
       "collapsed": false,
@@ -703,8 +687,8 @@
       "properties": {
         "name": "no_plan_exists"
       },
-      "x": 410,
-      "y": 1359,
+      "x": 402,
+      "y": 1351,
       "width": 210,
       "height": 78,
       "collapsed": true,
@@ -718,8 +702,8 @@
       "properties": {
         "name": "no_plan_exists"
       },
-      "x": 400,
-      "y": 1819,
+      "x": 392,
+      "y": 1811,
       "width": 210,
       "height": 78,
       "collapsed": true,
@@ -733,8 +717,8 @@
       "properties": {
         "template": ""
       },
-      "x": 290,
-      "y": 419,
+      "x": 282,
+      "y": 411,
       "width": 210,
       "height": 153,
       "collapsed": false,
@@ -755,8 +739,8 @@
         "name": "instructions",
         "scope": "local"
       },
-      "x": 40,
-      "y": 639,
+      "x": 32,
+      "y": 631,
       "width": 210,
       "height": 122,
       "collapsed": false,
@@ -893,8 +877,8 @@
       "title": "Return",
       "id": "6bbf4c4a-818a-4eae-99b5-7379402af2a4",
       "properties": {},
-      "x": -437,
-      "y": 2080,
+      "x": -429,
+      "y": 2323,
       "width": 140,
       "height": 26,
       "collapsed": false,
@@ -906,8 +890,8 @@
       "title": "Get Active Chat Plan ID",
       "id": "e86e048e-b56e-4890-a2b3-67ccb5d6ca57",
       "properties": {},
-      "x": -897,
-      "y": 2070,
+      "x": -889,
+      "y": 2313,
       "width": 193,
       "height": 66,
       "collapsed": false,
@@ -921,8 +905,8 @@
       "properties": {
         "value": true
       },
-      "x": -1017,
-      "y": 2090,
+      "x": -1009,
+      "y": 2333,
       "width": 210,
       "height": 58,
       "collapsed": true,
@@ -936,8 +920,8 @@
       "properties": {
         "pass_through": false
       },
-      "x": -677,
-      "y": 2070,
+      "x": -669,
+      "y": 2313,
       "width": 210,
       "height": 78,
       "collapsed": false,
@@ -951,8 +935,8 @@
       "properties": {
         "name": "plan_exists"
       },
-      "x": -258,
-      "y": 2072,
+      "x": -250,
+      "y": 2315,
       "width": 210,
       "height": 78,
       "collapsed": false,
@@ -977,204 +961,17 @@
       "registry": "focal/Argument",
       "base_type": "core/Node"
     },
-    "bf1bae8d-32e2-466e-a584-6a877846e28e": {
-      "title": "Edit Task",
-      "id": "bf1bae8d-32e2-466e-a584-6a877846e28e",
-      "properties": {},
-      "x": -948,
-      "y": 2336,
-      "width": 140,
-      "height": 86,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/director/plan/EditTask",
-      "base_type": "core/Node"
-    },
-    "2b733c64-501e-43e6-b470-e60fdde43b4f": {
-      "title": "Return",
-      "id": "2b733c64-501e-43e6-b470-e60fdde43b4f",
-      "properties": {},
-      "x": -758,
-      "y": 2376,
-      "width": 140,
-      "height": 26,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/Return",
-      "base_type": "core/Node"
-    },
-    "3c071bbd-b8fa-4b15-b8f4-10f54d40cc69": {
-      "title": "DEF edit_task",
-      "id": "3c071bbd-b8fa-4b15-b8f4-10f54d40cc69",
-      "properties": {
-        "name": "edit_task"
-      },
-      "x": -258,
-      "y": 2366,
-      "width": 210,
-      "height": 78,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/DefineFunction",
-      "base_type": "core/Node"
-    },
-    "3bfd7d87-3092-4271-812b-567dab93c40a": {
-      "title": "task",
-      "id": "3bfd7d87-3092-4271-812b-567dab93c40a",
-      "properties": {
-        "name": "task",
-        "typ": "any",
-        "instructions": "The task to insert as a dictionary. For generic tasks: {'description': '...'}. For beats: include 'type' (narration/dialogue/action/transition/reveal), 'characters' (list), 'pacing' (slow/moderate/fast), and 'tension' (0.0-1.0)."
-      },
-      "x": -1301,
-      "y": 2628,
-      "width": 210,
-      "height": 106,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Argument",
-      "base_type": "core/Node"
-    },
-    "9e1103d6-b731-4a32-8210-1e416c0ad199": {
-      "title": "Return",
-      "id": "9e1103d6-b731-4a32-8210-1e416c0ad199",
-      "properties": {},
-      "x": -770,
-      "y": 2719,
-      "width": 140,
-      "height": 26,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/Return",
-      "base_type": "core/Node"
-    },
-    "3b86de9f-9759-4b24-b626-061bc0eaaa16": {
-      "title": "Insert Task",
-      "id": "3b86de9f-9759-4b24-b626-061bc0eaaa16",
-      "properties": {
-        "position": "end"
-      },
-      "x": -1025,
-      "y": 2689,
-      "width": 210,
-      "height": 98,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/director/plan/InsertTask",
-      "base_type": "core/Node"
-    },
-    "1673610f-2f8a-41f7-ac96-2a923c0b6988": {
-      "title": "DEF insert_task",
-      "id": "1673610f-2f8a-41f7-ac96-2a923c0b6988",
-      "properties": {
-        "name": "insert_task"
-      },
-      "x": -261,
-      "y": 2708,
-      "width": 210,
-      "height": 78,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/DefineFunction",
-      "base_type": "core/Node"
-    },
-    "e662edaf-d52e-48fe-89b8-6be141edaf19": {
-      "title": "Return",
-      "id": "e662edaf-d52e-48fe-89b8-6be141edaf19",
-      "properties": {},
-      "x": -767,
-      "y": 3030,
-      "width": 140,
-      "height": 26,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/Return",
-      "base_type": "core/Node"
-    },
-    "4ef094fe-30db-451f-a6b9-a021a31ffd6a": {
-      "title": "Remove Task",
-      "id": "4ef094fe-30db-451f-a6b9-a021a31ffd6a",
-      "properties": {},
-      "x": -971,
-      "y": 3018,
-      "width": 140,
-      "height": 46,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/director/plan/RemoveTask",
-      "base_type": "core/Node"
-    },
-    "e6817196-fae0-4abf-b958-ce8ccd598dc0": {
-      "title": "DEF remove_task",
-      "id": "e6817196-fae0-4abf-b958-ce8ccd598dc0",
-      "properties": {
-        "name": "remove_task"
-      },
-      "x": -261,
-      "y": 3018,
-      "width": 210,
-      "height": 78,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/DefineFunction",
-      "base_type": "core/Node"
-    },
     "6cacf949-f729-497a-bd32-fc6ae0faeec8": {
       "title": "Return",
       "id": "6cacf949-f729-497a-bd32-fc6ae0faeec8",
       "properties": {},
-      "x": -767,
-      "y": 3238,
+      "x": -764,
+      "y": 1885,
       "width": 140,
       "height": 26,
       "collapsed": false,
       "inherited": false,
       "registry": "core/functions/Return",
-      "base_type": "core/Node"
-    },
-    "712c6d77-aa14-436c-b46a-756144071d66": {
-      "title": "Delete Plan",
-      "id": "712c6d77-aa14-436c-b46a-756144071d66",
-      "properties": {},
-      "x": -973,
-      "y": 3219,
-      "width": 140,
-      "height": 46,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/director/plan/DeletePlan",
-      "base_type": "core/Node"
-    },
-    "2bdaefb0-c9ce-4dc7-b2a3-036bdb92f770": {
-      "title": "FN edit_task",
-      "id": "2bdaefb0-c9ce-4dc7-b2a3-036bdb92f770",
-      "properties": {
-        "name": "edit_task"
-      },
-      "x": 80,
-      "y": 2330,
-      "width": 210,
-      "height": 78,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/GetFunction",
-      "base_type": "core/Node"
-    },
-    "64ea0ff0-614c-49ec-9343-1b9d952e590a": {
-      "title": "AI Function Callback",
-      "id": "64ea0ff0-614c-49ec-9343-1b9d952e590a",
-      "properties": {
-        "name": "my_function",
-        "allow_multiple_calls": true,
-        "allow_concurrent": false
-      },
-      "x": 350,
-      "y": 2330,
-      "width": 210,
-      "height": 126,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Callback",
       "base_type": "core/Node"
     },
     "c595badd-3bf2-45a9-a198-ac6d1ccf088f": {
@@ -1192,122 +989,13 @@
         "availability": "chat",
         "force_enabled": false
       },
-      "x": 650,
-      "y": 1919,
+      "x": 642,
+      "y": 1911,
       "width": 260,
       "height": 246,
       "collapsed": false,
       "inherited": false,
       "registry": "agents/director/chat/DirectorChatSubAction",
-      "base_type": "core/Node"
-    },
-    "48fed01a-ea27-4960-ac9a-0947a903b3d1": {
-      "title": "FN plan_exists",
-      "id": "48fed01a-ea27-4960-ac9a-0947a903b3d1",
-      "properties": {
-        "name": "plan_exists"
-      },
-      "x": 420,
-      "y": 2520,
-      "width": 210,
-      "height": 78,
-      "collapsed": true,
-      "inherited": false,
-      "registry": "core/functions/GetFunction",
-      "base_type": "core/Node"
-    },
-    "ae107d09-1a9a-44e3-9e3c-464ec7c18595": {
-      "title": "AI Function Callback",
-      "id": "ae107d09-1a9a-44e3-9e3c-464ec7c18595",
-      "properties": {
-        "name": "my_function",
-        "allow_multiple_calls": true,
-        "allow_concurrent": false
-      },
-      "x": 360,
-      "y": 2668,
-      "width": 210,
-      "height": 126,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Callback",
-      "base_type": "core/Node"
-    },
-    "a2d1ec62-e706-4642-bcfc-77bfe86dbbfb": {
-      "title": "FN plan_exists",
-      "id": "a2d1ec62-e706-4642-bcfc-77bfe86dbbfb",
-      "properties": {
-        "name": "plan_exists"
-      },
-      "x": 430,
-      "y": 2858,
-      "width": 210,
-      "height": 78,
-      "collapsed": true,
-      "inherited": false,
-      "registry": "core/functions/GetFunction",
-      "base_type": "core/Node"
-    },
-    "b096de8e-e2f8-456a-aac6-9ad456712f97": {
-      "title": "FN insert_task",
-      "id": "b096de8e-e2f8-456a-aac6-9ad456712f97",
-      "properties": {
-        "name": "insert_task"
-      },
-      "x": 80,
-      "y": 2670,
-      "width": 210,
-      "height": 78,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/GetFunction",
-      "base_type": "core/Node"
-    },
-    "f6bcde3d-dd19-4a2d-88a0-fa14358c5493": {
-      "title": "AI Function Callback",
-      "id": "f6bcde3d-dd19-4a2d-88a0-fa14358c5493",
-      "properties": {
-        "name": "my_function",
-        "allow_multiple_calls": true,
-        "allow_concurrent": false
-      },
-      "x": 371,
-      "y": 3024,
-      "width": 210,
-      "height": 126,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Callback",
-      "base_type": "core/Node"
-    },
-    "f565234a-1146-451d-aa17-15305e839fa2": {
-      "title": "FN plan_exists",
-      "id": "f565234a-1146-451d-aa17-15305e839fa2",
-      "properties": {
-        "name": "plan_exists"
-      },
-      "x": 441,
-      "y": 3214,
-      "width": 210,
-      "height": 78,
-      "collapsed": true,
-      "inherited": false,
-      "registry": "core/functions/GetFunction",
-      "base_type": "core/Node"
-    },
-    "9986a5a1-7e84-4ff2-9dbc-5a58e5be6732": {
-      "title": "FN remove_task",
-      "id": "9986a5a1-7e84-4ff2-9dbc-5a58e5be6732",
-      "properties": {
-        "name": "remove_task"
-      },
-      "x": 60,
-      "y": 3020,
-      "width": 210,
-      "height": 78,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/GetFunction",
       "base_type": "core/Node"
     },
     "dc667224-ecfa-42e5-9211-d21e29034975": {
@@ -1318,43 +1006,13 @@
         "allow_multiple_calls": true,
         "allow_concurrent": false
       },
-      "x": 380,
-      "y": 3386,
+      "x": 364,
+      "y": 2302,
       "width": 210,
       "height": 126,
       "collapsed": false,
       "inherited": false,
       "registry": "focal/Callback",
-      "base_type": "core/Node"
-    },
-    "54ba316e-07bc-4fa4-a065-a141db7e4017": {
-      "title": "FN plan_exists",
-      "id": "54ba316e-07bc-4fa4-a065-a141db7e4017",
-      "properties": {
-        "name": "plan_exists"
-      },
-      "x": 450,
-      "y": 3576,
-      "width": 210,
-      "height": 78,
-      "collapsed": true,
-      "inherited": false,
-      "registry": "core/functions/GetFunction",
-      "base_type": "core/Node"
-    },
-    "4577c3a6-fefb-442e-8aa1-91a61c649493": {
-      "title": "DEF delete_plan",
-      "id": "4577c3a6-fefb-442e-8aa1-91a61c649493",
-      "properties": {
-        "name": "delete_plan"
-      },
-      "x": -260,
-      "y": 3230,
-      "width": 210,
-      "height": 78,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/DefineFunction",
       "base_type": "core/Node"
     },
     "94689740-53dc-4a6a-914c-060eb64b0846": {
@@ -1363,8 +1021,8 @@
       "properties": {
         "name": "delete_plan"
       },
-      "x": 90,
-      "y": 3380,
+      "x": 74,
+      "y": 2296,
       "width": 210,
       "height": 78,
       "collapsed": false,
@@ -1372,14 +1030,47 @@
       "registry": "core/functions/GetFunction",
       "base_type": "core/Node"
     },
+    "5b38a2c6-a850-4b01-bf69-439c23d30edb": {
+      "title": "AI Function Callback Metadata",
+      "id": "5b38a2c6-a850-4b01-bf69-439c23d30edb",
+      "properties": {
+        "instructions": "For deleting the entire active plan. Use when the instruction mentions deleting, removing, or discarding the whole plan (not a specific task).",
+        "examples": [
+          {}
+        ]
+      },
+      "x": -564,
+      "y": 1885,
+      "width": 244,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Metadata",
+      "base_type": "core/Node"
+    },
+    "3435d8ca-bfdd-4373-91b5-d48746d94f2b": {
+      "title": "Stage 1",
+      "id": "3435d8ca-bfdd-4373-91b5-d48746d94f2b",
+      "properties": {
+        "stage": 1
+      },
+      "x": 1951,
+      "y": 1432,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
     "f0748ba3-9332-4550-b9b3-4fb505e8ac75": {
       "title": "List Collector",
       "id": "f0748ba3-9332-4550-b9b3-4fb505e8ac75",
       "properties": {},
-      "x": 1170,
-      "y": 2220,
+      "x": 1151,
+      "y": 1712,
       "width": 140,
-      "height": 201,
+      "height": 141,
       "collapsed": false,
       "inherited": false,
       "registry": "data/ListCollector",
@@ -1399,298 +1090,9 @@
         {
           "name": "item3",
           "type": "*"
-        },
-        {
-          "name": "item4",
-          "type": "*"
-        },
-        {
-          "name": "item5",
-          "type": "*"
-        },
-        {
-          "name": "item6",
-          "type": "*"
         }
       ],
       "base_type": "core/DynamicSocketNodeBase"
-    },
-    "d44ba551-a441-4832-9deb-03d8e0f1f174": {
-      "title": "task_id",
-      "id": "d44ba551-a441-4832-9deb-03d8e0f1f174",
-      "properties": {
-        "name": "task_id",
-        "typ": "str",
-        "instructions": "The ID of the task/beat to edit. Use the task ID from the plan."
-      },
-      "x": -1248,
-      "y": 2256,
-      "width": 210,
-      "height": 106,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Argument",
-      "base_type": "core/Node"
-    },
-    "e3627b39-6e3e-455e-ad18-9b1a94dbf775": {
-      "title": "updates",
-      "id": "e3627b39-6e3e-455e-ad18-9b1a94dbf775",
-      "properties": {
-        "name": "updates",
-        "typ": "any",
-        "instructions": "A dictionary of fields to update on the task. Only include fields you want to change. For generic tasks: 'description', 'status'. For beats: 'description', 'type' (narration/dialogue/action/transition/reveal), 'characters' (list of character names), 'pacing' (slow/moderate/fast), 'tension' (0.0-1.0), 'status'."
-      },
-      "x": -1248,
-      "y": 2416,
-      "width": 210,
-      "height": 106,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Argument",
-      "base_type": "core/Node"
-    },
-    "e6dfb956-fa79-4318-a55e-bb46c52bad19": {
-      "title": "AI Function Callback Metadata",
-      "id": "e6dfb956-fa79-4318-a55e-bb46c52bad19",
-      "properties": {
-        "instructions": "For editing an existing task or beat in the active plan. Use when the instruction mentions changing, updating, or modifying a specific task/beat. Extract the task_id and only the fields being changed as updates.",
-        "examples": [
-          {
-            "task_id": "e7f3877a",
-            "updates": {
-              "description": "Establish the new character's backstory and motivation"
-            }
-          },
-          {
-            "task_id": "b19c2b5e",
-            "updates": {
-              "type": "dialogue",
-              "characters": [
-                "Elena",
-                "Marcus"
-              ],
-              "pacing": "slow"
-            }
-          },
-          {
-            "task_id": "c3d4e5f6",
-            "updates": {
-              "description": "Introduce the rival faction's demands",
-              "status": "pending"
-            }
-          }
-        ]
-      },
-      "x": -558,
-      "y": 2356,
-      "width": 244,
-      "height": 82,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Metadata",
-      "base_type": "core/Node"
-    },
-    "3506f048-ddb0-43a1-a0e0-6373219847ab": {
-      "title": "task",
-      "id": "3506f048-ddb0-43a1-a0e0-6373219847ab",
-      "properties": {
-        "name": "position",
-        "typ": "str",
-        "instructions": "Where to insert the task. Use 'start' to insert at the beginning, 'end' to append at the end, or a task ID to insert after that specific task."
-      },
-      "x": -1301,
-      "y": 2798,
-      "width": 210,
-      "height": 106,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Argument",
-      "base_type": "core/Node"
-    },
-    "706d91de-02e7-46a0-a18b-71417b9c83a4": {
-      "title": "AI Function Callback Metadata",
-      "id": "706d91de-02e7-46a0-a18b-71417b9c83a4",
-      "properties": {
-        "instructions": "For removing a task or beat from the active plan. Use when the instruction mentions removing, deleting, or dropping a specific task/beat by ID.",
-        "examples": [
-          {
-            "task_id": "e7f3877a"
-          },
-          {
-            "task_id": "b19c2b5e"
-          }
-        ]
-      },
-      "x": -567,
-      "y": 3010,
-      "width": 244,
-      "height": 82,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Metadata",
-      "base_type": "core/Node"
-    },
-    "37380da8-e58a-497a-8ec8-c056b83fecba": {
-      "title": "AI Function Callback Metadata",
-      "id": "37380da8-e58a-497a-8ec8-c056b83fecba",
-      "properties": {
-        "instructions": "For inserting a new task or beat into the active plan. Use when the instruction mentions adding, inserting, or appending a task/beat. Extract the task definition and position. Position is 'start', 'end', or an existing task ID to insert after.",
-        "examples": [
-          {
-            "task": {
-              "description": "Have the party discuss their next move"
-            },
-            "position": "e7f3877a"
-          },
-          {
-            "task": {
-              "description": "Introduce the consequences of the earlier decision"
-            },
-            "position": "end"
-          },
-          {
-            "task": {
-              "description": "A flash of light illuminates the bridge",
-              "type": "reveal",
-              "pacing": "fast",
-              "tension": 0.9,
-              "characters": [
-                "Elena"
-              ]
-            },
-            "position": "start"
-          },
-          {
-            "task": {
-              "description": "Check the engine room for damage"
-            },
-            "position": "end"
-          }
-        ]
-      },
-      "x": -570,
-      "y": 2699,
-      "width": 244,
-      "height": 82,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Metadata",
-      "base_type": "core/Node"
-    },
-    "1feb3712-f136-40fa-9c90-87d62a35f44f": {
-      "title": "task_id",
-      "id": "1feb3712-f136-40fa-9c90-87d62a35f44f",
-      "properties": {
-        "name": "task_id",
-        "typ": "str",
-        "instructions": "The ID of the task/beat to remove from the plan."
-      },
-      "x": -1271,
-      "y": 3008,
-      "width": 210,
-      "height": 106,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Argument",
-      "base_type": "core/Node"
-    },
-    "5b38a2c6-a850-4b01-bf69-439c23d30edb": {
-      "title": "AI Function Callback Metadata",
-      "id": "5b38a2c6-a850-4b01-bf69-439c23d30edb",
-      "properties": {
-        "instructions": "For deleting the entire active plan. Use when the instruction mentions deleting, removing, or discarding the whole plan (not a specific task).",
-        "examples": [
-          {}
-        ]
-      },
-      "x": -567,
-      "y": 3218,
-      "width": 244,
-      "height": 82,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Metadata",
-      "base_type": "core/Node"
-    },
-    "e7c2f63d-1768-41cf-a9ef-231ce6629c83": {
-      "title": "[Planning] Insert Task",
-      "id": "e7c2f63d-1768-41cf-a9ef-231ce6629c83",
-      "properties": {
-        "group": "Planning",
-        "action_id": "planning.insert_task",
-        "action_title": "Insert Task",
-        "description_chat": "Insert a new task in the active plan.",
-        "description_scene_direction": "Insert a new task in the active plan.",
-        "instruction_examples": [
-          "Add a new task after e7f3877a: Have the party discuss their next move",
-          "Insert a narration beat at the start: The station looms ahead, silent and dark",
-          "Append a new task: Introduce the consequences of the earlier decision",
-          "Add a dialogue beat after b19c2b5e between Elena and Marcus about the plan"
-        ],
-        "availability": "chat",
-        "force_enabled": false
-      },
-      "x": 670,
-      "y": 2650,
-      "width": 260,
-      "height": 246,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/director/chat/DirectorChatSubAction",
-      "base_type": "core/Node"
-    },
-    "097f9efe-2af9-4a6f-ac62-dad6d6230f11": {
-      "title": "[Planning] Edit Task",
-      "id": "097f9efe-2af9-4a6f-ac62-dad6d6230f11",
-      "properties": {
-        "group": "Planning",
-        "action_id": "planning.edit_task",
-        "action_title": "Edit Task",
-        "description_chat": "Edit an existing task in the active plan.",
-        "description_scene_direction": "Edit an existing task in the active plan.",
-        "instruction_examples": [
-          "Change task e7f3877a description to: Establish the new character's motivation",
-          "Update beat b19c2b5e to a dialogue beat between Elena and Marcus",
-          "Set the tension of beat a1b2c3d4 to 0.9 and pacing to fast",
-          "Mark task c3d4e5f6 as pending again"
-        ],
-        "availability": "chat",
-        "force_enabled": false
-      },
-      "x": 660,
-      "y": 2320,
-      "width": 260,
-      "height": 246,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/director/chat/DirectorChatSubAction",
-      "base_type": "core/Node"
-    },
-    "3faecc3b-b3c6-4aad-8ec3-5c49f935d8ea": {
-      "title": "[Planning] Remove Task",
-      "id": "3faecc3b-b3c6-4aad-8ec3-5c49f935d8ea",
-      "properties": {
-        "group": "Planning",
-        "action_id": "planning.remove_task",
-        "action_title": "Remove Task",
-        "description_chat": "Remove a task from the active plan.",
-        "description_scene_direction": "Remove a task from the active plan.",
-        "instruction_examples": [
-          "Remove task e7f3877a from the plan",
-          "Delete beat b19c2b5e",
-          "Drop the task about investigating the signals"
-        ],
-        "availability": "chat",
-        "force_enabled": false
-      },
-      "x": 680,
-      "y": 3010,
-      "width": 260,
-      "height": 246,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/director/chat/DirectorChatSubAction",
-      "base_type": "core/Node"
     },
     "9d1d77e3-e917-479a-ac4b-875cad440d2a": {
       "title": "[Planning] Delete Plan",
@@ -1709,8 +1111,8 @@
         "availability": "chat",
         "force_enabled": false
       },
-      "x": 690,
-      "y": 3370,
+      "x": 670,
+      "y": 2290,
       "width": 260,
       "height": 246,
       "collapsed": false,
@@ -1718,19 +1120,48 @@
       "registry": "agents/director/chat/DirectorChatSubAction",
       "base_type": "core/Node"
     },
-    "3435d8ca-bfdd-4373-91b5-d48746d94f2b": {
-      "title": "Stage 1",
-      "id": "3435d8ca-bfdd-4373-91b5-d48746d94f2b",
+    "6361c3ad-923a-4d61-a0cf-e452bc626c20": {
+      "title": "SET local.focal_calls",
+      "id": "6361c3ad-923a-4d61-a0cf-e452bc626c20",
       "properties": {
-        "stage": 1
+        "name": "focal_calls",
+        "scope": "local"
       },
-      "x": 1970,
-      "y": 1940,
+      "x": 1710,
+      "y": 1420,
       "width": 210,
-      "height": 118,
+      "height": 122,
       "collapsed": false,
       "inherited": false,
-      "registry": "core/Stage",
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "712c6d77-aa14-436c-b46a-756144071d66": {
+      "title": "Delete Plan",
+      "id": "712c6d77-aa14-436c-b46a-756144071d66",
+      "properties": {},
+      "x": -968,
+      "y": 1885,
+      "width": 140,
+      "height": 46,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/plan/DeletePlan",
+      "base_type": "core/Node"
+    },
+    "4577c3a6-fefb-442e-8aa1-91a61c649493": {
+      "title": "DEF delete_plan",
+      "id": "4577c3a6-fefb-442e-8aa1-91a61c649493",
+      "properties": {
+        "name": "delete_plan"
+      },
+      "x": -254,
+      "y": 1885,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
       "base_type": "core/Node"
     },
     "36467a04-f2c1-410e-8c6a-2d3bb7598565": {
@@ -1739,13 +1170,43 @@
       "properties": {
         "value": true
       },
-      "x": -970,
-      "y": 3200,
+      "x": -1074,
+      "y": 1885,
       "width": 210,
       "height": 58,
       "collapsed": true,
       "inherited": false,
       "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "54ba316e-07bc-4fa4-a065-a141db7e4017": {
+      "title": "FN plan_exists",
+      "id": "54ba316e-07bc-4fa4-a065-a141db7e4017",
+      "properties": {
+        "name": "plan_exists"
+      },
+      "x": 420,
+      "y": 2500,
+      "width": 210,
+      "height": 78,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "3b6f099a-1ae0-4282-abb2-9f7baad8aba8": {
+      "title": "FN plan_exists",
+      "id": "3b6f099a-1ae0-4282-abb2-9f7baad8aba8",
+      "properties": {
+        "name": "plan_exists"
+      },
+      "x": 410,
+      "y": 2100,
+      "width": 210,
+      "height": 78,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
       "base_type": "core/Node"
     }
   },
@@ -1816,9 +1277,6 @@
     ],
     "d4268d43-56ac-4364-b588-78d31f05f7ff.name": [
       "e728f40b-355a-46d1-b6d9-ac7c645faca6.name"
-    ],
-    "6361c3ad-923a-4d61-a0cf-e452bc626c20.value": [
-      "3435d8ca-bfdd-4373-91b5-d48746d94f2b.state"
     ],
     "98aefe0d-3d3a-4f80-a2b7-9c20b881eb34.summary": [
       "68099419-d078-4126-8d96-e50ddf2237d5.value"
@@ -1927,78 +1385,14 @@
       "c9309352-4080-401f-8e7a-8f82d4cb0cd1.state",
       "c9309352-4080-401f-8e7a-8f82d4cb0cd1.task_id"
     ],
-    "bf1bae8d-32e2-466e-a584-6a877846e28e.result": [
-      "2b733c64-501e-43e6-b470-e60fdde43b4f.value"
-    ],
-    "2b733c64-501e-43e6-b470-e60fdde43b4f.value": [
-      "e6dfb956-fa79-4318-a55e-bb46c52bad19.state"
-    ],
-    "3bfd7d87-3092-4271-812b-567dab93c40a.value": [
-      "3b86de9f-9759-4b24-b626-061bc0eaaa16.state",
-      "3b86de9f-9759-4b24-b626-061bc0eaaa16.task"
-    ],
-    "9e1103d6-b731-4a32-8210-1e416c0ad199.value": [
-      "37380da8-e58a-497a-8ec8-c056b83fecba.state"
-    ],
-    "3b86de9f-9759-4b24-b626-061bc0eaaa16.result": [
-      "9e1103d6-b731-4a32-8210-1e416c0ad199.value"
-    ],
-    "e662edaf-d52e-48fe-89b8-6be141edaf19.value": [
-      "706d91de-02e7-46a0-a18b-71417b9c83a4.state"
-    ],
-    "4ef094fe-30db-451f-a6b9-a021a31ffd6a.result": [
-      "e662edaf-d52e-48fe-89b8-6be141edaf19.value"
-    ],
     "6cacf949-f729-497a-bd32-fc6ae0faeec8.value": [
       "5b38a2c6-a850-4b01-bf69-439c23d30edb.state"
-    ],
-    "712c6d77-aa14-436c-b46a-756144071d66.result": [
-      "6cacf949-f729-497a-bd32-fc6ae0faeec8.value"
-    ],
-    "2bdaefb0-c9ce-4dc7-b2a3-036bdb92f770.fn": [
-      "64ea0ff0-614c-49ec-9343-1b9d952e590a.fn"
-    ],
-    "2bdaefb0-c9ce-4dc7-b2a3-036bdb92f770.name": [
-      "64ea0ff0-614c-49ec-9343-1b9d952e590a.name"
-    ],
-    "64ea0ff0-614c-49ec-9343-1b9d952e590a.callback": [
-      "097f9efe-2af9-4a6f-ac62-dad6d6230f11.state"
     ],
     "c595badd-3bf2-45a9-a198-ac6d1ccf088f.state": [
       "f0748ba3-9332-4550-b9b3-4fb505e8ac75.item2"
     ],
-    "48fed01a-ea27-4960-ac9a-0947a903b3d1.fn": [
-      "097f9efe-2af9-4a6f-ac62-dad6d6230f11.condition"
-    ],
-    "ae107d09-1a9a-44e3-9e3c-464ec7c18595.callback": [
-      "e7c2f63d-1768-41cf-a9ef-231ce6629c83.state"
-    ],
-    "a2d1ec62-e706-4642-bcfc-77bfe86dbbfb.fn": [
-      "e7c2f63d-1768-41cf-a9ef-231ce6629c83.condition"
-    ],
-    "b096de8e-e2f8-456a-aac6-9ad456712f97.fn": [
-      "ae107d09-1a9a-44e3-9e3c-464ec7c18595.fn"
-    ],
-    "b096de8e-e2f8-456a-aac6-9ad456712f97.name": [
-      "ae107d09-1a9a-44e3-9e3c-464ec7c18595.name"
-    ],
-    "f6bcde3d-dd19-4a2d-88a0-fa14358c5493.callback": [
-      "3faecc3b-b3c6-4aad-8ec3-5c49f935d8ea.state"
-    ],
-    "f565234a-1146-451d-aa17-15305e839fa2.fn": [
-      "3faecc3b-b3c6-4aad-8ec3-5c49f935d8ea.condition"
-    ],
-    "9986a5a1-7e84-4ff2-9dbc-5a58e5be6732.fn": [
-      "f6bcde3d-dd19-4a2d-88a0-fa14358c5493.fn"
-    ],
-    "9986a5a1-7e84-4ff2-9dbc-5a58e5be6732.name": [
-      "f6bcde3d-dd19-4a2d-88a0-fa14358c5493.name"
-    ],
     "dc667224-ecfa-42e5-9211-d21e29034975.callback": [
       "9d1d77e3-e917-479a-ac4b-875cad440d2a.state"
-    ],
-    "54ba316e-07bc-4fa4-a065-a141db7e4017.fn": [
-      "9d1d77e3-e917-479a-ac4b-875cad440d2a.condition"
     ],
     "94689740-53dc-4a6a-914c-060eb64b0846.fn": [
       "dc667224-ecfa-42e5-9211-d21e29034975.fn"
@@ -2006,49 +1400,29 @@
     "94689740-53dc-4a6a-914c-060eb64b0846.name": [
       "dc667224-ecfa-42e5-9211-d21e29034975.name"
     ],
-    "f0748ba3-9332-4550-b9b3-4fb505e8ac75.list": [
-      "3c87a026-21f9-460c-ace1-76e741cec66f.callbacks"
-    ],
-    "d44ba551-a441-4832-9deb-03d8e0f1f174.value": [
-      "bf1bae8d-32e2-466e-a584-6a877846e28e.state",
-      "bf1bae8d-32e2-466e-a584-6a877846e28e.task_id"
-    ],
-    "e3627b39-6e3e-455e-ad18-9b1a94dbf775.value": [
-      "bf1bae8d-32e2-466e-a584-6a877846e28e.updates"
-    ],
-    "e6dfb956-fa79-4318-a55e-bb46c52bad19.state": [
-      "3c071bbd-b8fa-4b15-b8f4-10f54d40cc69.nodes"
-    ],
-    "3506f048-ddb0-43a1-a0e0-6373219847ab.value": [
-      "3b86de9f-9759-4b24-b626-061bc0eaaa16.position"
-    ],
-    "706d91de-02e7-46a0-a18b-71417b9c83a4.state": [
-      "e6817196-fae0-4abf-b958-ce8ccd598dc0.nodes"
-    ],
-    "37380da8-e58a-497a-8ec8-c056b83fecba.state": [
-      "1673610f-2f8a-41f7-ac96-2a923c0b6988.nodes"
-    ],
-    "1feb3712-f136-40fa-9c90-87d62a35f44f.value": [
-      "4ef094fe-30db-451f-a6b9-a021a31ffd6a.state",
-      "4ef094fe-30db-451f-a6b9-a021a31ffd6a.task_id"
-    ],
     "5b38a2c6-a850-4b01-bf69-439c23d30edb.state": [
       "4577c3a6-fefb-442e-8aa1-91a61c649493.nodes"
     ],
-    "e7c2f63d-1768-41cf-a9ef-231ce6629c83.state": [
-      "f0748ba3-9332-4550-b9b3-4fb505e8ac75.item4"
-    ],
-    "097f9efe-2af9-4a6f-ac62-dad6d6230f11.state": [
-      "f0748ba3-9332-4550-b9b3-4fb505e8ac75.item3"
-    ],
-    "3faecc3b-b3c6-4aad-8ec3-5c49f935d8ea.state": [
-      "f0748ba3-9332-4550-b9b3-4fb505e8ac75.item5"
+    "f0748ba3-9332-4550-b9b3-4fb505e8ac75.list": [
+      "3c87a026-21f9-460c-ace1-76e741cec66f.callbacks"
     ],
     "9d1d77e3-e917-479a-ac4b-875cad440d2a.state": [
-      "f0748ba3-9332-4550-b9b3-4fb505e8ac75.item6"
+      "f0748ba3-9332-4550-b9b3-4fb505e8ac75.item3"
+    ],
+    "6361c3ad-923a-4d61-a0cf-e452bc626c20.value": [
+      "3435d8ca-bfdd-4373-91b5-d48746d94f2b.state"
+    ],
+    "712c6d77-aa14-436c-b46a-756144071d66.result": [
+      "6cacf949-f729-497a-bd32-fc6ae0faeec8.value"
     ],
     "36467a04-f2c1-410e-8c6a-2d3bb7598565.value": [
       "712c6d77-aa14-436c-b46a-756144071d66.state"
+    ],
+    "54ba316e-07bc-4fa4-a065-a141db7e4017.fn": [
+      "9d1d77e3-e917-479a-ac4b-875cad440d2a.condition"
+    ],
+    "3b6f099a-1ae0-4282-abb2-9f7baad8aba8.fn": [
+      "c595badd-3bf2-45a9-a198-ac6d1ccf088f.condition"
     ]
   },
   "groups": [
@@ -2084,10 +1458,10 @@
     },
     {
       "title": "Process",
-      "x": 9,
-      "y": 237,
-      "width": 2292,
-      "height": 3515,
+      "x": 1,
+      "y": 229,
+      "width": 2308,
+      "height": 2411,
       "color": "#3f789e",
       "font_size": 24,
       "inherited": false
@@ -2114,8 +1488,8 @@
     },
     {
       "title": "Function - no_plan_exists",
-      "x": -1043,
-      "y": 1808,
+      "x": -1035,
+      "y": 2051,
       "width": 1020,
       "height": 183,
       "color": "#b06634",
@@ -2124,8 +1498,8 @@
     },
     {
       "title": "Function - plan_exists",
-      "x": -1043,
-      "y": 1995,
+      "x": -1035,
+      "y": 2239,
       "width": 1020,
       "height": 178,
       "color": "#b06634",
@@ -2133,41 +1507,11 @@
       "inherited": false
     },
     {
-      "title": "Function",
-      "x": -1273,
-      "y": 2181,
-      "width": 1250,
-      "height": 366,
-      "color": "#b06634",
-      "font_size": 24,
-      "inherited": false
-    },
-    {
-      "title": "Function",
-      "x": -1326,
-      "y": 2553,
-      "width": 1300,
-      "height": 376,
-      "color": "#b06634",
-      "font_size": 24,
-      "inherited": false
-    },
-    {
-      "title": "Function",
-      "x": -1296,
-      "y": 2933,
-      "width": 1270,
-      "height": 206,
-      "color": "#b06634",
-      "font_size": 24,
-      "inherited": false
-    },
-    {
-      "title": "Function",
-      "x": -998,
-      "y": 3143,
-      "width": 971,
-      "height": 186,
+      "title": "Function - delete_plan",
+      "x": -1086,
+      "y": 1812,
+      "width": 1066,
+      "height": 179,
       "color": "#b06634",
       "font_size": 24,
       "inherited": false
@@ -2179,28 +1523,28 @@
   "inputs": [],
   "outputs": [
     {
-      "id": "96b53a19-281c-40aa-9e08-240293a3b4e4",
+      "id": "7d687d88-2d2e-40f4-be47-e3c071d35520",
       "name": "fn",
       "optional": false,
       "group": null,
       "socket_type": "function"
     },
     {
-      "id": "365e0a82-36d5-441a-afa2-6b7b563f8da0",
+      "id": "e055a432-5810-41ac-a615-496c0afd4145",
       "name": "name",
       "optional": false,
       "group": null,
       "socket_type": "str"
     },
     {
-      "id": "5864eda8-30a8-4a49-8605-e0e788d6f71d",
+      "id": "c95300b8-349d-47f3-bae0-91fa52877fef",
       "name": "allow_multiple_calls",
       "optional": false,
       "group": null,
       "socket_type": "bool"
     },
     {
-      "id": "2ff2e271-eef1-4e34-9d42-6d396e94f659",
+      "id": "af4e682f-8711-4a41-b205-21ae6bff6365",
       "name": "ai_callback",
       "optional": false,
       "group": null,
