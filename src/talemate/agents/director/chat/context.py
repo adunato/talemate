@@ -41,11 +41,14 @@ def create_task_with_chat_context(
     chat_id: str,
     *args,
     confirm_write_actions: bool = True,
+    plan_id: str | None = None,
     **kwargs,
 ):
     async def wrapper(*args, **kwargs):
         with DirectorChatContext(
-            chat_id=chat_id, confirm_write_actions=confirm_write_actions
+            chat_id=chat_id,
+            confirm_write_actions=confirm_write_actions,
+            plan_id=plan_id,
         ):
             return await fn(*args, **kwargs)
 

@@ -138,6 +138,13 @@ NOSPOILERS MODE: You are operating in nospoilers mode. You are not allowed to sp
 {% else %}
 NORMAL MODE: You are operating in normal mode. You are allowed to discuss the story, and you are allowed to reveal information that could potentially spoil the story as you make your decisions and changes.
 {% endif %}
+{% if scene_plan and mode not in ["generate_arc", "generate_arc_expand"] %}
+
+## Active Plan
+When referencing tasks for edit, remove, or insert-after operations, use the task ID shown in brackets (e.g., `[a1b2c3d4]`).
+
+{{ scene_plan.status_summary() }}
+{% endif %}
 
 Use light markdown in `<MESSAGE>` for clarity (lists, bold for emphasis). Avoid heavy formatting.
 

@@ -4,6 +4,10 @@ Plan graph nodes.
 - CreatePlan: creates a plan with tasks and saves to agent state
 - EstimateWords: estimates word count for a given number of beats
 - CompleteTask: marks a task as completed in a plan
+- RemoveTask: removes a task from a plan
+- EditTask: patch-updates a task's fields
+- InsertTask: inserts a new task at a given position
+- DeletePlan: removes an entire plan
 - ExpandStoryArc: expands beats into prose via the arc-expand pipeline
 
 Beat execution is handled by the existing `direct_scene` FOCAL action.
@@ -32,7 +36,17 @@ from .schema import (
     READING_SPEED_WPM,
     NARRATION_BEAT_RATIO,
 )
-from .util import save_plan, complete_task, emit_plan_updated, get_plan
+from .util import (
+    save_plan,
+    delete_plan,
+    complete_task,
+    emit_plan_updated,
+    get_plan,
+    get_active_plan,
+    check_plan_locked,
+    resolve_plan_id,
+    emit_plan_for_chat,
+)
 
 log = structlog.get_logger("talemate.agents.director.plan.nodes")
 
@@ -41,10 +55,10 @@ BEAT_FIELDS = {"type", "pacing", "tension", "characters"}
 
 def _validate_task(item: dict, order: int) -> Task:
     """Validate a task dict as Beat or Task based on fields present."""
-    item.setdefault("order", order)
-    if BEAT_FIELDS & item.keys():
-        return Beat.model_validate(item)
-    return Task.model_validate(item)
+    data = {**item, "order": item.get("order", order)}
+    if BEAT_FIELDS & data.keys():
+        return Beat.model_validate(data)
+    return Task.model_validate(data)
 
 
 @register("agents/director/plan/CreatePlan")
@@ -418,3 +432,233 @@ class ExpandStoryArc(AgentNode):
                 "word_count": total_words,
             }
         )
+
+
+
+
+@register("agents/director/plan/RemoveTask")
+class RemoveTask(Node):
+    """
+    Removes a task from the active plan by task ID.
+
+    Renumbers remaining tasks to keep contiguous ordering.
+    Blocked if the plan is completed.
+    """
+
+    def __init__(self, title="Remove Task", **kwargs):
+        super().__init__(title=title, **kwargs)
+
+    def setup(self):
+        self.add_input("state")
+        self.add_input("task_id", socket_type="str")
+        self.add_output("state")
+        self.add_output("result", socket_type="str")
+
+    async def run(self, state: GraphState):
+        input_state = self.require_input("state")
+        task_id = self.require_input("task_id")
+        scene = active_scene.get()
+
+        plan = get_active_plan(scene)
+        if not plan:
+            self.set_output_values({"state": input_state, "result": "No active plan"})
+            return
+
+        locked = check_plan_locked(plan)
+        if locked:
+            self.set_output_values({"state": input_state, "result": locked})
+            return
+
+        removed = plan.remove_task(task_id)
+        if not removed:
+            self.set_output_values({"state": input_state, "result": f"No task with ID '{task_id}' in plan '{plan.id}'"})
+            return
+
+        save_plan(scene, plan)
+        emit_plan_for_chat(plan)
+
+        log.info("plan.remove_task", plan_id=plan.id, task_id=task_id)
+        self.set_output_values({
+            "state": input_state,
+            "result": f"Removed task {removed.order} [{task_id}] from plan [{plan.id}]. {len(plan.tasks)} tasks remaining.",
+        })
+
+
+@register("agents/director/plan/EditTask")
+class EditTask(Node):
+    """
+    Patch-updates a task's fields in the active plan.
+
+    Accepts a dict of field updates — only provided fields are changed.
+    The 'id' and 'order' fields are protected and cannot be changed.
+    Blocked if the plan is completed.
+    """
+
+    def __init__(self, title="Edit Task", **kwargs):
+        super().__init__(title=title, **kwargs)
+
+    def setup(self):
+        self.add_input("state")
+        self.add_input("task_id", socket_type="str")
+        self.add_input("updates", socket_type="dict")
+        self.add_output("state")
+        self.add_output("result", socket_type="str")
+
+    async def run(self, state: GraphState):
+        input_state = self.require_input("state")
+        task_id = self.require_input("task_id")
+        updates = self.require_input("updates")
+        scene = active_scene.get()
+
+        plan = get_active_plan(scene)
+        if not plan:
+            self.set_output_values({"state": input_state, "result": "No active plan"})
+            return
+
+        locked = check_plan_locked(plan)
+        if locked:
+            self.set_output_values({"state": input_state, "result": locked})
+            return
+
+        if not isinstance(updates, dict):
+            self.set_output_values({"state": input_state, "result": "Updates must be a dict"})
+            return
+
+        task, changed_fields = plan.edit_task(task_id, updates)
+        if not task:
+            self.set_output_values({"state": input_state, "result": f"No task with ID '{task_id}' in plan '{plan.id}'"})
+            return
+
+        save_plan(scene, plan)
+        emit_plan_for_chat(plan)
+
+        log.info("plan.edit_task", plan_id=plan.id, task_id=task_id, fields=changed_fields)
+        self.set_output_values({
+            "state": input_state,
+            "result": f"Updated task [{task_id}] in plan [{plan.id}]: changed {', '.join(changed_fields)}",
+        })
+
+
+@register("agents/director/plan/InsertTask")
+class InsertTask(Node):
+    """
+    Inserts a new task into the active plan at a given position.
+
+    Position can be "start", "end", or an existing task ID (inserts after that task).
+    The task dict is auto-validated as Beat or Task based on fields present.
+    Blocked if the plan is completed.
+    """
+
+    class Fields:
+        position = PropertyField(
+            name="position",
+            type="str",
+            description="Where to insert: 'start', 'end', or a task ID to insert after",
+            default="end",
+        )
+
+    def __init__(self, title="Insert Task", **kwargs):
+        super().__init__(title=title, **kwargs)
+
+    def setup(self):
+        self.add_input("state")
+        self.add_input("task", socket_type="dict")
+        self.add_input("position", socket_type="str", optional=True)
+        self.add_output("state")
+        self.add_output("result", socket_type="str")
+
+        self.set_property("position", "end")
+
+    async def run(self, state: GraphState):
+        input_state = self.require_input("state")
+        raw_task = self.require_input("task")
+        position = self.normalized_input_value("position") or "end"
+        scene = active_scene.get()
+
+        plan = get_active_plan(scene)
+        if not plan:
+            self.set_output_values({"state": input_state, "result": "No active plan"})
+            return
+
+        locked = check_plan_locked(plan)
+        if locked:
+            self.set_output_values({"state": input_state, "result": locked})
+            return
+
+        if not isinstance(raw_task, dict):
+            self.set_output_values({"state": input_state, "result": "Task must be a dict"})
+            return
+
+        try:
+            task = _validate_task(raw_task, order=0)
+        except Exception as e:
+            self.set_output_values({"state": input_state, "result": f"Invalid task: {e}"})
+            return
+
+        try:
+            plan.insert_task(task, position)
+        except ValueError as e:
+            self.set_output_values({"state": input_state, "result": str(e)})
+            return
+
+        save_plan(scene, plan)
+        emit_plan_for_chat(plan)
+
+        log.info("plan.insert_task", plan_id=plan.id, task_id=task.id, position=position)
+        self.set_output_values({
+            "state": input_state,
+            "result": f"Inserted task [{task.id}] at position '{position}' in plan [{plan.id}]. Now {len(plan.tasks)} tasks.",
+        })
+
+
+@register("agents/director/plan/DeletePlan")
+class DeletePlan(Node):
+    """
+    Deletes the active plan.
+
+    Also unlinks the plan from the active director chat.
+    """
+
+    def __init__(self, title="Delete Plan", **kwargs):
+        super().__init__(title=title, **kwargs)
+
+    def setup(self):
+        self.add_input("state")
+        self.add_output("state")
+        self.add_output("result", socket_type="str")
+
+    async def run(self, state: GraphState):
+        input_state = self.require_input("state")
+        scene = active_scene.get()
+
+        plan = get_active_plan(scene)
+        if not plan:
+            self.set_output_values({"state": input_state, "result": "No active plan"})
+            return
+
+        deleted = delete_plan(scene, plan.id)
+        if not deleted:
+            self.set_output_values({"state": input_state, "result": f"Failed to delete plan '{plan.id}'"})
+            return
+
+        # Unlink from active chat and notify frontend
+        chat_ctx = director_chat_context.get()
+        chat_id = chat_ctx.chat_id if chat_ctx else None
+        if chat_ctx and chat_ctx.plan_id == plan.id:
+            chat_ctx.plan_id = None
+
+        # Clear persisted plan_id on the chat object
+        director = get_agent("director")
+        if chat_id:
+            chat = director.chat_get(chat_id)
+            if chat and chat.plan_id == plan.id:
+                chat.plan_id = None
+                director._chat_save(chat)
+
+        emit_plan_updated(None, chat_id=chat_id)
+
+        log.info("plan.delete", plan_id=plan.id)
+        self.set_output_values({
+            "state": input_state,
+            "result": f"Deleted plan [{plan.id}]",
+        })

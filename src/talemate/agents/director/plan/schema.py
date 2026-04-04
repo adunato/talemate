@@ -148,6 +148,70 @@ class Plan(pydantic.BaseModel):
                 self.status = PlanStatus.completed
         return task
 
+    def _renumber_tasks(self):
+        """Renumber all tasks to maintain contiguous 1-based ordering."""
+        for i, task in enumerate(self.tasks):
+            task.order = i + 1
+
+    def remove_task(self, task_id: str) -> Task | None:
+        """Remove a task by ID. Returns the removed task, or None if not found."""
+        task = self.get_task(task_id)
+        if task:
+            self.tasks.remove(task)
+            self._renumber_tasks()
+        return task
+
+    def insert_task(self, task: "Task", position: str = "end") -> "Task":
+        """Insert a task at a position.
+
+        Args:
+            task: The task to insert.
+            position: "start", "end", or an existing task ID to insert after.
+
+        Returns:
+            The inserted task.
+
+        Raises:
+            ValueError: If position is a task ID that doesn't exist in the plan.
+        """
+        if position == "start":
+            self.tasks.insert(0, task)
+        elif position == "end":
+            self.tasks.append(task)
+        else:
+            # position is a task ID — insert after that task
+            for i, existing in enumerate(self.tasks):
+                if existing.id == position:
+                    self.tasks.insert(i + 1, task)
+                    break
+            else:
+                raise ValueError(f"No task with ID '{position}' found in plan")
+        self._renumber_tasks()
+        return task
+
+    def edit_task(self, task_id: str, updates: dict) -> tuple[Task | None, list[str]]:
+        """Patch-update a task's fields.
+
+        Returns (task, changed_fields) where changed_fields lists the field names
+        that were actually updated. Returns (None, []) if the task is not found.
+
+        Only fields present in the updates dict are changed. The 'id' and 'order'
+        fields are protected and cannot be changed via this method.
+        Unknown fields are silently ignored.
+        """
+        task = self.get_task(task_id)
+        if not task:
+            return None, []
+        protected = {"id", "order"}
+        changed = []
+        for key, value in updates.items():
+            if key in protected:
+                continue
+            if hasattr(task, key):
+                setattr(task, key, value)
+                changed.append(key)
+        return task, changed
+
     def tasks_as_text(self) -> str:
         """Plain-text representation of all tasks, delegating to each task's as_text()."""
         return "\n".join(task.as_text() for task in self.tasks)

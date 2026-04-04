@@ -5,12 +5,16 @@ Plan utilities — plan state management and task parsing.
 import structlog
 
 from talemate.emit import emit
+from talemate.agents.director.chat.context import director_chat_context
 
-from .schema import Beat, Plan
+from .schema import Beat, Plan, PlanStatus
 
 log = structlog.get_logger("talemate.agents.director.plan.util")
 
 PLANS_STATE_KEY = "plans"
+
+# Plan statuses that block modifications
+LOCKED_STATUSES = {PlanStatus.completed}
 
 
 def _ensure_plans_collection(scene) -> dict:
@@ -31,13 +35,13 @@ def get_plan(scene, plan_id: str) -> Plan | None:
     return Plan.model_validate(raw)
 
 
-def emit_plan_updated(plan: Plan, chat_id: str | None = None):
+def emit_plan_updated(plan: Plan | None, chat_id: str | None = None):
     """Emit a plan_updated event to the frontend via the director handler."""
     emit(
         "director",
         data={
             "action": "plan_updated",
-            "plan": plan.model_dump(),
+            "plan": plan.model_dump() if plan else None,
             "chat_id": chat_id or "",
         },
     )
@@ -58,24 +62,25 @@ def delete_plan(scene, plan_id: str) -> bool:
     return False
 
 
+def find_plan_by_task(scene, task_id: str, plan_id: str | None = None) -> Plan | None:
+    """Find the plan containing a task. Searches all plans if plan_id is not given."""
+    if plan_id:
+        return get_plan(scene, plan_id)
+    plans = scene.agent_state.get("director", {}).get(PLANS_STATE_KEY, {})
+    for pid, raw in plans.items():
+        p = Plan.model_validate(raw)
+        if p.get_task(task_id):
+            return p
+    return None
+
+
 def complete_task(scene, task_id: str, plan_id: str | None = None) -> str:
     """Mark a task as completed. Searches all plans if plan_id is not given."""
 
-    if plan_id:
-        plan = get_plan(scene, plan_id)
-        if not plan:
-            return f"No plan found with ID '{plan_id}'"
-    else:
-        # Search all plans for the task
-        plans = scene.agent_state.get("director", {}).get(PLANS_STATE_KEY, {})
-        plan = None
-        for pid, raw in plans.items():
-            p = Plan.model_validate(raw)
-            if p.get_task(task_id):
-                plan = p
-                break
-        if not plan:
-            return f"No task found with ID '{task_id}' in any plan"
+    plan = find_plan_by_task(scene, task_id, plan_id)
+    if not plan:
+        msg = f"No plan found with ID '{plan_id}'" if plan_id else f"No task found with ID '{task_id}' in any plan"
+        return msg
 
     task = plan.complete_task(task_id)
     if not task:
@@ -86,6 +91,36 @@ def complete_task(scene, task_id: str, plan_id: str | None = None) -> str:
     completed = plan.completed_count
     total = len(plan.tasks)
     return f"Task {task.order} [{task_id}] completed ({completed}/{total} done)"
+
+
+def check_plan_locked(plan: Plan) -> str | None:
+    """Return an error message if the plan is in a locked status, else None."""
+    if plan.status in LOCKED_STATUSES:
+        return f"Cannot modify plan [{plan.id}]: status is '{plan.status.value}'"
+    return None
+
+
+def resolve_plan_id(plan_id: str | None) -> str | None:
+    """Resolve plan_id from input or active chat context."""
+    if plan_id:
+        return plan_id
+    chat_ctx = director_chat_context.get()
+    return chat_ctx.plan_id if chat_ctx else None
+
+
+def get_active_plan(scene) -> Plan | None:
+    """Get the plan from the active chat context."""
+    plan_id = resolve_plan_id(None)
+    if not plan_id:
+        return None
+    return get_plan(scene, plan_id)
+
+
+def emit_plan_for_chat(plan: Plan):
+    """Emit plan_updated for the current chat context."""
+    chat_ctx = director_chat_context.get()
+    chat_id = chat_ctx.chat_id if chat_ctx else None
+    emit_plan_updated(plan, chat_id=chat_id)
 
 
 def parse_beats(data) -> list[Beat]:

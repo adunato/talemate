@@ -526,8 +526,9 @@ class DirectorChatMixin:
                 chat.plan_id if chat else None
             )
             if plan_id:
-                if chat and not chat.plan_id:
+                if chat and chat.plan_id != plan_id:
                     chat.plan_id = plan_id
+                    self._chat_save(chat)
                 extra_vars["scene_plan"] = get_plan(self.scene, plan_id)
             else:
                 extra_vars.pop("scene_plan", None)

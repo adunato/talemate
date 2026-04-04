@@ -4,6 +4,7 @@ import structlog
 from typing import Literal, TYPE_CHECKING
 
 from talemate.instance import get_agent
+from talemate.agents.director.plan.util import get_plan
 from .context import create_task_with_chat_context
 import talemate.util as util
 
@@ -82,6 +83,31 @@ class DirectorChatWebsocketMixin:
     def director(self):
         return get_agent("director")
 
+    def _plan_payload(self, chat) -> dict | None:
+        """Return the plan dict for a chat, or None."""
+        if not chat or not chat.plan_id:
+            return None
+        plan = get_plan(self.director.scene, chat.plan_id)
+        return plan.model_dump() if plan else None
+
+    def _chat_history_payload(self, chat, **overrides) -> dict:
+        """Build a standard chat_history response payload."""
+        messages = overrides.pop("messages", None)
+        if messages is None:
+            messages = chat.messages
+        payload = {
+            "type": "director",
+            "action": "chat_history",
+            "chat_id": chat.id,
+            "messages": [m.model_dump() if hasattr(m, "model_dump") else m for m in messages],
+            "mode": chat.mode,
+            "confirm_write_actions": chat.confirm_write_actions,
+            "title": chat.title,
+            "plan": self._plan_payload(chat),
+        }
+        payload.update(overrides)
+        return payload
+
     def _chat_list_payload(self) -> list[dict]:
         """Build a serializable list of chat entries."""
         return [entry.model_dump() for entry in self.director.chat_list()]
@@ -131,16 +157,17 @@ class DirectorChatWebsocketMixin:
 
         async def _on_compacted(chat_id, new_messages):
             try:
+                chat = self.director.chat_get(chat_id)
+                if not chat:
+                    return
                 self.websocket_handler.queue_put(
-                    {
-                        "type": "director",
-                        "action": "chat_history",
-                        "chat_id": chat_id,
-                        "messages": [m.model_dump() for m in new_messages],
-                        "token_total": sum(
+                    self._chat_history_payload(
+                        chat,
+                        messages=new_messages,
+                        token_total=sum(
                             util.count_tokens(str(m)) for m in new_messages
                         ),
-                    }
+                    )
                 )
                 self.websocket_handler.queue_put(
                     {
@@ -208,15 +235,7 @@ class DirectorChatWebsocketMixin:
             }
         )
         self.websocket_handler.queue_put(
-            {
-                "type": "director",
-                "action": "chat_history",
-                "chat_id": chat.id,
-                "messages": [m.model_dump() for m in chat.messages],
-                "mode": chat.mode,
-                "confirm_write_actions": chat.confirm_write_actions,
-                "title": chat.title,
-            }
+            self._chat_history_payload(chat)
         )
 
     async def handle_chat_list(self, data: dict):
@@ -241,37 +260,26 @@ class DirectorChatWebsocketMixin:
 
         messages = chat.messages
         self.websocket_handler.queue_put(
-            {
-                "type": "director",
-                "action": "chat_history",
-                "chat_id": payload.chat_id,
-                "messages": [m.model_dump() for m in messages],
-                "token_total": sum(util.count_tokens(str(m)) for m in messages),
-                "mode": chat.mode,
-                "confirm_write_actions": chat.confirm_write_actions,
-                "title": chat.title,
-            }
+            self._chat_history_payload(
+                chat,
+                messages=messages,
+                token_total=sum(util.count_tokens(str(m)) for m in messages),
+            )
         )
 
     async def handle_chat_history(self, data: dict):
         payload = ChatHistoryPayload(**data)
         messages = self.director.chat_history(payload.chat_id)
         chat = self.director.chat_get(payload.chat_id)
-        mode = chat.mode if chat else "normal"
-        confirm_write_actions = chat.confirm_write_actions if chat else True
-        title = chat.title if chat else None
+        if not chat:
+            return
 
         self.websocket_handler.queue_put(
-            {
-                "type": "director",
-                "action": "chat_history",
-                "chat_id": payload.chat_id,
-                "messages": [m.model_dump() for m in messages],
-                "token_total": sum(util.count_tokens(str(m)) for m in messages),
-                "mode": mode,
-                "confirm_write_actions": confirm_write_actions,
-                "title": title,
-            }
+            self._chat_history_payload(
+                chat,
+                messages=messages,
+                token_total=sum(util.count_tokens(str(m)) for m in messages),
+            )
         )
 
     async def handle_chat_send(self, data: dict):
@@ -297,6 +305,7 @@ class DirectorChatWebsocketMixin:
             on_compacted=_on_compacted,
             on_title_generated=_on_title_generated,
             confirm_write_actions=cwa,
+            plan_id=chat.plan_id if chat else None,
         )
         self._attach_task_done_callback(task, payload.chat_id)
 
@@ -313,22 +322,12 @@ class DirectorChatWebsocketMixin:
         )
         if cleared:
             # Emit the reset greeting history so UI updates immediately
-            messages = self.director.chat_history(payload.chat_id)
             chat = self.director.chat_get(payload.chat_id)
-            mode = chat.mode if chat else "normal"
-            confirm_write_actions = chat.confirm_write_actions if chat else True
-            title = chat.title if chat else None
-            self.websocket_handler.queue_put(
-                {
-                    "type": "director",
-                    "action": "chat_history",
-                    "chat_id": payload.chat_id,
-                    "messages": [m.model_dump() for m in messages],
-                    "mode": mode,
-                    "confirm_write_actions": confirm_write_actions,
-                    "title": title,
-                }
-            )
+            if chat:
+                messages = self.director.chat_history(payload.chat_id)
+                self.websocket_handler.queue_put(
+                    self._chat_history_payload(chat, messages=messages)
+                )
 
     async def handle_chat_delete(self, data: dict):
         """Delete a chat and switch to the next available one."""
@@ -352,18 +351,7 @@ class DirectorChatWebsocketMixin:
 
         # Emit history for the new active chat
         self.websocket_handler.queue_put(
-            {
-                "type": "director",
-                "action": "chat_history",
-                "chat_id": active_chat.id,
-                "messages": [m.model_dump() for m in active_chat.messages],
-                "token_total": sum(
-                    util.count_tokens(str(m)) for m in active_chat.messages
-                ),
-                "mode": active_chat.mode,
-                "confirm_write_actions": active_chat.confirm_write_actions,
-                "title": active_chat.title,
-            }
+            self._chat_history_payload(active_chat)
         )
 
     async def handle_chat_remove_message(self, data: dict):
@@ -372,16 +360,7 @@ class DirectorChatWebsocketMixin:
         if not chat:
             return
         self.websocket_handler.queue_put(
-            {
-                "type": "director",
-                "action": "chat_history",
-                "chat_id": payload.chat_id,
-                "messages": [m.model_dump() for m in chat.messages],
-                "token_total": sum(util.count_tokens(str(m)) for m in chat.messages),
-                "mode": chat.mode,
-                "confirm_write_actions": chat.confirm_write_actions,
-                "title": chat.title,
-            }
+            self._chat_history_payload(chat)
         )
 
     async def handle_chat_regenerate(self, data: dict):
@@ -391,6 +370,7 @@ class DirectorChatWebsocketMixin:
             self._make_generation_callbacks(payload.chat_id)
         )
 
+        chat = self.director.chat_get(payload.chat_id)
         task = create_task_with_chat_context(
             self.director.chat_regenerate_last,
             payload.chat_id,
@@ -400,6 +380,7 @@ class DirectorChatWebsocketMixin:
             on_compacting=_on_compacting,
             on_compacted=_on_compacted,
             on_title_generated=_on_title_generated,
+            plan_id=chat.plan_id if chat else None,
         )
         self._attach_task_done_callback(task, payload.chat_id)
 
@@ -483,15 +464,7 @@ class DirectorChatWebsocketMixin:
             }
         )
         self.websocket_handler.queue_put(
-            {
-                "type": "director",
-                "action": "chat_history",
-                "chat_id": chat.id,
-                "messages": [m.model_dump() for m in chat.messages],
-                "mode": chat.mode,
-                "confirm_write_actions": chat.confirm_write_actions,
-                "title": chat.title,
-            }
+            self._chat_history_payload(chat)
         )
 
         _on_update, _on_done, _on_compacting, _on_compacted, _on_title_generated = (
@@ -508,5 +481,6 @@ class DirectorChatWebsocketMixin:
             on_compacted=_on_compacted,
             on_title_generated=_on_title_generated,
             confirm_write_actions=False,
+            plan_id=chat.plan_id,
         )
         self._attach_task_done_callback(task, chat.id)

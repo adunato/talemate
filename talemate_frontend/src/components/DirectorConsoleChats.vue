@@ -407,6 +407,9 @@ export default {
                     this.tokenTotal = message.token_total ?? null;
                     this.currentChatMode = message.mode || 'normal';
                     this.confirmWriteActions = (message.confirm_write_actions !== undefined) ? !!message.confirm_write_actions : true;
+                    if('plan' in message) {
+                        this.activePlan = message.plan || null;
+                    }
                 }
                 return;
             }
