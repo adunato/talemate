@@ -44,7 +44,6 @@ from .util import (
     get_plan,
     get_active_plan,
     check_plan_locked,
-    resolve_plan_id,
     emit_plan_for_chat,
 )
 
@@ -434,8 +433,6 @@ class ExpandStoryArc(AgentNode):
         )
 
 
-
-
 @register("agents/director/plan/RemoveTask")
 class RemoveTask(Node):
     """
@@ -471,17 +468,24 @@ class RemoveTask(Node):
 
         removed = plan.remove_task(task_id)
         if not removed:
-            self.set_output_values({"state": input_state, "result": f"No task with ID '{task_id}' in plan '{plan.id}'"})
+            self.set_output_values(
+                {
+                    "state": input_state,
+                    "result": f"No task with ID '{task_id}' in plan '{plan.id}'",
+                }
+            )
             return
 
         save_plan(scene, plan)
         emit_plan_for_chat(plan)
 
         log.info("plan.remove_task", plan_id=plan.id, task_id=task_id)
-        self.set_output_values({
-            "state": input_state,
-            "result": f"Removed task {removed.order} [{task_id}] from plan [{plan.id}]. {len(plan.tasks)} tasks remaining.",
-        })
+        self.set_output_values(
+            {
+                "state": input_state,
+                "result": f"Removed task {removed.order} [{task_id}] from plan [{plan.id}]. {len(plan.tasks)} tasks remaining.",
+            }
+        )
 
 
 @register("agents/director/plan/EditTask")
@@ -521,22 +525,33 @@ class EditTask(Node):
             return
 
         if not isinstance(updates, dict):
-            self.set_output_values({"state": input_state, "result": "Updates must be a dict"})
+            self.set_output_values(
+                {"state": input_state, "result": "Updates must be a dict"}
+            )
             return
 
         task, changed_fields = plan.edit_task(task_id, updates)
         if not task:
-            self.set_output_values({"state": input_state, "result": f"No task with ID '{task_id}' in plan '{plan.id}'"})
+            self.set_output_values(
+                {
+                    "state": input_state,
+                    "result": f"No task with ID '{task_id}' in plan '{plan.id}'",
+                }
+            )
             return
 
         save_plan(scene, plan)
         emit_plan_for_chat(plan)
 
-        log.info("plan.edit_task", plan_id=plan.id, task_id=task_id, fields=changed_fields)
-        self.set_output_values({
-            "state": input_state,
-            "result": f"Updated task [{task_id}] in plan [{plan.id}]: changed {', '.join(changed_fields)}",
-        })
+        log.info(
+            "plan.edit_task", plan_id=plan.id, task_id=task_id, fields=changed_fields
+        )
+        self.set_output_values(
+            {
+                "state": input_state,
+                "result": f"Updated task [{task_id}] in plan [{plan.id}]: changed {', '.join(changed_fields)}",
+            }
+        )
 
 
 @register("agents/director/plan/InsertTask")
@@ -586,13 +601,17 @@ class InsertTask(Node):
             return
 
         if not isinstance(raw_task, dict):
-            self.set_output_values({"state": input_state, "result": "Task must be a dict"})
+            self.set_output_values(
+                {"state": input_state, "result": "Task must be a dict"}
+            )
             return
 
         try:
             task = _validate_task(raw_task, order=0)
         except Exception as e:
-            self.set_output_values({"state": input_state, "result": f"Invalid task: {e}"})
+            self.set_output_values(
+                {"state": input_state, "result": f"Invalid task: {e}"}
+            )
             return
 
         try:
@@ -604,11 +623,15 @@ class InsertTask(Node):
         save_plan(scene, plan)
         emit_plan_for_chat(plan)
 
-        log.info("plan.insert_task", plan_id=plan.id, task_id=task.id, position=position)
-        self.set_output_values({
-            "state": input_state,
-            "result": f"Inserted task [{task.id}] at position '{position}' in plan [{plan.id}]. Now {len(plan.tasks)} tasks.",
-        })
+        log.info(
+            "plan.insert_task", plan_id=plan.id, task_id=task.id, position=position
+        )
+        self.set_output_values(
+            {
+                "state": input_state,
+                "result": f"Inserted task [{task.id}] at position '{position}' in plan [{plan.id}]. Now {len(plan.tasks)} tasks.",
+            }
+        )
 
 
 @register("agents/director/plan/DeletePlan")
@@ -638,7 +661,9 @@ class DeletePlan(Node):
 
         deleted = delete_plan(scene, plan.id)
         if not deleted:
-            self.set_output_values({"state": input_state, "result": f"Failed to delete plan '{plan.id}'"})
+            self.set_output_values(
+                {"state": input_state, "result": f"Failed to delete plan '{plan.id}'"}
+            )
             return
 
         # Unlink from active chat and notify frontend
@@ -658,7 +683,9 @@ class DeletePlan(Node):
         emit_plan_updated(None, chat_id=chat_id)
 
         log.info("plan.delete", plan_id=plan.id)
-        self.set_output_values({
-            "state": input_state,
-            "result": f"Deleted plan [{plan.id}]",
-        })
+        self.set_output_values(
+            {
+                "state": input_state,
+                "result": f"Deleted plan [{plan.id}]",
+            }
+        )

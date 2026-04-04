@@ -528,7 +528,9 @@ class TestStdUserCRUD:
 
     def test_save_and_list(self, model_prompt, std_user_dir):
         """Saving a template makes it appear in list_std_user_templates."""
-        model_prompt.save_std_user_template("TestCRUD.jinja2", "hello {{ user_message }}")
+        model_prompt.save_std_user_template(
+            "TestCRUD.jinja2", "hello {{ user_message }}"
+        )
         templates = model_prompt.list_std_user_templates()
         names = [t["name"] for t in templates]
         assert "TestCRUD.jinja2" in names

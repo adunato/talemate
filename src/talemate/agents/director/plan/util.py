@@ -79,7 +79,11 @@ def complete_task(scene, task_id: str, plan_id: str | None = None) -> str:
 
     plan = find_plan_by_task(scene, task_id, plan_id)
     if not plan:
-        msg = f"No plan found with ID '{plan_id}'" if plan_id else f"No task found with ID '{task_id}' in any plan"
+        msg = (
+            f"No plan found with ID '{plan_id}'"
+            if plan_id
+            else f"No task found with ID '{task_id}' in any plan"
+        )
         return msg
 
     task = plan.complete_task(task_id)
@@ -131,7 +135,11 @@ def cleanup_orphaned_plans(scene, chats: dict) -> list[str]:
 
     referenced = set()
     for chat_data in chats.values():
-        plan_id = chat_data.get("plan_id") if isinstance(chat_data, dict) else chat_data.plan_id
+        plan_id = (
+            chat_data.get("plan_id")
+            if isinstance(chat_data, dict)
+            else chat_data.plan_id
+        )
         if plan_id:
             referenced.add(plan_id)
 

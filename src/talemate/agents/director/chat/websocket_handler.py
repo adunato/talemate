@@ -99,7 +99,9 @@ class DirectorChatWebsocketMixin:
             "type": "director",
             "action": "chat_history",
             "chat_id": chat.id,
-            "messages": [m.model_dump() if hasattr(m, "model_dump") else m for m in messages],
+            "messages": [
+                m.model_dump() if hasattr(m, "model_dump") else m for m in messages
+            ],
             "mode": chat.mode,
             "confirm_write_actions": chat.confirm_write_actions,
             "title": chat.title,
@@ -234,9 +236,7 @@ class DirectorChatWebsocketMixin:
                 "chat_list": self._chat_list_payload(),
             }
         )
-        self.websocket_handler.queue_put(
-            self._chat_history_payload(chat)
-        )
+        self.websocket_handler.queue_put(self._chat_history_payload(chat))
 
     async def handle_chat_list(self, data: dict):
         """Return the list of all chats."""
@@ -350,18 +350,14 @@ class DirectorChatWebsocketMixin:
         )
 
         # Emit history for the new active chat
-        self.websocket_handler.queue_put(
-            self._chat_history_payload(active_chat)
-        )
+        self.websocket_handler.queue_put(self._chat_history_payload(active_chat))
 
     async def handle_chat_remove_message(self, data: dict):
         payload = ChatRemoveMessagePayload(**data)
         chat = self.director.chat_remove_message(payload.chat_id, payload.message_id)
         if not chat:
             return
-        self.websocket_handler.queue_put(
-            self._chat_history_payload(chat)
-        )
+        self.websocket_handler.queue_put(self._chat_history_payload(chat))
 
     async def handle_chat_regenerate(self, data: dict):
         payload = ChatRegeneratePayload(**data)
@@ -463,9 +459,7 @@ class DirectorChatWebsocketMixin:
                 "chat_list": self._chat_list_payload(),
             }
         )
-        self.websocket_handler.queue_put(
-            self._chat_history_payload(chat)
-        )
+        self.websocket_handler.queue_put(self._chat_history_payload(chat))
 
         _on_update, _on_done, _on_compacting, _on_compacted, _on_title_generated = (
             self._make_generation_callbacks(chat.id)
