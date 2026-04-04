@@ -27,6 +27,7 @@ from talemate.game.engine.nodes.agent import AgentNode
 from talemate.instance import get_agent
 from talemate.context import active_scene
 from talemate.agents.director.chat.context import director_chat_context
+from talemate.agents.director.action_core.exceptions import ActionFailed
 
 from .schema import (
     Beat,
@@ -458,23 +459,17 @@ class RemoveTask(Node):
 
         plan = get_active_plan(scene)
         if not plan:
-            self.set_output_values({"state": input_state, "result": "No active plan"})
-            return
+            raise ActionFailed("No active plan")
 
         locked = check_plan_locked(plan)
         if locked:
-            self.set_output_values({"state": input_state, "result": locked})
-            return
+            raise ActionFailed(locked)
 
         removed = plan.remove_task(task_id)
         if not removed:
-            self.set_output_values(
-                {
-                    "state": input_state,
-                    "result": f"No task with ID '{task_id}' in plan '{plan.id}'",
-                }
+            raise ActionFailed(
+                f"No task with ID '{task_id}' in plan '{plan.id}'"
             )
-            return
 
         save_plan(scene, plan)
         emit_plan_for_chat(plan)
@@ -516,29 +511,20 @@ class EditTask(Node):
 
         plan = get_active_plan(scene)
         if not plan:
-            self.set_output_values({"state": input_state, "result": "No active plan"})
-            return
+            raise ActionFailed("No active plan")
 
         locked = check_plan_locked(plan)
         if locked:
-            self.set_output_values({"state": input_state, "result": locked})
-            return
+            raise ActionFailed(locked)
 
         if not isinstance(updates, dict):
-            self.set_output_values(
-                {"state": input_state, "result": "Updates must be a dict"}
-            )
-            return
+            raise ActionFailed("Updates must be a dict")
 
         task, changed_fields = plan.edit_task(task_id, updates)
         if not task:
-            self.set_output_values(
-                {
-                    "state": input_state,
-                    "result": f"No task with ID '{task_id}' in plan '{plan.id}'",
-                }
+            raise ActionFailed(
+                f"No task with ID '{task_id}' in plan '{plan.id}'"
             )
-            return
 
         save_plan(scene, plan)
         emit_plan_for_chat(plan)
@@ -592,33 +578,24 @@ class InsertTask(Node):
 
         plan = get_active_plan(scene)
         if not plan:
-            self.set_output_values({"state": input_state, "result": "No active plan"})
-            return
+            raise ActionFailed("No active plan")
 
         locked = check_plan_locked(plan)
         if locked:
-            self.set_output_values({"state": input_state, "result": locked})
-            return
+            raise ActionFailed(locked)
 
         if not isinstance(raw_task, dict):
-            self.set_output_values(
-                {"state": input_state, "result": "Task must be a dict"}
-            )
-            return
+            raise ActionFailed("Task must be a dict")
 
         try:
             task = _validate_task(raw_task, order=0)
         except Exception as e:
-            self.set_output_values(
-                {"state": input_state, "result": f"Invalid task: {e}"}
-            )
-            return
+            raise ActionFailed(f"Invalid task: {e}") from e
 
         try:
             plan.insert_task(task, position)
         except ValueError as e:
-            self.set_output_values({"state": input_state, "result": str(e)})
-            return
+            raise ActionFailed(str(e)) from e
 
         save_plan(scene, plan)
         emit_plan_for_chat(plan)
@@ -656,15 +633,11 @@ class DeletePlan(Node):
 
         plan = get_active_plan(scene)
         if not plan:
-            self.set_output_values({"state": input_state, "result": "No active plan"})
-            return
+            raise ActionFailed("No active plan")
 
         deleted = delete_plan(scene, plan.id)
         if not deleted:
-            self.set_output_values(
-                {"state": input_state, "result": f"Failed to delete plan '{plan.id}'"}
-            )
-            return
+            raise ActionFailed(f"Failed to delete plan '{plan.id}'")
 
         # Unlink from active chat and notify frontend
         chat_ctx = director_chat_context.get()

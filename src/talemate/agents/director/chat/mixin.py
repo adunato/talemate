@@ -8,6 +8,7 @@ from talemate.game.engine.nodes.core import GraphState
 
 from talemate.agents.director.action_core import utils as action_utils
 from talemate.agents.director.action_core.exceptions import (
+    ActionFailed,
     ActionRejected,
     UnknownAction,
 )
@@ -608,6 +609,18 @@ class DirectorChatMixin:
                         name=e.action_name,
                         result=f"Error executing actions: {e}",
                         instructions=e.action_name,
+                        status="error",
+                    ),
+                    on_update=on_update,
+                )
+            except ActionFailed as e:
+                log.warning("director.chat.actions.execute.action_failed", error=e)
+                await self.chat_append_message(
+                    chat_id,
+                    DirectorChatActionResultMessage(
+                        name="action_failed",
+                        result=str(e),
+                        instructions="",
                         status="error",
                     ),
                     on_update=on_update,

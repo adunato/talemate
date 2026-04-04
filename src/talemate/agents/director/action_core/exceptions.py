@@ -1,7 +1,20 @@
 __all__ = [
+    "ActionFailed",
     "ActionRejected",
     "UnknownAction",
 ]
+
+
+class ActionFailed(RuntimeError):
+    """Raised when an action fails during execution.
+
+    The message is communicated back to the director as an error result.
+    """
+
+    focal_reraise: bool = True
+
+    def __init__(self, message: str):
+        super().__init__(message)
 
 
 class UnknownAction(ValueError):
