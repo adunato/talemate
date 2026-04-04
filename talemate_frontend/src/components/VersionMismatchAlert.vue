@@ -26,6 +26,7 @@
                     <li><strong>Browser cache:</strong> Hard refresh this page (<code class="bg-grey-darken-3 px-1">Ctrl+Shift+R</code> or <code class="bg-grey-darken-3 px-1">Cmd+Shift+R</code>)</li>
                     <li><strong>Git users:</strong> Run <code class="bg-grey-darken-3 px-1">update.bat</code> (Windows) or <code class="bg-grey-darken-3 px-1">update.sh</code> (Linux/Mac)</li>
                     <li><strong>Others:</strong> Do a fresh install</li>
+                    <li><strong>Backend:</strong> Restart the backend</li>
                 </ul>
             </v-card-text>
             <v-card-actions>
