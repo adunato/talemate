@@ -158,7 +158,6 @@ class LlamaCppClient(OpenAIVisionMixin, ClientBase):
         payload = {k: v for k, v in parameters.items() if v is not None}
         payload["prompt"] = prompt.strip(" ")
         payload["stream"] = True
-        payload["add_special"] = True
 
         # dry_sequence_breakers in Talemate presets is stored as a string like:
         #   '"\\n", ":", "\\\"", "*"'
