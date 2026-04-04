@@ -325,7 +325,8 @@ class DirectorChatActionConfirm(Node):
 
     async def run(self, state: GraphState):
         state_value = self.get_input_value("state")
-        max_wait_time: int = 180
+        director = get_agent("director")
+        max_wait_time: int = director.chat_action_confirm_timeout
         key: str = f"_director_chat_action_confirm_{self.id}"
         name: str = self.normalized_input_value("name")
         description: str = self.normalized_input_value("description")
@@ -364,7 +365,7 @@ class DirectorChatActionConfirm(Node):
                         node=self.id,
                     )
                     await asyncio.sleep(1)
-                    if time.time() - start_time > max_wait_time:
+                    if max_wait_time and time.time() - start_time > max_wait_time:
                         log.error(
                             "Director Chat Action Confirm: Max wait time reached",
                             node=self.id,

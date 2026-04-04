@@ -105,6 +105,15 @@ class DirectorChatMixin:
                     min=0.05,
                     max=0.95,
                 ),
+                "action_confirm_timeout": AgentActionConfig(
+                    type="number",
+                    label="Action confirm timeout",
+                    description="How long to wait (in minutes) for user confirmation of write actions. 0 means wait indefinitely.",
+                    value=3,
+                    step=1,
+                    min=0,
+                    max=60,
+                ),
                 "custom_instructions": AgentActionConfig(
                     type="blob",
                     label="Custom instructions",
@@ -156,6 +165,11 @@ class DirectorChatMixin:
     @property
     def chat_custom_instructions(self) -> str:
         return self.actions["chat"].config["custom_instructions"].value
+
+    @property
+    def chat_action_confirm_timeout(self) -> int:
+        """Timeout in seconds. 0 means wait indefinitely."""
+        return int(self.actions["chat"].config["action_confirm_timeout"].value) * 60
 
     # === Node initialization ===
 

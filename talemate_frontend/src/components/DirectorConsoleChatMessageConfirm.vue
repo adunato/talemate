@@ -58,7 +58,7 @@ export default {
         },
     },
     mounted() {
-        if (!this.decision) {
+        if (!this.decision && this.timer > 0) {
             this.startCountdown();
         }
     },

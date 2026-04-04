@@ -14,6 +14,7 @@
                     :name="m.name"
                     :description="m.description"
                     :decision="m.decision"
+                    :timer="m.timer"
                     :confirming="confirming[m.id]"
                     @decide="onDecide"
                 />

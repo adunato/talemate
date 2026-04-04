@@ -146,18 +146,18 @@ export default {
             if(!params || !params.chat_id) return;
             this.deleteChat();
         },
-        addOrUpdateConfirmRequest(id, name, description) {
+        addOrUpdateConfirmRequest(id, name, description, timer) {
             try {
                 // If there's already a pending entry for this id, just update its details
                 const pendingIdx = this.chatMessages.findIndex((m) => m.type === 'confirm_request' && m.id === id && !m.decision);
                 if (pendingIdx !== -1) {
                     const existing = this.chatMessages[pendingIdx];
-                    const updated = { ...existing, name: name ?? existing.name, description: description ?? existing.description };
+                    const updated = { ...existing, name: name ?? existing.name, description: description ?? existing.description, timer: timer ?? existing.timer };
                     this.chatMessages.splice(pendingIdx, 1, updated);
                     return;
                 }
                 // If previous entries exist but are already decided, push a new one
-                this.chatMessages.push({ source: 'director', type: 'confirm_request', id, name, description, decision: null });
+                this.chatMessages.push({ source: 'director', type: 'confirm_request', id, name, description, timer, decision: null });
             } catch (e) { /* safely ignore malformed confirm requests */ }
         },
         markConfirmRequestDecision(id, decision) {
@@ -348,7 +348,7 @@ export default {
                 console.log('request_action_confirmation', data);
                 // Remove any trailing thinking placeholder while waiting for user decision
                 this.removeTrailingPlaceholder();
-                this.addOrUpdateConfirmRequest(data.id, data.name, data.description);
+                this.addOrUpdateConfirmRequest(data.id, data.name, data.description, data.timer);
                 return;
             }
 
