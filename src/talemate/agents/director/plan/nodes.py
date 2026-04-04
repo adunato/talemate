@@ -467,9 +467,7 @@ class RemoveTask(Node):
 
         removed = plan.remove_task(task_id)
         if not removed:
-            raise ActionFailed(
-                f"No task with ID '{task_id}' in plan '{plan.id}'"
-            )
+            raise ActionFailed(f"No task with ID '{task_id}' in plan '{plan.id}'")
 
         save_plan(scene, plan)
         emit_plan_for_chat(plan)
@@ -522,9 +520,7 @@ class EditTask(Node):
 
         task, changed_fields = plan.edit_task(task_id, updates)
         if not task:
-            raise ActionFailed(
-                f"No task with ID '{task_id}' in plan '{plan.id}'"
-            )
+            raise ActionFailed(f"No task with ID '{task_id}' in plan '{plan.id}'")
 
         save_plan(scene, plan)
         emit_plan_for_chat(plan)
