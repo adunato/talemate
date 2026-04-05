@@ -97,9 +97,9 @@
                                 <v-checkbox v-model="newIntroduction.narrate_entry" label="Narrate entry" color="primary" hint="Narrate the character's entry into the scene."></v-checkbox>
                             </v-col>
                         </v-row>
-                        <v-row v-if="!newIntroduction.name">
+                        <v-row>
                             <v-col cols="12">
-                                <v-textarea v-model="newIntroduction.content" label="Instructions for the new character. If you have a name in mind, mention it here." rows="4" auto-grow hide-details></v-textarea>
+                                <v-textarea v-model="newIntroduction.content" :label="newIntroduction.name ? 'Instructions for the new character.' : 'Instructions for the new character. If you have a name in mind, mention it here.'" rows="4" auto-grow hide-details></v-textarea>
                             </v-col>
                         </v-row>
                         <v-row v-if="newIntroduction.narrate_entry && newIntroduction.active">

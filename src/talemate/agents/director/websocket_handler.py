@@ -139,10 +139,6 @@ class DirectorWebsocketHandler(DirectorChatWebsocketMixin, Plugin):
 
     async def handle_persist_character(self, data: dict):
         payload = PersistCharacterPayload(**data)
-        scene: "Scene" = self.scene
-
-        if not payload.content:
-            payload.content = scene.snapshot(lines=15)
 
         # add as asyncio task
         task = asyncio.create_task(
