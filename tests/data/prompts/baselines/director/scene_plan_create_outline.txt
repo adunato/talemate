@@ -37,8 +37,11 @@ Guidelines:
 - At least 3 of the 8 beats must have a character making a meaningful choice that changes the trajectory of events. Characters must have agency, not just witness spectacle.
 - Plan for character development: if a character has a defining trait (e.g., denial, fear), that trait must evolve over the scene. It must crack, deepen, or transform — not repeat identically.
 - Build tension with valleys, not just peaks. Include quiet beats between intense ones — moments of reflection, conversation, or uneasy calm that make the intense beats hit harder.
-- The FINAL beat must involve a character making a choice, taking an action, or facing a consequence — not just witnessing a revelation or spectacle. Pure "and then they saw something amazing/terrifying" is not a valid ending. The character must DO something that closes or pivots the arc.
-- The `tension` value must reflect genuine escalation. Early beats must have LOW tension (0.1-0.3). Save high tension (0.7+) for the latter portion. Do not start at high intensity.
+- **CONTINUATION MODE** — this arc does NOT end. The generated content is a segment inside a longer roleplay that will continue after you finish. You are NOT writing a complete short story.
+- The FINAL beat is a HANDOFF, not a resolution. It must leave the situation LIVE — an unanswered question, an unfinished action, a threat revealed but not confronted, a decision announced but not yet acted on, a door about to open. The user will pick up the scene from whatever moment you stop on.
+- DO NOT resolve the central conflict. DO NOT let characters retreat to safety. DO NOT write a "wind-down" or "reflection" beat. DO NOT end on a character processing what happened. The last beat must push forward, not settle.
+- The final beat's `tension` MUST be HIGH (0.6 or higher). Do NOT descend to low tension at the end.
+- The `tension` value must still show escalation through the arc — early beats low (0.1-0.3), middle beats climbing, final beats high. But unlike a closed arc, the peak is at (or near) the END, not before a resolution. Do not start at high intensity.
 
 **Beat construction:**
 - Approximately 40% of beats should be `dialogue` type — characters need to speak, not just act and observe

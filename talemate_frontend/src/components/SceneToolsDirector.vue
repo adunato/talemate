@@ -99,6 +99,13 @@
                         </v-btn>
                     </v-btn-toggle>
                     <v-checkbox
+                        v-model="scenePlanCloseArc"
+                        label="Close the arc"
+                        density="compact"
+                        hide-details
+                        color="primary"
+                    ></v-checkbox>
+                    <v-checkbox
                         v-model="scenePlanOutlineCritique"
                         label="Outline critique"
                         density="compact"
@@ -114,8 +121,13 @@
                         v-if="scenePlanMode === 'generate_arc_expand'"
                     ></v-checkbox>
                 </div>
-                <div class="text-caption text-muted mb-4" v-if="scenePlanMode === 'generate_arc'">Each beat is executed individually through narrator and conversation agents. Slower, but the director can adjust strategy between beats.</div>
-                <div class="text-caption text-muted mb-4" v-else>Beats are expanded into prose in chunks. Much faster, with automatic chunking and arc-aware pacing.</div>
+                <div class="text-caption text-muted mb-1" v-if="scenePlanMode === 'generate_arc'">Each beat is executed individually through narrator and conversation agents. Slower, but the director can adjust strategy between beats.</div>
+                <div class="text-caption text-muted mb-1" v-else>Beats are expanded into prose in chunks. Much faster, with automatic chunking and arc-aware pacing.</div>
+                <div class="text-caption text-muted mb-4">
+                    <v-icon size="x-small" class="mr-1">mdi-information-outline</v-icon>
+                    <span v-if="scenePlanCloseArc">Closed arc: lands a full resolution. Use when writing a self-contained short story.</span>
+                    <span v-else>Continuation: ends on a handoff moment so you can keep playing from where the arc leaves off.</span>
+                </div>
 
                 <!-- Warnings - compact format -->
                 <div v-if="narratorProgressStoryLength < minRecommendedNarratorLength" class="text-caption text-warning mb-1">
@@ -166,6 +178,7 @@ export default {
             scenePlanMode: 'generate_arc_expand',
             scenePlanOutlineCritique: true,
             scenePlanExpandCritique: true,
+            scenePlanCloseArc: false,
             minRecommendedNarratorLength: 1024,
         }
     },
@@ -253,6 +266,8 @@ export default {
             this.scenePlanDialogueRatio = Math.round((this.agentStatus?.director?.actions?.plan?.config?.dialogue_ratio?.value ?? 0.4) * 100);
             this.scenePlanOutlineCritique = this.agentStatus?.director?.actions?.plan?.config?.outline_critique?.value ?? true;
             this.scenePlanExpandCritique = this.agentStatus?.director?.actions?.plan?.config?.expand_critique?.value ?? true;
+            // Always reset close_arc to continuation (default) on reopen — no agent-level default for this.
+            this.scenePlanCloseArc = false;
             this.scenePlanDialog = true;
         },
 
@@ -267,6 +282,7 @@ export default {
                 mode: this.scenePlanMode,
                 outline_critique: this.scenePlanOutlineCritique,
                 expand_critique: this.scenePlanExpandCritique,
+                close_arc: this.scenePlanCloseArc,
             }));
             this.openDirectorConsole();
         },

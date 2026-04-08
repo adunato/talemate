@@ -25,6 +25,7 @@ from .schema import (
     DirectorChatBudgets,
     DirectorChatListEntry,
 )
+from .settings import ChatModeSettings
 
 if TYPE_CHECKING:
     from talemate.tale_mate import Scene
@@ -294,6 +295,7 @@ class DirectorChatMixin:
         instructions: str,
         beat_count: int = 8,
         mode: Literal["generate_arc", "generate_arc_expand"] = "generate_arc",
+        modes: ChatModeSettings | None = None,
     ) -> DirectorChat:
         """Create a new chat in generate_arc mode with planning instructions as initial user message."""
         chat = DirectorChat(
@@ -316,6 +318,7 @@ class DirectorChatMixin:
             ],
             mode=mode,
             confirm_write_actions=False,
+            modes=modes or ChatModeSettings(),
         )
         self._chat_save(chat)
         self.chat_set_last_active_id(chat.id)

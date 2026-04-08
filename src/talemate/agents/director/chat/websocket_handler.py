@@ -6,6 +6,7 @@ from typing import Literal, TYPE_CHECKING
 from talemate.instance import get_agent
 from talemate.agents.director.plan.util import get_plan
 from .context import create_task_with_chat_context
+from .settings import ChatModeSettings, GenerateArcSettings
 import talemate.util as util
 
 if TYPE_CHECKING:
@@ -47,6 +48,7 @@ class ChatCreateGenerateArcPayload(pydantic.BaseModel):
     mode: Literal["generate_arc", "generate_arc_expand"] = "generate_arc"
     outline_critique: bool | None = None
     expand_critique: bool | None = None
+    close_arc: bool = False
 
 
 class ChatRegeneratePayload(pydantic.BaseModel):
@@ -444,10 +446,14 @@ class DirectorChatWebsocketMixin:
                 "expand_critique"
             ].value = payload.expand_critique
 
+        modes = ChatModeSettings(
+            generate_arc=GenerateArcSettings(close_arc=payload.close_arc),
+        )
         chat = self.director.chat_create_generate_arc(
             payload.instructions,
             payload.beat_count,
             mode=payload.mode,
+            modes=modes,
         )
 
         # Notify frontend of new chat and its initial history
@@ -476,5 +482,6 @@ class DirectorChatWebsocketMixin:
             on_title_generated=_on_title_generated,
             confirm_write_actions=False,
             plan_id=chat.plan_id,
+            modes=chat.modes,
         )
         self._attach_task_done_callback(task, chat.id)

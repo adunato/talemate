@@ -133,33 +133,6 @@
       "registry": "state/SetState",
       "base_type": "core/Node"
     },
-    "62b71c3b-02ab-43bb-98ae-c1d4521c0f99": {
-      "title": "Dict Collector",
-      "id": "62b71c3b-02ab-43bb-98ae-c1d4521c0f99",
-      "properties": {},
-      "x": 375,
-      "y": 1148,
-      "width": 140,
-      "height": 121,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "data/DictCollector",
-      "dynamic_inputs": [
-        {
-          "name": "item0",
-          "type": "*"
-        },
-        {
-          "name": "item1",
-          "type": "*"
-        },
-        {
-          "name": "item2",
-          "type": "*"
-        }
-      ],
-      "base_type": "core/DynamicSocketNodeBase"
-    },
     "6afa0a64-551b-4724-85f4-53a5bdebbac9": {
       "title": "Critique Outline",
       "id": "6afa0a64-551b-4724-85f4-53a5bdebbac9",
@@ -170,8 +143,8 @@
         "action_type": "scene_direction",
         "attempts": 1
       },
-      "x": 1165,
-      "y": 1098,
+      "x": 1361,
+      "y": 1233,
       "width": 270,
       "height": 334,
       "collapsed": false,
@@ -185,8 +158,8 @@
       "properties": {
         "attribute": "response"
       },
-      "x": 1645,
-      "y": 1288,
+      "x": 1841,
+      "y": 1423,
       "width": 210,
       "height": 98,
       "collapsed": false,
@@ -201,8 +174,8 @@
         "name": "perspective",
         "scope": "local"
       },
-      "x": 25,
-      "y": 1348,
+      "x": 31,
+      "y": 1346,
       "width": 210,
       "height": 122,
       "collapsed": false,
@@ -217,8 +190,8 @@
         "name": "outline_instructions",
         "scope": "local"
       },
-      "x": 25,
-      "y": 968,
+      "x": 31,
+      "y": 966,
       "width": 252,
       "height": 122,
       "collapsed": false,
@@ -300,8 +273,8 @@
         "name": "changed_outline",
         "scope": "local"
       },
-      "x": 1901,
-      "y": 1290,
+      "x": 2097,
+      "y": 1425,
       "width": 210,
       "height": 122,
       "collapsed": false,
@@ -331,8 +304,8 @@
       "properties": {
         "agent_name": "director"
       },
-      "x": 375,
-      "y": 998,
+      "x": 381,
+      "y": 996,
       "width": 210,
       "height": 58,
       "collapsed": false,
@@ -347,28 +320,13 @@
         "name": "outline",
         "scope": "local"
       },
-      "x": 40,
-      "y": 1160,
+      "x": 46,
+      "y": 1158,
       "width": 210,
       "height": 122,
       "collapsed": false,
       "inherited": false,
       "registry": "state/GetState",
-      "base_type": "core/Node"
-    },
-    "be70edc8-644a-4f5e-9ab3-6686b148b14f": {
-      "title": "Stage 1",
-      "id": "be70edc8-644a-4f5e-9ab3-6686b148b14f",
-      "properties": {
-        "stage": 1
-      },
-      "x": 2150,
-      "y": 1190,
-      "width": 210,
-      "height": 118,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/Stage",
       "base_type": "core/Node"
     },
     "0a48c932-e00b-48a4-b37c-8b096af11232": {
@@ -378,8 +336,8 @@
         "name": "changes",
         "scope": "local"
       },
-      "x": 1900,
-      "y": 1100,
+      "x": 2096,
+      "y": 1235,
       "width": 210,
       "height": 122,
       "collapsed": false,
@@ -408,8 +366,8 @@
       "title": "extracted",
       "id": "1db08506-4744-43af-ab42-ec473076c110",
       "properties": {},
-      "x": 1470,
-      "y": 1230,
+      "x": 1666,
+      "y": 1365,
       "width": 140,
       "height": 26,
       "collapsed": false,
@@ -502,8 +460,8 @@
       "properties": {
         "attribute": "changes"
       },
-      "x": 1650,
-      "y": 1120,
+      "x": 1846,
+      "y": 1255,
       "width": 210,
       "height": 98,
       "collapsed": false,
@@ -562,6 +520,93 @@
       "registry": "util/ModuleStyle",
       "base_type": "core/Node"
     },
+    "c887f94c-8825-4388-b6b4-1e6b59c3024b": {
+      "title": "Get Director Chat Context",
+      "id": "c887f94c-8825-4388-b6b4-1e6b59c3024b",
+      "properties": {},
+      "x": 40,
+      "y": 1540,
+      "width": 210,
+      "height": 66,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/GetDirectorChatContext",
+      "base_type": "core/Node"
+    },
+    "7e752004-a0db-455c-b632-8e1b8a1fedf8": {
+      "title": "Dict Get (Path)",
+      "id": "7e752004-a0db-455c-b632-8e1b8a1fedf8",
+      "properties": {
+        "path": "modes.generate_arc.close_arc"
+      },
+      "x": 300,
+      "y": 1540,
+      "width": 210,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/DictGetPath",
+      "base_type": "core/Node"
+    },
+    "62b71c3b-02ab-43bb-98ae-c1d4521c0f99": {
+      "title": "Dict Collector",
+      "id": "62b71c3b-02ab-43bb-98ae-c1d4521c0f99",
+      "properties": {},
+      "x": 560,
+      "y": 1300,
+      "width": 140,
+      "height": 141,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/DictCollector",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        },
+        {
+          "name": "item2",
+          "type": "*"
+        },
+        {
+          "name": "item3",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "4c8ee4e7-865a-4d8d-84b7-2742862231ce": {
+      "title": "Template Variables",
+      "id": "4c8ee4e7-865a-4d8d-84b7-2742862231ce",
+      "properties": {},
+      "x": 760,
+      "y": 1250,
+      "width": 170,
+      "height": 46,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/TemplateVariables",
+      "base_type": "core/Node"
+    },
+    "be70edc8-644a-4f5e-9ab3-6686b148b14f": {
+      "title": "Stage 1",
+      "id": "be70edc8-644a-4f5e-9ab3-6686b148b14f",
+      "properties": {
+        "stage": 1
+      },
+      "x": 2350,
+      "y": 1330,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
     "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683": {
       "title": "Prompt From Template",
       "id": "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683",
@@ -571,8 +616,8 @@
         "template_text": "",
         "dedupe": false
       },
-      "x": 860,
-      "y": 970,
+      "x": 1030,
+      "y": 1060,
       "width": 210,
       "height": 170,
       "collapsed": false,
@@ -580,17 +625,19 @@
       "registry": "prompt/PromptFromTemplate",
       "base_type": "core/Node"
     },
-    "4c8ee4e7-865a-4d8d-84b7-2742862231ce": {
-      "title": "Template Variables",
-      "id": "4c8ee4e7-865a-4d8d-84b7-2742862231ce",
-      "properties": {},
-      "x": 650,
-      "y": 1200,
-      "width": 170,
-      "height": 46,
-      "collapsed": false,
+    "66479125-a7e8-4f9e-8f34-ff40ed7eb1e6": {
+      "title": "true",
+      "id": "66479125-a7e8-4f9e-8f34-ff40ed7eb1e6",
+      "properties": {
+        "value": true
+      },
+      "x": 40,
+      "y": 1520,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
       "inherited": false,
-      "registry": "prompt/TemplateVariables",
+      "registry": "core/MakeBool",
       "base_type": "core/Node"
     }
   },
@@ -609,9 +656,6 @@
     ],
     "ad9f740c-6362-422f-9a9b-e5e5236464e3.value": [
       "000e6837-2d2f-45b6-9406-65639d8b02a0.state"
-    ],
-    "62b71c3b-02ab-43bb-98ae-c1d4521c0f99.dict": [
-      "4c8ee4e7-865a-4d8d-84b7-2742862231ce.merge_with"
     ],
     "6afa0a64-551b-4724-85f4-53a5bdebbac9.extracted": [
       "1db08506-4744-43af-ab42-ec473076c110.value"
@@ -674,15 +718,27 @@
     "7686f35b-4635-405a-80f9-3021e1d8cb3b.value": [
       "c5703360-9be8-42dc-8a5f-6030faf9796c.value"
     ],
-    "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683.prompt": [
-      "6afa0a64-551b-4724-85f4-53a5bdebbac9.state",
-      "6afa0a64-551b-4724-85f4-53a5bdebbac9.prompt"
+    "c887f94c-8825-4388-b6b4-1e6b59c3024b.context": [
+      "7e752004-a0db-455c-b632-8e1b8a1fedf8.dict"
+    ],
+    "7e752004-a0db-455c-b632-8e1b8a1fedf8.value": [
+      "62b71c3b-02ab-43bb-98ae-c1d4521c0f99.item3"
+    ],
+    "62b71c3b-02ab-43bb-98ae-c1d4521c0f99.dict": [
+      "4c8ee4e7-865a-4d8d-84b7-2742862231ce.merge_with"
     ],
     "4c8ee4e7-865a-4d8d-84b7-2742862231ce.variables": [
       "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683.variables"
     ],
     "4c8ee4e7-865a-4d8d-84b7-2742862231ce.agent": [
       "6afa0a64-551b-4724-85f4-53a5bdebbac9.agent"
+    ],
+    "86adc4cb-bc5f-4842-b4bd-9dc4d5f3c683.prompt": [
+      "6afa0a64-551b-4724-85f4-53a5bdebbac9.state",
+      "6afa0a64-551b-4724-85f4-53a5bdebbac9.prompt"
+    ],
+    "66479125-a7e8-4f9e-8f34-ff40ed7eb1e6.value": [
+      "c887f94c-8825-4388-b6b4-1e6b59c3024b.state"
     ]
   },
   "groups": [
@@ -698,10 +754,10 @@
     },
     {
       "title": "Process",
-      "x": 0,
-      "y": 893,
-      "width": 2400,
-      "height": 602,
+      "x": 6,
+      "y": 891,
+      "width": 2625,
+      "height": 801,
       "color": "#3f789e",
       "font_size": 24,
       "inherited": false

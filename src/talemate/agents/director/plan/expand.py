@@ -26,11 +26,15 @@ MIN_CHUNK_BEATS = 3
 class ChunkArcInfo(pydantic.BaseModel):
     """Arc metadata for a single expansion chunk."""
 
-    position: str  # "opening", "rising", "climax", "climax_and_resolution", "resolution", "full"
+    # Positions:
+    #   continuation mode (default): opening / rising / climax / full_open
+    #   closed-arc mode: opening / rising / climax / climax_and_resolution / resolution / full
+    position: str
     chunk_index: int
     total_chunks: int
     tension_range: tuple[float, float]  # (min, max) tension in this chunk
     has_peak: bool  # whether the arc's highest-tension beat is in this chunk
+    close_arc: bool = False
 
 
 def compute_chunks(beats: list[Beat], max_chunk_size: int) -> list[list[Beat]]:
@@ -78,9 +82,16 @@ def compute_chunks(beats: list[Beat], max_chunk_size: int) -> list[list[Beat]]:
 
 
 def compute_arc_info(
-    chunks: list[list[Beat]], all_beats: list[Beat]
+    chunks: list[list[Beat]], all_beats: list[Beat], close_arc: bool = False
 ) -> list[ChunkArcInfo]:
-    """Derive arc-position metadata for each chunk."""
+    """
+    Derive arc-position metadata for each chunk.
+
+    Default is continuation mode (close_arc=False): we never emit `resolution`
+    or `climax_and_resolution` — the arc does not land, so the final chunk
+    stays at `climax` or `rising` and the single-chunk case becomes `full_open`.
+    When close_arc is True, the full closed-arc position vocabulary applies.
+    """
     total_chunks = len(chunks)
     peak_tension = max(b.tension for b in all_beats)
 
@@ -95,15 +106,15 @@ def compute_arc_info(
 
         # Determine position
         if total_chunks == 1:
-            position = "full"
+            position = "full" if close_arc else "full_open"
         elif idx == 0:
             position = "opening"
-        elif has_peak and winds_down:
+        elif has_peak and winds_down and close_arc:
             position = "climax_and_resolution"
         elif has_peak:
             position = "climax"
         elif idx == total_chunks - 1:
-            position = "resolution"
+            position = "resolution" if close_arc else "rising"
         else:
             position = "rising"
 
@@ -114,6 +125,7 @@ def compute_arc_info(
                 total_chunks=total_chunks,
                 tension_range=(t_min, t_max),
                 has_peak=has_peak,
+                close_arc=close_arc,
             )
         )
 

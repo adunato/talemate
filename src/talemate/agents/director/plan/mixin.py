@@ -130,13 +130,13 @@ class PlanMixin:
         return len(content.split())
 
     async def _plan_critique_expanded_blocks(
-        self, blocks: list[dict], narrator
+        self, blocks: list[dict], narrator, close_arc: bool = False
     ) -> list[dict]:
         """
         Run a post-expansion critique pass on all blocks to fix cross-beat
         redundancy, intensity monotony, and repeated vocabulary.
         """
-        log.info("expand.critique", block_count=len(blocks))
+        log.info("expand.critique", block_count=len(blocks), close_arc=close_arc)
 
         response, extracted = await Prompt.request(
             "narrator.arc-expand-critique",
@@ -146,6 +146,7 @@ class PlanMixin:
                 "blocks": blocks,
                 "max_tokens": narrator.client.max_token_length,
                 "response_length": 4096,
+                "close_arc": close_arc,
             },
         )
 
@@ -170,6 +171,7 @@ class PlanMixin:
         chunk_size: int | None = None,
         chat_id: str | None = None,
         critique: bool | None = None,
+        close_arc: bool = False,
     ) -> tuple[int, int]:
         """
         Expand beats into prose in chunks and push to scene history.
@@ -188,9 +190,11 @@ class PlanMixin:
         preceding_text = ""
         all_blocks: list[dict] = []
 
+        log.info("plan.expand.mode", close_arc=close_arc, plan_id=plan_id)
+
         # Compute chunks and arc metadata
         chunks = compute_chunks(beats, chunk_size)
-        arc_infos = compute_arc_info(chunks, beats)
+        arc_infos = compute_arc_info(chunks, beats, close_arc=close_arc)
 
         # Build a flat index to find following beats across chunk boundaries
         beat_offset = 0
@@ -227,6 +231,7 @@ class PlanMixin:
                 "extra_instructions": narrator.extra_instructions,
                 "response_length": 4096,
                 "arc_info": arc_info,
+                "close_arc": close_arc,
             }
 
             for attempt in range(1, max_attempts + 1):
@@ -269,7 +274,9 @@ class PlanMixin:
         # Post-expansion critique pass
         do_critique = critique if critique is not None else self.plan_expand_critique
         if do_critique and len(chunks) > 1 and all_blocks:
-            all_blocks = await self._plan_critique_expanded_blocks(all_blocks, narrator)
+            all_blocks = await self._plan_critique_expanded_blocks(
+                all_blocks, narrator, close_arc=close_arc
+            )
 
         # Push all blocks to scene history and emit to frontend
         for block in all_blocks:

@@ -227,6 +227,124 @@ class DictGet(Node):
         self.set_output_values({"value": value, "key": key})
 
 
+@register("data/DictGetPath")
+class DictGetPath(Node):
+    """
+    Retrieves a value from a nested dict (or list-of-dicts) using a dotted path.
+
+    Supports:
+    - Nested dict keys:    "modes.generate_arc.close_arc"
+    - List indices:        "items.0.name"
+    - Missing paths return the `default` input (or None if unset)
+    - Any non-traversable segment short-circuits to `default`
+
+    Downstream DynamicSocketNodeBase collectors (DictCollector, UpdateObject)
+    auto-infer the collector key from the last segment of `path` via the
+    `key` property set during run(). E.g. `modes.generate_arc.close_arc`
+    yields a collector key of `close_arc`.
+
+    Inputs:
+    - dict: Dictionary (or any traversable structure)
+    - path: Dotted path string
+    - default: Fallback value when the path does not fully resolve (optional)
+
+    Properties:
+    - path: Dotted path string
+
+    Outputs:
+    - value: The resolved value, or `default` if the path does not resolve
+    - found: True if the full path was resolved, False if default was used
+    - path: The path that was attempted (echoed for graph readability)
+    """
+
+    class Fields:
+        path = PropertyField(
+            name="path",
+            description="Dotted path to the value (e.g. 'modes.generate_arc.close_arc')",
+            type="str",
+            default="",
+        )
+
+    def __init__(self, title="Dict Get (Path)", **kwargs):
+        super().__init__(title=title, **kwargs)
+
+    def setup(self):
+        self.add_input("dict", socket_type="dict")
+        self.add_input("path", socket_type="str", optional=True)
+        self.add_input("default", socket_type="any", optional=True)
+        self.add_output("value", socket_type="any")
+        self.add_output("found", socket_type="bool")
+        self.add_output("path", socket_type="str")
+
+        self.set_property("path", "")
+
+    async def run(self, state: GraphState):
+        data = self.require_input("dict")
+        path = self.normalized_input_value("path") or ""
+        default = self.normalized_input_value("default")
+
+        value, found = self._walk(data, path)
+        if not found:
+            value = default
+
+        # Publish the derived collector key so downstream DynamicSocketNodeBase
+        # consumers (DictCollector, UpdateObject) pick it up via
+        # best_key_name_for_socket(). The last path segment is always used.
+        if path:
+            self.set_property("key", self._derive_key(path), state)
+
+        self.set_output_values(
+            {"value": value, "found": found, "path": path}
+        )
+
+    @staticmethod
+    def _derive_key(path: str) -> str:
+        """
+        Derive a collector-friendly key name from a dotted path.
+
+        Normal case: return the last segment (e.g. 'modes.generate_arc.close_arc'
+        -> 'close_arc').
+
+        Edge case: if the last segment is a numeric list index (e.g. 'items.0'),
+        the bare index is a useless dict key — fold the parent segment in with
+        an underscore so the result reads like 'items_0'. This also handles
+        longer tails like 'a.b.items.0' -> 'b_items_0' by keeping the simple
+        "join with _" rule for the trailing non-segment-safe chunk.
+        """
+        if not path:
+            return ""
+        segments = path.split(".")
+        last = segments[-1]
+        if last.lstrip("-").isdigit() and len(segments) >= 2:
+            return f"{segments[-2]}_{last}"
+        return last
+
+    @staticmethod
+    def _walk(data, path: str) -> tuple:
+        """Walk a dotted path. Returns (value, found_flag)."""
+        if not path:
+            return data, True
+        current = data
+        for segment in path.split("."):
+            if isinstance(current, dict):
+                if segment not in current:
+                    return None, False
+                current = current[segment]
+                continue
+            if isinstance(current, (list, tuple)):
+                try:
+                    idx = int(segment)
+                except ValueError:
+                    return None, False
+                if idx < 0 or idx >= len(current):
+                    return None, False
+                current = current[idx]
+                continue
+            # Unsupported container — can't traverse further
+            return None, False
+        return current, True
+
+
 @register("data/DictPop")
 class DictPop(Node):
     """

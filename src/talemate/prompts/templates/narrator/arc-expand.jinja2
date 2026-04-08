@@ -24,19 +24,28 @@ Extractors:
 <|SECTION:TASK|>
 Write scene prose from the beat descriptions below.
 
+{% set is_final_chunk = arc_info and arc_info.chunk_index == arc_info.total_chunks - 1 %}
 {% if arc_info and arc_info.total_chunks > 1 %}
 **Arc position:** {{ arc_info.position | upper }} (chunk {{ arc_info.chunk_index + 1 }} of {{ arc_info.total_chunks }}, tension {{ "%.1f"|format(arc_info.tension_range[0]) }}–{{ "%.1f"|format(arc_info.tension_range[1]) }})
 {% if arc_info.position == "opening" %}
 You are writing the OPENING of the story. Establish the world and characters, build tension gradually. Do not peak yet — save the most intense moments for later.
 {% elif arc_info.position == "rising" %}
 You are writing the RISING ACTION. Tension is building. Escalate steadily but leave room for the climax ahead.
+{% if not close_arc and is_final_chunk %}
+**This is the FINAL chunk of a CONTINUATION segment.** The story does NOT end here — it will be continued by the user. End on a forward-facing moment: a question asked but not answered, an action in progress, a threat just revealed, a decision about to be made. Do NOT wind down. Do NOT resolve anything. Leave the wire live.
+{% endif %}
 {% elif arc_info.position == "climax" %}
 You are writing the CLIMAX — the dramatic high point. Commit fully to the peak intensity. This is where the biggest moments happen.
+{% if not close_arc and is_final_chunk %}
+**This is the FINAL chunk of a CONTINUATION segment.** The story does NOT end here. Stay at peak intensity through the FINAL block. Do NOT wind down. Do NOT let characters regroup. Do NOT close the situation. End on the peak moment itself — the decision, the reveal, the strike, the impact. The user picks up from the live moment. Write the last block as if the scene is about to continue five seconds later.
+{% endif %}
 {% elif arc_info.position == "climax_and_resolution" %}
 You are writing the CLIMAX and RESOLUTION. Build to the dramatic peak, then wind down. The final beats must land the consequences and let the characters process what happened — do not end at maximum intensity.
 {% elif arc_info.position == "resolution" %}
 You are writing the RESOLUTION. The peak has passed. Land the consequences, close the arc, and let the characters process what happened.
 {% endif %}
+{% elif arc_info and arc_info.position == "full_open" %}
+**You are writing a CONTINUATION segment as a single chunk.** The story does NOT end here — it is part of a longer roleplay that the user will continue. Build tension through the arc as normal, but DO NOT resolve. The final block must stay at HIGH tension and leave a live thread for the user to pick up: an unanswered question, an action in progress, a decision about to be made, a threat just revealed. Do NOT wind down. Do NOT let characters regroup. The user picks up from the live moment.
 {% endif %}
 
 {% if preceding_text %}

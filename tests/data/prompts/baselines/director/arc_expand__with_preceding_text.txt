@@ -46,6 +46,8 @@ Write scene prose from the beat descriptions below.
 
 You are writing the CLIMAX — the dramatic high point. Commit fully to the peak intensity. This is where the biggest moments happen.
 
+**This is the FINAL chunk of a CONTINUATION segment.** The story does NOT end here. Stay at peak intensity through the FINAL block. Do NOT wind down. Do NOT let characters regroup. Do NOT close the situation. End on the peak moment itself — the decision, the reveal, the strike, the impact. The user picks up from the live moment. Write the last block as if the scene is about to continue five seconds later.
+
 **Story so far** (continue from here):
 ```
 The door creaked open, revealing an empty room. Elena stepped inside cautiously.

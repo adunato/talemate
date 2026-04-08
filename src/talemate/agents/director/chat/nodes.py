@@ -488,3 +488,46 @@ class InsertChatMessage(AgentNode):
             output_values["asset_id"] = asset_id
 
         self.set_output_values(output_values)
+
+
+@register("agents/director/chat/GetDirectorChatContext")
+class GetDirectorChatContext(Node):
+    """
+    Exposes the active DirectorChatContext as a dict for graph consumption.
+
+    Use this when a graph needs to read flags off the current director chat
+    (e.g. close_arc, chat_id, plan_id) without reaching into Python context.
+    The `context` output is a plain dict that can be wired into template_vars
+    or inspected directly; fields are added as the DirectorChatContext grows
+    without requiring node socket changes.
+
+    When no chat context is active, `has_context` is False and `context` is
+    an empty dict.
+    """
+
+    def __init__(self, title="Get Director Chat Context", **kwargs):
+        super().__init__(title=title, **kwargs)
+
+    def setup(self):
+        self.add_input("state")
+        self.add_output("state")
+        self.add_output("has_context", socket_type="bool")
+        self.add_output("context", socket_type="dict")
+
+    async def run(self, state: GraphState):
+        input_state = self.require_input("state")
+        ctx = director_chat_context.get()
+        # Exclude `token` — it's the contextvars reset handle, not state worth
+        # exposing. Private fields (_context_id_collector) are already dropped
+        # by pydantic's model_dump.
+        context_dict = (
+            ctx.model_dump(exclude={"token"}) if ctx is not None else {}
+        )
+
+        self.set_output_values(
+            {
+                "state": input_state,
+                "has_context": ctx is not None,
+                "context": context_dict,
+            }
+        )

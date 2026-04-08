@@ -10,6 +10,7 @@
   - "Prompt Logging: Set TALEMATE_LOG_PROMPTS=1 to write full prompt+response data to logs/prompt_log.jsonl for debugging and analysis."
   - "Asset Exists Node: Added an allow_partial option that enables startswith matching instead of exact asset ID matching."
   - "Prompt From Template Node: Added a dedupe property (default on) to control prompt deduplication. Useful for templates with structured repeated content like beat listings that should not be deduplicated."
+  - "Dict Get (Path) Node: Retrieves a value from a nested dict (or list-of-dicts) using a dotted path such as `modes.generate_arc.close_arc` or `items.0.name`. Returns a `found` flag so falsy values can be distinguished from missing keys, and accepts a `default` input for when the path does not resolve."
   - "Gemma 4 Prompt Template: Added a prompt template for Google's Gemma 4 model family, with support for toggling thinking mode via the reasoning tokens setting."
   - "Advance Time: Moved time tools into a dedicated sub-component with grouped presets (Minutes, Hours, Days, Weeks, Months, Years) and a custom time dialog for arbitrary durations."
   - "LLM Prompt Templates Manager: Added a dedicated UI tab for viewing, creating, editing, and deleting LLM prompt templates. Built-in templates are read-only and can be copied to user templates. User templates are stored in std/user/ and gitignored. GGUF/llama.cpp chat templates can be used directly."

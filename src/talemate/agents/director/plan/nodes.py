@@ -110,6 +110,7 @@ class CreatePlan(Node):
         status_value = self.normalized_input_value("status") or "ready"
 
         scene = active_scene.get()
+        chat_ctx = director_chat_context.get()
 
         # Validate tasks
         tasks = []
@@ -124,6 +125,12 @@ class CreatePlan(Node):
                 tasks.append(_validate_task(item, order=i + 1))
             except Exception as e:
                 log.warning("plan.create.skip_task", index=i, error=str(e))
+
+        # Stamp close_arc from the active chat context so expansion can read it
+        # from plan.meta later (survives regenerations from a saved plan).
+        # Guard on "not in meta" in case an upstream graph node set it explicitly.
+        if chat_ctx is not None and "close_arc" not in meta:
+            meta["close_arc"] = bool(chat_ctx.modes.generate_arc.close_arc)
 
         plan = Plan(
             instructions=instructions,
@@ -141,7 +148,6 @@ class CreatePlan(Node):
             log.info("plan.set_perspective", perspective=perspective)
 
         # Link plan to the active director chat via context
-        chat_ctx = director_chat_context.get()
         chat_id = None
         if chat_ctx:
             chat_ctx.plan_id = plan.id
@@ -269,6 +275,7 @@ class GetActivePlan(Node):
         self.add_output("plan", socket_type="any")
         self.add_output("beats", socket_type="list")
         self.add_output("perspective", socket_type="str")
+        self.add_output("close_arc", socket_type="bool")
         self.add_output("has_plan", socket_type="bool")
 
     async def run(self, state: GraphState):
@@ -280,10 +287,12 @@ class GetActivePlan(Node):
 
         perspective = ""
         beats = []
+        close_arc = False
 
         if plan:
             perspective = plan.meta.get("perspective") or ""
             beats = [t for t in plan.tasks if isinstance(t, Beat)]
+            close_arc = bool(plan.meta.get("close_arc", False))
 
         # Fall back to scene perspective or a sensible default
         if not perspective:
@@ -299,6 +308,7 @@ class GetActivePlan(Node):
                 "plan": plan,
                 "perspective": perspective,
                 "beats": beats,
+                "close_arc": close_arc,
                 "has_plan": plan is not None,
             }
         )
@@ -374,6 +384,7 @@ class ExpandStoryArc(AgentNode):
         self.add_input("director_notes", socket_type="str", optional=True)
         self.add_input("chunk_size", socket_type="int", optional=True)
         self.add_input("expand_critique", socket_type="bool", optional=True)
+        self.add_input("close_arc", socket_type="bool", optional=True)
 
         self.set_property("chunk_size", 5)
 
@@ -393,6 +404,8 @@ class ExpandStoryArc(AgentNode):
             self.get_property("chunk_size")
         )
         expand_critique = self.normalized_input_value("expand_critique")
+        # Unwired socket -> None -> False (continuation mode default)
+        close_arc = bool(self.normalized_input_value("close_arc"))
 
         scene = active_scene.get()
         director = get_agent("director")
@@ -420,6 +433,7 @@ class ExpandStoryArc(AgentNode):
             chunk_size=chunk_size,
             chat_id=chat_id,
             critique=expand_critique,
+            close_arc=close_arc,
         )
 
         result = f"Generated {total_blocks} blocks, {total_words} words from {len(beats)} beats"

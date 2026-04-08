@@ -99,10 +99,18 @@ class TestComputeChunks:
 class TestComputeArcInfo:
     """Tests for arc position metadata computation."""
 
-    def test_single_chunk_is_full(self):
+    def test_single_chunk_is_full_open_by_default(self):
+        # Default is continuation mode (close_arc=False) -> full_open
         beats = _make_beats([0.2, 0.5, 0.8])
         chunks = [beats]
         infos = compute_arc_info(chunks, beats)
+        assert len(infos) == 1
+        assert infos[0].position == "full_open"
+
+    def test_single_chunk_is_full_when_closed(self):
+        beats = _make_beats([0.2, 0.5, 0.8])
+        chunks = [beats]
+        infos = compute_arc_info(chunks, beats, close_arc=True)
         assert len(infos) == 1
         assert infos[0].position == "full"
 
@@ -121,17 +129,35 @@ class TestComputeArcInfo:
         assert infos[1].position == "rising"
         assert infos[2].position == "climax"
 
-    def test_resolution_when_peak_not_in_last_chunk(self):
+    def test_last_chunk_stays_rising_when_peak_not_in_last(self):
+        # Continuation mode: never emits `resolution`.
+        # Last chunk without peak is `rising`, not `resolution`.
         beats = _make_beats([0.2, 0.5, 1.0, 0.8, 0.4, 0.3])
         chunks = [beats[:3], beats[3:]]
         infos = compute_arc_info(chunks, beats)
+        assert infos[0].position == "opening"
+        assert infos[1].position == "rising"
+
+    def test_resolution_when_peak_not_in_last_chunk_closed(self):
+        beats = _make_beats([0.2, 0.5, 1.0, 0.8, 0.4, 0.3])
+        chunks = [beats[:3], beats[3:]]
+        infos = compute_arc_info(chunks, beats, close_arc=True)
         assert infos[0].position == "opening"  # has peak but is first chunk
         assert infos[1].position == "resolution"
 
-    def test_climax_and_resolution_when_winds_down(self):
+    def test_last_chunk_stays_climax_when_winds_down_continuation(self):
+        # Continuation mode: never emits `climax_and_resolution`.
+        # Even if tension winds down within the chunk, position stays `climax`.
         beats = _make_beats([0.2, 0.5, 0.8, 1.0, 0.7, 0.5, 0.3])
         chunks = [beats[:3], beats[3:]]
         infos = compute_arc_info(chunks, beats)
+        assert infos[0].position == "opening"
+        assert infos[1].position == "climax"
+
+    def test_climax_and_resolution_when_winds_down_closed(self):
+        beats = _make_beats([0.2, 0.5, 0.8, 1.0, 0.7, 0.5, 0.3])
+        chunks = [beats[:3], beats[3:]]
+        infos = compute_arc_info(chunks, beats, close_arc=True)
         assert infos[0].position == "opening"
         # Second chunk has peak (1.0) but winds down to 0.3
         assert infos[1].position == "climax_and_resolution"

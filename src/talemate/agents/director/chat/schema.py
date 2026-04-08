@@ -9,6 +9,7 @@ from talemate.agents.director.action_core.schema import (
     ActionCoreMessage,
     ActionCoreResultMessage,
 )
+from talemate.agents.director.chat.settings import ChatModeSettings
 
 __all__ = [
     "DirectorChatMessage",
@@ -76,6 +77,7 @@ class DirectorChat(pydantic.BaseModel):
     confirm_write_actions: bool = True
     created_at: float = pydantic.Field(default_factory=time.time)
     plan_id: str | None = None
+    modes: ChatModeSettings = pydantic.Field(default_factory=ChatModeSettings)
 
 
 class DirectorChatListEntry(pydantic.BaseModel):

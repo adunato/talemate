@@ -79,19 +79,6 @@
       "registry": "agents/director/chat/ActionArgument",
       "base_type": "core/Node"
     },
-    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf": {
-      "title": "Get Active Plan",
-      "id": "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf",
-      "properties": {},
-      "x": 343,
-      "y": 328,
-      "width": 144,
-      "height": 126,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/director/plan/GetActivePlan",
-      "base_type": "core/Node"
-    },
     "32f0b1c1-537e-4f65-a462-afa169d494d7": {
       "title": "GET local.instructions",
       "id": "32f0b1c1-537e-4f65-a462-afa169d494d7",
@@ -170,7 +157,7 @@
       "x": 570,
       "y": 320,
       "width": 220,
-      "height": 178,
+      "height": 198,
       "collapsed": false,
       "inherited": false,
       "registry": "agents/director/plan/ExpandStoryArc",
@@ -239,10 +226,23 @@
       "x": 10,
       "y": 770,
       "width": 363,
-      "height": 986,
+      "height": 1006,
       "collapsed": true,
       "inherited": false,
       "registry": "agents/director/Settings",
+      "base_type": "core/Node"
+    },
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf": {
+      "title": "Get Active Plan",
+      "id": "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf",
+      "properties": {},
+      "x": 343,
+      "y": 328,
+      "width": 144,
+      "height": 146,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/plan/GetActivePlan",
       "base_type": "core/Node"
     }
   },
@@ -255,18 +255,6 @@
     ],
     "4dc2471a-b1a3-4d7e-a3e6-e1cf3ade5851.value": [
       "3abaa4b8-d1c0-4e9d-aa40-0a97352789b0.value"
-    ],
-    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.state": [
-      "a30b01b3-84da-46c0-8783-785660b85ccb.state"
-    ],
-    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.plan_id": [
-      "a30b01b3-84da-46c0-8783-785660b85ccb.plan_id"
-    ],
-    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.beats": [
-      "a30b01b3-84da-46c0-8783-785660b85ccb.beats"
-    ],
-    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.perspective": [
-      "a30b01b3-84da-46c0-8783-785660b85ccb.perspective"
     ],
     "32f0b1c1-537e-4f65-a462-afa169d494d7.value": [
       "a30b01b3-84da-46c0-8783-785660b85ccb.director_notes"
@@ -297,6 +285,21 @@
     ],
     "dc9bff13-a1bb-46a7-9159-090287494766.plan_expand_critique": [
       "08c18906-862b-4450-a1b1-71937b095717.value"
+    ],
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.state": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.state"
+    ],
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.plan_id": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.plan_id"
+    ],
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.beats": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.beats"
+    ],
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.perspective": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.perspective"
+    ],
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.close_arc": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.close_arc"
     ]
   },
   "groups": [
@@ -327,28 +330,28 @@
   "inputs": [],
   "outputs": [
     {
-      "id": "37499312-00a2-4f6f-862e-63372a020be1",
+      "id": "6c0ff769-5e2d-49d9-8317-3647bd937484",
       "name": "fn",
       "optional": false,
       "group": null,
       "socket_type": "function"
     },
     {
-      "id": "deea07dc-3fde-475f-b6f1-db7a4e723862",
+      "id": "70cbb47f-4448-44e7-88cb-db3c65ae865e",
       "name": "name",
       "optional": false,
       "group": null,
       "socket_type": "str"
     },
     {
-      "id": "235121d0-ddca-48e0-828c-e4f8c0fe1602",
+      "id": "0f329eb9-79b4-4330-bb10-1d01efe54832",
       "name": "allow_multiple_calls",
       "optional": false,
       "group": null,
       "socket_type": "bool"
     },
     {
-      "id": "bcbb8f4e-0ad8-48ae-b874-3d7615c4d3a1",
+      "id": "d5e4a954-73f3-4163-be14-b68efa6c358c",
       "name": "ai_callback",
       "optional": false,
       "group": null,

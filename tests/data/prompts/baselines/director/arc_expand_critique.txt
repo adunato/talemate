@@ -12,6 +12,7 @@ You are an editor reviewing the following scene prose. Your job is to revise it 
 - Keep the same number of blocks in the same order.
 - Keep block types (narrator/character) and character names unchanged.
 - Your revisions must be subtle — polish, not rewrite. Cut redundant sentences, vary repeated words, adjust intensity. Do not add new plot elements.
+- **CONTINUATION MODE:** This scene is a SEGMENT of a longer roleplay — it does NOT end here. The final block is intentionally OPEN. Do NOT "tidy up" the ending. Do NOT soften the final block into a resolution. Do NOT wind down. Do NOT add reflection or closure. The final block must remain LIVE — high tension, forward-facing, unresolved. If anything, sharpen the last block's open quality.
 
 **Original prose:**
 

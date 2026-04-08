@@ -142,21 +142,6 @@
       "registry": "core/MakeBool",
       "base_type": "core/Node"
     },
-    "becc58ac-1e13-44df-85d8-466c27935c5e": {
-      "title": "true",
-      "id": "becc58ac-1e13-44df-85d8-466c27935c5e",
-      "properties": {
-        "value": true
-      },
-      "x": 95,
-      "y": 1185,
-      "width": 210,
-      "height": 58,
-      "collapsed": true,
-      "inherited": false,
-      "registry": "core/MakeBool",
-      "base_type": "core/Node"
-    },
     "517d4bb8-38aa-4b11-8ba9-f569a6a45338": {
       "title": "template_vars",
       "id": "517d4bb8-38aa-4b11-8ba9-f569a6a45338",
@@ -170,21 +155,6 @@
       "registry": "core/Watch",
       "base_type": "core/Node"
     },
-    "ce451ad3-ba27-474c-8b61-e3b0863ae036": {
-      "title": "List Characters",
-      "id": "ce451ad3-ba27-474c-8b61-e3b0863ae036",
-      "properties": {
-        "character_status": "active"
-      },
-      "x": 226,
-      "y": 930,
-      "width": 228,
-      "height": 58,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "scene/ListCharacters",
-      "base_type": "core/Node"
-    },
     "033144ca-3b94-497b-b14e-3a01fb59558d": {
       "title": "GET local.beat_count",
       "id": "033144ca-3b94-497b-b14e-3a01fb59558d",
@@ -192,8 +162,8 @@
         "name": "beat_count",
         "scope": "local"
       },
-      "x": 26,
-      "y": 1250,
+      "x": 14,
+      "y": 1127,
       "width": 210,
       "height": 122,
       "collapsed": true,
@@ -207,8 +177,8 @@
       "properties": {
         "beat_count": 8
       },
-      "x": 256,
-      "y": 1190,
+      "x": 244,
+      "y": 1067,
       "width": 304,
       "height": 118,
       "collapsed": false,
@@ -293,53 +263,6 @@
       "collapsed": false,
       "inherited": false,
       "registry": "prompt/GenerateResponse",
-      "base_type": "core/Node"
-    },
-    "6bb81c40-cff1-42e6-a471-001985e57e5c": {
-      "title": "Dict Collector",
-      "id": "6bb81c40-cff1-42e6-a471-001985e57e5c",
-      "properties": {},
-      "x": 637,
-      "y": 1164,
-      "width": 140,
-      "height": 141,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "data/DictCollector",
-      "dynamic_inputs": [
-        {
-          "name": "item0",
-          "type": "*"
-        },
-        {
-          "name": "item1",
-          "type": "*"
-        },
-        {
-          "name": "item2",
-          "type": "*"
-        },
-        {
-          "name": "item3",
-          "type": "*"
-        }
-      ],
-      "base_type": "core/DynamicSocketNodeBase"
-    },
-    "1a5053b8-6cb9-449e-a52c-acb44b79ab14": {
-      "title": "GET local.instructions",
-      "id": "1a5053b8-6cb9-449e-a52c-acb44b79ab14",
-      "properties": {
-        "name": "instructions",
-        "scope": "local"
-      },
-      "x": 357,
-      "y": 1374,
-      "width": 210,
-      "height": 122,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "state/GetState",
       "base_type": "core/Node"
     },
     "cd6a7f30-cc94-4fcc-8d2a-a99dd985a526": {
@@ -885,6 +808,130 @@
       "inherited": false,
       "registry": "prompt/PromptFromTemplate",
       "base_type": "core/Node"
+    },
+    "6bb81c40-cff1-42e6-a471-001985e57e5c": {
+      "title": "Dict Collector",
+      "id": "6bb81c40-cff1-42e6-a471-001985e57e5c",
+      "properties": {},
+      "x": 640,
+      "y": 1160,
+      "width": 140,
+      "height": 161,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/DictCollector",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        },
+        {
+          "name": "item2",
+          "type": "*"
+        },
+        {
+          "name": "item3",
+          "type": "*"
+        },
+        {
+          "name": "item4",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "ce451ad3-ba27-474c-8b61-e3b0863ae036": {
+      "title": "List Characters",
+      "id": "ce451ad3-ba27-474c-8b61-e3b0863ae036",
+      "properties": {
+        "character_status": "active"
+      },
+      "x": 299,
+      "y": 948,
+      "width": 228,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "scene/ListCharacters",
+      "base_type": "core/Node"
+    },
+    "1a5053b8-6cb9-449e-a52c-acb44b79ab14": {
+      "title": "GET local.instructions",
+      "id": "1a5053b8-6cb9-449e-a52c-acb44b79ab14",
+      "properties": {
+        "name": "instructions",
+        "scope": "local"
+      },
+      "x": 340,
+      "y": 1250,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "10fa70c5-011f-4e05-a8ed-46beff507819": {
+      "title": "Dict Get (Path)",
+      "id": "10fa70c5-011f-4e05-a8ed-46beff507819",
+      "properties": {
+        "path": "modes.generate_arc.close_arc"
+      },
+      "x": 340,
+      "y": 1430,
+      "width": 210,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/DictGetPath",
+      "base_type": "core/Node"
+    },
+    "8ac97c27-564f-441f-b961-15cda6124026": {
+      "title": "Get Director Chat Context",
+      "id": "8ac97c27-564f-441f-b961-15cda6124026",
+      "properties": {},
+      "x": 70,
+      "y": 1370,
+      "width": 210,
+      "height": 66,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/GetDirectorChatContext",
+      "base_type": "core/Node"
+    },
+    "becc58ac-1e13-44df-85d8-466c27935c5e": {
+      "title": "true",
+      "id": "becc58ac-1e13-44df-85d8-466c27935c5e",
+      "properties": {
+        "value": true
+      },
+      "x": 80,
+      "y": 1060,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "f6992ae9-85e9-40f7-b59d-d255e0999885": {
+      "title": "true",
+      "id": "f6992ae9-85e9-40f7-b59d-d255e0999885",
+      "properties": {
+        "value": true
+      },
+      "x": 70,
+      "y": 1340,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
     }
   },
   "edges": {
@@ -902,12 +949,6 @@
     ],
     "d864bf7b-83ce-440b-8a9b-ac00f5ad496a.value": [
       "18339c3e-031b-471d-a317-efcd2c14a4e0.state"
-    ],
-    "becc58ac-1e13-44df-85d8-466c27935c5e.value": [
-      "903af300-88b8-4a88-9200-1fc8a11f4100.state"
-    ],
-    "ce451ad3-ba27-474c-8b61-e3b0863ae036.characters": [
-      "6bb81c40-cff1-42e6-a471-001985e57e5c.item0"
     ],
     "033144ca-3b94-497b-b14e-3a01fb59558d.value": [
       "903af300-88b8-4a88-9200-1fc8a11f4100.beat_count"
@@ -934,14 +975,6 @@
     "18339c3e-031b-471d-a317-efcd2c14a4e0.extracted": [
       "78cbb918-22da-4e99-87b4-e7a0a3c9da67.object",
       "944cd2b9-8d55-4353-a7a9-e3cd98882768.object"
-    ],
-    "6bb81c40-cff1-42e6-a471-001985e57e5c.dict": [
-      "517d4bb8-38aa-4b11-8ba9-f569a6a45338.value",
-      "34f29d9b-828c-4450-86ce-7163a9ffd2e0.merge_with",
-      "0bf06241-b92b-4f0f-bc67-0789fe061c18.dict"
-    ],
-    "1a5053b8-6cb9-449e-a52c-acb44b79ab14.value": [
-      "6bb81c40-cff1-42e6-a471-001985e57e5c.item3"
     ],
     "cd6a7f30-cc94-4fcc-8d2a-a99dd985a526.value": [
       "857a9a27-0b46-4ab7-99b3-c00d773c4902.value"
@@ -1037,6 +1070,29 @@
     ],
     "d5a28d38-c91d-443a-82f3-bbccee1d84e6.prompt": [
       "18339c3e-031b-471d-a317-efcd2c14a4e0.prompt"
+    ],
+    "6bb81c40-cff1-42e6-a471-001985e57e5c.dict": [
+      "517d4bb8-38aa-4b11-8ba9-f569a6a45338.value",
+      "34f29d9b-828c-4450-86ce-7163a9ffd2e0.merge_with",
+      "0bf06241-b92b-4f0f-bc67-0789fe061c18.dict"
+    ],
+    "ce451ad3-ba27-474c-8b61-e3b0863ae036.characters": [
+      "6bb81c40-cff1-42e6-a471-001985e57e5c.item0"
+    ],
+    "1a5053b8-6cb9-449e-a52c-acb44b79ab14.value": [
+      "6bb81c40-cff1-42e6-a471-001985e57e5c.item3"
+    ],
+    "10fa70c5-011f-4e05-a8ed-46beff507819.value": [
+      "6bb81c40-cff1-42e6-a471-001985e57e5c.item4"
+    ],
+    "8ac97c27-564f-441f-b961-15cda6124026.context": [
+      "10fa70c5-011f-4e05-a8ed-46beff507819.dict"
+    ],
+    "becc58ac-1e13-44df-85d8-466c27935c5e.value": [
+      "903af300-88b8-4a88-9200-1fc8a11f4100.state"
+    ],
+    "f6992ae9-85e9-40f7-b59d-d255e0999885.value": [
+      "8ac97c27-564f-441f-b961-15cda6124026.state"
     ]
   },
   "groups": [
