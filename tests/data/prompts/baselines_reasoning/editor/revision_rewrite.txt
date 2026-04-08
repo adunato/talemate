@@ -1,0 +1,63 @@
+## Characters
+
+### Hero
+name: Hero
+
+A test character.
+
+### Elena
+name: Elena
+
+A test character.
+
+## Additional information
+
+## Classification
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+
+## Intention of this story
+The overarching intention of this story. Use it to guide your decisions in the scene.
+
+A fantasy adventure story.
+
+## Intention of the current scene
+An exploration scene
+
+The hero explores the forest.
+
+## Scene
+
+Elena: Hello there, traveler.
+
+The sun filters through the leaves above.
+
+Marcus: What brings you to these woods?
+
+## Draft text
+The forest was dark and mysterious.
+
+## Issue 1: repeated text
+These sentences have been classified as repetition and must either be substantially rewritten or removed. When removing a sentence, substitute something else, that's meaningful to the story and context.
+
+- MATCH: `The forest was dark and mysterious.`
+
+## Task
+1. Analyze each issue separately, taking into account the instructions and guidelines for it.
+2. Specifically compare against previous messages, instead of rewriting the same information often it is better to just drop the repetitive sentence entirely. Its no use to convey the SAME information again just with different words. Repeat back your understanding of this concept.
+3. Tell us your confident plan for fixing the issues.
+4. Rewrite the ENTIRE draft text to fix the issues, the best you can, according to the plan you made.
+  - Keep your changes minimal, don't get carried away.
+    - YOU MUST NOT MAKE IT LONGER.
+    - YOU MUST NOT REWRITE PARTS THAT WEREN'T EXPLICITLY FLAGGED.
+  - Make one revision in total - so analyze issues first, then fix them all at once!
+  - Wrap ONLY the final rewritten draft in `<REVISION>` tags, exactly once, like this:
+    <REVISION>
+    ... the full rewritten draft text goes here ...
+    </REVISION>
+  - The text inside `<REVISION>` must be the complete replacement for the draft — no commentary, no partial excerpts.
+
+Repeat back your understanding of the task, then work and report each step 1 - 4, sequentially. End your response with the `<REVISION>` block.
+
+The length of your final answer must fit within 6 paragraphs.

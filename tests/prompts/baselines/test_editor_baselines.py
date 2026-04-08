@@ -6,7 +6,7 @@ against stored baseline files. Run with --update-baselines to create/update.
 """
 
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 from ..conftest import mock_llm_client  # noqa: F401
 from ..test_editor_templates import (  # noqa: F401
@@ -34,6 +34,48 @@ class TestEditorBaselines:
         editor.actions["add_detail"].enabled = True
         await editor.add_detail(content="Elena: Hello there.", character=character)
         baseline_checker(capture_prompt(editor), AGENT, "add_detail")
+
+    @pytest.mark.asyncio
+    async def test_revision_rewrite(
+        self,
+        active_context,
+        mock_scene,
+        mock_memory_agent,
+        baseline_checker,
+    ):
+        editor = active_context
+        editor.actions["revision"].enabled = True
+        editor.actions["revision"].config["revision_method"].value = "rewrite"
+        editor.actions["revision"].config["min_issues"].value = 1
+
+        # Provide history message that the draft text repeats
+        history_messages = [
+            Mock(message="The forest was dark and mysterious.", typ="narrator"),
+        ]
+        mock_scene.collect_messages = Mock(return_value=history_messages)
+
+        # Force a repetition match so the rewrite path actually runs
+        mock_memory_agent.compare_string_lists = AsyncMock(
+            return_value={
+                "similarity_matches": [[0, 0, 0.9]],
+                "cosine_similarity_matrix": [],
+            }
+        )
+
+        # Single-prompt flow: return a well-formed <REVISION> response
+        editor.client.send_prompt = AsyncMock(
+            return_value="<REVISION>The forest was silent.</REVISION>"
+        )
+
+        from talemate.agents.editor.revision import RevisionInformation
+
+        info = RevisionInformation(
+            text="The forest was dark and mysterious.",
+            character=None,
+        )
+        await editor.revision_rewrite(info)
+
+        baseline_checker(capture_prompt(editor), AGENT, "revision_rewrite")
 
     @pytest.mark.asyncio
     async def test_revision_unslop(

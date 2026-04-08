@@ -361,8 +361,15 @@ Handlers can edit `response` in-place to clean up or transform the text (the Edi
 ---
 ### agent.editor.revision-analysis.before
 
-Emitted **before** the Editor agent requests the revision-analysis prompt.  
+Emitted **before** the Editor agent requests the revision-rewrite prompt.  
 Handlers can add extra analysis instructions via `dynamic_instructions` or adjust `template_vars`.
+
+!!! note
+
+    The signal is named `revision-analysis.*` for historical reasons — it was
+    introduced when analysis and rewrite were two separate prompts. They are
+    now combined into a single prompt (`editor.revision-rewrite`), but the
+    signal name is kept for backward compatibility.
 
 !!! payload "Payload"
 
@@ -376,8 +383,18 @@ Handlers can add extra analysis instructions via `dynamic_instructions` or adjus
 
 ### agent.editor.revision-analysis.after
 
-Emitted after the revision-analysis prompt returns but **before** the rewrite is requested.  
-Handlers may inspect or replace the `response` string.
+Emitted after the revision-rewrite prompt returns. Intended as a
+notification hook for observers of the rewrite flow.
+
+!!! warning
+
+    Historically this signal fired between a separate analysis prompt and a
+    rewrite prompt, with `response` carrying the raw analysis text that
+    handlers could mutate before the rewrite ran. Analysis and rewrite are
+    now combined into a single prompt, so there is no separable "analysis
+    text" — `response` is not set on the emission and any mutation is
+    discarded. Use [`agent.editor.revision-revise.after`](#agenteditorrevision-reviseafter)
+    if you need to inspect or replace the final rewritten text.
 
 !!! payload "Payload"
 
@@ -385,7 +402,6 @@ Handlers may inspect or replace the `response` string.
     |-------|------|-------|
     | `agent` | `EditorAgent` | The agent instance |
     | `template_vars` | `dict` | Same vars used for the prompt |
-    | `response` | `str` | **Mutable.** Raw analysis text returned by the model |
 
 ## Narrator Agent Events
 

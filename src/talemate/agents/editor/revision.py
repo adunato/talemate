@@ -42,7 +42,6 @@ from talemate.util import count_tokens
 from talemate.prompts import Prompt
 from talemate.prompts.response import ResponseSpec, AnchorExtractor
 from talemate.exceptions import GenerationCancelled
-import talemate.game.focal as focal
 from talemate.status import LoadingStatus
 from talemate.world_state.templates.content import PhraseDetection
 from contextvars import ContextVar
@@ -57,6 +56,13 @@ log = structlog.get_logger()
 FIX_SPEC = ResponseSpec(
     extractors={
         "fix": AnchorExtractor(left="<FIX>", right="</FIX>"),
+    },
+    required=[],  # Not required - we handle None case
+)
+
+REWRITE_SPEC = ResponseSpec(
+    extractors={
+        "revision": AnchorExtractor(left="<REVISION>", right="</REVISION>"),
     },
     required=[],  # Not required - we handle None case
 )
@@ -182,6 +188,26 @@ class RevisionEmission(AgentTemplateEmission):
 # the fix as hallucinated content. Unslop should trim, not expand.
 UNSLOP_MAX_LENGTH_RATIO = 1.25
 
+# Maximum ratio of revision length to original length before discarding
+# the rewrite as hallucinated content. Rewrites should stay close to the
+# original length — the analysis template explicitly forbids expansion.
+REWRITE_MAX_LENGTH_RATIO = 1.25
+
+# Extra token headroom added on top of the draft's token count when sizing
+# the response budget for revision prompts. Gives the model room for the
+# analysis preamble before it emits the wrapped rewrite.
+REVISION_RESPONSE_HEADROOM = 768
+
+
+def _format_length_ratio(new_len: int, original_len: int) -> str:
+    """
+    Format a length ratio for log output, guarding against division by zero
+    when the original text is empty.
+    """
+    if not original_len:
+        return "inf"
+    return f"{new_len / original_len:.2f}"
+
 ## MIXIN
 
 
@@ -266,7 +292,7 @@ class RevisionMixin:
                         ),
                         "rewrite": AgentActionNote(
                             color="primary",
-                            text="Each generation will be checked for repetition and unwanted prose. If issues are found, a rewrite of the problematic part(s) will be attempted. (+2 prompts)",
+                            text="Each generation will be checked for repetition and unwanted prose. If issues are found, a rewrite of the problematic part(s) will be attempted. (+1 prompt)",
                         ),
                     },
                 ),
@@ -950,7 +976,12 @@ class RevisionMixin:
         info: RevisionInformation,
     ) -> str:
         """
-        Revise the text by rewriting
+        Revise the text by rewriting.
+
+        Runs a single analysis+rewrite prompt and extracts the rewritten text
+        from a ``<REVISION>...</REVISION>`` anchor. If the anchor is missing,
+        or the rewrite balloons past ``REWRITE_MAX_LENGTH_RATIO``, the original
+        text is returned unchanged.
         """
 
         text = info.text
@@ -965,9 +996,6 @@ class RevisionMixin:
             text = text[len(character.name) + 2 :]
 
         issues = await self.revision_collect_issues(text, character)
-
-        if loading_status:
-            loading_status.max_steps = 2
 
         num_issues = len(issues.log)
 
@@ -994,13 +1022,13 @@ class RevisionMixin:
             )
             return original_text
 
-        # Step 4 - Rewrite
         token_count = count_tokens(text)
+        response_length = token_count + REVISION_RESPONSE_HEADROOM
 
         log.debug("revision_rewrite: token_count", token_count=token_count)
 
         if loading_status:
-            loading_status("Editor - Issues identified, analyzing text...")
+            loading_status("Editor - Issues identified, rewriting text...")
 
         emission = RevisionEmission(
             agent=self,
@@ -1012,7 +1040,7 @@ class RevisionMixin:
             "text": text,
             "character": character,
             "scene": self.scene,
-            "response_length": token_count,
+            "response_length": response_length,
             "max_tokens": self.client.max_token_length,
             "repetition": issues.repetition,
             "bad_prose": issues.bad_prose,
@@ -1024,52 +1052,39 @@ class RevisionMixin:
         await async_signals.get("agent.editor.revision-revise.before").send(emission)
         await async_signals.get("agent.editor.revision-analysis.before").send(emission)
 
-        analysis, extracted = await Prompt.request(
-            "editor.revision-analysis",
+        _, extracted = await Prompt.request(
+            "editor.revision-rewrite",
             self.client,
-            "edit_768",
+            f"edit_{response_length}",
             vars=emission.template_vars,
             dedupe_enabled=False,
+            response_spec=REWRITE_SPEC,
         )
 
-        async def rewrite_text(text: str) -> str:
-            return text
-
-        analysis = extracted["response"]
-        emission.response = analysis
+        # The analysis-after signal is fired as a notification hook for
+        # backward compatibility. Analysis and rewrite now share a single
+        # prompt, so there is no separable analysis text to expose on the
+        # emission — listeners that previously mutated `emission.response`
+        # here will have no effect. See docs/user-guide/node-editor/reference/events.md.
         await async_signals.get("agent.editor.revision-analysis.after").send(emission)
-        analysis = emission.response
 
-        focal_handler = focal.Focal(
-            self.client,
-            callbacks=[
-                focal.Callback(
-                    name="rewrite_text",
-                    arguments=[
-                        focal.Argument(name="text", type="str", preserve_newlines=True),
-                    ],
-                    fn=rewrite_text,
-                    multiple=False,
-                ),
-            ],
-            max_calls=1,
-            retries=1,
-            scene=self.scene,
-            analysis=analysis,
-            text=text,
-        )
+        revision = extracted["revision"]
+        if revision is None:
+            log.debug(
+                "revision_rewrite: no <REVISION> found in response, keeping original"
+            )
+            return original_text
 
-        if loading_status:
-            loading_status("Editor - Rewriting text...")
-
-        await focal_handler.request(
-            "editor.revision-rewrite",
-        )
-
-        try:
-            revision = focal_handler.state.calls[0].result
-        except Exception as e:
-            log.error("revision_rewrite: error", error=e)
+        # Guard: if the rewrite is substantially longer than the original,
+        # the model likely expanded beyond the "do not make it longer"
+        # instruction — discard it.
+        if len(revision) > len(text) * REWRITE_MAX_LENGTH_RATIO:
+            log.warning(
+                "revision_rewrite: revision is too long, discarding",
+                original_len=len(text),
+                revision_len=len(revision),
+                ratio=_format_length_ratio(len(revision), len(text)),
+            )
             return original_text
 
         emission.response = revision
@@ -1105,7 +1120,7 @@ class RevisionMixin:
     async def revision_unslop(
         self,
         info: RevisionInformation,
-        response_length: int = 768,
+        response_length: int = REVISION_RESPONSE_HEADROOM,
     ) -> str:
         """
         Unslop the text
@@ -1183,7 +1198,7 @@ class RevisionMixin:
                 "revision_unslop: fix is too long, discarding",
                 original_len=len(text),
                 fix_len=len(fix),
-                ratio=f"{len(fix) / len(text):.2f}",
+                ratio=_format_length_ratio(len(fix), len(text)),
             )
             return original_text
 
