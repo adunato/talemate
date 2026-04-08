@@ -520,9 +520,7 @@ class GetDirectorChatContext(Node):
         # Exclude `token` — it's the contextvars reset handle, not state worth
         # exposing. Private fields (_context_id_collector) are already dropped
         # by pydantic's model_dump.
-        context_dict = (
-            ctx.model_dump(exclude={"token"}) if ctx is not None else {}
-        )
+        context_dict = ctx.model_dump(exclude={"token"}) if ctx is not None else {}
 
         self.set_output_values(
             {

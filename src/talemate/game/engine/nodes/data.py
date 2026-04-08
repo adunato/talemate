@@ -293,9 +293,7 @@ class DictGetPath(Node):
         if path:
             self.set_property("key", self._derive_key(path), state)
 
-        self.set_output_values(
-            {"value": value, "found": found, "path": path}
-        )
+        self.set_output_values({"value": value, "found": found, "path": path})
 
     @staticmethod
     def _derive_key(path: str) -> str:

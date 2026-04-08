@@ -76,9 +76,7 @@ class TestDictGetPathWalk:
 
 class TestDictGetPathDeriveKey:
     def test_last_segment_of_nested_path(self):
-        assert (
-            DictGetPath._derive_key("modes.generate_arc.close_arc") == "close_arc"
-        )
+        assert DictGetPath._derive_key("modes.generate_arc.close_arc") == "close_arc"
 
     def test_single_segment(self):
         assert DictGetPath._derive_key("close_arc") == "close_arc"
