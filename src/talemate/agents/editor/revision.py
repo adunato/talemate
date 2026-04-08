@@ -208,6 +208,63 @@ def _format_length_ratio(new_len: int, original_len: int) -> str:
         return "inf"
     return f"{new_len / original_len:.2f}"
 
+
+def _strip_character_prefix(
+    text: str, character: "Character | None"
+) -> tuple[str, bool]:
+    """
+    If ``text`` starts with ``"{character.name}: "``, return the stripped body
+    and ``True``. Otherwise return the text unchanged and ``False``.
+
+    Used by the revision methods to compare/rewrite the raw dialogue body
+    without the speaker prefix, which would otherwise confuse the model.
+    """
+    if character and text.startswith(f"{character.name}: "):
+        return text[len(character.name) + 2 :], True
+    return text, False
+
+
+def _reattach_character_prefix(
+    text: str, character: "Character | None", had_prefix: bool
+) -> str:
+    """
+    Re-add the ``"{character.name}: "`` prefix if it was originally present
+    and is not already on the (possibly model-produced) ``text``. The
+    idempotency guard protects against models that include the speaker
+    prefix inside their own response.
+    """
+    if not had_prefix or not character:
+        return text
+    if text.startswith(f"{character.name}: "):
+        return text
+    return f"{character.name}: {text}"
+
+
+def _revision_exceeds_max_length(
+    method_name: str,
+    original_text: str,
+    revised_text: str,
+    ratio: float,
+) -> bool:
+    """
+    Return ``True`` if ``revised_text`` is longer than ``ratio`` times the
+    length of ``original_text``. Emits a warning log entry that identifies
+    which revision method tripped the guardrail.
+
+    Revisions should stay close to the original length — the prompts
+    explicitly forbid expansion — so anything past the ratio is almost
+    always hallucinated content and should be discarded.
+    """
+    if len(revised_text) <= len(original_text) * ratio:
+        return False
+    log.warning(
+        f"{method_name}: revision is too long, discarding",
+        original_len=len(original_text),
+        revised_len=len(revised_text),
+        ratio=_format_length_ratio(len(revised_text), len(original_text)),
+    )
+    return True
+
 ## MIXIN
 
 
@@ -571,6 +628,32 @@ class RevisionMixin:
 
         return return_messages
 
+    async def _emit_revision_diff(
+        self,
+        header: str,
+        original: str,
+        revised: str,
+        issues: Issues,
+        meta: dict,
+        color: str = "highlight4",
+    ) -> None:
+        """
+        Emit a UI-side ``agent_message`` diff showing the original text, the
+        revision, and the issues that triggered the revision. Used by both
+        ``revision_rewrite`` and ``revision_unslop`` to report their work.
+        """
+        diff = dmp_inline_diff(original, revised)
+        await self.emit_message(
+            header,
+            message=[
+                {"subtitle": "Issues", "content": issues.log},
+                {"subtitle": "Original", "content": original},
+                {"subtitle": "Changes", "content": diff, "process": "diff"},
+            ],
+            meta=meta,
+            color=color,
+        )
+
     # actions
 
     @set_processing
@@ -880,15 +963,10 @@ class RevisionMixin:
 
         info.revision_method = "dedupe"
 
-        text = info.text
+        original_text = info.text
         character = info.character
 
-        original_text = text
-        character_name_prefix = (
-            text.startswith(f"{character.name}: ") if character else False
-        )
-        if character_name_prefix:
-            text = text[len(character.name) + 2 :]
+        text, had_character_prefix = _strip_character_prefix(original_text, character)
 
         original_length = len(text)
 
@@ -943,8 +1021,7 @@ class RevisionMixin:
             )
             return original_text
 
-        if character_name_prefix:
-            text = f"{character.name}: {text}"
+        text = _reattach_character_prefix(text, character, had_character_prefix)
 
         for dedupe in issues.repetition:
             text_a = dedupe["text_a"]
@@ -984,16 +1061,11 @@ class RevisionMixin:
         text is returned unchanged.
         """
 
-        text = info.text
+        original_text = info.text
         character = info.character
         loading_status = info.loading_status
-        original_text = text
 
-        character_name_prefix = (
-            text.startswith(f"{character.name}: ") if character else False
-        )
-        if character_name_prefix:
-            text = text[len(character.name) + 2 :]
+        text, had_character_prefix = _strip_character_prefix(original_text, character)
 
         issues = await self.revision_collect_issues(text, character)
 
@@ -1078,27 +1150,23 @@ class RevisionMixin:
         # Guard: if the rewrite is substantially longer than the original,
         # the model likely expanded beyond the "do not make it longer"
         # instruction — discard it.
-        if len(revision) > len(text) * REWRITE_MAX_LENGTH_RATIO:
-            log.warning(
-                "revision_rewrite: revision is too long, discarding",
-                original_len=len(text),
-                revision_len=len(revision),
-                ratio=_format_length_ratio(len(revision), len(text)),
-            )
+        if _revision_exceeds_max_length(
+            "revision_rewrite",
+            text,
+            revision,
+            REWRITE_MAX_LENGTH_RATIO,
+        ):
             return original_text
 
         emission.response = revision
         await async_signals.get("agent.editor.revision-revise.after").send(emission)
         revision = emission.response
 
-        diff = dmp_inline_diff(text, revision)
-        await self.emit_message(
+        await self._emit_revision_diff(
             "Rewrite",
-            message=[
-                {"subtitle": "Issues", "content": issues.log},
-                {"subtitle": "Original", "content": text},
-                {"subtitle": "Changes", "content": diff, "process": "diff"},
-            ],
+            text,
+            revision,
+            issues,
             meta={
                 "action": "revision_rewrite",
                 "repetition_threshold": self.revision_repetition_threshold,
@@ -1109,13 +1177,9 @@ class RevisionMixin:
                 "detect_bad_prose": self.revision_detect_bad_prose_enabled,
                 "detect_bad_prose_threshold": self.revision_detect_bad_prose_threshold,
             },
-            color="highlight4",
         )
 
-        if character_name_prefix and not revision.startswith(f"{character.name}: "):
-            revision = f"{character.name}: {revision}"
-
-        return revision
+        return _reattach_character_prefix(revision, character, had_character_prefix)
 
     async def revision_unslop(
         self,
@@ -1126,16 +1190,10 @@ class RevisionMixin:
         Unslop the text
         """
 
-        text = info.text
+        original_text = info.text
         character = info.character
 
-        original_text = text
-
-        character_name_prefix = (
-            text.startswith(f"{character.name}: ") if character else False
-        )
-        if character_name_prefix:
-            text = text[len(character.name) + 2 :]
+        text, had_character_prefix = _strip_character_prefix(original_text, character)
 
         issues = await self.revision_collect_issues(text, character)
 
@@ -1193,38 +1251,27 @@ class RevisionMixin:
 
         # Guard: if the fix is substantially longer than the original,
         # the model likely hallucinated extra content — discard it
-        if len(fix) > len(text) * UNSLOP_MAX_LENGTH_RATIO:
-            log.warning(
-                "revision_unslop: fix is too long, discarding",
-                original_len=len(text),
-                fix_len=len(fix),
-                ratio=_format_length_ratio(len(fix), len(text)),
-            )
+        if _revision_exceeds_max_length(
+            "revision_unslop",
+            text,
+            fix,
+            UNSLOP_MAX_LENGTH_RATIO,
+        ):
             return original_text
 
         emission.response = fix
         await async_signals.get("agent.editor.revision-revise.after").send(emission)
         fix = emission.response
 
-        # send diff to user
-        diff = dmp_inline_diff(text, fix)
-        await self.emit_message(
+        await self._emit_revision_diff(
             "Unslop",
-            message=[
-                {"subtitle": "Issues", "content": issues.log},
-                {"subtitle": "Original", "content": text},
-                {"subtitle": "Changes", "content": diff, "process": "diff"},
-            ],
-            meta={
-                "action": "revision_unslop",
-            },
-            color="highlight4",
+            text,
+            fix,
+            issues,
+            meta={"action": "revision_unslop"},
         )
 
-        if character_name_prefix and not fix.startswith(f"{character.name}: "):
-            fix = f"{character.name}: {fix}"
-
-        return fix
+        return _reattach_character_prefix(fix, character, had_character_prefix)
 
     def inject_prompt_paramters(
         self, prompt_param: dict, kind: str, agent_function_name: str
