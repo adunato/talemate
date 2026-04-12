@@ -374,9 +374,7 @@ class WorldStateManager:
 
         character.set_color(color)
 
-    async def update_character_folder(
-        self, character_name: str, folder: str | None
-    ):
+    async def update_character_folder(self, character_name: str, folder: str | None):
         """
         Sets or clears the folder assignment for a single character.
 
