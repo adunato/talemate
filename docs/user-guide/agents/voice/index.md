@@ -22,6 +22,7 @@ In 0.32.0 Talemate's TTS (Text-to-Speech) agent has been completely refactored t
 - **[ElevenLabs](elevenlabs.md)** - Professional voice synthesis with voice cloning
 - **[Google Gemini-TTS](google.md)** - Google's text-to-speech service
 - **[OpenAI](openai.md)** - OpenAI's TTS-1 and TTS-1-HD models
+- **[OpenAI Compatible](openai-compatible.md)** - Any server exposing an OpenAI-style `/v1/audio/speech` endpoint
 
 ## Troubleshooting
 
