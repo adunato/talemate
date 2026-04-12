@@ -14,6 +14,7 @@
   - "Gemma 4 Prompt Template: Added a prompt template for Google's Gemma 4 model family, with support for toggling thinking mode via the reasoning tokens setting."
   - "Advance Time: Moved time tools into a dedicated sub-component with grouped presets (Minutes, Hours, Days, Weeks, Months, Years) and a custom time dialog for arbitrary durations."
   - "LLM Prompt Templates Manager: Added a dedicated UI tab for viewing, creating, editing, and deleting LLM prompt templates. Built-in templates are read-only and can be copied to user templates. User templates are stored in std/user/ and gitignored. GGUF/llama.cpp chat templates can be used directly."
+  - "Character Folders: Optionally organize the World State Manager character list into collapsible folders. Assign from the character editor; rename from the sidebar. Folder assignments sync across scenes linked to the same shared world context."
   fixes:
   - "Message Regeneration: Fixed a bug where regenerating a message that fails (e.g., missing agent or function) would permanently remove the original message from the scene. The original message is now restored to both history and UI on failure, and unhandled exceptions during regeneration are caught."
   - "Anthropic Client: Fixed generation error caused by missing required max_tokens parameter when response length capping is disabled. Now defaults to the model's API output token limit."

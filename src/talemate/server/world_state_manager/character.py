@@ -1,7 +1,15 @@
 import pydantic
 import structlog
 
+from talemate.util.strings import normalize_name
+
 log = structlog.get_logger("talemate.server.world_state_manager.character")
+
+FOLDER_NAME_MAX_LENGTH = 29
+
+
+def _normalize_folder_name(raw: str | None) -> str | None:
+    return normalize_name(raw, FOLDER_NAME_MAX_LENGTH)
 
 
 class UpdateCharacterVoicePayload(pydantic.BaseModel):
@@ -39,6 +47,20 @@ class UpdateCharacterSharedDetailPayload(pydantic.BaseModel):
     name: str
     detail: str
     shared: bool
+
+
+class SetCharacterFolderPayload(pydantic.BaseModel):
+    """Payload for setting a character folder."""
+
+    name: str
+    folder: str | None = None
+
+
+class RenameCharacterFolderPayload(pydantic.BaseModel):
+    """Payload for renaming a character folder (bulk)."""
+
+    old_name: str
+    new_name: str
 
 
 class CharacterMixin:
@@ -199,5 +221,74 @@ class CharacterMixin:
         # Refresh character list and shared context counts
         await self.handle_get_character_list({})
         await self.handle_list_shared_contexts({})
+        await self.signal_operation_done()
+        self.scene.emit_status()
+
+    async def handle_set_character_folder(self, data: dict):
+        """Assign or clear a single character's folder.
+
+        Expected payload
+        -----------------
+        {
+            "type": "world_state_manager",
+            "action": "set_character_folder",
+            "name": "<character name>",
+            "folder": "<folder name>" | null
+        }
+        """
+        try:
+            payload = SetCharacterFolderPayload(**data)
+        except pydantic.ValidationError as e:
+            log.error("Invalid payload for set_character_folder", error=e)
+            await self.signal_operation_failed(str(e))
+            return
+
+        character = self.scene.get_character(payload.name)
+        if not character:
+            await self.signal_operation_failed("Character not found")
+            return
+
+        folder = _normalize_folder_name(payload.folder)
+        await self.world_state_manager.update_character_folder(payload.name, folder)
+
+        await self.handle_get_character_list({})
+        await self.handle_get_character_details({"name": payload.name})
+        await self.signal_operation_done()
+        self.scene.emit_status()
+
+    async def handle_rename_character_folder(self, data: dict):
+        """Bulk-rename a folder across every character currently assigned to it.
+
+        Expected payload
+        -----------------
+        {
+            "type": "world_state_manager",
+            "action": "rename_character_folder",
+            "old_name": "<current folder name>",
+            "new_name": "<new folder name>"
+        }
+        """
+        try:
+            payload = RenameCharacterFolderPayload(**data)
+        except pydantic.ValidationError as e:
+            log.error("Invalid payload for rename_character_folder", error=e)
+            await self.signal_operation_failed(str(e))
+            return
+
+        old_name = _normalize_folder_name(payload.old_name)
+        new_name = _normalize_folder_name(payload.new_name)
+        if not new_name:
+            await self.signal_operation_failed("Folder name cannot be empty")
+            return
+
+        if not old_name or new_name == old_name:
+            # No-op, still refresh so client state stays consistent
+            await self.handle_get_character_list({})
+            await self.signal_operation_done()
+            return
+
+        await self.world_state_manager.rename_character_folder(old_name, new_name)
+
+        await self.handle_get_character_list({})
         await self.signal_operation_done()
         self.scene.emit_status()

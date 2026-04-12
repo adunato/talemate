@@ -13,6 +13,7 @@ from talemate.util.time import *  # noqa: F403, F401
 from talemate.util.dedupe import *  # noqa: F403, F401
 from talemate.util.data import *  # noqa: F403, F401
 from talemate.util.colors import *  # noqa: F403, F401
+from talemate.util.strings import *  # noqa: F403, F401
 
 log = structlog.get_logger("talemate.util")
 

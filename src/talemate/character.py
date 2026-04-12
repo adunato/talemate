@@ -52,6 +52,9 @@ class Character(pydantic.BaseModel):
     shared_attributes: list[str] = pydantic.Field(default_factory=list)
     shared_details: list[str] = pydantic.Field(default_factory=list)
 
+    # user-facing organization (see CharacterMixin.handle_set_character_folder)
+    folder: str | None = None
+
     # dialogue instructions and examples
     dialogue_instructions: str | None = pydantic.Field(
         default=None,
@@ -657,6 +660,10 @@ class Character(pydantic.BaseModel):
             "current_avatar", None
         )  # current_avatar is scene-specific, not shared
         self.update(**updates)
+
+        # `folder` must propagate even when cleared; the exclude_none=True dump
+        # above would drop None values so we assign explicitly here.
+        self.folder = other_character.folder
 
         for attribute in self.shared_attributes:
             if attribute not in other_character.base_attributes:
