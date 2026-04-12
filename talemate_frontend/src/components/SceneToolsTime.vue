@@ -139,13 +139,21 @@ export default {
             this.customTimeDialog = true;
         },
 
+        amountUnitToIso8601(amount, unit) {
+            const n = Math.abs(amount);
+            switch (unit) {
+                case 'minutes': return `PT${n}M`;
+                case 'hours':   return `PT${n}H`;
+                case 'days':    return `P${n}D`;
+                case 'weeks':   return `P${n}W`;
+                case 'months':  return `P${n}M`;
+                case 'years':   return `P${n}Y`;
+                default: throw new Error(`Invalid unit: ${unit}`);
+            }
+        },
+
         submitCustomTime() {
-            this.getWebsocket().send(JSON.stringify({
-                type: 'world_state_agent',
-                action: 'advance_time',
-                amount: this.customTimeAmount,
-                unit: this.customTimeUnit,
-            }));
+            this.advanceTime(this.amountUnitToIso8601(this.customTimeAmount, this.customTimeUnit));
             this.customTimeDialog = false;
         },
     },
