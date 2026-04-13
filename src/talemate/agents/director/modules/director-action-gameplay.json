@@ -1,0 +1,810 @@
+{
+  "title": "Director Action Gameplay",
+  "id": "a7b4f1e2-0000-4000-8000-000000000001",
+  "properties": {
+    "name": "gameplay",
+    "description": "Available gameplay utilities that can help you solve game mechanics.",
+    "instructions": "Pass a clear natural-language description of what you want to do.",
+    "example_json": "[]",
+    "allow_concurrent": false
+  },
+  "x": 0,
+  "y": 0,
+  "width": 200,
+  "height": 100,
+  "collapsed": false,
+  "inherited": false,
+  "registry": "agents/director/chat/directorActionGameplay",
+  "nodes": {
+    "0170c645-46d8-4728-87d5-480940730109": {
+      "title": "Action Argument: instructions",
+      "id": "0170c645-46d8-4728-87d5-480940730109",
+      "properties": {
+        "name": "instructions",
+        "typ": "str",
+        "instructions": "A natural-language sentence describing what gameplay action should be resolved. Examples: \"Roll a d20 for Elmer's lockpick attempt\", \"Quick d6 for surprise\", \"Roll between 1 and 100 for the contested arm-wrestling match\". The system parses this sentence and extracts the structured parameters (dice range, reason) for you \u2014 you don't need to format anything."
+      },
+      "x": 0,
+      "y": 0,
+      "width": 244,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/ActionArgument",
+      "base_type": "core/Node"
+    },
+    "8beb80f5-7d5d-48dd-b7e4-8be0a10f9ab7": {
+      "title": "Validate instructions",
+      "id": "8beb80f5-7d5d-48dd-b7e4-8be0a10f9ab7",
+      "properties": {
+        "error_message": "`instructions` is required",
+        "blank_string_is_unset": true
+      },
+      "x": 360,
+      "y": 0,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "validation/ValidateValueIsSet",
+      "base_type": "core/Node"
+    },
+    "c2aac2fc-29e5-43a3-8d98-def2d3065f60": {
+      "title": "SET local.instructions",
+      "id": "c2aac2fc-29e5-43a3-8d98-def2d3065f60",
+      "properties": {
+        "name": "instructions",
+        "scope": "local"
+      },
+      "x": 720,
+      "y": 0,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "95a89fd5-18e4-4928-8e0d-508e3bfbe288": {
+      "title": "Stage -3",
+      "id": "95a89fd5-18e4-4928-8e0d-508e3bfbe288",
+      "properties": {
+        "stage": -3
+      },
+      "x": 1080,
+      "y": 0,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "37d6f1e8-8c36-4e34-ba83-f0da0c224286": {
+      "title": "min",
+      "id": "37d6f1e8-8c36-4e34-ba83-f0da0c224286",
+      "properties": {
+        "name": "min",
+        "typ": "int",
+        "instructions": "Minimum value of the roll (inclusive). For a standard die, use 1 (e.g. d20 -> min=1, max=20; d6 -> min=1, max=6; percentile roll -> min=1, max=100)."
+      },
+      "x": -9,
+      "y": 1451,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "1e9b8045-5ce5-469f-99a6-0779c69d07ed": {
+      "title": "reason",
+      "id": "1e9b8045-5ce5-469f-99a6-0779c69d07ed",
+      "properties": {
+        "name": "reason",
+        "typ": "str",
+        "instructions": "A short natural-language description of what is being resolved by the roll \u2014 e.g. \"Elmer picks the lock\", \"surprise check\", \"arm-wrestling contest\". This is shown to the user as context for the roll."
+      },
+      "x": -3,
+      "y": 1808,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "1b7c3427-46d4-476d-aa94-ad0233905456": {
+      "title": "Validate min",
+      "id": "1b7c3427-46d4-476d-aa94-ad0233905456",
+      "properties": {
+        "error_message": "`min` is required",
+        "blank_string_is_unset": false
+      },
+      "x": 333,
+      "y": 1451,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "validation/ValidateValueIsSet",
+      "base_type": "core/Node"
+    },
+    "872134b7-be67-4acb-b713-873190fe2b70": {
+      "title": "Roll Dice",
+      "id": "872134b7-be67-4acb-b713-873190fe2b70",
+      "properties": {},
+      "x": 719,
+      "y": 1745,
+      "width": 329,
+      "height": 174,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/gameplay/rollDice",
+      "base_type": "core/Graph"
+    },
+    "816e5d36-a31c-4908-9104-1509189a78f2": {
+      "title": "Return",
+      "id": "816e5d36-a31c-4908-9104-1509189a78f2",
+      "properties": {},
+      "x": 1079,
+      "y": 1745,
+      "width": 210,
+      "height": 60,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "953a9363-d461-4024-aacd-39b904824cd8": {
+      "title": "Metadata: roll_dice",
+      "id": "953a9363-d461-4024-aacd-39b904824cd8",
+      "properties": {
+        "instructions": "Roll a random integer between `min` and `max` (inclusive) to resolve a gameplay mechanic such as a skill check, contested action, or chance-driven outcome. Always provide a `reason` describing what is being resolved. Prefer standard die shapes (d4, d6, d8, d10, d12, d20, d100) unless a specific range is more appropriate. Returns a short human-readable summary string of the form `<reason>: rolled <n>` describing the outcome.",
+        "examples": [
+          {
+            "min": 1,
+            "max": 20,
+            "reason": "Elmer attempts to pick the lock on the gate"
+          },
+          {
+            "min": 1,
+            "max": 6,
+            "reason": "Surprise check as the party enters the cave"
+          },
+          {
+            "min": 1,
+            "max": 100,
+            "reason": "Contested arm-wrestling match between Klex and Brug"
+          }
+        ]
+      },
+      "x": 1439,
+      "y": 1745,
+      "width": 210,
+      "height": 86,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Metadata",
+      "base_type": "core/Node"
+    },
+    "ca594239-746b-48bd-b807-0dce4891f723": {
+      "title": "DEF roll_dice",
+      "id": "ca594239-746b-48bd-b807-0dce4891f723",
+      "properties": {
+        "name": "roll_dice"
+      },
+      "x": 1799,
+      "y": 1745,
+      "width": 210,
+      "height": 86,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "0adb5233-376a-47f5-9cce-617b6833932d": {
+      "title": "FN roll_dice",
+      "id": "0adb5233-376a-47f5-9cce-617b6833932d",
+      "properties": {
+        "name": "roll_dice"
+      },
+      "x": 0,
+      "y": 250,
+      "width": 210,
+      "height": 86,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "4cc8a45d-3208-466d-a431-2cc3e51a8303": {
+      "title": "Callback: roll_dice",
+      "id": "4cc8a45d-3208-466d-a431-2cc3e51a8303",
+      "properties": {
+        "name": "roll_dice",
+        "allow_multiple_calls": true,
+        "allow_concurrent": false
+      },
+      "x": 360,
+      "y": 250,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Callback",
+      "base_type": "core/Node"
+    },
+    "6c8d98d0-f0a8-45b8-8b2c-fe0986707e08": {
+      "title": "GET local.instructions",
+      "id": "6c8d98d0-f0a8-45b8-8b2c-fe0986707e08",
+      "properties": {
+        "name": "instructions",
+        "scope": "local"
+      },
+      "x": 0,
+      "y": 500,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "aee897c5-a9c8-4d4a-9351-9d50c5137dfe": {
+      "title": "Format instructions",
+      "id": "aee897c5-a9c8-4d4a-9351-9d50c5137dfe",
+      "properties": {
+        "template": "Call the appropriate function(s) to resolve the requested gameplay action.\n\nFirst analyze the instructions and decide which function(s) to call, then call them with the appropriate arguments.\n\nYour task is NOT to narrate the outcome yourself, your task is only to call the functions necessary to resolve the gameplay mechanic.\n\nIMPORTANT: YOU MUST MAKE AT LEAST ONE FUNCTION CALL.\n\nINSTRUCTIONS: {instructions}"
+      },
+      "x": 360,
+      "y": 500,
+      "width": 210,
+      "height": 133,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/string/AdvancedFormat",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "91b71c42-c7b9-4361-a2d1-2ee2603df4cf": {
+      "title": "summarizer",
+      "id": "91b71c42-c7b9-4361-a2d1-2ee2603df4cf",
+      "properties": {
+        "agent_name": "summarizer"
+      },
+      "x": 0,
+      "y": 680,
+      "width": 210,
+      "height": 64,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/GetAgent",
+      "base_type": "core/Node"
+    },
+    "43a56ff5-c202-4f78-a1a6-5bce22b0b80a": {
+      "title": "true (BuildPrompt state)",
+      "id": "43a56ff5-c202-4f78-a1a6-5bce22b0b80a",
+      "properties": {
+        "value": true
+      },
+      "x": 0,
+      "y": 386,
+      "width": 210,
+      "height": 64,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "8fc3fb94-65e8-4f60-a7cd-61e87941899a": {
+      "title": "Build Prompt",
+      "id": "8fc3fb94-65e8-4f60-a7cd-61e87941899a",
+      "properties": {
+        "template_file": "base",
+        "scope": "common",
+        "instructions": "",
+        "reserved_tokens": 312,
+        "limit_max_tokens": 0,
+        "include_scene_intent": true,
+        "include_extra_context": true,
+        "include_memory_context": false,
+        "include_scene_context": false,
+        "include_character_context": false,
+        "include_gamestate_context": false,
+        "memory_prompt": "",
+        "prefill_prompt": "",
+        "return_prefill_prompt": false,
+        "dedupe_enabled": true,
+        "response_length": 0,
+        "technical": true
+      },
+      "x": 720,
+      "y": 540,
+      "width": 304,
+      "height": 542,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/BuildPrompt",
+      "base_type": "core/Node"
+    },
+    "7a73db2e-2fe1-4fcb-8e38-55c66727a5ce": {
+      "title": "Callbacks",
+      "id": "7a73db2e-2fe1-4fcb-8e38-55c66727a5ce",
+      "properties": {},
+      "x": 1080,
+      "y": 250,
+      "width": 140,
+      "height": 81,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/ListCollector",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "b8be6e70-c78d-42f2-9640-dae5238bc78b": {
+      "title": "AI Function Calling",
+      "id": "b8be6e70-c78d-42f2-9640-dae5238bc78b",
+      "properties": {
+        "template": null,
+        "max_calls": 3,
+        "retries": 0,
+        "response_length": 1024,
+        "max_concurrent": 1
+      },
+      "x": 1440,
+      "y": 395,
+      "width": 228,
+      "height": 284,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Focal",
+      "base_type": "core/Node"
+    },
+    "6bf4bbbf-a5a0-4a43-b7d8-e7cc7cd5db8b": {
+      "title": "SET local.focal_calls",
+      "id": "6bf4bbbf-a5a0-4a43-b7d8-e7cc7cd5db8b",
+      "properties": {
+        "name": "focal_calls",
+        "scope": "local"
+      },
+      "x": 1800,
+      "y": 395,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "0c1ca147-8ee9-403c-becf-53692270e60a": {
+      "title": "Stage 1",
+      "id": "0c1ca147-8ee9-403c-becf-53692270e60a",
+      "properties": {
+        "stage": 1
+      },
+      "x": 2160,
+      "y": 395,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "20938973-cbf6-45ac-b6b8-3c5896091593": {
+      "title": "Return",
+      "id": "20938973-cbf6-45ac-b6b8-3c5896091593",
+      "properties": {},
+      "x": 720,
+      "y": 1186,
+      "width": 210,
+      "height": 60,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "0e06046b-04c3-4a01-afd6-634b712bda9e": {
+      "title": "Director Action Summary",
+      "id": "0e06046b-04c3-4a01-afd6-634b712bda9e",
+      "properties": {},
+      "x": 360,
+      "y": 1186,
+      "width": 210,
+      "height": 60,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/directorActionSummary",
+      "base_type": "core/Graph"
+    },
+    "12f43b2b-c272-49bb-aed4-2e4430b5b5a5": {
+      "title": "GET local.focal_calls",
+      "id": "12f43b2b-c272-49bb-aed4-2e4430b5b5a5",
+      "properties": {
+        "name": "focal_calls",
+        "scope": "local"
+      },
+      "x": 0,
+      "y": 1190,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "ecd89db9-74f5-4d9c-ab8b-6ff4a1f113d9": {
+      "title": "max",
+      "id": "ecd89db9-74f5-4d9c-ab8b-6ff4a1f113d9",
+      "properties": {
+        "name": "max",
+        "typ": "int",
+        "instructions": "Maximum value of the roll (inclusive). For a standard die, this is the die size (e.g. d20 -> max=20, d6 -> max=6)."
+      },
+      "x": -7,
+      "y": 1621,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "6aca0c36-b086-4f1d-8f4f-1c3ef95b6475": {
+      "title": "As Bool",
+      "id": "6aca0c36-b086-4f1d-8f4f-1c3ef95b6475",
+      "properties": {
+        "default": false
+      },
+      "x": 341,
+      "y": 1985,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/AsBool",
+      "base_type": "core/Node"
+    },
+    "dacaddcd-0089-40bd-9469-4597e1779be4": {
+      "title": "true (state)",
+      "id": "dacaddcd-0089-40bd-9469-4597e1779be4",
+      "properties": {
+        "value": true
+      },
+      "x": 720,
+      "y": 1715,
+      "width": 210,
+      "height": 64,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "065d8cc1-c78d-44cb-89ae-a73270b4ea9a": {
+      "title": "Validate max",
+      "id": "065d8cc1-c78d-44cb-89ae-a73270b4ea9a",
+      "properties": {
+        "error_message": "`max` is required",
+        "blank_string_is_unset": false
+      },
+      "x": 330,
+      "y": 1620,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "validation/ValidateValueIsSet",
+      "base_type": "core/Node"
+    },
+    "f427f4b7-96d9-4587-86f2-4fe73943ab73": {
+      "title": "Validate reason",
+      "id": "f427f4b7-96d9-4587-86f2-4fe73943ab73",
+      "properties": {
+        "error_message": "`reason` is required",
+        "blank_string_is_unset": true
+      },
+      "x": 340,
+      "y": 1800,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "validation/ValidateValueIsSet",
+      "base_type": "core/Node"
+    },
+    "460615fb-c111-4fbc-9e0a-c4a12cbdb11d": {
+      "title": "show_to_user",
+      "id": "460615fb-c111-4fbc-9e0a-c4a12cbdb11d",
+      "properties": {
+        "name": "show_to_user",
+        "typ": "bool",
+        "instructions": "Whether or not to show this roll to the user. Default is False."
+      },
+      "x": 0,
+      "y": 1970,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "0fb697ab-0e38-4825-9432-70c4cebc6c61": {
+      "title": "[Gameplay] Roll Dice",
+      "id": "0fb697ab-0e38-4825-9432-70c4cebc6c61",
+      "properties": {
+        "group": "Gameplay",
+        "action_id": "roll_dice",
+        "action_title": "Roll Dice",
+        "description_chat": "Roll dice for introduction of random elements or to help resolve dice roll game mechanics.",
+        "description_scene_direction": "Roll dice for introduction of random elements or to help resolve dice roll game mechanics.",
+        "instruction_examples": [
+          "Roll a d20 for Elmer's lockpick attempt. Show the roll to user(s).",
+          "Quick d6 to help me determine my which way to go here.",
+          "Roll between 1 and 100 for the contested arm-wrestling match. Show the roll to user(s)."
+        ],
+        "availability": "both",
+        "force_enabled": false
+      },
+      "x": 720,
+      "y": 250,
+      "width": 210,
+      "height": 246,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/DirectorChatSubAction",
+      "base_type": "core/Node"
+    }
+  },
+  "edges": {
+    "0170c645-46d8-4728-87d5-480940730109.value": [
+      "8beb80f5-7d5d-48dd-b7e4-8be0a10f9ab7.value"
+    ],
+    "8beb80f5-7d5d-48dd-b7e4-8be0a10f9ab7.value": [
+      "c2aac2fc-29e5-43a3-8d98-def2d3065f60.value"
+    ],
+    "c2aac2fc-29e5-43a3-8d98-def2d3065f60.value": [
+      "95a89fd5-18e4-4928-8e0d-508e3bfbe288.state"
+    ],
+    "37d6f1e8-8c36-4e34-ba83-f0da0c224286.value": [
+      "1b7c3427-46d4-476d-aa94-ad0233905456.value"
+    ],
+    "1e9b8045-5ce5-469f-99a6-0779c69d07ed.value": [
+      "f427f4b7-96d9-4587-86f2-4fe73943ab73.value"
+    ],
+    "1b7c3427-46d4-476d-aa94-ad0233905456.value": [
+      "872134b7-be67-4acb-b713-873190fe2b70.min"
+    ],
+    "872134b7-be67-4acb-b713-873190fe2b70.formatted_result": [
+      "816e5d36-a31c-4908-9104-1509189a78f2.value"
+    ],
+    "816e5d36-a31c-4908-9104-1509189a78f2.value": [
+      "953a9363-d461-4024-aacd-39b904824cd8.state"
+    ],
+    "953a9363-d461-4024-aacd-39b904824cd8.state": [
+      "ca594239-746b-48bd-b807-0dce4891f723.nodes"
+    ],
+    "0adb5233-376a-47f5-9cce-617b6833932d.fn": [
+      "4cc8a45d-3208-466d-a431-2cc3e51a8303.fn"
+    ],
+    "0adb5233-376a-47f5-9cce-617b6833932d.name": [
+      "4cc8a45d-3208-466d-a431-2cc3e51a8303.name"
+    ],
+    "4cc8a45d-3208-466d-a431-2cc3e51a8303.callback": [
+      "0fb697ab-0e38-4825-9432-70c4cebc6c61.state"
+    ],
+    "6c8d98d0-f0a8-45b8-8b2c-fe0986707e08.value": [
+      "aee897c5-a9c8-4d4a-9351-9d50c5137dfe.item0"
+    ],
+    "aee897c5-a9c8-4d4a-9351-9d50c5137dfe.result": [
+      "8fc3fb94-65e8-4f60-a7cd-61e87941899a.instructions"
+    ],
+    "91b71c42-c7b9-4361-a2d1-2ee2603df4cf.agent": [
+      "8fc3fb94-65e8-4f60-a7cd-61e87941899a.agent"
+    ],
+    "43a56ff5-c202-4f78-a1a6-5bce22b0b80a.value": [
+      "8fc3fb94-65e8-4f60-a7cd-61e87941899a.state"
+    ],
+    "8fc3fb94-65e8-4f60-a7cd-61e87941899a.state": [
+      "b8be6e70-c78d-42f2-9640-dae5238bc78b.state"
+    ],
+    "8fc3fb94-65e8-4f60-a7cd-61e87941899a.agent": [
+      "b8be6e70-c78d-42f2-9640-dae5238bc78b.agent"
+    ],
+    "8fc3fb94-65e8-4f60-a7cd-61e87941899a.prompt": [
+      "b8be6e70-c78d-42f2-9640-dae5238bc78b.prompt"
+    ],
+    "7a73db2e-2fe1-4fcb-8e38-55c66727a5ce.list": [
+      "b8be6e70-c78d-42f2-9640-dae5238bc78b.callbacks"
+    ],
+    "b8be6e70-c78d-42f2-9640-dae5238bc78b.calls": [
+      "6bf4bbbf-a5a0-4a43-b7d8-e7cc7cd5db8b.value"
+    ],
+    "6bf4bbbf-a5a0-4a43-b7d8-e7cc7cd5db8b.value": [
+      "0c1ca147-8ee9-403c-becf-53692270e60a.state"
+    ],
+    "0e06046b-04c3-4a01-afd6-634b712bda9e.summary": [
+      "20938973-cbf6-45ac-b6b8-3c5896091593.value"
+    ],
+    "12f43b2b-c272-49bb-aed4-2e4430b5b5a5.value": [
+      "0e06046b-04c3-4a01-afd6-634b712bda9e.calls"
+    ],
+    "ecd89db9-74f5-4d9c-ab8b-6ff4a1f113d9.value": [
+      "065d8cc1-c78d-44cb-89ae-a73270b4ea9a.value"
+    ],
+    "6aca0c36-b086-4f1d-8f4f-1c3ef95b6475.value": [
+      "872134b7-be67-4acb-b713-873190fe2b70.emit_system_message"
+    ],
+    "dacaddcd-0089-40bd-9469-4597e1779be4.value": [
+      "872134b7-be67-4acb-b713-873190fe2b70.state"
+    ],
+    "065d8cc1-c78d-44cb-89ae-a73270b4ea9a.value": [
+      "872134b7-be67-4acb-b713-873190fe2b70.max"
+    ],
+    "f427f4b7-96d9-4587-86f2-4fe73943ab73.value": [
+      "872134b7-be67-4acb-b713-873190fe2b70.reason"
+    ],
+    "460615fb-c111-4fbc-9e0a-c4a12cbdb11d.value": [
+      "6aca0c36-b086-4f1d-8f4f-1c3ef95b6475.value"
+    ],
+    "0fb697ab-0e38-4825-9432-70c4cebc6c61.state": [
+      "7a73db2e-2fe1-4fcb-8e38-55c66727a5ce.item0"
+    ]
+  },
+  "groups": [
+    {
+      "title": "Input",
+      "x": -25,
+      "y": -65,
+      "width": 1340,
+      "height": 220,
+      "color": "#88A",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Stage 1 (Focal)",
+      "x": -25,
+      "y": 185,
+      "width": 2420,
+      "height": 906,
+      "color": "#3f789e",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Function: roll_dice",
+      "x": -26,
+      "y": 1376,
+      "width": 2060,
+      "height": 731,
+      "color": "#b06634",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Output",
+      "x": -25,
+      "y": 1121,
+      "width": 980,
+      "height": 220,
+      "color": "#8A8",
+      "font_size": 24,
+      "inherited": false
+    }
+  ],
+  "comments": [],
+  "extends": null,
+  "base_type": "agents/director/DirectorChatAction",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "15ecf58a-8fed-4aac-be58-ae43827fcc79",
+      "name": "fn",
+      "optional": false,
+      "group": null,
+      "socket_type": "function"
+    },
+    {
+      "id": "30586a55-e9e1-4b8b-9554-826f69abc196",
+      "name": "name",
+      "optional": false,
+      "group": null,
+      "socket_type": "str"
+    },
+    {
+      "id": "87b6031d-5d53-4397-b38c-5d9ee70a18b3",
+      "name": "allow_multiple_calls",
+      "optional": false,
+      "group": null,
+      "socket_type": "bool"
+    },
+    {
+      "id": "da949bec-6c74-4503-87d2-d78ce63572f5",
+      "name": "ai_callback",
+      "optional": false,
+      "group": null,
+      "socket_type": "focal/callback"
+    }
+  ],
+  "module_properties": {
+    "name": {
+      "name": "name",
+      "description": "The name of the action",
+      "type": "str",
+      "default": "",
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "description": {
+      "name": "description",
+      "description": "The description of the action",
+      "type": "text",
+      "default": "",
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "instructions": {
+      "name": "instructions",
+      "description": "The instructions for the action",
+      "type": "text",
+      "default": "",
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "example_json": {
+      "name": "example_json",
+      "description": "An example JSON payload for the action",
+      "type": "text",
+      "default": null,
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "allow_concurrent": {
+      "name": "allow_concurrent",
+      "description": "Whether the action can be called concurrently",
+      "type": "bool",
+      "default": false,
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    }
+  },
+  "style": {
+    "title_color": "#573a2e",
+    "node_color": "#392f2c",
+    "icon": "F0295",
+    "auto_title": null,
+    "counterpart": null
+  }
+}
