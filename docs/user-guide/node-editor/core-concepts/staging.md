@@ -25,14 +25,17 @@ an integer **priority** (`stage` property) that the engine uses to decide when t
 nodes *after* this marker should run.
 
 The Stage node contains four inputs and four matching outputs (`state`, `state_b`,
-`state_c`, `state_d`). These sockets do **not** exist to pass data through the
-Stage—they exist so the node can physically attach to any point in your graph, either
-inline between two nodes or at the start or end of a chain.
+`state_c`, `state_d`). The Stage node is designed to be "wire-compatible" with most
+places in a graph so you can drop it wherever you need a stage boundary without
+rerouting existing connections — inline between two nodes, at the start of a chain,
+or at the end.
 
-In other words, the Stage node is designed to be "wire-compatible" with most places
-in a graph so you can drop it wherever you need a stage boundary without rerouting
-existing connections. The **actual data** on those connections is *ignored* by the
-Stage node—only the existence of a wire matters.
+The **values on those connections are passed through unchanged**: whatever flows
+into `state` exits on `state` (and the same for `state_b`/`state_c`/`state_d`). An
+input that is left unconnected is treated as `True` on the matching output. This
+means a Stage node can serve double duty as both a stage marker *and* a data passthrough
+— a common idiom for forwarding an input value all the way to a same-named module
+output without breaking it into a separate sub-chain.
 
 During execution the engine walks backwards from each node to find the lowest stage
 value on its path. That value becomes the node's execution priority (lower numbers run earlier, and
@@ -42,6 +45,16 @@ value on its path. That value becomes the node's execution priority (lower numbe
 2. Nodes that are reachable through a Stage with `stage = 0` run next.
 3. Nodes behind a Stage with `stage = 1` run after all stage-0 nodes have finished.
 4. And so on for higher stage numbers.
+
+**Nodes that are not reachable through any Stage marker run *after* every staged
+node**, at default priority. This makes "outputs at the bottom" easy: leave the
+final `core/Output` chains unstaged and they will fire after Stages 0, 1, 2, ...
+have all completed.
+
+**Multiple Stage nodes can share the same `stage` value.** They form independent
+chains running at the same priority level — useful when you want to break what
+would otherwise be a single sprawling stage into two visually-separated branches
+without imposing an artificial ordering between them.
 
 ## Why use Stages?
 
