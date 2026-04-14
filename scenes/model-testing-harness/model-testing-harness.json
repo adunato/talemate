@@ -404,9 +404,9 @@
     "cover_image": "e64105ebce7f3350dc1f5a3e7d37cbd41cc7b810e45018bd81f79ce6e61e516f"
   },
   "memory_id": "b8df7500-d",
-  "memory_session_id": "7ec54c59-e",
-  "saved_memory_session_id": "10b0fa11-f",
-  "immutable_save": false,
+  "memory_session_id": "18cd7d72-1",
+  "saved_memory_session_id": "7ec54c59-e",
+  "immutable_save": true,
   "ts": "PT7H45M",
   "help": "",
   "experimental": false,
