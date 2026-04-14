@@ -968,11 +968,17 @@ class ChromaDBMemoryAgent(MemoryAgent):
             )
 
             try:
-                # Evict cached model so device changes take effect without restart.
                 # ChromaDB caches models in a class-level dict keyed only by model name,
                 # ignoring device — so a device switch would silently reuse the old model.
+                # Evict only when the cached model's device differs from the requested one,
+                # otherwise reuse it (avoids an expensive reload on every set_db call).
                 ST = embedding_functions.SentenceTransformerEmbeddingFunction
-                if model_name in ST.models:
+                cached = ST.models.get(model_name)
+                if (
+                    cached is not None
+                    and getattr(cached, "device", None) is not None
+                    and cached.device.type != device
+                ):
                     self._release_embedding_model(ST.models.pop(model_name))
 
                 ef = ST(
