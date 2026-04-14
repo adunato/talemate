@@ -1,0 +1,35 @@
+{
+  "assets": {
+    "e64105ebce7f3350dc1f5a3e7d37cbd41cc7b810e45018bd81f79ce6e61e516f": {
+      "id": "e64105ebce7f3350dc1f5a3e7d37cbd41cc7b810e45018bd81f79ce6e61e516f",
+      "file_type": "png",
+      "media_type": "image/png",
+      "meta": {
+        "name": "cover-card",
+        "vis_type": "SCENE_CARD",
+        "gen_type": "IMAGE_EDIT",
+        "character_name": null,
+        "prompt": "Provide an alternate version of this logo for a dark theme",
+        "negative_prompt": "",
+        "format": "PORTRAIT",
+        "resolution": {
+          "width": 768,
+          "height": 1376
+        },
+        "sampler_settings": {
+          "steps": 40
+        },
+        "reference_assets": [],
+        "tags": [],
+        "reference": [],
+        "analysis": "",
+        "cover_bbox": {
+          "x": 0.0,
+          "y": 0.195795,
+          "w": 1.0,
+          "h": 0.632295
+        }
+      }
+    }
+  }
+}

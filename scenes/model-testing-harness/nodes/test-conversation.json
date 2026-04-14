@@ -1,0 +1,351 @@
+{
+  "title": "Test Conversation",
+  "id": "182f8e4b-f9bd-4aae-9210-1245712a4765",
+  "properties": {},
+  "x": 0,
+  "y": 0,
+  "width": 200,
+  "height": 100,
+  "collapsed": false,
+  "inherited": false,
+  "registry": "model-tests/basics/testConversation",
+  "nodes": {
+    "66daf189-ba25-4d4f-a112-bba2ce5d520c": {
+      "title": "IN state",
+      "id": "66daf189-ba25-4d4f-a112-bba2ce5d520c",
+      "properties": {
+        "input_type": "any",
+        "input_name": "state",
+        "input_optional": false,
+        "input_group": "",
+        "num": 0
+      },
+      "x": 23,
+      "y": 79,
+      "width": 210,
+      "height": 154,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Input",
+      "base_type": "core/Node"
+    },
+    "cd6eca19-93bb-4269-8a5b-5c2eca33c481": {
+      "title": "OUT state",
+      "id": "cd6eca19-93bb-4269-8a5b-5c2eca33c481",
+      "properties": {
+        "output_type": "any",
+        "output_name": "state",
+        "num": 0
+      },
+      "x": 293,
+      "y": 79,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "2ed08c2c-c037-4eaf-8a7c-3c67bf3729d6": {
+      "title": "Make String",
+      "id": "2ed08c2c-c037-4eaf-8a7c-3c67bf3729d6",
+      "properties": {
+        "value": "VERA-7"
+      },
+      "x": 53,
+      "y": 459,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/string/Make",
+      "base_type": "core/Node"
+    },
+    "ce3eea10-92ba-4cb6-a35c-b36924c100ca": {
+      "title": "true",
+      "id": "ce3eea10-92ba-4cb6-a35c-b36924c100ca",
+      "properties": {
+        "value": true
+      },
+      "x": 53,
+      "y": 349,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "c8dbfeae-9f08-4a3f-a9bb-011200e82a67": {
+      "title": "Get Character",
+      "id": "c8dbfeae-9f08-4a3f-a9bb-011200e82a67",
+      "properties": {
+        "partial": false
+      },
+      "x": 323,
+      "y": 469,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "scene/GetCharacter",
+      "base_type": "core/Node"
+    },
+    "bdba38c2-6367-476e-bf9b-0efc72b64c1b": {
+      "title": "Generate Conversation",
+      "id": "bdba38c2-6367-476e-bf9b-0efc72b64c1b",
+      "properties": {
+        "trigger_conversation_generated": true
+      },
+      "x": 603,
+      "y": 359,
+      "width": 210,
+      "height": 138,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/conversation/Generate",
+      "base_type": "core/Node"
+    },
+    "b3cdfce4-21c1-4d0f-b36a-1c339049083a": {
+      "title": "Get",
+      "id": "b3cdfce4-21c1-4d0f-b36a-1c339049083a",
+      "properties": {
+        "attribute": "character_name"
+      },
+      "x": 903,
+      "y": 409,
+      "width": 210,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/Get",
+      "base_type": "core/Node"
+    },
+    "9c59df45-97e9-417e-b389-3ae55e0d147b": {
+      "title": "Make String",
+      "id": "9c59df45-97e9-417e-b389-3ae55e0d147b",
+      "properties": {
+        "value": "VERA-7"
+      },
+      "x": 903,
+      "y": 559,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/string/Make",
+      "base_type": "core/Node"
+    },
+    "a64815b1-fb8e-4582-850e-f0a9e8c481ee": {
+      "title": "Emit Test Result",
+      "id": "a64815b1-fb8e-4582-850e-f0a9e8c481ee",
+      "properties": {
+        "message_title": "Conversation Generation",
+        "message": "Test generating conversation for one specific character."
+      },
+      "x": 1493,
+      "y": 429,
+      "width": 210,
+      "height": 142,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/emitTestResult",
+      "base_type": "core/Graph"
+    },
+    "4557da8d-dbcc-490a-8cfe-1de532b8004c": {
+      "title": "OUT success",
+      "id": "4557da8d-dbcc-490a-8cfe-1de532b8004c",
+      "properties": {
+        "output_type": "bool",
+        "output_name": "success",
+        "num": 1
+      },
+      "x": 1753,
+      "y": 459,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "5a10e8a8-6149-4e9c-a577-8558ee4f0a6e": {
+      "title": "String Check",
+      "id": "5a10e8a8-6149-4e9c-a577-8558ee4f0a6e",
+      "properties": {
+        "substring": "",
+        "mode": "exact",
+        "case_sensitive": true
+      },
+      "x": 1224,
+      "y": 442,
+      "width": 210,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/string/StringCheck",
+      "base_type": "core/Node"
+    },
+    "126d2c20-ee08-4789-b10a-2f2cdc874e8f": {
+      "title": "Make Bool",
+      "id": "126d2c20-ee08-4789-b10a-2f2cdc874e8f",
+      "properties": {
+        "value": false
+      },
+      "x": 283,
+      "y": 827,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "320e846d-e03b-43df-8e30-6178bc7749e8": {
+      "title": "Argument",
+      "id": "320e846d-e03b-43df-8e30-6178bc7749e8",
+      "properties": {
+        "name": "exc",
+        "typ": "any"
+      },
+      "x": 23,
+      "y": 727,
+      "width": 210,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Argument",
+      "base_type": "core/Node"
+    },
+    "43887c2b-6dda-4ed9-9fe9-1a2f296c97c4": {
+      "title": "Error Handler",
+      "id": "43887c2b-6dda-4ed9-9fe9-1a2f296c97c4",
+      "properties": {},
+      "x": 1313,
+      "y": 727,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/ErrorHandler",
+      "base_type": "core/Node"
+    },
+    "ab6b6754-5b0f-49d5-9a48-eb6f4f1dd24d": {
+      "title": "FN error_handler",
+      "id": "ab6b6754-5b0f-49d5-9a48-eb6f4f1dd24d",
+      "properties": {
+        "name": "error_handler"
+      },
+      "x": 1063,
+      "y": 730,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "f0d00aef-0d4c-42f0-8344-8a0472036bf7": {
+      "title": "DEF error_handler",
+      "id": "f0d00aef-0d4c-42f0-8344-8a0472036bf7",
+      "properties": {
+        "name": "error_handler"
+      },
+      "x": 812,
+      "y": 728,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "087d27d3-f4d8-46de-90f5-4510f3ae2631": {
+      "title": "Emit Test Result",
+      "id": "087d27d3-f4d8-46de-90f5-4510f3ae2631",
+      "properties": {
+        "message_title": "Conversation Generation",
+        "message": "Test generating conversation for one specific character."
+      },
+      "x": 560,
+      "y": 720,
+      "width": 210,
+      "height": 142,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/emitTestResult",
+      "base_type": "core/Graph"
+    }
+  },
+  "edges": {
+    "66daf189-ba25-4d4f-a112-bba2ce5d520c.value": [
+      "cd6eca19-93bb-4269-8a5b-5c2eca33c481.value"
+    ],
+    "2ed08c2c-c037-4eaf-8a7c-3c67bf3729d6.value": [
+      "c8dbfeae-9f08-4a3f-a9bb-011200e82a67.character_name"
+    ],
+    "ce3eea10-92ba-4cb6-a35c-b36924c100ca.value": [
+      "bdba38c2-6367-476e-bf9b-0efc72b64c1b.state"
+    ],
+    "c8dbfeae-9f08-4a3f-a9bb-011200e82a67.character": [
+      "bdba38c2-6367-476e-bf9b-0efc72b64c1b.character"
+    ],
+    "bdba38c2-6367-476e-bf9b-0efc72b64c1b.message": [
+      "b3cdfce4-21c1-4d0f-b36a-1c339049083a.object"
+    ],
+    "b3cdfce4-21c1-4d0f-b36a-1c339049083a.value": [
+      "5a10e8a8-6149-4e9c-a577-8558ee4f0a6e.string"
+    ],
+    "9c59df45-97e9-417e-b389-3ae55e0d147b.value": [
+      "5a10e8a8-6149-4e9c-a577-8558ee4f0a6e.substring"
+    ],
+    "a64815b1-fb8e-4582-850e-f0a9e8c481ee.success": [
+      "4557da8d-dbcc-490a-8cfe-1de532b8004c.value"
+    ],
+    "5a10e8a8-6149-4e9c-a577-8558ee4f0a6e.result": [
+      "a64815b1-fb8e-4582-850e-f0a9e8c481ee.state",
+      "a64815b1-fb8e-4582-850e-f0a9e8c481ee.success"
+    ],
+    "126d2c20-ee08-4789-b10a-2f2cdc874e8f.value": [
+      "087d27d3-f4d8-46de-90f5-4510f3ae2631.success"
+    ],
+    "320e846d-e03b-43df-8e30-6178bc7749e8.value": [
+      "087d27d3-f4d8-46de-90f5-4510f3ae2631.state"
+    ],
+    "ab6b6754-5b0f-49d5-9a48-eb6f4f1dd24d.fn": [
+      "43887c2b-6dda-4ed9-9fe9-1a2f296c97c4.fn"
+    ],
+    "087d27d3-f4d8-46de-90f5-4510f3ae2631.state": [
+      "f0d00aef-0d4c-42f0-8344-8a0472036bf7.nodes"
+    ]
+  },
+  "groups": [
+    {
+      "title": "Error Handling",
+      "x": -2,
+      "y": 652,
+      "width": 1480,
+      "height": 258,
+      "color": "#A88",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Process",
+      "x": -2,
+      "y": 4,
+      "width": 1990,
+      "height": 638,
+      "color": "#3f789e",
+      "font_size": 24,
+      "inherited": false
+    }
+  ],
+  "comments": [],
+  "extends": null,
+  "base_type": "core/Graph",
+  "inputs": [],
+  "outputs": [],
+  "module_properties": {},
+  "style": null
+}
