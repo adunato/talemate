@@ -1,3 +1,4 @@
+import copy
 import random
 import json
 import structlog
@@ -564,7 +565,9 @@ class MakeDict(Node):
         self.add_output("dict", socket_type="dict")
 
     async def run(self, state: GraphState):
-        new_dict = self.get_property("data")
+        # Deep copy so that downstream mutation does not leak back into the
+        # node's static `data` property across executions.
+        new_dict = copy.deepcopy(self.get_property("data"))
 
         self.set_output_values({"dict": new_dict})
 
@@ -796,8 +799,9 @@ class MakeList(Node):
         if state.verbosity >= NodeVerbosity.VERBOSE:
             log.debug("Creating new list", item_type=item_type)
 
-        # Create a new empty list
-        new_list = self.get_property("items")
+        # Deep copy so that downstream mutation does not leak back into the
+        # node's static `items` property across executions.
+        new_list = copy.deepcopy(self.get_property("items"))
 
         self.set_output_values({"list": new_list})
 

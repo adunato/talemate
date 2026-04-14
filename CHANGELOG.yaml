@@ -32,6 +32,7 @@
   - "Contextual Generate: Fixed list-type generation prefilling an empty line after '1.', which caused some LLMs to produce empty lists."
   - "Narrate Progress: Fixed narration sometimes generating screenplay-style dialogue entries instead of continuous narrative prose."
   - "Advance Time: Fixed toolbar time advancement being completely non-functional due to a missing websocket handler. Also fixed invalid ISO 8601 duration strings for the 1 week and 2 weeks options."
+  - "Node Graph: Fixed `data/MakeDict` and `data/MakeList` leaking their initial value as a shared mutable reference across graph executions. Downstream in-place mutations (e.g., writing into a dict fed into SetState) would persist on the node and appear on the next run as stale data. Both nodes now deep-copy their configured default before emitting it."
   improvements:
   - "System Prompt Override Indicators: The system prompt override list now shows a pencil icon next to entries that have an active override, making it easy to see which prompts have been customized."
   - "Search Strictness: The distance_mod embedding preset value is now a float (was int) with a range of 0.1–2.0, allowing both tighter and looser similarity matching. A 'Search Strictness' slider is now available in the Context Database UI, letting users tune search sensitivity on the fly. Changes persist to the active embedding preset immediately."

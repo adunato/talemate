@@ -7,6 +7,14 @@ from talemate.game.engine.nodes.core import (
     Router,
     GraphContext,
 )
+from talemate.game.engine.nodes.state import SetState, GetState
+from talemate.game.engine.nodes.run import (
+    DefineFunction,
+    GetFunction,
+    CallFunction,
+    FunctionReturn,
+    RunModule,
+)
 import networkx as nx
 import structlog
 import pytest
@@ -396,3 +404,248 @@ async def test_visited_paths():
         )
 
     await cleanup_pending_tasks()
+
+
+class _FreshDict(Node):
+    """Outputs a brand-new dict literal every run."""
+
+    def __init__(self, title="Fresh Dict", **kwargs):
+        super().__init__(title=title, **kwargs)
+
+    def setup(self):
+        self.add_output("value")
+
+    async def run(self, state: GraphState):
+        self.set_output_values({"value": {"counter": 0}})
+
+
+def _build_parent_scope_test_graph(captures: list) -> Graph:
+    """
+    Inner module layout (identical for both variants of the regression test):
+
+        FreshDict -> SetState(local, "data") -> CallFunction
+                                                    ^
+                                                    |
+                                    GetFunction -----+
+
+        function body:
+            GetState(parent, "data") -> IncrementAndCapture -> FunctionReturn
+    """
+
+    class IncrementAndCapture(Node):
+        """Takes a dict, increments dict['counter'] in place, records it."""
+
+        def __init__(self, title="Increment & Capture", **kwargs):
+            super().__init__(title=title, **kwargs)
+
+        def setup(self):
+            self.add_input("value")
+            self.add_output("value")
+
+        async def run(self, state: GraphState):
+            data = self.get_input_value("value")
+            data["counter"] = data.get("counter", 0) + 1
+            captures.append(data["counter"])
+            self.set_output_values({"value": data})
+
+    graph = Graph()
+
+    get_parent = GetState()
+    get_parent.set_property("name", "data")
+    get_parent.set_property("scope", "parent")
+
+    increment = IncrementAndCapture()
+    fn_return = FunctionReturn()
+
+    graph.add_node(get_parent)
+    graph.add_node(increment)
+    graph.add_node(fn_return)
+
+    graph.connect(
+        get_parent.get_output_socket("value"),
+        increment.get_input_socket("value"),
+    )
+    graph.connect(
+        increment.get_output_socket("value"),
+        fn_return.get_input_socket("value"),
+    )
+
+    define_fn = DefineFunction()
+    define_fn.set_property("name", "inner_fn")
+    graph.add_node(define_fn)
+    graph.connect(
+        fn_return.get_output_socket("value"),
+        define_fn.get_input_socket("nodes"),
+    )
+
+    fresh = _FreshDict()
+    set_local = SetState()
+    set_local.set_property("name", "data")
+    set_local.set_property("scope", "local")
+    get_fn = GetFunction()
+    get_fn.set_property("name", "inner_fn")
+    call_fn = CallFunction()
+
+    graph.add_node(fresh)
+    graph.add_node(set_local)
+    graph.add_node(get_fn)
+    graph.add_node(call_fn)
+
+    graph.connect(
+        fresh.get_output_socket("value"),
+        set_local.get_input_socket("value"),
+    )
+    graph.connect(
+        get_fn.get_output_socket("fn"),
+        call_fn.get_input_socket("fn"),
+    )
+    # Ordering: SetState must run before CallFunction. Wire SetState's "value"
+    # output (the dict we just stored) into CallFunction's args input. It is a
+    # valid dict for args and creates a topological dependency.
+    graph.connect(
+        set_local.get_output_socket("value"),
+        call_fn.get_input_socket("args"),
+    )
+
+    return graph
+
+
+@pytest.mark.asyncio
+async def test_parent_scope_state_isolation_across_runs():
+    """
+    Regression test: a module uses SetState(scope=local) to initialise a
+    fresh mutable container, then calls an inline function whose body uses
+    GetState(scope=parent) to read and mutate that container.
+
+    Each graph execution must see a fresh container — mutations performed by
+    one run must not leak into the next run.
+    """
+
+    captures: list[int] = []
+    graph = _build_parent_scope_test_graph(captures)
+
+    # Execute twice. Each run should start with counter=0, so each run's
+    # capture should be 1. If parent-scope state leaks across runs, the
+    # second run will see counter=1 and record 2.
+    await graph.execute()
+    await graph.execute()
+
+    await cleanup_pending_tasks()
+
+    assert captures == [1, 1], (
+        f"Parent-scope state leaked across runs: captures={captures} "
+        "(expected [1, 1])"
+    )
+
+
+@pytest.mark.asyncio
+async def test_parent_scope_state_isolation_through_run_module():
+    """
+    Same invariant as test_parent_scope_state_isolation_across_runs, but the
+    inner module is executed through a RunModule node from an outer graph -
+    matching the actual production scenario reported in the bug.
+    """
+
+    captures: list[int] = []
+    inner = _build_parent_scope_test_graph(captures)
+
+    outer = Graph()
+
+    class InnerModuleSource(Node):
+        """Outputs a reference to the inner graph for RunModule to execute."""
+
+        def __init__(self, title="Inner Module Source", **kwargs):
+            super().__init__(title=title, **kwargs)
+
+        def setup(self):
+            self.add_output("module")
+
+        async def run(self, state: GraphState):
+            self.set_output_values({"module": inner})
+
+    source = InnerModuleSource()
+    run_module = RunModule()
+
+    outer.add_node(source)
+    outer.add_node(run_module)
+    outer.connect(
+        source.get_output_socket("module"),
+        run_module.get_input_socket("module"),
+    )
+
+    # RunModule requires state.outer to be set (it uses state.outer.data
+    # to detect recursive calls), so execute with an explicit outer_state.
+    sentinel_outer = GraphState()
+    await outer.execute(outer_state=sentinel_outer)
+    await outer.execute(outer_state=sentinel_outer)
+
+    await cleanup_pending_tasks()
+
+    assert captures == [1, 1], (
+        f"Parent-scope state leaked across runs when nested in RunModule: "
+        f"captures={captures} (expected [1, 1])"
+    )
+
+
+@pytest.mark.asyncio
+async def test_make_dict_does_not_leak_mutation_across_runs():
+    """
+    Regression test: data/MakeDict reads its initial value from the ``data``
+    property at run time. If ``MakeDict.run`` hands out that property dict by
+    reference, any downstream mutation will persist on the node across
+    executions - the next run will see an already-mutated dict instead of the
+    initial value.
+
+    This was observed in the model-testing-harness test-function-calling
+    graph where a MakeDict node feeds a containers dict into SetState; the
+    AI-callable functions mutate that dict, and on subsequent graph runs
+    the mutations from the previous run are still visible.
+    """
+    from talemate.game.engine.nodes.data import MakeDict
+
+    observed: list[dict] = []
+
+    class ObserveAndMutate(Node):
+        """Records the incoming dict (deep) then mutates it in place."""
+
+        def __init__(self, title="Observe & Mutate", **kwargs):
+            super().__init__(title=title, **kwargs)
+
+        def setup(self):
+            self.add_input("value")
+
+        async def run(self, state: GraphState):
+            data = self.get_input_value("value")
+            # Snapshot what we see on entry (deep copy so later mutation
+            # does not change the recorded view).
+            import copy
+
+            observed.append(copy.deepcopy(data))
+            # Mutate in place - this is the common case (dict is the
+            # primary state container).
+            data["bucket"]["apple"] = 5
+
+    graph = Graph()
+    make_dict = MakeDict()
+    make_dict.set_property("data", {"bucket": {}, "basket": {}, "bowl": {}})
+    observer = ObserveAndMutate()
+
+    graph.add_node(make_dict)
+    graph.add_node(observer)
+    graph.connect(
+        make_dict.get_output_socket("dict"),
+        observer.get_input_socket("value"),
+    )
+
+    await graph.execute()
+    await graph.execute()
+
+    await cleanup_pending_tasks()
+
+    assert observed[0] == {"bucket": {}, "basket": {}, "bowl": {}}, (
+        f"First run saw an unexpected initial dict: {observed[0]}"
+    )
+    assert observed[1] == {"bucket": {}, "basket": {}, "bowl": {}}, (
+        f"Second run saw stale mutations from the first run: {observed[1]} "
+        "(MakeDict leaked a mutable reference to its data property)"
+    )
