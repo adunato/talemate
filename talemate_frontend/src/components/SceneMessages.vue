@@ -26,7 +26,7 @@
                 @click="handleViewImage"
             >
                 <v-list-item-title>View Image</v-list-item-title>
-                <v-list-item-subtitle>Ctrl+click</v-list-item-subtitle>
+                <v-list-item-subtitle>{{ primaryModifierLabel }}+click</v-list-item-subtitle>
             </v-list-item>
             <v-divider></v-divider>
             <v-list-item
@@ -375,6 +375,7 @@ import VisualReferenceCarousel from './VisualReferenceCarousel.vue';
 import ConfirmActionPrompt from './ConfirmActionPrompt.vue';
 import VisualAssetsMixin from './VisualAssetsMixin.js';
 import { isVisualAgentReady } from '../constants/visual.js';
+import { primaryModifierLabel } from '@/utils/keyboardModifiers';
 
 const MESSAGE_FLAGS = {
     NONE: 0,
@@ -503,6 +504,7 @@ export default {
     emits: ['cancel-audio-queue'],
     data() {
         return {
+            primaryModifierLabel,
             messages: [],
             selectedForkMessageId: null,
             defaultColors: {

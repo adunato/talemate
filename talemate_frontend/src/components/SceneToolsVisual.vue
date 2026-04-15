@@ -91,6 +91,7 @@
 </template>
 <script>
 import { VIS_TYPE_OPTIONS } from '../constants/visual';
+import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 export default {
     name: 'SceneToolsVisual',
     props: {
@@ -183,7 +184,7 @@ export default {
             return null;
         },
         handleVisualize(character_name, event, vis_type = 'CHARACTER_CARD') {
-            const ctrlPressed = event.ctrlKey || event.metaKey;
+            const ctrlPressed = isPrimaryModifier(event);
             const altPressed = event.altKey;
             
             if (ctrlPressed) {

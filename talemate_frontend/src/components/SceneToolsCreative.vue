@@ -15,7 +15,7 @@
                 <template v-slot:prepend>
                     <v-icon color="secondary">mdi-exit-run</v-icon>
                 </template>
-                <v-list-item-title>Take out of scene: {{ character }}<v-chip variant="text" color="info" class="ml-1" size="x-small">Ctrl: no narration</v-chip></v-list-item-title>
+                <v-list-item-title>Take out of scene: {{ character }}<v-chip variant="text" color="info" class="ml-1" size="x-small">{{ primaryModifierLabel }}: no narration</v-chip></v-list-item-title>
                 <v-list-item-subtitle>Make {{ character }} a passive character.</v-list-item-subtitle>
             </v-list-item>
 
@@ -25,7 +25,7 @@
                 <template v-slot:prepend>
                     <v-icon color="secondary">mdi-human-greeting</v-icon>
                 </template>
-                <v-list-item-title>Call into scene: {{ character }}<v-chip variant="text" color="info" class="ml-1" size="x-small">Ctrl: no narration</v-chip></v-list-item-title>
+                <v-list-item-title>Call into scene: {{ character }}<v-chip variant="text" color="info" class="ml-1" size="x-small">{{ primaryModifierLabel }}: no narration</v-chip></v-list-item-title>
                 <v-list-item-subtitle>Make {{ character }} an active character.</v-list-item-subtitle>
             </v-list-item>
 
@@ -44,7 +44,7 @@
                 <template v-slot:prepend>
                     <v-icon color="warning">mdi-human-greeting</v-icon>
                 </template>
-                <v-list-item-title>Introduce {{ character }}<v-chip variant="text" color="highlight5" class="ml-1" size="x-small">Ctrl: Advanced</v-chip></v-list-item-title>
+                <v-list-item-title>Introduce {{ character }}<v-chip variant="text" color="highlight5" class="ml-1" size="x-small">{{ primaryModifierLabel }}: Advanced</v-chip></v-list-item-title>
                 <v-list-item-subtitle>Make {{ character }} an active character.</v-list-item-subtitle>
             </v-list-item>
 
@@ -134,6 +134,7 @@
 <script>
 
 import WorldStateManagerTemplateApplicator from './WorldStateManagerTemplateApplicator.vue';
+import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 export default {
     name: 'SceneToolsCreative',
     components: {
@@ -186,6 +187,7 @@ export default {
     },
     data() {
         return {
+            primaryModifierLabel,
             dialogIntroduceCharacter: false,
             newIntroduction: null,
             introduction: {
@@ -246,12 +248,12 @@ export default {
         },
         
         activateCharacter(ev, name) {
-            let modifyNoNarration = ev.ctrlKey;
+            let modifyNoNarration = isPrimaryModifier(ev);
             this.getWebsocket().send(JSON.stringify({ type: 'director', action: 'activate_character', character_name: name, never_narrate: modifyNoNarration }));
         },
 
         deactivateCharacter(ev, name) {
-            let modifyNoNarration = ev.ctrlKey;
+            let modifyNoNarration = isPrimaryModifier(ev);
             this.getWebsocket().send(JSON.stringify({ type: 'director', action: 'deactivate_character', character_name: name, never_narrate: modifyNoNarration }));
         },
 
@@ -276,7 +278,7 @@ export default {
         },
 
         introduceCharacter(ev, name) {
-            let advanced = ev.ctrlKey;
+            let advanced = isPrimaryModifier(ev);
             let payload = {};
 
             if(typeof name === 'string' && !advanced) {

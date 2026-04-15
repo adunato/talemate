@@ -4,6 +4,7 @@ import { CommentNode } from './commentNode.js';
 import { trackRecentNodes } from './recentNodes.js';
 import { handleFitGroupToNodes, handleDuplicateGroup, handleVerticalSnapGroup, handleCreateGroupFromSelectedNodes } from './groupInteractions.js';
 import { handleWatchNodeShortcut, handleSetStateNodeShortcut, handleStageNodeShortcut } from './graphConnectionUtil.js';
+import { isPrimaryModifier } from './keyboardModifiers.js';
 
 const UNRESOLVED = "<class 'talemate.game.engine.nodes.core.UNRESOLVED'>";
 
@@ -1605,7 +1606,7 @@ LGraphCanvas.prototype.processKey = function(e) {
     var key_code = e.keyCode;
 
     // Ctrl+C to copy
-    if (e.type == "keydown" && (e.ctrlKey || e.metaKey) && key_code == 67) {
+    if (e.type == "keydown" && isPrimaryModifier(e) && key_code == 67) {
         if (this.selected_nodes) {
             // Store the selected nodes for copy
             var selected_list = [];
@@ -1672,7 +1673,7 @@ LGraphCanvas.prototype.processKey = function(e) {
         block_default = true;
     } 
     // Ctrl+V to paste
-    else if (e.type == "keydown" && (e.ctrlKey || e.metaKey) && key_code == 86) {
+    else if (e.type == "keydown" && isPrimaryModifier(e) && key_code == 86) {
         if (LiteGraph._clipboard_data && LiteGraph._clipboard_data.nodes && LiteGraph._clipboard_data.nodes.length) {
             this.graph.beforeChange();
             
@@ -1835,8 +1836,8 @@ LGraphCanvas.prototype.processMouseDown = function(e) {
 
         if (isClickOnTitle) {
             let handled = false;
-            // --- Ctrl+Click: Fit Group to Nodes ---
-            if (e.ctrlKey || e.metaKey) {
+            // --- Ctrl/Cmd+Click: Fit Group to Nodes ---
+            if (isPrimaryModifier(e)) {
                 handled = handleFitGroupToNodes(group, this);
             }
             // --- Shift+Click: Duplicate Group ---

@@ -294,7 +294,9 @@
                         ref="messageInput" 
                         @keydown.enter.prevent="sendMessage"
                         @keydown.ctrl.up.prevent="onHistoryUp"
+                        @keydown.meta.up.prevent="onHistoryUp"
                         @keydown.ctrl.down.prevent="onHistoryDown"
+                        @keydown.meta.down.prevent="onHistoryDown"
                         @keydown.tab.prevent="cycleActAs"
                         :hint="messageInputLongHint()"
                         :disabled="busy || !ready || uxInteractionActive || isInputDisabled()"
@@ -386,6 +388,7 @@
   
 <script>
 import AIClient from './AIClient.vue';
+import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 import AIAgent from './AIAgent.vue';
 import AgentActivityBar from './AgentActivityBar.vue';
 import LoadScene from './LoadScene.vue';
@@ -1318,8 +1321,8 @@ export default {
 
     sendMessage(event) {
 
-      // if ctrl+enter is pressed, request autocomplete
-      if (event.ctrlKey && event.key === 'Enter') {
+      // if ctrl/cmd+enter is pressed, request autocomplete
+      if (isPrimaryModifier(event) && event.key === 'Enter') {
         return this.autocomplete();
       }
 
@@ -1525,7 +1528,7 @@ export default {
     },
 
     autocompleteInfoMessage(active) {
-      return active ? 'Generating ...' : "Ctrl+Enter to autocomplete";
+      return active ? 'Generating ...' : `${primaryModifierLabel}+Enter to autocomplete`;
     },
 
     requestAppConfig() {
@@ -1803,7 +1806,7 @@ export default {
     },
 
     messageInputLongHint() {
-      const DIALOG_HINT = "Ctrl+Enter to autocomplete, Shift+Enter for newline, Ctrl+Up/Down for history, Tab to act as another character. Start messages with '@' to do an action. (e.g., '@look at the door')";
+      const DIALOG_HINT = `${primaryModifierLabel}+Enter to autocomplete, Shift+Enter for newline, ${primaryModifierLabel}+Up/Down for history, Tab to act as another character. Start messages with '@' to do an action. (e.g., '@look at the door')`;
 
       if(this.waitingForInput) {
         if(this.inputRequestInfo.reason === "talk") {

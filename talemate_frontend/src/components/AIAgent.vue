@@ -106,6 +106,7 @@
     
 <script>
 import AgentModal from './AgentModal.vue';
+import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 import AgentMessages from './AgentMessages.vue';
 
 export default {
@@ -192,7 +193,7 @@ export default {
          */
         listItemClicked(event, agent, index) {
             // If the user is holding Ctrl (Windows/Linux) or Cmd (macOS)
-            if (event.ctrlKey || event.metaKey) {
+            if (isPrimaryModifier(event)) {
                 // Only toggle agents that explicitly allow it
                 if (agent.data && agent.data.has_toggle) {
                     agent.enabled = !agent.enabled;

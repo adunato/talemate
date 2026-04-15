@@ -18,10 +18,11 @@
                                 v-model="input"
                                 ref="input_multiline"
                                 @keydown.enter.ctrl="proceed"
+                                @keydown.enter.meta="proceed"
                                 :placeholder="placeholder"
                                 :label="title"
                                 :rules="[rules.required]"
-                                messages="Press Ctrl+Enter to submit"
+                                :messages="`Press ${primaryModifierLabel}+Enter to submit`"
                             ></v-textarea>
                         </v-col>
                     </v-row>
@@ -31,10 +32,11 @@
                                 v-model="input"
                                 ref="input_text"
                                 @keydown.enter.ctrl="proceed"
+                                @keydown.enter.meta="proceed"
                                 :label="title"
                                 :placeholder="placeholder"
                                 :rules="[rules.required]"
-                                messages="Press Ctrl+Enter to submit"
+                                :messages="`Press ${primaryModifierLabel}+Enter to submit`"
                             ></v-text-field>
                         </v-col>
                     </v-row>
@@ -54,6 +56,7 @@
 </template>
 
 <script>
+import { primaryModifierLabel } from '@/utils/keyboardModifiers';
 
 export default {
     name: "RequestInput",
@@ -80,6 +83,7 @@ export default {
     },
     data() {
         return {
+            primaryModifierLabel,
             open: false,
             valid: false,
             extra_params: {},

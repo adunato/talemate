@@ -115,10 +115,10 @@
                                 <!-- GENERATE CHANGE SUGGESTIONS -->
                                 <div>
                                     <v-list-item>
-                                        <v-tooltip max-width="300" :text="`Generate change suggestions for ${character.name}. This will provide a list of suggestions for changes to the character, based on the progression of the story thus far. [Ctrl: Provide instructions]`">
+                                        <v-tooltip max-width="300" :text="`Generate change suggestions for ${character.name}. This will provide a list of suggestions for changes to the character, based on the progression of the story thus far. [${primaryModifierLabel}: Provide instructions]`">
                                             <template v-slot:activator="{ props }">
-                                                <v-btn 
-                                                @click.stop="(event) => { suggestChanges(character.name, event.ctrlKey)}"
+                                                <v-btn
+                                                @click.stop="(event) => { suggestChanges(character.name, isPrimaryModifier(event))}"
                                                 v-bind="props" 
                                                 variant="tonal" 
                                                 :disabled="appBusy || !appReady"
@@ -350,6 +350,7 @@ import WorldStateManagerCharacterActor from './WorldStateManagerCharacterActor.v
 import WorldStateManagerCharacterCreator from './WorldStateManagerCharacterCreator.vue';
 import WorldStateManagerCharacterVisuals from './WorldStateManagerCharacterVisuals.vue';
 import { MAX_CONTENT_WIDTH, FOLDER_NAME_MAX_LENGTH } from '@/constants';
+import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 
 export default {
     name: 'WorldStateManagerCharacter',
@@ -397,6 +398,7 @@ export default {
             folderInput: '',
             folderMenuOpen: false,
             MAX_CONTENT_WIDTH,
+            primaryModifierLabel,
         }
     },
     watch: {
@@ -447,6 +449,7 @@ export default {
         },
     },
     methods: {
+        isPrimaryModifier,
         reset() {
             this.selected = null;
             this.character = null;

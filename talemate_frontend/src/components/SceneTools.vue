@@ -59,7 +59,7 @@
     <RequestInput
         ref="requestDirectedRegenerate"
         title="Directed regenerate"
-        instructions="Provide instructions for regeneration. Ctrl+Enter submits."
+        :instructions="`Provide instructions for regeneration. ${primaryModifierLabel}+Enter submits.`"
         icon="mdi-refresh"
         inputType="multiline"
         @continue="directedRegenerateContinue"
@@ -107,7 +107,7 @@
                 </v-tooltip>
 
                 <v-tooltip :disabled="appBusy || !appReady" location="top"
-                    :text="'Redo most recent AI message.\n[Ctrl: Provide instructions, +Alt: Rewrite]'"
+                    :text="`Redo most recent AI message.\n[${primaryModifierLabel}: Provide instructions, +Alt: Rewrite]`"
                     class="pre-wrap"
                     max-width="300px">
                     <template v-slot:activator="{ props }">
@@ -119,7 +119,7 @@
                 </v-tooltip>
 
                 <v-tooltip :disabled="appBusy || !appReady" location="top"
-                    :text="'Redo most recent AI message (Nuke Option - use this to attempt to break out of repetition) \n[Ctrl: Provide instructions, +Alt: Rewrite]'"
+                    :text="`Redo most recent AI message (Nuke Option - use this to attempt to break out of repetition) \n[${primaryModifierLabel}: Provide instructions, +Alt: Rewrite]`"
                     class="pre-wrap"
                     max-width="300px">
                     <template v-slot:activator="{ props }">
@@ -223,6 +223,7 @@ import SceneToolsSettings from './SceneToolsSettings.vue';
 import SceneToolsSave from './SceneToolsSave.vue';
 import SceneToolsTime from './SceneToolsTime.vue';
 import RequestInput from './RequestInput.vue';
+import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 export default {
 
     name: 'SceneTools',
@@ -284,6 +285,7 @@ export default {
     },
     data() {
         return {
+            primaryModifierLabel,
             commandActive: false,
             commandName: null,
             autoSave: true,
@@ -368,9 +370,9 @@ export default {
         },
 
         regenerate(event) {
-            // if ctrl is pressed use directed regenerate
-            let withDirection = event.ctrlKey;
-            let method = event.altKey || event.metaKey ? "edit" : "replace";
+            // primary modifier (Ctrl/Cmd) opens the directed regenerate dialog
+            let withDirection = isPrimaryModifier(event);
+            let method = event.altKey ? "edit" : "replace";
             const nuke_repetition = 0.0;
 
             if (withDirection) {
@@ -390,9 +392,9 @@ export default {
         },
 
         regenerateNuke(event) {
-            // if ctrl is pressed use directed regenerate
-            let withDirection = event.ctrlKey;
-            let method = event.altKey || event.metaKey ? "edit" : "replace";
+            // primary modifier (Ctrl/Cmd) opens the directed regenerate dialog
+            let withDirection = isPrimaryModifier(event);
+            let method = event.altKey ? "edit" : "replace";
             const nuke_repetition = 0.5;
 
             if (withDirection) {

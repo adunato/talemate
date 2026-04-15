@@ -38,8 +38,8 @@ If your voice agent is disabled - indicated by the grey dot next to the agent - 
 
 ![Agent disabled](/talemate/img/0.26.0/agent-disabled.png) ![Agent enabled](/talemate/img/0.26.0/agent-enabled.png)
 
-!!! note "Ctrl click to toggle agent"
-    You can use Ctrl click to toggle the agent on and off.
+!!! note "Ctrl/Cmd click to toggle agent"
+    You can use Ctrl click (or Cmd click on macOS) to toggle the agent on and off.
 
 ## Voice Library Management
 

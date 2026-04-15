@@ -1,5 +1,8 @@
 # Scene Tools
 
+!!! note "Mac users"
+    Throughout this guide, hold **Cmd** wherever **Ctrl** is mentioned. macOS reserves `Ctrl`+click for the system context menu, so Talemate also accepts the Command key as the primary modifier on every click and shortcut.
+
 ## Agent Activity Bar
 
 ![Agent activity bar showing active agents](/talemate/img/0.35.0/agent-activity-bar.png)

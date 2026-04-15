@@ -221,7 +221,7 @@
                                 :style="propertyEditorStyle"
                                 @keydown.capture="onPropertyEditorKeydown"
                             ></Codemirror>
-                            <span class="text-caption text-muted">(Ctrl+Enter to submit changes)</span>
+                            <span class="text-caption text-muted">({{ primaryModifierLabel }}+Enter to submit changes)</span>
                         </v-card-text>
                         <v-card-actions v-if="propertyEditorType === 'color'">
                             <v-spacer></v-spacer>
@@ -311,6 +311,7 @@
 <script>
 import { LGraphCanvas, LiteGraph } from 'litegraph.js';
 import { initializeGraphFromJSON, normalizeHexColor } from '@/utils/litegraphUtils'
+import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 import { convertGraphToJSON, convertSelectedGraphToJSON } from '@/utils/exportGraph.js'
 //import '@/utils/litegraphSearchBox'
 import { Codemirror } from 'vue-codemirror'
@@ -367,6 +368,7 @@ export default {
     
     data() {
         return {
+            primaryModifierLabel,
             propertyEditor: false,
             propertyEditorType: 'text',
             propertyEditorValue: '',
@@ -607,7 +609,7 @@ export default {
 
         submitPropertyEditor(ev) {
 
-            if(ev && !(ev.ctrlKey || ev.metaKey)) {
+            if(ev && !isPrimaryModifier(ev)) {
                 return;
             }
             if(ev) {
@@ -638,7 +640,7 @@ export default {
         },
 
         onPropertyEditorKeydown(ev) {
-            if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') {
+            if (isPrimaryModifier(ev) && ev.key === 'Enter') {
                 ev.preventDefault();
                 ev.stopPropagation();
                 this.submitPropertyEditor(ev);

@@ -10,12 +10,12 @@
             <v-list-item v-for="npcName in npcCharacters" :key="npcName"
                 @click="(ev) => { actionGenerateActingAction(ev, null, {character: npcName}) }" prepend-icon="mdi-comment-account-outline">
                 <v-list-item-title>Actor Action ({{ npcName }})</v-list-item-title>
-                <v-list-item-subtitle>Generate Actor Action <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">Ctrl: Provide direction</v-chip></v-list-item-subtitle>
+                <v-list-item-subtitle>Generate Actor Action <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">{{ primaryModifierLabel }}: Provide direction</v-chip></v-list-item-subtitle>
             </v-list-item>
 
             <v-list-item @click="actionGenerateActingAction" prepend-icon="mdi-comment-text-outline">
                 <v-list-item-title>Actor Action</v-list-item-title>
-                <v-list-item-subtitle>Generate Actor Action <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">Ctrl: Provide direction</v-chip></v-list-item-subtitle>
+                <v-list-item-subtitle>Generate Actor Action <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">{{ primaryModifierLabel }}: Provide direction</v-chip></v-list-item-subtitle>
             </v-list-item>
         </v-list>
     </v-menu>
@@ -29,6 +29,7 @@
 
 <script>
 import RequestInput from './RequestInput.vue';
+import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 
 export default {
     name: "SceneToolsActor",
@@ -42,6 +43,7 @@ export default {
     inject: ['getWebsocket'],
     data() {
         return {
+            primaryModifierLabel,
         }
     },
     methods: {
@@ -69,7 +71,7 @@ export default {
 
         actionGenerateActingAction(ev, actingDirection="", params) {
 
-            if (ev.ctrlKey) {
+            if (isPrimaryModifier(ev)) {
                 this.requestDirection({action: 'GenerateActingAction', ...params});
                 return;
             }

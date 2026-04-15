@@ -13,7 +13,7 @@
                 @click="actionRequestDynamicChoices"
                 prepend-icon="mdi-tournament"
             >
-                <v-list-item-title>Generate dynamic actions<v-chip variant="text" color="highlight5" class="ml-1" size="x-small">Ctrl: Provide direction</v-chip></v-list-item-title>
+                <v-list-item-title>Generate dynamic actions<v-chip variant="text" color="highlight5" class="ml-1" size="x-small">{{ primaryModifierLabel }}: Provide direction</v-chip></v-list-item-title>
                 <v-list-item-subtitle>{{ getActAsCharacterName() }}</v-list-item-subtitle>
             </v-list-item>
             <!-- Trigger scene direction turn -->
@@ -23,7 +23,7 @@
                 prepend-icon="mdi-movie-play"
                 :disabled="!sceneDirectionEnabled"
             >
-                <v-list-item-title>Scene direction turn<v-chip variant="text" color="highlight5" class="ml-1" size="x-small">Ctrl: Provide direction</v-chip></v-list-item-title>
+                <v-list-item-title>Scene direction turn<v-chip variant="text" color="highlight5" class="ml-1" size="x-small">{{ primaryModifierLabel }}: Provide direction</v-chip></v-list-item-title>
                 <v-list-item-subtitle>Manually trigger a scene direction turn</v-list-item-subtitle>
             </v-list-item>
             <!-- Generate long progress -->
@@ -156,6 +156,7 @@
 
 <script>
 import RequestInput from './RequestInput.vue';
+import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 
 export default {
     name: "SceneToolsDirector",
@@ -171,6 +172,7 @@ export default {
     inject: ['getWebsocket', 'getActAsCharacterName', 'openDirectorConsole', 'openAgentSettings'],
     data() {
         return {
+            primaryModifierLabel,
             scenePlanDialog: false,
             scenePlanInstructions: '',
             scenePlanBeats: 8,
@@ -222,7 +224,7 @@ export default {
 
         actionRequestDynamicChoices(ev, instructions="") {
 
-            if (ev.ctrlKey) {
+            if (isPrimaryModifier(ev)) {
                 this.requestDirection({action: 'RequestDynamicChoices'});
                 return;
             }
@@ -245,7 +247,7 @@ export default {
 
         actionSceneDirectionTurn(ev, instructions="") {
 
-            if (ev.ctrlKey) {
+            if (isPrimaryModifier(ev)) {
                 this.requestDirection({action: 'SceneDirectionTurn'});
                 return;
             }

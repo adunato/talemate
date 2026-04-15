@@ -235,6 +235,7 @@
 
 <script>
 import { VIS_TYPE_OPTIONS } from '../constants/visual.js';
+import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 import VisualReferenceImages from './VisualReferenceImages.vue';
 import CoverBBoxEditor from './CoverBBoxEditor.vue';
 export default {
@@ -392,7 +393,7 @@ export default {
     },
     handleAnalyzeClick(event) {
       // If Ctrl/Cmd is pressed, open dialog; otherwise quick analyze
-      if (event.ctrlKey || event.metaKey) {
+      if (isPrimaryModifier(event)) {
         event.preventDefault();
         event.stopPropagation();
         this.showAnalyzeDialog = true;
