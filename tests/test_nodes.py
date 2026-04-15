@@ -533,8 +533,7 @@ async def test_parent_scope_state_isolation_across_runs():
     await cleanup_pending_tasks()
 
     assert captures == [1, 1], (
-        f"Parent-scope state leaked across runs: captures={captures} "
-        "(expected [1, 1])"
+        f"Parent-scope state leaked across runs: captures={captures} (expected [1, 1])"
     )
 
 

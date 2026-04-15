@@ -103,15 +103,15 @@ class GroupColor:
     the convention used by hand-built graphs.
     """
 
-    INPUT = "#88A"           # blue       — input collection / passthrough
-    OUTPUT = "#8A8"          # green      — output emission
-    PROCESS = "#3f789e"      # pale_blue  — main computation stages
-    PREPARE = "#8AA"         # cyan       — setup / preconditions
-    VALIDATION = "#b58b2a"   # yellow     — validation / guards
-    FUNCTION = "#b06634"     # brown      — function definitions
-    SPECIAL = "#a1309b"      # purple     — helpers / orphans / one-offs
+    INPUT = "#88A"  # blue       — input collection / passthrough
+    OUTPUT = "#8A8"  # green      — output emission
+    PROCESS = "#3f789e"  # pale_blue  — main computation stages
+    PREPARE = "#8AA"  # cyan       — setup / preconditions
+    VALIDATION = "#b58b2a"  # yellow     — validation / guards
+    FUNCTION = "#b06634"  # brown      — function definitions
+    SPECIAL = "#a1309b"  # purple     — helpers / orphans / one-offs
     ERROR_HANDLING = "#A88"  # red        — error-handler chains
-    UX = "#207e7e"           # teal       — user-facing UX nodes
+    UX = "#207e7e"  # teal       — user-facing UX nodes
 
 
 # Default canvas dimensions used when a node in ``add_group``'s target
@@ -125,8 +125,8 @@ DEFAULT_NODE_HEIGHT = 100
 # should look identical to user-created ones, so we mirror the same
 # numbers rather than picking our own.
 GROUP_PADDING = 25
-GROUP_TOP_PADDING = 45     # padding + 20
-GROUP_TITLE_HEIGHT = 20    # LiteGraph.NODE_TITLE_HEIGHT default
+GROUP_TOP_PADDING = 45  # padding + 20
+GROUP_TITLE_HEIGHT = 20  # LiteGraph.NODE_TITLE_HEIGHT default
 GROUP_MIN_WIDTH = 140
 GROUP_MIN_HEIGHT = 80
 GROUP_DEFAULT_FONT_SIZE = 24
@@ -321,11 +321,7 @@ def _require_node(graph: dict, node_id: str) -> dict:
 
 
 def _dynamic_input_names(node: dict) -> list[str]:
-    return [
-        d.get("name")
-        for d in (node.get("dynamic_inputs") or [])
-        if d.get("name")
-    ]
+    return [d.get("name") for d in (node.get("dynamic_inputs") or []) if d.get("name")]
 
 
 def _input_names_for_node(node: dict) -> list[str]:
@@ -455,20 +451,14 @@ def remove_node(graph: dict, node_id: str) -> None:
 
     edges = _edges(graph)
     # Drop entire edge keys whose source is this node
-    to_drop = [
-        src for src in edges if src.split(".", 1)[0] == node_id
-    ]
+    to_drop = [src for src in edges if src.split(".", 1)[0] == node_id]
     for src in to_drop:
         del edges[src]
 
     # For remaining edges, filter out targets pointing at this node.
     empty_keys: list[str] = []
     for src, targets in edges.items():
-        kept = [
-            tgt
-            for tgt in targets
-            if tgt.split(".", 1)[0] != node_id
-        ]
+        kept = [tgt for tgt in targets if tgt.split(".", 1)[0] != node_id]
         if len(kept) != len(targets):
             edges[src] = kept
         if not edges[src]:
@@ -551,9 +541,7 @@ def connect(
         )
 
 
-def _would_cycle_including_new(
-    graph: dict, source_node: str, target_node: str
-) -> bool:
+def _would_cycle_including_new(graph: dict, source_node: str, target_node: str) -> bool:
     """Cycle check based on current edge state (edge already inserted).
 
     With the new edge in place, a cycle exists iff there is a path from
@@ -668,9 +656,7 @@ def remove_dynamic_input(graph: dict, node_id: str, name: str) -> None:
     dyn = node.get("dynamic_inputs") or []
     new_dyn = [d for d in dyn if d.get("name") != name]
     if len(new_dyn) == len(dyn):
-        raise DynamicInputError(
-            f"No dynamic input named '{name}' on node {node_id}."
-        )
+        raise DynamicInputError(f"No dynamic input named '{name}' on node {node_id}.")
     node["dynamic_inputs"] = new_dyn
 
     # Sweep any edges targeting this now-removed socket.
@@ -770,7 +756,9 @@ def add_group(
     pos_x = min_x - GROUP_PADDING
     pos_y = min_y - GROUP_TOP_PADDING - GROUP_TITLE_HEIGHT
     raw_width = (max_x - min_x) + GROUP_PADDING * 2
-    raw_height = (max_y - min_y) + GROUP_PADDING + GROUP_TOP_PADDING + GROUP_TITLE_HEIGHT
+    raw_height = (
+        (max_y - min_y) + GROUP_PADDING + GROUP_TOP_PADDING + GROUP_TITLE_HEIGHT
+    )
     width = max(GROUP_MIN_WIDTH, raw_width)
     height = max(GROUP_MIN_HEIGHT, raw_height)
 

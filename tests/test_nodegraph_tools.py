@@ -195,7 +195,10 @@ def test_resolve_short_prefix_unique_ambiguous_missing():
     }
 
     # unique-enough prefix still works
-    assert analysis.resolve_node_id(g, "aaaa1111") == "aaaa1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    assert (
+        analysis.resolve_node_id(g, "aaaa1111")
+        == "aaaa1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    )
 
     # ambiguous
     with pytest.raises(ValueError, match="Ambiguous"):
@@ -312,8 +315,12 @@ def test_real_graph_summarize_and_lists():
 
     chk = analysis.check_registries(g)
     # Shipped graph should not contain unknown registries.
-    assert chk.unknown_registries == [], [p.model_dump() for p in chk.unknown_registries]
-    assert chk.unknown_base_types == [], [p.model_dump() for p in chk.unknown_base_types]
+    assert chk.unknown_registries == [], [
+        p.model_dump() for p in chk.unknown_registries
+    ]
+    assert chk.unknown_base_types == [], [
+        p.model_dump() for p in chk.unknown_base_types
+    ]
 
 
 def test_loader_missing_file(tmp_path):
@@ -374,9 +381,7 @@ def test_cli_check_registries_unknown_exits_2(tmp_path):
 
 
 def test_cli_node_with_short_prefix():
-    code, out, err = _run_cli(
-        ["node", str(DIRECTOR_FIXTURE), "ccb39d43"]
-    )
+    code, out, err = _run_cli(["node", str(DIRECTOR_FIXTURE), "ccb39d43"])
     # ccb39d43 is the top-level graph id, not a node id - expect error
     assert code == cli.EXIT_STRUCT_ERROR
     assert "No node" in err or "matches" in err

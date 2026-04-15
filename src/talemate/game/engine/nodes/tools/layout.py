@@ -110,8 +110,8 @@ class LayoutOptions(pydantic.BaseModel):
 class WCCKind(enum.Enum):
     """The vertical band a weakly-connected component belongs to."""
 
-    TOP = "top"        # has core/Input, no core/Stage
-    STAGE = "stage"    # has core/Stage
+    TOP = "top"  # has core/Input, no core/Stage
+    STAGE = "stage"  # has core/Stage
     MIDDLE = "middle"  # no Input, no Output, no Stage
     BOTTOM = "bottom"  # has core/Output, no core/Input, no core/Stage
 
@@ -152,9 +152,7 @@ def _node_rect(node: dict) -> tuple[int, int, int, int]:
     return x, y, w, h
 
 
-def _existing_bounds(
-    graph: dict, target_set: set[str]
-) -> tuple[int, int, int, int]:
+def _existing_bounds(graph: dict, target_set: set[str]) -> tuple[int, int, int, int]:
     """Return (min_x, min_y, max_x, max_y) for nodes NOT in the target set.
 
     If the "outside" set is empty (e.g. full relayout, or every node is
@@ -225,9 +223,7 @@ def _estimate_height(graph_node: dict, options: LayoutOptions) -> int:
 
     rows = max(num_inputs, num_outputs) + num_properties
     estimated = (
-        options.title_bar_height
-        + rows * options.socket_row_height
-        + options.padding
+        options.title_bar_height + rows * options.socket_row_height + options.padding
     )
     if meta.is_dynamic:
         estimated += options.dynamic_socket_bonus
@@ -257,9 +253,7 @@ def _apply_estimated_heights(
 # ---------------------------------------------------------------------------
 
 
-def _wcc_over_subset(
-    graph: dict, subset: set[str]
-) -> list[list[str]]:
+def _wcc_over_subset(graph: dict, subset: set[str]) -> list[list[str]]:
     """Compute weakly-connected components restricted to ``subset``.
 
     Only edges with both endpoints in ``subset`` contribute to adjacency;
@@ -435,9 +429,7 @@ def _topological_depths(
     return depths
 
 
-def _rects_overlap(
-    a: tuple[int, int, int, int], b: tuple[int, int, int, int]
-) -> bool:
+def _rects_overlap(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) -> bool:
     ax, ay, aw, ah = a
     bx, by, bw, bh = b
     return not (ax + aw <= bx or bx + bw <= ax or ay + ah <= by or by + bh <= ay)
@@ -642,9 +634,7 @@ def _place_band(
             # deterministic.
             def _preferred(nid: str) -> tuple[int, int, str]:
                 placed_parents = [
-                    placed_y[p]
-                    for p in predecessors.get(nid, ())
-                    if p in placed_y
+                    placed_y[p] for p in predecessors.get(nid, ()) if p in placed_y
                 ]
                 if placed_parents:
                     avg = sum(placed_parents) // len(placed_parents)
@@ -661,9 +651,7 @@ def _place_band(
             preferred_y: int | None = None
             if depth > 0:
                 placed_parents = [
-                    placed_y[p]
-                    for p in predecessors.get(nid, ())
-                    if p in placed_y
+                    placed_y[p] for p in predecessors.get(nid, ()) if p in placed_y
                 ]
                 if placed_parents:
                     preferred_y = sum(placed_parents) // len(placed_parents)

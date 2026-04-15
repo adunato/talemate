@@ -331,7 +331,9 @@ def _instance_for_class(node_cls: Any) -> Any | None:
         return None
 
 
-def _static_socket_names(registry: str | None) -> tuple[list[str] | None, list[str] | None]:
+def _static_socket_names(
+    registry: str | None,
+) -> tuple[list[str] | None, list[str] | None]:
     """Return ``(input_names, output_names)`` from the registered class.
 
     Each element is ``None`` when we couldn't determine it.
@@ -631,7 +633,9 @@ def list_edges(
                     target_socket=tgt_socket,
                 )
             )
-    out.sort(key=lambda e: (e.source_short, e.source_socket, e.target_short, e.target_socket))
+    out.sort(
+        key=lambda e: (e.source_short, e.source_socket, e.target_short, e.target_socket)
+    )
     return out
 
 
@@ -707,7 +711,9 @@ def consumers(graph: dict, source: str) -> ConsumersResult:
 # ---------------------------------------------------------------------------
 
 
-def _make_trace_leaf(graph: dict, node_id: str, via: str | None, *, cycle: bool, truncated: bool) -> TraceNode:
+def _make_trace_leaf(
+    graph: dict, node_id: str, via: str | None, *, cycle: bool, truncated: bool
+) -> TraceNode:
     node = _nodes(graph).get(node_id, {})
     return TraceNode(
         node_id=node_id,

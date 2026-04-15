@@ -44,7 +44,7 @@ def _fmt_summary(s: analysis.GraphSummary) -> str:
     out.write(f"base_type:    {s.base_type}\n")
     out.write(f"extends:      {s.extends}\n")
     out.write(f"nodes:        {s.node_count}\n")
-    out.write(f"  by category:\n")
+    out.write("  by category:\n")
     for cat, count in s.nodes_by_category.items():
         out.write(f"    {cat:<20} {count}\n")
     out.write(f"stage nodes:  {s.stage_node_count}\n")
@@ -306,7 +306,12 @@ def _run(args: argparse.Namespace, out_stream: TextIO, err_stream: TextIO) -> in
     try:
         if cmd == "summary":
             result = analysis.summarize(graph)
-            _emit(result, json_out=json_out, text_formatter=_fmt_summary, out_stream=out_stream)
+            _emit(
+                result,
+                json_out=json_out,
+                text_formatter=_fmt_summary,
+                out_stream=out_stream,
+            )
 
         elif cmd == "list-nodes":
             result = analysis.list_nodes(
@@ -334,11 +339,21 @@ def _run(args: argparse.Namespace, out_stream: TextIO, err_stream: TextIO) -> in
             result = analysis.list_edges(
                 graph, from_node=args.from_node, to_node=args.to_node
             )
-            _emit(result, json_out=json_out, text_formatter=_fmt_edges, out_stream=out_stream)
+            _emit(
+                result,
+                json_out=json_out,
+                text_formatter=_fmt_edges,
+                out_stream=out_stream,
+            )
 
         elif cmd == "feeds":
             result = analysis.feeds(graph, args.target)
-            _emit(result, json_out=json_out, text_formatter=_fmt_feeds, out_stream=out_stream)
+            _emit(
+                result,
+                json_out=json_out,
+                text_formatter=_fmt_feeds,
+                out_stream=out_stream,
+            )
 
         elif cmd == "consumers":
             result = analysis.consumers(graph, args.source)
@@ -351,11 +366,21 @@ def _run(args: argparse.Namespace, out_stream: TextIO, err_stream: TextIO) -> in
 
         elif cmd == "trace":
             result = analysis.trace_forward(graph, args.start, depth=args.depth)
-            _emit(result, json_out=json_out, text_formatter=_fmt_trace, out_stream=out_stream)
+            _emit(
+                result,
+                json_out=json_out,
+                text_formatter=_fmt_trace,
+                out_stream=out_stream,
+            )
 
         elif cmd == "rtrace":
             result = analysis.trace_backward(graph, args.end, depth=args.depth)
-            _emit(result, json_out=json_out, text_formatter=_fmt_trace, out_stream=out_stream)
+            _emit(
+                result,
+                json_out=json_out,
+                text_formatter=_fmt_trace,
+                out_stream=out_stream,
+            )
 
         elif cmd == "stages":
             result = analysis.stage_map(graph)

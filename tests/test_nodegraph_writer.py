@@ -46,9 +46,7 @@ DIRECTOR_FIXTURE = (
     REPO_ROOT
     / "src/talemate/agents/director/modules/director-action-direct-story-arc.json"
 )
-ROLL_DICE_FIXTURE = (
-    REPO_ROOT / "scenes/infinity-quest/nodes/roll-dice.json"
-)
+ROLL_DICE_FIXTURE = REPO_ROOT / "scenes/infinity-quest/nodes/roll-dice.json"
 
 
 # ---------------------------------------------------------------------------
@@ -164,7 +162,7 @@ def test_remove_node_prunes_edges():
 
 def test_remove_node_missing_raises():
     g = _empty_graph()
-    w = GraphWriter(g)
+    GraphWriter(g)
     with pytest.raises(NodeNotFoundError):
         writer_mod.remove_node(g, "no-such-node")
 
@@ -611,9 +609,7 @@ def _expected_height(registry: str, options: LayoutOptions) -> int:
     meta = get_node_metadata(registry)
     rows = max(len(meta.inputs), len(meta.outputs)) + len(meta.properties)
     estimated = (
-        options.title_bar_height
-        + rows * options.socket_row_height
-        + options.padding
+        options.title_bar_height + rows * options.socket_row_height + options.padding
     )
     if meta.is_dynamic:
         estimated += options.dynamic_socket_bonus
@@ -647,11 +643,7 @@ def test_layout_height_formula_is_deterministic():
 
     meta = get_node_metadata("state/SetState")
     rows = max(len(meta.inputs), len(meta.outputs)) + len(meta.properties)
-    manual = (
-        opts.title_bar_height
-        + rows * opts.socket_row_height
-        + opts.padding
-    )
+    manual = opts.title_bar_height + rows * opts.socket_row_height + opts.padding
     if meta.is_dynamic:
         manual += opts.dynamic_socket_bonus
     manual = max(manual, opts.min_height)
@@ -832,16 +824,12 @@ def test_layout_vertical_band_ordering():
     w.connect(top_in, "value", top_watch, "value")
 
     # STAGE(0) component
-    stage0 = w.add_node(
-        "core/Stage", title="Stage 0", properties={"stage": 0}
-    )
+    stage0 = w.add_node("core/Stage", title="Stage 0", properties={"stage": 0})
     stage0_watch = w.add_node("core/Watch", title="s0 watch")
     w.connect(stage0_watch, "value", stage0, "state")
 
     # STAGE(1) component
-    stage1 = w.add_node(
-        "core/Stage", title="Stage 1", properties={"stage": 1}
-    )
+    stage1 = w.add_node("core/Stage", title="Stage 1", properties={"stage": 1})
     stage1_watch = w.add_node("core/Watch", title="s1 watch")
     w.connect(stage1_watch, "value", stage1, "state")
 
@@ -861,9 +849,7 @@ def test_layout_vertical_band_ordering():
         return min(g["nodes"][nid]["y"] for nid in node_ids)
 
     def _comp_bottom(node_ids: list[str]) -> int:
-        return max(
-            g["nodes"][nid]["y"] + g["nodes"][nid]["height"] for nid in node_ids
-        )
+        return max(g["nodes"][nid]["y"] + g["nodes"][nid]["height"] for nid in node_ids)
 
     top_y = _comp_y([top_in, top_watch])
     stage0_y = _comp_y([stage0, stage0_watch])
@@ -900,11 +886,7 @@ def test_layout_v21_height_formula_matches_explicit_math():
 
     meta = get_node_metadata("state/SetState")
     rows = max(len(meta.inputs), len(meta.outputs)) + len(meta.properties)
-    expected = (
-        opts.title_bar_height
-        + rows * opts.socket_row_height
-        + opts.padding
-    )
+    expected = opts.title_bar_height + rows * opts.socket_row_height + opts.padding
     # state/SetState is a regular node, not a DynamicSocketNodeBase.
     assert meta.is_dynamic is False
     expected = max(expected, opts.min_height)
@@ -924,11 +906,7 @@ def test_layout_v21_dynamic_socket_bonus_applies_to_dynamic_class():
     assert meta.is_dynamic is True
 
     rows = max(len(meta.inputs), len(meta.outputs)) + len(meta.properties)
-    base = (
-        opts.title_bar_height
-        + rows * opts.socket_row_height
-        + opts.padding
-    )
+    base = opts.title_bar_height + rows * opts.socket_row_height + opts.padding
     expected = max(base + opts.dynamic_socket_bonus, opts.min_height)
     assert _estimate_height(g["nodes"][dyn_nid], opts) == expected
 
@@ -988,9 +966,7 @@ def test_layout_v21_height_aware_column_packing():
     y_tall = g["nodes"][tall_id]["y"]
     y_short = g["nodes"][short_id]["y"]
     assert y_tall != y_short
-    top_id, bottom_id = (
-        (tall_id, short_id) if y_tall < y_short else (short_id, tall_id)
-    )
+    top_id, bottom_id = (tall_id, short_id) if y_tall < y_short else (short_id, tall_id)
     top_y = g["nodes"][top_id]["y"]
     top_h = g["nodes"][top_id]["height"]
     bottom_y = g["nodes"][bottom_id]["y"]
@@ -1078,7 +1054,10 @@ def _empty_graph() -> dict:
         "registry": "test/Test",
         "base_type": "core/Graph",
         "properties": {},
-        "x": 0, "y": 0, "width": 200, "height": 100,
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 100,
         "collapsed": False,
         "inherited": False,
         "nodes": {},
@@ -1095,8 +1074,12 @@ def _empty_graph() -> dict:
 def test_add_group_creates_group_around_nodes():
     """add_group computes bbox from node positions and produces a group dict."""
     g = GraphWriter(_empty_graph())
-    a = g.add_node("core/Input", properties={"input_name": "a", "input_type": "any", "num": 0})
-    b = g.add_node("core/Output", properties={"output_name": "a", "output_type": "any", "num": 0})
+    a = g.add_node(
+        "core/Input", properties={"input_name": "a", "input_type": "any", "num": 0}
+    )
+    b = g.add_node(
+        "core/Output", properties={"output_name": "a", "output_type": "any", "num": 0}
+    )
     g.connect(a, "value", b, "value")
     layout_graph(g.graph, anchor="full")
 
@@ -1125,7 +1108,9 @@ def test_add_group_creates_group_around_nodes():
 def test_add_group_resolves_short_prefix_ids():
     """GraphWriter.add_group accepts short-prefix node ids like other methods."""
     g = GraphWriter(_empty_graph())
-    a = g.add_node("core/Input", properties={"input_name": "a", "input_type": "any", "num": 0})
+    a = g.add_node(
+        "core/Input", properties={"input_name": "a", "input_type": "any", "num": 0}
+    )
     layout_graph(g.graph, anchor="full")
     group = g.add_group("X", GroupColor.SPECIAL, [a[:8]])
     assert group["title"] == "X"
@@ -1146,8 +1131,12 @@ def test_add_group_unknown_node_raises():
 def test_add_group_appends_to_existing_groups():
     """add_group never clobbers user-drawn groups; it appends."""
     g = GraphWriter(_empty_graph())
-    g.graph["groups"].append({"title": "User Group", "x": 0, "y": 0, "width": 100, "height": 50})
-    a = g.add_node("core/Input", properties={"input_name": "a", "input_type": "any", "num": 0})
+    g.graph["groups"].append(
+        {"title": "User Group", "x": 0, "y": 0, "width": 100, "height": 50}
+    )
+    a = g.add_node(
+        "core/Input", properties={"input_name": "a", "input_type": "any", "num": 0}
+    )
     layout_graph(g.graph, anchor="full")
     g.add_group("Auto", GroupColor.OUTPUT, [a])
     titles = [grp["title"] for grp in g.graph["groups"]]
