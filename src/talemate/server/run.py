@@ -19,6 +19,7 @@ import websockets
 import talemate.config  # noqa: F401
 from talemate.version import VERSION
 from talemate.path import LOGS_DIR
+from talemate.environ import env_port, env_str
 
 print("Initialization time", time.perf_counter() - t_import_start)
 
@@ -98,7 +99,7 @@ async def log_stream(stream, log_func):
             log_func("uvicorn", message=decoded_line)
 
 
-async def run_frontend(host: str = "localhost", port: int = 8080):
+async def run_frontend(host: str, port: int):
     if sys.platform == "win32":
         activate_cmd = ".\\.venv\\Scripts\\activate.bat"
         frontend_cmd = f"{activate_cmd} && uvicorn --host {host} --port {port} frontend_wsgi:application"
@@ -275,18 +276,32 @@ def main():
     runserver_parser = subparser.add_parser(
         "runserver", help="Run the talemate api server"
     )
-    runserver_parser.add_argument("--host", default="localhost", help="Hostname")
-    runserver_parser.add_argument("--port", type=int, default=6000, help="Port")
+    runserver_parser.add_argument(
+        "--host",
+        default=env_str("TALEMATE_BACKEND_HOST", "localhost"),
+        help="Hostname (env: TALEMATE_BACKEND_HOST)",
+    )
+    runserver_parser.add_argument(
+        "--port",
+        type=int,
+        default=env_port("TALEMATE_BACKEND_PORT", 5050),
+        help="Port (env: TALEMATE_BACKEND_PORT)",
+    )
     runserver_parser.add_argument(
         "--backend-only", action="store_true", help="Run the backend only"
     )
 
     # frontend host and port
     runserver_parser.add_argument(
-        "--frontend-host", default="localhost", help="Frontend Hostname"
+        "--frontend-host",
+        default=env_str("TALEMATE_FRONTEND_HOST", "localhost"),
+        help="Frontend Hostname (env: TALEMATE_FRONTEND_HOST)",
     )
     runserver_parser.add_argument(
-        "--frontend-port", type=int, default=8080, help="Frontend Port"
+        "--frontend-port",
+        type=int,
+        default=env_port("TALEMATE_FRONTEND_PORT", 8082),
+        help="Frontend Port (env: TALEMATE_FRONTEND_PORT)",
     )
 
     args = parser.parse_args()

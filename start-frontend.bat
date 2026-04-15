@@ -1,1 +1,2 @@
-start cmd /k "cd talemate_frontend && npm run serve"
+if "%TALEMATE_FRONTEND_PORT%"=="" set TALEMATE_FRONTEND_PORT=8082
+start cmd /k "cd talemate_frontend && npm run serve -- --host 0.0.0.0 --port %TALEMATE_FRONTEND_PORT%"

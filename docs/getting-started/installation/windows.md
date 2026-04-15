@@ -7,7 +7,7 @@
      2. Create and configure a Python virtual environment.
      3. Install all back-end and front-end dependencies with the included *uv* and *npm*.
      4. Build the web client.
-3. When the console window prints **"Talemate is now running"** and the logo appears, open your browser at **http://localhost:8080**.
+3. When the console window prints **"Talemate is now running"** and the logo appears, open your browser at **http://localhost:8082**.
 
 !!! note "First start can take a while"
     The initial download and dependency installation may take several minutes, especially on slow internet connections. The console will keep you updated – just wait until the Talemate logo shows up.
