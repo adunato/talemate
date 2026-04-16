@@ -82,8 +82,81 @@ export default {
     data() {
         return {
             dialog: false,
-            selected: "0.36.1",
+            selected: "0.37.0",
             whatsNew: [
+                {
+                    version: '0.37.0',
+                    items: [
+                        {
+                            title: "Upgrade Notes",
+                            description: "Frontend default port is now 8082 (was 8080) to avoid conflicting with llama.cpp. Update bookmarks and reverse-proxy configs, or set TALEMATE_FRONTEND_PORT=8080 to keep the old port.\n\nDocker Compose environment variables have been renamed with the TALEMATE_ prefix: FRONTEND_PORT → TALEMATE_FRONTEND_PORT, BACKEND_PORT → TALEMATE_BACKEND_PORT. Rename them in any .env files or shell exports."
+                        },
+                        {
+                            title: "Director Planning",
+                            description: "The director can now plan and autonomously generate multi-beat scene arcs from a set of instructions. The flow produces an outline, critiques it, and then executes the scene beat-by-beat. Dialogue ratio and pacing are configurable."
+                        },
+                        {
+                            title: "LLM Prompt Templates Manager",
+                            description: "A dedicated UI tab for viewing, creating, editing, and deleting LLM prompt templates. Built-in templates are read-only but can be copied to user templates. User templates are stored in std/user/ and gitignored. GGUF/llama.cpp chat templates can be used directly."
+                        },
+                        {
+                            title: "Character Folders",
+                            description: "The World State Manager character list can optionally be organized into collapsible folders. Folders are assigned from the character editor and renamed from the sidebar. Folder assignments sync across scenes linked to the same shared world context."
+                        },
+                        {
+                            title: "OpenAI Compatible TTS",
+                            description: "A new TTS backend that connects to any service exposing an OpenAI-compatible /v1/audio/speech endpoint (e.g. vLLM). Base URL, API key, and model are configurable. Voices are added manually through the voice library."
+                        },
+                        {
+                            title: "Section Format",
+                            description: "Per-client setting that controls how prompt sections are formatted. Choose between Markdown (## headings) or XML (<SECTION>...</SECTION> tags). Found in the client configuration next to the data format setting."
+                        },
+                        {
+                            title: "Model Testing Harness",
+                            description: "A bundled scene that runs a suite of minimum-viability tests against a connected language model client."
+                        },
+                        {
+                            title: "Notable Improvements",
+                            items: [
+                                "Director: button in scene tools menu to manually trigger a direction turn; Ctrl+click for one-off instructions",
+                                "Visual: organized tools menu into per-character submenus, matching the world scene tools pattern",
+                                "System Prompt: added {{ system_prompt }} template variable for app and client overrides",
+                                "System Prompt: override list now shows a pencil icon next to entries with an active override",
+                                "Scene Outline: added a perspective field for narrative perspective and tense (e.g., \"Third person limited, past tense\")",
+                                "Advance Time: moved time tools into a dedicated sub-component with grouped presets and a custom time dialog",
+                                "Client Config: moved Inference Presets, Data Format, Section Format, Length Enforcement, Prompt Caching, and Rate Limit into a dedicated Advanced tab",
+                                "Prompts: top-level tab now shows a warning icon when any active template overrides are outdated",
+                                "Director Chat: action confirmation timeout is now configurable (0–60 minutes, default 3; 0 waits indefinitely)",
+                                "Rewrite Revision: collapsed the targeted rewrite from two prompts into one, with a length guardrail and dynamic response length budget",
+                                "Context Database: added a Search Strictness slider; distance_mod preset is now a float (0.1–2.0)",
+                                "Embeddings: switching devices (e.g., CPU to CUDA) no longer requires a restart",
+                                "Context Formatting: the |condensed filter no longer permanently compacts multi-line context",
+                                "Debugging: set TALEMATE_LOG_PROMPTS=1 to write full prompt+response data to logs/prompt_log.jsonl",
+                                "NodeEditor: Asset Exists gains allow_partial (startswith matching); Prompt From Template gains dedupe toggle; new Dict Get (Path) node for dotted-path lookups"
+                            ]
+                        },
+                        {
+                            title: "Bug Fixes",
+                            items: [
+                                "Regenerating a failed message no longer permanently removes the original; it is restored on failure",
+                                "Anthropic: fixed missing max_tokens when response length capping is disabled; cleaned up outdated model IDs",
+                                "Fixed crash in the voice library character manager when a character was deactivated",
+                                "Fixed blank page on some Windows 10 systems caused by incorrect MIME type on JS module scripts",
+                                "Fixed response extraction when only a closing anchor tag was present (e.g., </PHASE_INTENT>)",
+                                "Text-Generation-WebUI / KoboldCpp: fixed SSE streaming crash on unhandled [DONE] sentinel",
+                                "Director actions: removed redundant fix_instructions LLM call from the direct_scene actor path",
+                                "Introduce Character: advanced dialog (Ctrl+click) now sends actual user instructions instead of scene context",
+                                "Unslop: revisions substantially longer than the original are now discarded to prevent hallucinated duplication",
+                                "Encryption: API keys in nested agent action configs (e.g., OpenAI-compatible TTS, visual backends) are now encrypted",
+                                "Contextual Generate: fixed list-type generation prefilling an empty line after 1.",
+                                "Narrate Progress: fixed narration occasionally producing screenplay-style dialogue",
+                                "Advance Time: fixed non-functional toolbar time advancement and invalid ISO 8601 duration strings for 1/2 week options",
+                                "Node Graph: fixed data/MakeDict and data/MakeList leaking initial values as shared mutable references",
+                                "macOS Modifiers: Ctrl+click affordances now also accept Cmd (Meta) on macOS across the UI"
+                            ]
+                        }
+                    ]
+                },
                 {
                     version: '0.36.1',
                     items: [
