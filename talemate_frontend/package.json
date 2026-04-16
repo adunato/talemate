@@ -25,7 +25,7 @@
     "uuid": "^10.0.0",
     "vue": "^3.5",
     "vue-codemirror": "^6.1.1",
-    "vuetify": "^3.10",
+    "vuetify": "^3.12",
     "webfontloader": "^1.6.28"
   },
   "devDependencies": {
