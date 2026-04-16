@@ -315,6 +315,18 @@ def main():
     print(STARTUP_TEXT)
 
     if args.command == "runserver":
+        if not args.backend_only and args.frontend_port == 8082:
+            display_host = (
+                "localhost" if args.frontend_host == "0.0.0.0" else args.frontend_host
+            )
+            print(
+                "---\n"
+                "NOTICE: Talemate's default frontend port is now 8082 (was 8080)\n"
+                "        to avoid conflicting with llama.cpp.\n"
+                f"        Open Talemate at: http://{display_host}:{args.frontend_port}\n"
+                "        To revert to the old port: set TALEMATE_FRONTEND_PORT=8080\n"
+                "---\n"
+            )
         run_server(args)
     else:
         log.error("Unknown command", command=args.command)
