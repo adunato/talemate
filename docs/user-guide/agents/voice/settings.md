@@ -13,6 +13,7 @@ Select which TTS APIs to enable. You can enable multiple APIs simultaneously:
 - **ElevenLabs** - Professional voice synthesis with voice cloning
 - **Google Gemini-TTS** - Google's text-to-speech service
 - **OpenAI** - OpenAI's TTS-1 and TTS-1-HD models
+- **OpenAI Compatible** - Any server exposing an OpenAI-style `/v1/audio/speech` endpoint (vLLM, LocalAI, Speaches, etc.)
 
 !!! note "Multi-API Support"
     You can enable multiple APIs and assign different voices from different providers to different characters. The system will automatically route voice generation to the appropriate API based on the voice assignment.

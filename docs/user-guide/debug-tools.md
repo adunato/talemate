@@ -12,6 +12,8 @@ The Debug Tools panel slides in from the right side of the screen and contains s
 
 The Prompts tab shows a log of all AI prompts that have been sent during your session. Click on any prompt to inspect its full content. This is useful for understanding what information is being sent to the AI and debugging unexpected AI responses.
 
+For headless captures or longer-running debug sessions, the same prompt records can also be streamed to a file — see [Prompt Logging](../getting-started/advanced/prompt-logging.md).
+
 ### :material-memory: Memory
 
 The Memory tab displays memory retrieval requests made by the Memory Agent. Use this to verify that relevant context is being retrieved during generation.

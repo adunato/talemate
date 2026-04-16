@@ -34,16 +34,8 @@ In the case for `Phi-3-medium-128k-instruct-Q8_0` that is `Phi3` - select it fro
 
 ## Adding a new prompt template
 
-Talemate keeps its prompt templates in the `./templates/llm-prompts/` directory.
+The easiest way to add or edit prompt templates is from the **Prompts** view in the main toolbar. Open the **LLM Prompt Templates** tab to create new user templates, copy built-in templates as starting points, or paste a GGUF/llama.cpp chat template directly. See [LLM Prompt Templates](/talemate/user-guide/prompts/llm-prompt-templates/) for details.
 
-In there you will find a `std`, `talemate` and `user` subdirectory. 
+User templates are stored in `./templates/llm-prompt/std/user/` and are gitignored, so they are preserved across Talemate updates. Built-in templates live in `./templates/llm-prompt/std/` and are read-only.
 
-The `std` directory contains the most common prompt templates by format. 
-
-The `talemate` directory contains the talemate supplied templates for some popular models (although this is quickly becoming redundant with the automatic detection). 
-
-The `user` directory is for user supplied templates.
-
-Templates in the `user` and `talemate` directories will be auto assigned based on name matching. If you want to add a new template, you can do so by creating a new file in the `user` directory.
-
-Although it is recommended to just use the user-interface to assign the template, assuming it exists in the `std` directory (See above). Any template assigned through the user-interface will create a new file in the `user` directory.
+User templates appear in the client's **Prompt Template** dropdown with a `user/` prefix and are matched against model names the same way built-in templates are.

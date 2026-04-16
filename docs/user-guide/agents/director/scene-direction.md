@@ -31,6 +31,19 @@ Scene Direction is disabled by default. To enable it:
 !!! tip "Quick Toggle"
     Scene Direction has a quick toggle in the agent settings panel, making it easy to turn on and off during play.
 
+## Manually triggering a turn
+
+!!! info "New in 0.37.0"
+
+When Scene Direction is enabled but auto-progression is turned off, you can step the director through the scene one turn at a time using the **Scene direction turn** button in the director section of the scene tool bar.
+
+![Scene direction turn button in the director menu](../../../img/0.37.0/director-scene-tools-scene-direction-turn.png)
+
+- **Click** to run one scene direction turn with your current settings and intentions.
+- **Ctrl+click** (Cmd+click on macOS) to open an instructions dialog. Whatever you type is inserted into the scene direction history as a one-off user direction before the turn executes, so you can nudge the director for just that turn without editing your scene-level instructions.
+
+The button is greyed out when Scene Direction is disabled.
+
 ## How It Works
 
 When Scene Direction is enabled, the director analyzes the scene after each turn and decides whether to take action. The director can:

@@ -9,7 +9,10 @@ Time passage messages mark the flow of time within your scene. They appear as cl
 
 ### From the Scene Tools Menu
 
-The primary way to advance time is through the **Advance Time** option in the [Scene Tools](scenario-tools.md#advance-time) menu. This opens a submenu with preset durations ranging from 5 minutes to 10 years. By default, the [Narrator Agent](/talemate/user-guide/agents/narrator/) will narrate the time jump.
+The primary way to advance time is through the :material-clock: **Advance Time** button in the [Scene Tools](scenario-tools.md#advance-time) tool bar. It opens a menu of grouped duration presets (Minutes, Hours, Days, Weeks, Months, Years) plus a **Custom...** option for arbitrary durations. By default, the [Narrator Agent](/talemate/user-guide/agents/narrator/) will narrate the time jump.
+
+![Advance Time menu with grouped presets](../img/0.37.0/advance-time-menu.png)
+
 
 ### From the Scene View
 

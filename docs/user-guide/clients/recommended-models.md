@@ -8,3 +8,5 @@ Any of the top models in any of the size classes here should work well.
 [https://oobabooga.github.io/benchmark.html](https://oobabooga.github.io/benchmark.html)
 
 We do not recommend going lower than 7B, and for 7B and 8B we recommend running the unquantized version if you have the resources.
+
+Once you have a candidate model running, the [Model Testing Harness](model-testing-harness.md) scene is the quickest way to confirm it can handle the formats and function calls Talemate relies on.

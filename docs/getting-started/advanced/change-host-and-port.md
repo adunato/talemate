@@ -1,5 +1,42 @@
 # Changing host and port
 
+Talemate reads its listen host and port from environment variables, with CLI flags available as an explicit override. The same variables are consumed by the start scripts on Linux and Windows and by the Docker images.
+
+## Environment variables
+
+| Variable | Default | CLI flag | Purpose |
+|----------|---------|----------|---------|
+| `TALEMATE_BACKEND_HOST` | `localhost` | `--host` | Interface the backend websocket server binds to. |
+| `TALEMATE_BACKEND_PORT` | `5050` | `--port` | Port the backend websocket server binds to. |
+| `TALEMATE_FRONTEND_HOST` | `localhost` | `--frontend-host` | Interface the frontend web server binds to. |
+| `TALEMATE_FRONTEND_PORT` | `8082` | `--frontend-port` | Port the frontend web server binds to. |
+
+!!! info "CLI flags override the environment"
+    When both are provided, the explicit CLI flag wins over the matching environment variable. If neither is set, the default in the table above is used. Invalid port values (non-numeric or outside `1–65535`) cause Talemate to exit with an error at startup.
+
+In Docker the host variables default to `0.0.0.0` inside the container (set by the image) so the ports are reachable from your browser. You normally only need to change the port variables when running in Docker.
+
+## Upgrading from 0.36.x
+
+Two changes in **0.37.0** affect anyone who set host/port values or kept bookmarks to the UI:
+
+!!! warning "Frontend default port changed from 8080 to 8082"
+    To avoid a clash with llama.cpp (`llama-server` defaults to 8080) the frontend now listens on port `8082` by default. Update any bookmarks, reverse-proxy configs, and firewall rules that pointed at `http://localhost:8080`.
+
+    To keep the previous default, set `TALEMATE_FRONTEND_PORT=8080` before launching:
+
+    ```bash
+    TALEMATE_FRONTEND_PORT=8080 ./start.sh
+    ```
+
+!!! warning "Docker Compose variables renamed"
+    The Docker Compose variables have been prefixed with `TALEMATE_`:
+
+    - `FRONTEND_PORT` → `TALEMATE_FRONTEND_PORT`
+    - `BACKEND_PORT` → `TALEMATE_BACKEND_PORT`
+
+    If you have either variable set in a `.env` file or your shell, rename it before `docker compose up`. The new variables control **both** the host port that Docker publishes and the port uvicorn binds inside the container, so the two stay in sync automatically.
+
 ## Backend
 
 By default, the backend listens on `localhost:5050`.

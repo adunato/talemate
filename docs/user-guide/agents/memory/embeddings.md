@@ -65,13 +65,24 @@ For custom sentence-transformer models, you may need to toggle this on. This can
 
 The device to use for the embeddings. This can be either `cpu` or `cuda`. Note that this can also be overridden in the Memory agent settings.
 
+!!! note "Switching device without a restart (0.37.0)"
+    Changing the device no longer requires restarting Talemate. The old model is released from ChromaDB's cache and any GPU memory it held is freed before the new device is applied, and the active scene's memory database is re-imported automatically.
+
 ##### Distance
 
 The maximum distance for results to be considered a match. Different embeddings may require different distances, so if you find low accuracy, try changing this value.
 
 ##### Distance Mod
 
-A multiplier for the distance. This can be used to fine-tune the distance without changing the actual distance value. Generally you should leave this at 1.
+A multiplier applied to **Distance** when deciding whether a result is a match. The effective cutoff used during a search is `Distance × Distance Mod`, so this slider lets you fine-tune search sensitivity without changing the base distance.
+
+- Range: `0.1` to `2.0`, in steps of `0.1`.
+- Default: `1.0`.
+- Lower values tighten the match (fewer, more relevant results).
+- Higher values loosen the match (more results, lower relevance).
+
+!!! info "Also tunable from the Context Database"
+    The [Context Database](/talemate/user-guide/world-editor/context-db/#search-strictness) page exposes this same value as the **Search Strictness** slider, making it easy to adjust on the fly while testing searches. Changes made in either place are saved to the same preset.
 
 ##### Distance Function
 

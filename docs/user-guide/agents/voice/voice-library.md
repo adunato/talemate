@@ -91,6 +91,11 @@ Check the provider specific documentation for more information on how to configu
 - Choose from available OpenAI voice models
 - Configure model (GPT-4o Mini TTS, TTS-1, TTS-1-HD)
 
+**OpenAI Compatible:**
+
+- Manually add voices using the voice identifiers supported by your server
+- Voices are not auto-discovered (see the [OpenAI Compatible backend docs](openai-compatible.md))
+
 **Google Gemini-TTS:**
 
 - Select from Google's voice models

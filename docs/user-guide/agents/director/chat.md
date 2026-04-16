@@ -119,6 +119,18 @@ When rejected, the director acknowledges and waits for your next instruction:
 
 ![Action Rejected](/talemate/img/0.33.0/director-chat-reject-0002.png)
 
+### Confirmation timeout
+
+!!! info "New in 0.37.0"
+
+Each confirmation card shows a countdown timer in the top-right corner. The number turns red when less than 30 seconds remain.
+
+![Confirmation Timer](/talemate/img/0.37.0/director-chat-confirm-timer.png)
+
+If the timer runs out before you confirm or reject, the action is treated as rejected and the director will acknowledge and wait for your next instruction — the same behaviour as clicking **Reject**.
+
+The default timeout is **3 minutes**. You can change it (or disable it entirely) from the [Director Chat settings](/talemate/user-guide/agents/director/settings/#action-confirm-timeout).
+
 ## Enabling and Disabling Actions
 
 The director has access to many different actions for querying information, making changes, and progressing your story. You can control which actions the director is allowed to use by enabling or disabling them through the Actions menu.

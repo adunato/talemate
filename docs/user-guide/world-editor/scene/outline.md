@@ -29,6 +29,27 @@ You can type in a value or pick something from the list.
 
 > A terrifying adventure with lovecraftian elements 
 
+### Perspective and Tense
+
+The narrative perspective and tense for the story (for example `Third person limited, past tense` or `Second person, present tense`).
+
+When set, the value is included in the context sent to the AI for narration, dialogue, and autocomplete prompts, so the model knows which point of view and tense to write in.
+
+The field is free-form text. Leave it blank if you don't need to specify one — prompts will simply omit the line.
+
+![Scene outline perspective and tense field](/talemate/img/0.37.0/scene-outline-perspective-field.png)
+
+##### Examples
+
+> Third person limited, past tense
+
+> Second person, present tense
+
+> First person past tense, from Annabelle's point of view
+
+!!! note "Exposed as a context ID"
+    This field is also available as the `story_configuration:perspective` context ID, which means it can be referenced or updated by features that work with context IDs (for example the [Context Database](/talemate/user-guide/world-editor/context-db)).
+
 ### Description
 
 This should be an internal description - that will be included in the context sent to the ai, but not the player. It can be used to give the ai more information about the scene or how to treat certain elements.

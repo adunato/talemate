@@ -155,6 +155,8 @@ Scaffolds a data structure (JSON or YAML) for the agent to complete. The functio
 
 Disables deduplication for the prompt text. By default, Talemate removes duplicate lines from prompts to save tokens. This function prevents that behavior for the current prompt.
 
+See [Prompt Deduplication](../../prompts/deduplication.md) for when to reach for this and the equivalent per-node flag on `Prompt from Template`.
+
 !!! payload "Arguments"
 
     This function takes no arguments.
@@ -812,7 +814,9 @@ Provides access to the global Talemate configuration object.
 
 ### condensed
 
-Condenses a string by removing extra whitespace and newlines.
+Collapses runs of spaces and tabs within each line so that the prompt's deduplication pass can compare entries as single-line strings. The filter is intended for multi-line context chunks (world info, memory entries, pins, etc.) where you want duplicate paragraphs to be detected reliably but the original paragraph breaks should still reach the LLM.
+
+Internally the filter replaces newlines with a marker token before rendering. After the prompt has been rendered and deduplicated, the markers are expanded back to real newlines, so the final prompt the model sees keeps its original multi-line structure.
 
 !!! example "Example: Condensed String"
 
@@ -820,7 +824,15 @@ Condenses a string by removing extra whitespace and newlines.
     {{ "Hello\n\nWorld" | condensed }}
     ```
 
-    Output:
+    The prompt sent to the model:
     ```
-    Hello World
+    Hello
+
+    World
     ```
+
+    During deduplication the same value is compared as the single line `Hello World`, so a second entry with the same text on one line would be detected as a duplicate and removed.
+
+!!! info "Changed in 0.37.0"
+
+    Before 0.37.0 the filter permanently compacted its input into a single line, so a multi-paragraph memory or pin reached the LLM as one long line. It now only compacts temporarily for the dedupe comparison and restores the original line breaks afterwards. Templates that use `{{ value | condensed }}` do not need to be changed.

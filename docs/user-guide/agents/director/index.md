@@ -18,6 +18,12 @@ A conversational interface for interacting with the director directly. You can a
 
 See the [Director Chat](/talemate/user-guide/agents/director/chat) page for more information.
 
+### Director Planning
+
+Plans and autonomously generates a multi-beat scene arc from a short set of instructions. The director produces an outline, critiques it, and then executes each beat to generate the actual scene content.
+
+See the [Director Planning](/talemate/user-guide/agents/director/planning) page for more information.
+
 ### Dynamic Actions
 
 Generates clickable choices for the user during scene progression. This allows you to make decisions that affect the scene or story without manually typing out your choice.
