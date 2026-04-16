@@ -1,6 +1,6 @@
 {
   "name": "talemate_frontend",
-  "version": "0.37.0.dev4",
+  "version": "0.37.0.dev5",
   "private": true,
   "type": "module",
   "scripts": {
