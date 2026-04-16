@@ -1,7 +1,7 @@
 import pydantic
 import structlog
-from mistralai import Mistral
-from mistralai.models.sdkerror import SDKError
+from mistralai.client import Mistral
+from mistralai.client.errors import SDKError
 
 from talemate.client.base import (
     ClientBase,
