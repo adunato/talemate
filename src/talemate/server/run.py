@@ -83,7 +83,8 @@ async def install_punkt():
     log.info("Download complete")
 
 
-async def log_stream(stream, log_func):
+async def log_stream(stream, log_func, on_started=None):
+    started_emitted = False
     while True:
         line = await stream.readline()
         if not line:
@@ -98,8 +99,16 @@ async def log_stream(stream, log_func):
             # Use the provided log_func for other messages
             log_func("uvicorn", message=decoded_line)
 
+        if (
+            on_started
+            and not started_emitted
+            and "Application startup complete" in decoded_line
+        ):
+            started_emitted = True
+            on_started()
 
-async def run_frontend(host: str, port: int):
+
+async def run_frontend(host: str, port: int, on_started=None):
     if sys.platform == "win32":
         activate_cmd = ".\\.venv\\Scripts\\activate.bat"
         frontend_cmd = f"{activate_cmd} && uvicorn --host {host} --port {port} frontend_wsgi:application"
@@ -125,7 +134,9 @@ async def run_frontend(host: str, port: int):
     )
 
     try:
-        stdout_task = asyncio.create_task(log_stream(process.stdout, log.info))
+        stdout_task = asyncio.create_task(
+            log_stream(process.stdout, log.info, on_started=on_started)
+        )
         stderr_task = asyncio.create_task(log_stream(process.stderr, log.error))
 
         await asyncio.gather(stdout_task, stderr_task)
@@ -228,9 +239,25 @@ def run_server(args):
     # start task to unstall punkt
     loop.create_task(install_punkt())
 
+    def _on_frontend_started():
+        if args.frontend_port == 8082:
+            display_host = (
+                "localhost" if args.frontend_host == "0.0.0.0" else args.frontend_host
+            )
+            log.info(
+                "Talemate's default frontend port is now 8082 (was 8080) "
+                "to avoid conflicting with llama.cpp",
+                url=f"http://{display_host}:{args.frontend_port}",
+                revert_hint="set TALEMATE_FRONTEND_PORT=8080 to use the old port",
+            )
+
     if not args.backend_only:
         frontend_task = loop.create_task(
-            run_frontend(args.frontend_host, args.frontend_port)
+            run_frontend(
+                args.frontend_host,
+                args.frontend_port,
+                on_started=_on_frontend_started,
+            )
         )
     else:
         frontend_task = None
@@ -315,18 +342,6 @@ def main():
     print(STARTUP_TEXT)
 
     if args.command == "runserver":
-        if not args.backend_only and args.frontend_port == 8082:
-            display_host = (
-                "localhost" if args.frontend_host == "0.0.0.0" else args.frontend_host
-            )
-            print(
-                "---\n"
-                "NOTICE: Talemate's default frontend port is now 8082 (was 8080)\n"
-                "        to avoid conflicting with llama.cpp.\n"
-                f"        Open Talemate at: http://{display_host}:{args.frontend_port}\n"
-                "        To revert to the old port: set TALEMATE_FRONTEND_PORT=8080\n"
-                "---\n"
-            )
         run_server(args)
     else:
         log.error("Unknown command", command=args.command)
