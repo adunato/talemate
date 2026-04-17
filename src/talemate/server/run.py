@@ -134,10 +134,10 @@ async def run_frontend(host: str, port: int, on_started=None):
     )
 
     try:
-        stdout_task = asyncio.create_task(
-            log_stream(process.stdout, log.info, on_started=on_started)
+        stdout_task = asyncio.create_task(log_stream(process.stdout, log.info))
+        stderr_task = asyncio.create_task(
+            log_stream(process.stderr, log.error, on_started=on_started)
         )
-        stderr_task = asyncio.create_task(log_stream(process.stderr, log.error))
 
         await asyncio.gather(stdout_task, stderr_task)
         await process.wait()
@@ -244,12 +244,15 @@ def run_server(args):
             display_host = (
                 "localhost" if args.frontend_host == "0.0.0.0" else args.frontend_host
             )
+            separator = "-" * 70
+            log.info(separator)
             log.info(
-                "Talemate's default frontend port is now 8082 (was 8080) "
-                "to avoid conflicting with llama.cpp",
-                url=f"http://{display_host}:{args.frontend_port}",
-                revert_hint="set TALEMATE_FRONTEND_PORT=8080 to use the old port",
+                "NOTICE: Talemate's default frontend port is now 8082 (was 8080) "
+                "to avoid conflicting with llama.cpp"
             )
+            log.info(f"        Open Talemate at: http://{display_host}:{args.frontend_port}")
+            log.info("        To revert to the old port: set TALEMATE_FRONTEND_PORT=8080")
+            log.info(separator)
 
     if not args.backend_only:
         frontend_task = loop.create_task(
