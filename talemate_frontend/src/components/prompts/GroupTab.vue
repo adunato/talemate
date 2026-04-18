@@ -734,7 +734,7 @@ export default {
 }
 
 .tree-container {
-    max-height: calc(100vh - 400px);
+    max-height: calc(100vh - 420px);
     max-width: 750px;
     overflow-y: auto;
 }
@@ -744,7 +744,7 @@ export default {
 }
 
 .editor-container {
-    height: calc(100vh - 400px);
+    height: calc(100vh - 420px);
     overflow-y: auto;
     display: flex;
     flex-direction: column;

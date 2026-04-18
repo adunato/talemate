@@ -366,7 +366,7 @@ export default {
 }
 
 .tree-container {
-    max-height: calc(100vh - 465px);
+    max-height: calc(100vh - 510px);
     max-width: 750px;
     overflow-y: auto;
 }
@@ -376,8 +376,15 @@ export default {
 }
 
 .editor-container {
-    height: calc(100vh - 465px);
+    height: calc(100vh - 510px);
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-container .v-card-text {
+    flex: 1;
+    overflow: hidden;
 }
 
 .code-editor {

@@ -481,7 +481,7 @@ export default {
 }
 
 .editor-container {
-    height: calc(100vh - 400px);
+    height: calc(100vh - 420px);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
