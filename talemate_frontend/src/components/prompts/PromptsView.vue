@@ -89,6 +89,7 @@
                                     @update:priority="setGroupPriority"
                                     @set-template-source="setTemplateSource"
                                     @request-template="requestTemplate"
+                                    @override-in-group="handleOverrideInGroup"
                                 />
                             </v-window-item>
 
@@ -371,6 +372,12 @@ export default {
             }
         },
 
+        // Handle "Override in X" shortcut from ActiveTab preview
+        handleOverrideInGroup({ uid, group }) {
+            if (!uid || !group) return;
+            this.navigateToTemplate(uid, group);
+        },
+
         // Handle navigation to template from PromptDetailView
         handleNavigateToTemplate(templateUid) {
             // Ignore null/undefined template UIDs
@@ -444,14 +451,12 @@ export default {
                     }
                 }
             } else {
-                // Find the ref for GroupTab instances
-                const groupTabRef = this.$refs[`groupTab_${this.activeTab}`];
-                if (groupTabRef) {
-                    const template = groupTabRef.groupTemplates?.find(t => t.uid === uid);
-                    if (template) {
-                        groupTabRef.selectedTemplatePath = uid;
-                        groupTabRef.expandAndSelectTemplate(template);
-                    }
+                // Find the ref for GroupTab instances. v-for refs may be arrays.
+                let groupTabRef = this.$refs[`groupTab_${this.activeTab}`];
+                if (Array.isArray(groupTabRef)) groupTabRef = groupTabRef[0];
+                if (groupTabRef && typeof groupTabRef.selectTemplateByUid === 'function') {
+                    // GroupTab queues the selection until its data finishes loading.
+                    groupTabRef.selectTemplateByUid(uid);
                 }
             }
         },

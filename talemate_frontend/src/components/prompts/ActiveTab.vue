@@ -96,13 +96,62 @@
                 </div>
 
                 <v-card v-if="selectedTemplate" flat class="editor-container">
-                    <v-card-subtitle class="pa-2">
+                    <v-card-subtitle class="pa-2 d-flex align-center">
                         <v-chip size="small" label color="primary" variant="tonal">
                             {{ selectedTemplate.uid }}
                         </v-chip>
                         <v-chip size="small" label class="ml-1" :color="getSourceColor(selectedTemplate.sourceGroup)" variant="tonal">
                             from: {{ selectedTemplate.sourceGroup }}
                         </v-chip>
+                        <v-spacer></v-spacer>
+                        <v-btn
+                            v-if="canGoToSource"
+                            size="small"
+                            variant="tonal"
+                            :color="getSourceColor(selectedTemplate.sourceGroup)"
+                            prepend-icon="mdi-arrow-right-circle"
+                            class="mr-2"
+                            @click="goToSource"
+                        >
+                            Go to source
+                        </v-btn>
+                        <v-menu v-if="overrideTargets.length > 0">
+                            <template v-slot:activator="{ props }">
+                                <v-btn
+                                    v-bind="props"
+                                    size="small"
+                                    variant="tonal"
+                                    color="primary"
+                                    prepend-icon="mdi-content-copy"
+                                >
+                                    Override in
+                                </v-btn>
+                            </template>
+                            <v-list density="compact" slim>
+                                <v-list-subheader>Create/edit override in</v-list-subheader>
+                                <v-list-item
+                                    v-for="target in overrideTargets"
+                                    :key="target.name"
+                                    @click="overrideInGroup(target.name)"
+                                >
+                                    <template v-slot:prepend>
+                                        <v-icon size="small" :color="target.iconColor">{{ target.icon }}</v-icon>
+                                    </template>
+                                    <v-list-item-title>
+                                        {{ target.name }}
+                                        <v-chip
+                                            v-if="target.exists"
+                                            size="x-small"
+                                            color="success"
+                                            variant="outlined"
+                                            class="ml-1"
+                                        >
+                                            exists
+                                        </v-chip>
+                                    </v-list-item-title>
+                                </v-list-item>
+                            </v-list>
+                        </v-menu>
                     </v-card-subtitle>
                     <v-card-text class="pa-0">
                         <div v-if="loadingContent" class="d-flex justify-center align-center" style="height: 200px;">
@@ -173,7 +222,7 @@ export default {
             default: false
         }
     },
-    emits: ['update:priority', 'set-template-source', 'request-template'],
+    emits: ['update:priority', 'set-template-source', 'request-template', 'override-in-group'],
     data() {
         return {
             selectedTemplatePath: null,
@@ -199,9 +248,63 @@ export default {
                 EditorView.lineWrapping,
                 EditorView.editable.of(false)
             ];
+        },
+        overrideTargets() {
+            if (!this.selectedTemplate) return [];
+            const sourceGroup = this.selectedTemplate.sourceGroup;
+            // Scene templates are locked — don't offer override shortcuts
+            if (sourceGroup === 'scene') return [];
+            const availableIn = this.selectedTemplate.availableIn || [];
+            const targets = [];
+
+            if (sourceGroup !== 'user') {
+                targets.push({
+                    name: 'user',
+                    icon: 'mdi-account',
+                    iconColor: 'success',
+                    exists: availableIn.includes('user')
+                });
+            }
+
+            if (this.sceneLoaded) {
+                targets.push({
+                    name: 'scene',
+                    icon: 'mdi-book-open-variant',
+                    iconColor: 'warning',
+                    exists: availableIn.includes('scene')
+                });
+            }
+
+            for (const group of this.groups) {
+                if (['default', 'user', 'scene'].includes(group.name)) continue;
+                if (group.name === sourceGroup) continue;
+                targets.push({
+                    name: group.name,
+                    icon: 'mdi-folder-outline',
+                    iconColor: 'primary',
+                    exists: availableIn.includes(group.name)
+                });
+            }
+
+            return targets;
+        },
+        canGoToSource() {
+            return !!(this.selectedTemplate && this.selectedTemplate.sourceGroup && this.selectedTemplate.sourceGroup !== 'default');
         }
     },
     methods: {
+        overrideInGroup(group) {
+            if (!this.selectedTemplate) return;
+            this.$emit('override-in-group', { uid: this.selectedTemplate.uid, group });
+        },
+        goToSource() {
+            if (!this.selectedTemplate || !this.selectedTemplate.sourceGroup) return;
+            if (this.selectedTemplate.sourceGroup === 'default') return;
+            this.$emit('override-in-group', {
+                uid: this.selectedTemplate.uid,
+                group: this.selectedTemplate.sourceGroup,
+            });
+        },
         updatePriority(newPriority) {
             this.$emit('update:priority', newPriority);
         },
