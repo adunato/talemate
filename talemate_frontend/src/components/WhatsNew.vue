@@ -93,7 +93,7 @@ export default {
                         },
                         {
                             title: "Director Planning",
-                            description: "The director can now plan and autonomously generate multi-beat scene arcs from a set of instructions. The flow produces an outline, critiques it, and then executes the scene beat-by-beat. Dialogue ratio and pacing are configurable."
+                            description: "The director can now plan and track multi-step work. In director chat it keeps a short todo list while it works through a task.\n\nA new Generate long progress dialog on the scene tool bar kicks off longer arcs — generating a multi-beat outline and playing it out beat by beat."
                         },
                         {
                             title: "LLM Prompt Templates Manager",
