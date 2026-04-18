@@ -708,31 +708,34 @@ class ClientBase:
 
         if (
             spec.reasoning_pattern
-            and spec.reasoning_pattern != self.reason_response_pattern
+            and spec.reasoning_pattern != self.client_config.reason_response_pattern
         ):
             log.info("reasoning pattern determined from prompt template", spec=spec)
             self.client_config.reason_response_pattern = spec.reasoning_pattern
 
         return prompt
 
-    def prompt_template_example(self):
+    def prompt_template_example(self) -> tuple[str | None, str | None, PromptSpec]:
         if not getattr(self, "model_name", None):
-            return None, None
+            return None, None, PromptSpec()
 
         if not self.enabled:
-            return None, None
+            return None, None, PromptSpec()
 
         model_name = self.model_name
         if self.lock_template:
             model_name = locked_model_template(self.name, self.model_name)
 
-        return model_prompt(
+        spec = PromptSpec()
+        rendered, template_file = model_prompt(
             model_name,
             "{sysmsg}",
             "{prompt}<|BOT|>{LLM coercion}",
             default_template=self.default_prompt_template,
             reasoning_tokens=self.validated_reason_tokens if self.reason_enabled else 0,
+            spec=spec,
         )
+        return rendered, template_file, spec
 
     def split_prompt_for_coercion(self, prompt: str) -> tuple[str, str]:
         """
@@ -878,7 +881,9 @@ class ClientBase:
 
         default_prompt_template = self.default_prompt_template
 
-        prompt_template_example, prompt_template_file = self.prompt_template_example()
+        prompt_template_example, prompt_template_file, prompt_template_spec = (
+            self.prompt_template_example()
+        )
         has_prompt_template = (
             prompt_template_file and prompt_template_file != default_prompt_template
         )
@@ -898,7 +903,7 @@ class ClientBase:
                 log.debug("auto_determine_prompt_template", model_name=self.model_name)
                 self.auto_determine_prompt_template_attempt = self.model_name
                 self.determine_prompt_template()
-                prompt_template_example, prompt_template_file = (
+                prompt_template_example, prompt_template_file, prompt_template_spec = (
                     self.prompt_template_example()
                 )
                 has_prompt_template = (
@@ -913,6 +918,9 @@ class ClientBase:
             "has_prompt_template": has_prompt_template,
             "dedicated_default_template": dedicated_default_template,
             "template_file": prompt_template_file,
+            "reason_response_pattern_default": (
+                prompt_template_spec.reasoning_pattern or DEFAULT_REASONING_PATTERN
+            ),
             "meta": self.Meta().model_dump(),
             "error_action": None,
             "double_coercion": self.double_coercion,
@@ -964,7 +972,7 @@ class ClientBase:
             "reason_enabled": self.reason_enabled,
             "reason_tokens": self.reason_tokens,
             "min_reason_tokens": self.min_reason_tokens,
-            "reason_response_pattern": self.reason_response_pattern,
+            "reason_response_pattern": self.client_config.reason_response_pattern,
             "reason_prefill": self.reason_prefill,
             "reason_failure_behavior": self.reason_failure_behavior,
             "requires_reasoning_pattern": self.requires_reasoning_pattern,

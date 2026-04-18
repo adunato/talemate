@@ -767,3 +767,18 @@ class TestPromptSpec:
         )
         assert spec.reasoning_pattern is not None
         assert "seed:think" in spec.reasoning_pattern
+
+    def test_spec_reasoning_pattern_gpt_oss(self, model_prompt_with_std):
+        """GPT-OSS template always sets reasoning_pattern."""
+        mp, _ = model_prompt_with_std
+        spec = PromptSpec()
+        mp(
+            model_name="__spec_test__",
+            system_message="sys",
+            prompt="user<|BOT|>",
+            default_template="GPT-OSS.jinja2",
+            spec=spec,
+        )
+        assert spec.reasoning_pattern is not None
+        assert "final" in spec.reasoning_pattern
+        assert "message" in spec.reasoning_pattern

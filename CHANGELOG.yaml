@@ -20,6 +20,7 @@
   - "Message Regeneration: Fixed a bug where regenerating a message that fails (e.g., missing agent or function) would permanently remove the original message from the scene. The original message is now restored to both history and UI on failure, and unhandled exceptions during regeneration are caught."
   - "Anthropic Client: Fixed generation error caused by missing required max_tokens parameter when response length capping is disabled. Now defaults to the model's API output token limit."
   - "Anthropic Client: Cleaned up supported models list, removing outdated dated model IDs."
+  - "Reasoning Pattern: Fixed client reasoning pattern round-tripping through the default fallback. Blanking the pattern in the client config no longer silently re-saves as `.*?</think>`, and the template-derived pattern (e.g. Gemma 4's `<channel|>`) is now correctly adopted when the stored pattern is empty. The Client Config placeholder also shows the actual template-derived default instead of a hard-coded value."
   - Fixed crash in voice library character manager when a character was deactivated.
   - Fixed blank page on some Windows 10 systems where JavaScript files were served with incorrect MIME type (text/plain), causing Chromium-based browsers to reject module scripts.
   - Fixed "No episodes available" placeholder being selectable in the episode list.

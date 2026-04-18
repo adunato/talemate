@@ -206,12 +206,14 @@
                         <v-btn @click.stop="client.reason_response_pattern=''" size="small" color="primary" variant="text">{{ 'Default' }}</v-btn>
                         <!-- gpt-oss -->
                         <v-btn @click.stop="client.reason_response_pattern='.*?final<\\|message\\|>'" size="small" color="primary" variant="text">{{ 'gpt-oss' }}</v-btn>
+                        <!-- gemma-4 -->
+                        <v-btn @click.stop="client.reason_response_pattern='.*?<channel\\|>'" size="small" color="primary" variant="text">{{ 'gemma-4' }}</v-btn>
                         <!-- ◁/think▷ -->
                         <v-btn @click.stop="client.reason_response_pattern='.*?◁/think▷'" size="small" color="primary" variant="text">{{ '.*?◁/think▷' }}</v-btn>
                         <!-- </think> -->
                         <v-btn @click.stop="client.reason_response_pattern='.*?</think>'" size="small" color="primary" variant="text">{{ '.*?</think>' }}</v-btn>
                       </v-sheet>
-                      <v-text-field v-model="client.reason_response_pattern" label="Pattern to strip from the response if the model is reasoning" hint="This is a regular expression that will be used to strip out the thinking tokens from the response." placeholder=".*?</think>"></v-text-field>
+                      <v-text-field v-model="client.reason_response_pattern" label="Pattern to strip from the response if the model is reasoning" hint="This is a regular expression that will be used to strip out the thinking tokens from the response." :placeholder="client.data && client.data.reason_response_pattern_default ? client.data.reason_response_pattern_default : '.*?</think>'"></v-text-field>
                     </v-col>
                   </v-row>
                   <v-row v-if="client.reason_enabled && client.requires_reasoning_pattern">
@@ -705,6 +707,9 @@ export default {
         this.client.data.has_prompt_template = data.data.has_prompt_template;
         this.client.data.prompt_template_example = data.data.prompt_template_example;
         this.client.data.template_file = data.data.template_file;
+        if (data.data.reason_response_pattern_default !== undefined) {
+          this.client.data.reason_response_pattern_default = data.data.reason_response_pattern_default;
+        }
         this.waitingForTemplateSelection = false;
       } else if (data.type === 'config' && data.action === 'std_llm_templates') {
         console.log("Got std templates", data.data.templates);
