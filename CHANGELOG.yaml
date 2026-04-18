@@ -52,3 +52,199 @@
   - "Default frontend port changed from 8080 to 8082. Update any bookmarks or reverse-proxy configs that pointed at `localhost:8080`. To keep the old port, set `TALEMATE_FRONTEND_PORT=8080` before launching."
   - "Docker compose variable `FRONTEND_PORT` renamed to `TALEMATE_FRONTEND_PORT`. If you had `FRONTEND_PORT` set in a `.env` file or your shell, rename it. The new variable controls both the published host port and the port uvicorn binds inside the container."
   - "Docker compose variable `BACKEND_PORT` renamed to `TALEMATE_BACKEND_PORT`. Same migration as above — rename in any `.env` files or shell environments. The new variable controls both the published host port and the port uvicorn binds inside the container."
+0.36.1:
+  features:
+  - "Gemma 4 Support: Added prompt template for Gemma 4 models."
+  fixes:
+  - "Contextual Generate: Fixed white space issues that caused problems with list creation tasks."
+  - "Text-Generation-WebUI: Fixed SSE event termination when receiving the [DONE] signal."
+  - "Narrator: Prompt tweaks for narrator progress."
+0.36.0:
+  features:
+  - "Prompt Manager: The prompt template system has been rebuilt into a unified Prompt Manager accessible from the main UI. Templates are organized into groups with a configurable priority order controlling which overrides take effect. The resolved template tree is color-coded by source group, and recently rendered templates and sent prompts can be inspected with direct navigation to the source for editing."
+  - "Context History Review: A new context review panel visualizes how scene history is rendered into context for AI prompts, broken into sections with per-section token counts and budget allocation. A new best-fit mode automatically distributes budget across layers to cover the full timeline with a detail gradient — compressed at the start, detailed at the end."
+  - "Multiple Director Chats: The director chat now supports multiple concurrent conversations, each with its own message history and mode settings. Titles are auto-generated after the first exchange."
+  - "Scene State Reset: A new dialog provides granular control over resetting scene data — context DB, history, intent state, per-agent cached states, and reinforcements can be selected individually. Replaces the previous scattered reset commands with a single unified interface."
+  - "Time Passage Management: Time passage messages can now be inserted, edited, and deleted directly through the scene view. Layered history statistics including compression rate are now displayed in the history tools menu."
+  - "Image Analysis via Local Clients: Image analysis now supports two new backends: OpenAI Compatible for any OpenAI-compatible vision endpoint, and Talemate Client which uses any vision-capable Talemate LLM client."
+  - "API Key Encryption: API keys stored in config.yaml are now encrypted at rest. The encryption key is stored in the OS keyring when available, with a file-based fallback for Docker and headless environments. Existing plaintext keys are encrypted automatically on next save."
+  - "Volatile Context Placement: Volatile content — such as long-term memory, dynamic notes, and other frequently changing context — can now be placed after the scene history instead of before it. Improves prompt caching hit rates on API backends that support it. Disabled by default."
+  improvements:
+  - "Narrator: Generation length is now configurable per narration type."
+  - "Conversation: Added AI Aware mode where characters know they are AI personas."
+  - "Anthropic: Adaptive thinking support with configurable effort level."
+  - "Anthropic: Added claude-opus-4-5, claude-opus-4-6, and claude-haiku-4-5."
+  - "Google: Added support for gemini-3.1 models."
+  - "TTS: Audio tag support for vocal markers (e.g., [laughing]) with ElevenLabs v3."
+  - "World Editor: Generate from Topic for creating world entries from a prompt."
+  - "Frontend: Version mismatch detection between frontend and backend."
+  - "Summarizer: Custom instructions and writing style included during summarization."
+  fixes:
+  - "Fixed `)`, `]`, and `}` terminators being stripped from the end of messages."
+  - "Fixed `:` in conversation generation causing content loss."
+  - "Fixed conversation agent not respecting generation length."
+  - "Fixed duplicate length instructions when reasoning was enabled."
+  - "Fixed summarize dialogue sending too much context with layered history."
+  - "Fixed layered history construction and summary-to-dialogue crossover."
+  - "Fixed context ID dot notation when character names contained dots."
+  - "Fixed recursive retry bug in focal agent."
+  - "Fixed leading whitespace causing duplicate prepared responses."
+  - "Fixed multiline text handling in parentheses and brackets."
+0.35.0:
+  features:
+  - "Autonomous Scene Direction: Allows autonomous scene progression through the director agent, using the same actions available in director chat. The Direction tab shows actions taken during the director's turn. A strong LLM (100B+) with reasoning capabilities is recommended. New director actions can be added via Director Action Nodes in the node editor. Disabled by default."
+  - "Character Visuals & Avatars: New Visuals tab in the character editor for managing portraits and cover images with generation support. Character messages now display portraits. The world state manager can re-evaluate which portrait to use based on scene context and commission new portraits via the director."
+  - "Inline Visuals: Images created through scene tools or director actions now appear inline in the scene feed. Size and display options can be configured in appearance settings."
+  - "llama.cpp Client: Added official llama.cpp client support for llama-server."
+  - "Pocket TTS: Added Pocket TTS support for local CPU-based text-to-speech with voice cloning using audio prompts."
+  improvements:
+  - "Setup wizard on initial launch for LLM, Memory, and Visual agent configuration."
+  - "Message appearance overhaul with configurable markdown display."
+  - "KoboldCpp: adaptive-p, min-p, presence/frequency penalty support."
+  - "Pin conditions can now target game state variables."
+  - "Visual: resolution presets, prompt revision, auto analysis, and prompt length config."
+  - "Visual Library: image crop regions for cover images."
+  - "Experimental concurrent requests for hosted clients (visual prompts)."
+  - "Agent activity stack visible above scene tools."
+  - "Node editor shortcuts: X for staging/alignment, Y for vertical alignment."
+0.34.1:
+  fixes:
+  - "OpenRouter: Fixed empty responses from reasoning models."
+  - "OpenRouter: Fixed reasoning token not found errors."
+  - "OpenRouter: Let OpenRouter handle reasoning token collection."
+  - "OpenRouter: Configure reasoning effort correctly."
+0.34.0:
+  features:
+  - "Visual Agent Refactor: Adds image editing with reference images and image analysis capabilities. Image editing allows modifying existing images using reference images. Image analysis extracts information from images for use in generation. Supported backends: ComfyUI, Automatic1111, SD.Next, OpenAI, Google, OpenRouter. Visual prompt instruction can now be customized through new Visual Style templates in the Templates editor. Nodes for image generation have been added to the node editor."
+  - "Visual Library: Visual library system for managing generated images and scene assets. Includes character portraits, scene covers, and other generated images. The image queue allows generating new images, regenerating existing ones, and iterating on generated images with modifications. Nodes for asset management have been added to the node editor."
+  - "Character Card Support: Character card import system completely refactored. Director agent analyzes greeting texts to detect multiple characters present in the card, allowing selective import of detected characters. Alternate greetings can be imported as episodes with optional AI-generated titles. Character books (lore books) are imported as world state entries. Character generation now uses card description, greeting texts, and character book entries together to determine character descriptions, attributes, and dialogue examples. Player character can be set using a default template, selected from detected characters in the card, or imported from another scene."
+  improvements:
+  - "Templates editor moved out of the World Editor — now available from the main navigation and no longer requires a scene to be loaded."
+  - "Scene assets are now managed in a separate file that all scenes in the same project share (assets/library.json)."
+  - "Prompt for unified API key configuration during client setup."
+  - "Improved token/s calculation."
+  - "Add Reset shortcut to Save menu."
+  - "Add save required indicator to save menu."
+  - "Client selection in agent config now only shows enabled clients."
+  - "App now properly locks inputs when client configuration is missing."
+  - "Improvements to director chat."
+  - "Shared world: button to share/unshare all characters."
+  - "Shared world: button to share/unshare all world entries."
+  - "Shared world: added episodes — Talemate's version of alternate introductions."
+  - "Narrator: Story progress now respects the generation length setting in the narrator agent config."
+  - "Character state reinforcements: added require_active setting that requires the character to be active for the state to be reprocessed (defaults to true)."
+  fixes:
+  - "Fixed issue where narrator would use wrong preset / system message."
+  - "Fixed `'_SceneRef' object has no attribute '_changelog'` error."
+  - "Fixed character image generation missing information if the targeted character is inactive."
+0.33.0:
+  features:
+  - "Director Chat: A chat interface for conversing with the Director agent about the current scene. The Director can execute actions through 25+ specialized node modules covering scene queries, character/world state updates, game state management, narrative direction, and history modifications. Minimum recommended parameters: 12k+ context, 32B+ model with reasoning enabled. Ideally 100B+ models for best results. Accessible through the director console once a scene is loaded."
+  - "Scene Changelog and Restoration: Tracks all scene changes over time using delta compression. Stores incremental changes between revisions in segmented changelog files. Allows scenes to be reconstructed fully to a specific point in history and will be used for restoring scenes as well as true forking of scenes."
+  - "Shared World Context: Allows marking characters, world entries, and static history entries as `shared` to synchronize them across multiple scenes in the same project. Shared elements are exported to a dedicated context file that other scenes can reference. For characters, supports granular sharing at the attribute and detail level. Shared context files can be created and managed in World Editor → Scene → Shared Context."
+  improvements:
+  - "Agent persona (only for director currently)."
+  - "Pin decay — pin will stay active for N turns without having to be re-evaluated."
+  - "Improvements to data structure handling in LLM responses."
+  - "Game state variable editor."
+  - "ContextID system for unified management of context."
+  - "Pressing Ctrl+Up/Down arrow cycles through previous messages in the scene chat input."
+  - "Added summarizer / editor / director message access to scene toolbar."
+  - "Scene forking function now uses the new changelog system to reconstruct the scene to the specified revision."
+  - "World Editor → Context DB has been made read only (other than pin management)."
+  - "Memory agent semantic retrieval improvements."
+  - "Node Editor: Many new nodes added."
+  - "Node Editor: Module library overhaul to treeview display in sidebar."
+  - "Node Editor: Show when required inputs are not connected (red links)."
+  - "Node Editor: Certain nodes can now be Alt+Shift+dragged to spawn a counterpart."
+  - "Node Editor: Collector nodes for easier collection of values into lists or dicts."
+  - "Node Editor: Clicking outside of node property editor no longer discards changes automatically."
+  - "Node Editor: Auto resize new nodes to fit their title and inputs."
+  - "Node Editor: Property choice fields are now sorted alphabetically."
+  - "Node Editor: Added group presets."
+  - "Node Editor: Node search improvements."
+  fixes:
+  - "Fixed issue where drag-and-drop scene / character cover images would no longer work."
+  - "Fixed some layout issues in world editor."
+  - "Enforce Context DB clean up on scene load."
+  - "OpenRouter API key going from unset to set will now immediately fetch models."
+  - "Fixed remaining `World state manager` references in the UX to `World Editor`."
+  - "Scenes that no longer exist are automatically removed from recent scenes list."
+  - "Contextual generate now defaults to the scene writing style if it is set."
+  - "Fixed AI function argument conversion that would cast everything to string."
+  - "Node Editor: Errors in event nodes can no longer cause infinite loops of failures."
+  - "Node Editor: Deleting a module while it is loaded no longer results in an error."
+  - "Node Editor: Fixed issue where argument nodes would not convert to their type correctly."
+  - "Node Editor: Switching from node editor to world editor no longer causes graph changes to be lost."
+  - "Node Editor: Get node can now properly access tuple and set items."
+  - "Node Editor: Contextual Generate node now errors nicely when the required context_name is not set."
+  - "Node Editor: Fixed issue where Ctrl+Enter to submit in text editor nodes would cause extra new lines to be added."
+0.32.3:
+  fixes:
+  - "Node Editor: Fixed LiteGraph context menu positioning issue."
+0.32.2:
+  fixes:
+  - "Fixed KoboldCpp connection issues."
+0.32.1:
+  fixes:
+  - "Fixed LMStudio connection (#212)."
+  - "Fixed Windows setup failure when any parent folder path contains spaces (#211)."
+  - "Fixed character creation issues."
+  - "Tweaked scene analysis and director guidance prompts for conversation."
+  - "Added GLM 4.5 templates."
+0.32.0:
+  features:
+  - "TTS Agent Refactor: The Text-to-Speech agent has been completely refactored, adding support for additional APIs, per-character voice assignment, and speaker separation. Voices can now be managed through the new voice library. Local backends: F5-TTS (zero shot voice cloning), Chatterbox (zero shot voice cloning), Kokoro (predefined voice models). Remote backends: ElevenLabs, Google Gemini-TTS, OpenAI. The director agent can automatically assign voices to new characters based on voice library tags. XTTS2 support has been removed."
+  - "Reasoning / Thinking Models: Support for reasoning / thinking models has been added across all client types. Activate it via the new Reasoning tab in the client configuration UI. Disabled by default."
+  - "Scene Export / Import Packages: Scenes can now be exported as complete packages — including nodes, assets, and info files — and imported through the home view. Stand-alone JSON scene files remain supported for backward compatibility."
+  improvements:
+  - "Simulation suite: fixed inactive characters."
+  - "OpenRouter: provider selection and generation quality fixes."
+  - "KoboldCpp client default template added."
+  - "Agents can be Ctrl+clicked to toggle enabled state."
+  - "Visual agent: prevent scene cover image overwrite."
+  - "Disable scene analysis / guidance when building image generation prompts."
+  - "Migration from vue-cli to Vite (thanks @pax-co)."
+  - "Underlying config handling refactor improving stability."
+  - "Node Editor: Added As String node, Generate TTS node, Get Narrator Voice node, Get Voice node, TTS Agent settings node, and Unpack Voice node."
+  fixes:
+  - "Fixed Jinja2 error during auto direction generation."
+  migrations:
+  - "XTTS2 TTS support has been removed. Switch to one of the new local backends (F5-TTS, Chatterbox, Kokoro) or a remote backend (ElevenLabs, Google Gemini-TTS, OpenAI) via the voice library."
+0.31.0:
+  features:
+  - "Installable Node Modules: Added a rudimentary way to register node modules as packages so they can be installed into a scene. A mods tab becomes available once a scene is loaded and allows installing / uninstalling such modules. The Dynamic Story node module ships with a package, so manual node-editor setup is no longer required."
+  - "History Management: Can now add, edit, remove, and regenerate entries in the History tab of the World Editor. Entries based on summarization can be inspected to show their source messages."
+  improvements:
+  - "Instructor Embeddings are once again functional."
+  - "OpenRouter support added."
+  - "Ollama support added."
+  - "KoboldCpp Embeddings support added."
+  - "Visual agent can now generate prompts only — available even if the visual agent is not fully configured for image generation."
+  - "Memory Agent: memory retrieval has been improved."
+  - "Summarization Agent: summarization improvements."
+  - "Node Editor: Jinja2 templates existing in templates/modules can now be properly loaded."
+  - "Node Editor: Added Emit System Message node — allows for communication of messages to the user outside of the context history."
+  fixes:
+  - "chara_card_v3 spec character card import fixed."
+  - "Node Editor: Fixed issue where errors inside custom node graphs could hang Talemate."
+  - "Node Editor: Fixed issues with several math nodes that would run even though their wires were inactive."
+  - "Node Editor: Fixed issue with DynamicInstruction node that would run even though its wires were inactive."
+  - "Node Editor: Fixed issue where editor revision events were missing the `template_vars` value."
+0.30.0:
+  features:
+  - "Node Editor: The backend was refactored to a node-based architecture, allowing for more complex and dynamic scenes and customizable / reusable modules. This is the first iteration — accessible from creative mode once a scene is loaded."
+  - "Revisions: Revision action added to the Editor agent. When toggled on, it analyzes text for repetition or unwanted prose and revises it accordingly. Unwanted prose is defined through the writing style template assigned in the scene settings. Disabled by default."
+  - "Auto-Direction: The Director agent can now automatically direct the scene based on the current state and intention of the scene. Experimental and a work in progress — the goal is to test the waters towards giving the reins to the Director agent to direct the scene as it sees fit. Disabled by default."
+  improvements:
+  - "Inference preset groups."
+  - "AI function calling improvements."
+  - "Client rate limiting."
+  - "Clients can now configure data communication to be in YAML or JSON format."
+  - "Simulation Suite V2 — remade using the new node editor (v1 still exists)."
+  - "Director guidance cache."
+0.29.0:
+  features:
+  - "Scene Analysis: Added scene analysis capabilities, providing analytical summaries that other agents can use to enhance their output. Disabled by default."
+  - "Director Guidance: The director agent now offers conversation and narration guidance based on the summarizer's scene analysis. Disabled by default."
+  - "Character Progress: The world state agent can now automatically track character progress and provide proposals of updates to the character description and attributes. Disabled by default."
