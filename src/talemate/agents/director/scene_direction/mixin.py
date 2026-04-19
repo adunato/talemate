@@ -90,10 +90,10 @@ class SceneDirectionMixin:
                     type="number",
                     label="Max actions per turn",
                     description="Maximum number of actions to execute per scene direction turn.",
-                    value=5,
+                    value=10,
                     step=1,
                     min=1,
-                    max=20,
+                    max=99,
                 ),
                 "missing_response_retry_max": AgentActionConfig(
                     type="number",
