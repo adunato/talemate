@@ -329,7 +329,7 @@
             </div>
             <div v-else-if="message.type === 'director' && !getMessageTypeHidden(message.type)" :class="`message ${message.type}`">
                 <div class="director-message"  :id="`message-${message.id}`">
-                    <DirectorMessage :text="message.text" :message_id="message.id" :character="message.character" :direction_mode="message.direction_mode" :action="message.action" :uxLocked="uxLocked" :isLastMessage="index === messages.length - 1"/>
+                    <DirectorMessage :text="message.text" :message_id="message.id" :character="message.character" :direction_mode="message.direction_mode" :action="message.action" :subtype="message.subtype" :uxLocked="uxLocked" :isLastMessage="index === messages.length - 1"/>
                 </div>
             </div>
             <div v-else-if="message.type === 'time'" :class="`message ${message.type}`">
@@ -1733,6 +1733,7 @@ export default {
                             text: data.message,
                             direction_mode: data.direction_mode,
                             action: data.action,
+                            subtype: data.subtype,
                             rev: data.rev || 0
                         }
                     );

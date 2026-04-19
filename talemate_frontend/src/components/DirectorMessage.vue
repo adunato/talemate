@@ -1,5 +1,12 @@
 <template>
-  <div v-if="character">
+  <div v-if="subtype === 'user_direction'">
+    <!-- player-authored direction (~ / ~~ input) -->
+    <v-alert class="clickable user-direction" variant="text" icon="mdi-account-voice" elevation="0" density="compact" color="deep-purple-lighten-2" @click:close="deleteMessage()" closable :disabled="uxLocked">
+      <span class="text-caption text-medium-emphasis mr-1">Player directs:</span>
+      <span class="director-text">{{ text }}</span>
+    </v-alert>
+  </div>
+  <div v-else-if="character">
     <!-- actor instructions (character direction)-->
     <div class="director-container" v-if="show && minimized" >
       <v-chip closable :color="getMessageColor('director', null)" class="clickable" @click:close="deleteMessage()" :disabled="uxLocked">
@@ -53,7 +60,7 @@ export default {
       }
     }
   },
-  props: ['text', 'message_id', 'character', 'direction_mode', 'action', 'uxLocked', 'isLastMessage'],
+  props: ['text', 'message_id', 'character', 'direction_mode', 'action', 'subtype', 'uxLocked', 'isLastMessage'],
   inject: ['requestDeleteMessage', 'getMessageStyle', 'getMessageColor'],
   methods: {
     toggle() {

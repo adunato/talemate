@@ -9,6 +9,7 @@ import talemate.emit.async_signals as async_signals
 import talemate.util as util
 from talemate.scene_message import (
     CharacterMessage,
+    DIRECTOR_INPUT_PREFIX,
     NarratorMessage,
 )
 
@@ -209,6 +210,12 @@ class SceneDirectionMixin:
             return
 
         user_input = emission.message
+
+        # ~ and ~~ prefixed input is routed through WaitForInput as an explicit
+        # player direction, which appends its own is_direction=True message.
+        # Skip the default auto-append to avoid duplicate/noisy entries.
+        if user_input.startswith(DIRECTOR_INPUT_PREFIX):
+            return
 
         # Create user interaction message
         message = UserInteractionMessage(

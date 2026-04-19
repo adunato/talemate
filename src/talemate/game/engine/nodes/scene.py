@@ -17,7 +17,7 @@ import dataclasses
 from .registry import register, get_nodes_by_base_type, get_node
 from .event import connect_listeners, disconnect_listeners
 import talemate.events as events
-from talemate.emit import wait_for_input
+from talemate.emit import emit, wait_for_input
 from talemate.exceptions import ActedAsCharacter, AbortWaitForInput, GenerationCancelled
 from talemate.context import active_scene, InteractionState
 from talemate.instance import get_agent, AGENTS
@@ -28,6 +28,7 @@ from talemate.character import (
 )
 import talemate.scene_message as scene_message
 import talemate.emit.async_signals as async_signals
+from talemate.agents.director.scene_direction.schema import UserInteractionMessage
 from talemate.util.colors import random_color
 
 
@@ -1231,6 +1232,9 @@ class WaitForInput(Node):
             # input was empty, so continue the loop
             raise LoopContinue()
 
+        if text_message.startswith(scene_message.DIRECTOR_INPUT_PREFIX):
+            await self._handle_director_input(scene, state, text_message)
+
         if allow_commands and text_message.startswith("!"):
             command_state = {}
             node_cmd_executed = False
@@ -1306,6 +1310,60 @@ class WaitForInput(Node):
 
         # wait command_node().execute_command(state, **args_dict)
         return True
+
+    async def _handle_director_input(
+        self, scene: "Scene", state: GraphState, raw_text: str
+    ):
+        """
+        Parse a ~/~~ prefixed input as a player-authored director message.
+
+        Raises LoopContinue on empty payload; otherwise inserts the direction
+        and raises LoopBreak. The yield variant (~~) routes back to the player
+        input prompt; the plain variant (~) lets the scene loop advance.
+        """
+        yield_back = raw_text.startswith(scene_message.DIRECTOR_INPUT_PREFIX_YIELD)
+        prefix = (
+            scene_message.DIRECTOR_INPUT_PREFIX_YIELD
+            if yield_back
+            else scene_message.DIRECTOR_INPUT_PREFIX
+        )
+        text = raw_text[len(prefix) :].strip()
+
+        if not text:
+            raise LoopContinue()
+
+        director = get_agent("director")
+        if not director or not director.direction_enabled_with_override:
+            scene.commands.system_message(
+                "Player directions (~ / ~~) require Scene Direction to be enabled on the Director agent."
+            )
+            raise LoopContinue()
+
+        await self._insert_player_direction(scene, director, text)
+
+        if yield_back:
+            state.shared["signal_game_loop"] = False
+            state.shared["skip_to_player"] = True
+        raise LoopBreak()
+
+    async def _insert_player_direction(self, scene: "Scene", director, text: str):
+        """
+        Persist a player-authored direction to scene history and to the
+        director's scene direction history. Caller must verify that scene
+        direction is enabled.
+        """
+        message = scene_message.DirectorMessage(
+            text,
+            source="player",
+            action="user_direction",
+            subtype="user_direction",
+        )
+        await scene.push_history(message)
+        emit("director", message)
+
+        await director.direction_append_message(
+            UserInteractionMessage(user_input=text, is_direction=True)
+        )
 
 
 @register("scene/event/trigger/GameLoopActorIter")
