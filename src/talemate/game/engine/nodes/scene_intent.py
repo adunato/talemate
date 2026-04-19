@@ -185,6 +185,7 @@ class SetScenePhase(Node):
         self.add_output("state")
         self.add_output("phase", socket_type="scene_intent/scene_phase")
         self.add_output("scene_type", socket_type="scene_intent/scene_type")
+        self.add_output("intent", socket_type="str")
 
     async def run(self, state: GraphState):
         scene: "Scene" = active_scene.get()
@@ -200,6 +201,7 @@ class SetScenePhase(Node):
                 "state": scene.intent_state,
                 "phase": phase,
                 "scene_type": scene.intent_state.current_scene_type,
+                "intent": intent,
             }
         )
 
