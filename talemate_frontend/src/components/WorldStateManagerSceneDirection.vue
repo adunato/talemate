@@ -211,6 +211,7 @@
                     <tr>
                         <th class="name-column">Name</th>
                         <th class="description-column">Description</th>
+                        <th class="template-column">Instructions</th>
                         <th class="actions-column" style="text-align: right; width: 120px;">Actions</th>
                     </tr>
                 </thead>
@@ -219,6 +220,25 @@
                         <td class="name-column">{{ sceneType.name }}</td>
                         <td class="description-column align-start">
                             <div class="full-cell-content bg-mutedbg">{{ sceneType.description }}</div>
+                        </td>
+                        <td class="template-column">
+                            <div v-if="sceneType.instructions || sceneType.instruction_template">
+                                <div v-if="sceneType.instructions && sceneType.instructions.trim()" class="d-flex align-center mb-1">
+                                    <v-icon size="small" color="primary" class="mr-1">mdi-text-box-outline</v-icon>
+                                    <span class="text-caption">Text</span>
+                                </div>
+                                <div v-if="sceneType.instruction_template" class="d-flex align-center">
+                                    <v-icon
+                                        size="small"
+                                        :color="sceneTemplateFiles.includes(sceneType.instruction_template) ? 'primary' : 'warning'"
+                                        class="mr-1"
+                                    >
+                                        {{ sceneTemplateFiles.includes(sceneType.instruction_template) ? 'mdi-file-code' : 'mdi-file-alert' }}
+                                    </v-icon>
+                                    <span class="text-caption">{{ sceneType.instruction_template }}</span>
+                                </div>
+                            </div>
+                            <span v-else class="text-muted text-caption">—</span>
                         </td>
                         <td class="actions-column text-right">
                             <div class="action-buttons">
@@ -317,7 +337,12 @@
 }
 
 .description-column {
-    width: 65%;
+    width: 50%;
+}
+
+.template-column {
+    width: 15%;
+    min-width: 140px;
 }
 
 .instructions-text {
@@ -448,6 +473,11 @@ export default {
                     this.getSceneIntent();
                     this.requestSceneTemplateFiles();
                 }
+            }
+        },
+        sceneTypeEditor(value) {
+            if(value) {
+                this.requestSceneTemplateFiles();
             }
         },
         templates: {
