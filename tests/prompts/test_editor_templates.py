@@ -72,6 +72,7 @@ def mock_scene():
     intent_state.active = True
     intent_state.intent = "A fantasy adventure story."
     intent_state.instructions = "Make the story engaging."
+    intent_state.instruction_template = None
     intent_state.phase = Mock()
     intent_state.phase.intent = "The hero explores the forest."
     intent_state.current_scene_type = Mock(
@@ -79,6 +80,7 @@ def mock_scene():
         name="Exploration",
         description="An exploration scene",
         instructions="Focus on discovery.",
+        instruction_template=None,
     )
     intent_state.scene_types = {}
     scene.intent_state = intent_state

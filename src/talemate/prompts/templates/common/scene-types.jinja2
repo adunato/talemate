@@ -5,6 +5,7 @@
 {{ scene_type.description }}
 
 #### Instructions
-{{ scene_type.instructions }}
+{% if scene_type.instructions %}{{ scene_type.instructions }}{% endif %}
+{% if scene_type.instruction_template %}{% include scene_type.instruction_template ignore missing %}{% endif %}
 {% endfor %}
 <|CLOSE_SECTION|>

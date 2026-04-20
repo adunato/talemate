@@ -5,6 +5,8 @@ Captures the rendered prompt text passed to client.send_prompt() and compares
 against stored baseline files. Run with --update-baselines to create/update.
 """
 
+from pathlib import Path
+
 import pytest
 from unittest.mock import Mock, AsyncMock, patch
 
@@ -14,6 +16,10 @@ from talemate.agents.base import DynamicInstruction
 from talemate.agents.director.chat.schema import DirectorChatMessage
 from talemate.agents.director.plan.schema import Beat
 from talemate.agents.director.plan.expand import ChunkArcInfo
+
+TEST_TEMPLATES_DIR = (
+    Path(__file__).parent.parent.parent / "data" / "instruction_templates"
+)
 
 from ..conftest import mock_llm_client  # noqa: F401
 from ..test_director_templates import (  # noqa: F401
@@ -154,6 +160,47 @@ class TestDirectorBaselines:
             mock_meta.return_value = []
             await director.direction_execute_turn(always_on=True)
         baseline_checker(capture_prompt(director), AGENT, "direction_execute_turn")
+
+    @pytest.mark.asyncio
+    async def test_direction_execute_turn__with_instruction_template(
+        self, active_context, baseline_checker
+    ):
+        """Verify instruction_template addon renders alongside raw instructions text."""
+        director = active_context
+        director.actions["scene_direction"].enabled = True
+
+        director.scene.template_dir = str(TEST_TEMPLATES_DIR)
+        director.scene.intent_state.instructions = "Keep the pacing brisk."
+        director.scene.intent_state.instruction_template = (
+            "test-instruction-template.jinja2"
+        )
+        director.scene.intent_state.current_scene_type = Mock(
+            id="exploration",
+            name="Exploration",
+            description="An exploration scene.",
+            instructions="Focus on discovery.",
+            instruction_template="test-instruction-template.jinja2",
+        )
+
+        director.client.send_prompt = AsyncMock(
+            return_value="<ANALYSIS>Analysis.</ANALYSIS><DECISION>Decision text.</DECISION>"
+        )
+        with (
+            patch(
+                "talemate.agents.director.action_core.utils.get_available_actions"
+            ) as mock_actions,
+            patch(
+                "talemate.agents.director.action_core.utils.get_meta_groups"
+            ) as mock_meta,
+        ):
+            mock_actions.return_value = []
+            mock_meta.return_value = []
+            await director.direction_execute_turn(always_on=True)
+        baseline_checker(
+            capture_prompt(director),
+            AGENT,
+            "direction_execute_turn__with_instruction_template",
+        )
 
     @pytest.mark.asyncio
     async def test_guide_actor_off_of_scene_analysis__with_dynamic_instructions(

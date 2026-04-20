@@ -12,10 +12,13 @@ There is NO overal intention / set of expectations for this experience.
 {% endif %}
 
 <|CLOSE_SECTION|>
-{% if include_instructions and scene.intent_state.instructions and scene.intent_state.instructions|trim %}
+{% set _has_intent_instructions = scene.intent_state.instructions and scene.intent_state.instructions|trim %}
+{% set _has_intent_instruction_template = scene.intent_state.instruction_template %}
+{% if include_instructions and (_has_intent_instructions or _has_intent_instruction_template) %}
 <|SECTION:SPECIAL INSTRUCTIONS FOR MANAGING THIS EXPERIENCE|>
 {% if technical %}Context IDs: `story_configuration:director_instructions`{% endif %}
-{{ scene.intent_state.instructions }}
+{% if _has_intent_instructions %}{{ scene.intent_state.instructions }}{% endif %}
+{% if _has_intent_instruction_template %}{% include scene.intent_state.instruction_template ignore missing %}{% endif %}
 <|CLOSE_SECTION|>
 {% endif %}
 
@@ -25,7 +28,8 @@ There is NO overal intention / set of expectations for this experience.
 {% set _has_scene_type = scene_type.id and scene_type.id|trim -%}
 {% set _has_scene_intent = scene.intent_state.phase.intent and scene.intent_state.phase.intent|trim -%}
 {% set _has_scene_instructions = scene_type.instructions and scene_type.instructions|trim -%}
-{% if _has_scene_type or _has_scene_intent or _has_scene_instructions %}
+{% set _has_scene_instruction_template = scene_type.instruction_template -%}
+{% if _has_scene_type or _has_scene_intent or _has_scene_instructions or _has_scene_instruction_template %}
 <|SECTION:INTENTION OF THE CURRENT SCENE|>
 {% if technical %}Context IDs: `story_configuration:scene_intention`, `story_configuration:scene_type`{% endif %}
 
@@ -33,10 +37,11 @@ There is NO overal intention / set of expectations for this experience.
 Scene type: `{{ scene_type.id }}` - {{ scene_type.description }}
 {% endif %}
 
-{% if _has_scene_instructions %}
+{% if _has_scene_instructions or _has_scene_instruction_template %}
 ### INSTRUCTIONS FOR THE CURRENT SCENE TYPE `{{ scene_type.id }}`
 ---
-{{ scene_type.instructions }}
+{% if _has_scene_instructions %}{{ scene_type.instructions }}{% endif %}
+{% if _has_scene_instruction_template %}{% include scene_type.instruction_template ignore missing %}{% endif %}
 ---
 {% endif %}
 

@@ -85,6 +85,7 @@ def mock_scene():
     scene.intent_state.active = False
     scene.intent_state.intent = "A test story"
     scene.intent_state.instructions = ""
+    scene.intent_state.instruction_template = None
     scene.intent_state.phase = Mock()
     scene.intent_state.phase.intent = "Test phase"
     scene.intent_state.current_scene_type = None

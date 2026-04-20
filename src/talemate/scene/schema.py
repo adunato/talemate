@@ -27,6 +27,7 @@ class SceneType(pydantic.BaseModel):
     name: str
     description: str
     instructions: str | None = None
+    instruction_template: str | None = None
 
 
 class ScenePhase(pydantic.BaseModel):
@@ -45,6 +46,7 @@ class SceneIntent(pydantic.BaseModel):
     )
     intent: str | None = None
     instructions: str | None = None
+    instruction_template: str | None = None
     direction: SceneDirectionConfig = pydantic.Field(
         default_factory=SceneDirectionConfig
     )

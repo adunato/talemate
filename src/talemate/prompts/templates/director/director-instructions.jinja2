@@ -1,13 +1,15 @@
 {% set _intent_instructions = scene.intent_state.instructions if scene.intent_state and scene.intent_state.instructions else "" %}
-{% if _intent_instructions or custom_instructions %}
+{% set _intent_instruction_template = scene.intent_state.instruction_template if scene.intent_state else "" %}
+{% if _intent_instructions or _intent_instruction_template or custom_instructions %}
 <|SECTION:Instructions for your direction|>
 {% if custom_instructions %}
 ### System-wide instructions
 {{ custom_instructions }}
 {% endif %}
-{% if _intent_instructions %}
+{% if _intent_instructions or _intent_instruction_template %}
 ### Scene instructions
-{{ _intent_instructions }}
+{% if _intent_instructions %}{{ _intent_instructions }}{% endif %}
+{% if _intent_instruction_template %}{% include _intent_instruction_template ignore missing %}{% endif %}
 {% endif %}
 <|CLOSE_SECTION|>
 {% endif %}

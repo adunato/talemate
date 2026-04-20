@@ -60,6 +60,16 @@
                         @blur="updateSceneIntent()"
                     ></v-textarea>
 
+                    <v-select
+                        v-model="sceneIntent.instruction_template"
+                        :items="instructionTemplateItems"
+                        label="Instruction template"
+                        clearable
+                        messages="Optional. Jinja2 template from the scene's template directory. Rendered alongside the general instructions above."
+                        :color="dirty['instruction_template'] ? 'dirty' : ''"
+                        @update:model-value="setFieldDirty('instruction_template'); updateSceneIntent()"
+                    ></v-select>
+
                 </v-card>
 
                 <!-- overall intention -->
@@ -281,6 +291,14 @@
                         max-rows="30"
                         label="Instructions"
                     ></v-textarea>
+
+                    <v-select
+                        v-model="sceneType.instruction_template"
+                        :items="instructionTemplateItems"
+                        label="Instruction template"
+                        clearable
+                        messages="Optional. Jinja2 template from the scene's template directory. Rendered alongside the instructions above."
+                    ></v-select>
                 </v-form>
             </v-card-text>
             <v-card-actions>
@@ -353,6 +371,7 @@ const BLANK_SCENE_TYPE = {
     name: '',
     description: '',
     instructions: '',
+    instruction_template: '',
 }
 
 export default {
@@ -385,6 +404,18 @@ export default {
         sceneTypes() {
             return Object.values(this.sceneIntent.scene_types);
         },
+        instructionTemplateItems() {
+            // Always surface the currently-stored value even if the file was
+            // renamed/removed, so the user can see what's set and fix it.
+            const items = this.sceneTemplateFiles.map(name => ({ title: name, value: name }));
+            const current = [this.sceneIntent?.instruction_template, this.sceneType?.instruction_template];
+            for (const value of current) {
+                if (value && !this.sceneTemplateFiles.includes(value)) {
+                    items.push({ title: `${value} (missing)`, value, props: { disabled: false } });
+                }
+            }
+            return items;
+        },
         filteredSceneTypeTemplates() {
             // Check if we have templates from props
             if (!this.templates || !this.templates.by_type || !this.templates.by_type.scene_type) {
@@ -415,6 +446,7 @@ export default {
             handler(value) {
                 if(value) {
                     this.getSceneIntent();
+                    this.requestSceneTemplateFiles();
                 }
             }
         },
@@ -432,6 +464,7 @@ export default {
                 scene_types: {},
                 intent: '',
                 instructions: '',
+                instruction_template: '',
                 direction: {
                     always_on: false,
                     run_immediately: false,
@@ -448,6 +481,7 @@ export default {
             dirty: {},
             deleteColumnWidth: 200,
             selectedSceneTypeTemplate: null,
+            sceneTemplateFiles: [],
         }
     },
     methods: {
@@ -508,6 +542,13 @@ export default {
             }));
         },
 
+        requestSceneTemplateFiles() {
+            this.getWebsocket().send(JSON.stringify({
+                type: 'prompts',
+                action: 'list_templates',
+            }));
+        },
+
         updateSceneIntent() {
             if(!this.sceneIntent) {
                 return;
@@ -557,6 +598,17 @@ export default {
                 if (!hasDirty) {
                     this.sceneIntent = message.data;
                 }
+                return;
+            }
+
+            if (message.type === 'prompts' && message.action === 'list_templates') {
+                // Offer only flat scene-dir templates (agent=="") as
+                // instruction-template candidates. Agent-specific scene
+                // templates are for overriding named prompts, not includes.
+                const templates = (message.data && message.data.templates) || [];
+                this.sceneTemplateFiles = templates
+                    .filter(t => t.agent === '' && (t.available_in || []).includes('scene'))
+                    .map(t => `${t.name}.jinja2`);
                 return;
             }
 
