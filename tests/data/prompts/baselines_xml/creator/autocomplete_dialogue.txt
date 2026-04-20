@@ -1,7 +1,7 @@
 <CLASSIFICATION>
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 </CLASSIFICATION>
 
 Scenario Premise:
@@ -18,7 +18,7 @@ Elena: Hello there, traveler.
 </CHARACTER_DIRECTION>
 
 <ACTING_INSTRUCTIONS_FOR_ELENA>
-Speaks normally.
+Speaks calmly and with wisdom.
 </ACTING_INSTRUCTIONS_FOR_ELENA>
 
 <TASK>

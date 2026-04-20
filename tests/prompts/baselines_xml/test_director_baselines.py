@@ -13,9 +13,9 @@ from ..test_director_templates import (  # noqa: F401
     mock_creator_agent,
     mock_memory_agent,
     mock_tts_agent,
+    mock_editor_agent,
     director_agent,
     setup_agents,
     active_context,
-    MockCharacter,
 )
 from ..baselines.test_director_baselines import TestDirectorBaselines  # noqa: F401

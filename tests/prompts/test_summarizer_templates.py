@@ -11,69 +11,16 @@ from unittest.mock import Mock, AsyncMock
 
 import talemate.instance as instance
 from talemate.agents.summarize import SummarizeAgent
-from .helpers import create_mock_scene
-
-
-class MockCharacter:
-    """A mock character class for isinstance checks."""
-
-    def __init__(self, name, is_player=False):
-        self.name = name
-        self.is_player = is_player
-        self.description = "A test character."
-        self.gender = "female"
-        self.greeting_text = "Hello there."
-        self.dialogue_instructions = "Speaks normally."
-        self.base_attributes = {"name": name}
-        self.details = {}
-        self.sheet = f"name: {name}"
-        self.example_dialogue = []
-        self.random_dialogue_example = ""
+from .helpers import create_mock_character, create_scene_with_characters
 
 
 @pytest.fixture
 def mock_scene():
-    """Create a rich mock scene for testing."""
-    scene = create_mock_scene()
+    """Real Scene with Hero + Elena actors; IO-ish methods stubbed."""
+    scene = create_scene_with_characters()
 
-    # Add player character using MockCharacter class
-    player = MockCharacter(name="Hero", is_player=True)
-    npc = MockCharacter(name="Elena", is_player=False)
-
-    scene.get_player_character = Mock(return_value=player)
-    scene.get_npc_characters = Mock(return_value=[npc])
-    scene.get_characters = Mock(return_value=[player, npc])
-    scene.get_character = Mock(
-        side_effect=lambda name: player if name == "Hero" else npc
-    )
-    scene.writing_style = "descriptive"
-    scene.agent_state = {}
-
-    # Mock Character class for isinstance check
-    scene.Character = MockCharacter
-
-    # Mock push_history for tests that need it
     scene.push_history = AsyncMock()
-
-    # Add archived_history for layered history tests
-    scene.archived_history = []
-
-    # Add layered_history for context investigation tests
-    scene.layered_history = []
-
-    # Add intent_state for analyze scene templates
-    scene.intent_state = Mock()
-    scene.intent_state.active = False
-    scene.intent_state.intent = ""
-    scene.intent_state.phase = None
-    scene.intent_state.current_scene_type = Mock()
-    scene.intent_state.current_scene_type.description = "A test scene type"
-
-    # Add count_character_messages_since_director
     scene.count_character_messages_since_director = Mock(return_value=0)
-
-    # Add parse_characters_from_text
-    scene.parse_characters_from_text = Mock(return_value=[])
 
     return scene
 
@@ -108,9 +55,19 @@ def summarizer_agent(mock_llm_client, mock_scene):
 
 
 @pytest.fixture
+def mock_memory_agent():
+    """Create a mock memory agent."""
+    memory = Mock()
+    memory.query = AsyncMock(return_value="Mocked memory response")
+    memory.multi_query = AsyncMock(return_value={})
+    return memory
+
+
+@pytest.fixture
 def setup_agents(
     mock_conversation_agent,
     mock_summarizer_agent_for_registry,
+    mock_memory_agent,
 ):
     """Set up the agent registry with mocked agents."""
     # Save original AGENTS dict
@@ -119,6 +76,7 @@ def setup_agents(
     # Set up mock agents in the registry
     instance.AGENTS["summarizer"] = mock_summarizer_agent_for_registry
     instance.AGENTS["conversation"] = mock_conversation_agent
+    instance.AGENTS["memory"] = mock_memory_agent
 
     yield
 
@@ -526,7 +484,7 @@ class TestSummarizerAnalyzeSceneForNextAction:
             return_value="The scene is building tension as characters negotiate."
         )
 
-        character = MockCharacter(name="TestChar")
+        character = create_mock_character(name="TestChar")
 
         response = await summarizer.analyze_scene_for_next_action(
             typ="conversation", character=character, length=512

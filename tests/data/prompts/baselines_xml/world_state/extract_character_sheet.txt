@@ -1,11 +1,9 @@
 <CHARACTERS>
 ### Hero
 
-A test character.
-
 ### Elena
 
-A test character.
+A wandering healer with knowledge of ancient herbs.
 </CHARACTERS>
 
 <CONTENT>

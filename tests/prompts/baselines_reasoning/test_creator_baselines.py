@@ -14,7 +14,6 @@ from ..test_creator_templates import (  # noqa: F401
     creator_agent,
     setup_agents,
     active_context,
-    MockCharacter,
 )
 from ..baselines.test_creator_baselines import (  # noqa: F401
     TestCreatorTitleBaselines,

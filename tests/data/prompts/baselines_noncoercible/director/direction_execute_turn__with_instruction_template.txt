@@ -11,7 +11,7 @@ The overarching intention of this story. Use it to guide your decisions in the s
 
 THIS IS NOT THE STORY DESCRIPTION, IT IS THE INTENTION OF THE STORY.
 
-A test story
+There is NO overal intention / set of expectations for this experience.
 
 ## Intention of the current scene
 Context IDs: `story_configuration:scene_intention`, `story_configuration:scene_type`
@@ -26,12 +26,8 @@ ADDON TEMPLATE MARKER:
 - rule: no chapter breaks
 ---
 
-### INTENTION OF THE CURRENT SCENE
----
-Test phase
----
-
 ## Scene types
+- ID:`exploration`: DESCRIPTION: An exploration scene.
 
 ## Scene
 
@@ -42,6 +38,8 @@ Marcus: What brings you to these woods?
 [CHAT_START_MARKER: User conversation began after the above scene snapshot]
 
 ## Important notes
+
+UNPLAYED: There has been no progress in the interactive story yet.
 
 STORY TITLE: The Forest Clearing
 

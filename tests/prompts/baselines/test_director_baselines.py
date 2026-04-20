@@ -31,10 +31,10 @@ from ..test_director_templates import (  # noqa: F401
     mock_creator_agent,
     mock_memory_agent,
     mock_tts_agent,
+    mock_editor_agent,
     director_agent,
     setup_agents,
     active_context,
-    MockCharacter,
 )
 from .conftest import capture_prompt
 
@@ -169,18 +169,25 @@ class TestDirectorBaselines:
         director = active_context
         director.actions["scene_direction"].enabled = True
 
+        from talemate.scene.schema import ScenePhase, SceneType
+
         director.scene.template_dir = str(TEST_TEMPLATES_DIR)
         director.scene.intent_state.instructions = "Keep the pacing brisk."
         director.scene.intent_state.instruction_template = (
             "test-instruction-template.jinja2"
         )
-        director.scene.intent_state.current_scene_type = Mock(
-            id="exploration",
-            name="Exploration",
-            description="An exploration scene.",
-            instructions="Focus on discovery.",
-            instruction_template="test-instruction-template.jinja2",
-        )
+        # Install a real SceneType and point ``phase`` at it so
+        # ``SceneIntent.current_scene_type`` resolves via the real property.
+        director.scene.intent_state.scene_types = {
+            "exploration": SceneType(
+                id="exploration",
+                name="Exploration",
+                description="An exploration scene.",
+                instructions="Focus on discovery.",
+                instruction_template="test-instruction-template.jinja2",
+            )
+        }
+        director.scene.intent_state.phase = ScenePhase(scene_type="exploration")
 
         director.client.send_prompt = AsyncMock(
             return_value="<ANALYSIS>Analysis.</ANALYSIS><DECISION>Decision text.</DECISION>"

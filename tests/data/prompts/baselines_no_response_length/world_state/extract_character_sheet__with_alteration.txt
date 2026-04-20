@@ -2,11 +2,9 @@
 
 ### Hero
 
-A test character.
-
 ### Elena
 
-A test character.
+A wandering healer with knowledge of ancient herbs.
 
 ## Content
 A peaceful clearing in the heart of an ancient forest.Elena: Hello there, traveler.
@@ -19,14 +17,13 @@ Elena's character profile:
 name: Elena
 gender: female
 age: early 30s
+occupation: Healer
 
 Update the character sheet with any realtime changes for Elena based on the context and the following information. Add one attribute per line. You are a creative writer and are allowed to fill in any gaps in the profile with your own ideas.
 
 Treat updates as absolute, the new character sheet will replace the old one.
 
 Alteration instructions: Update age to reflect time passing.
-
-## Writing style
 
 You must only generate attributes for Elena. You are omniscient and can describe the character in detail.
 

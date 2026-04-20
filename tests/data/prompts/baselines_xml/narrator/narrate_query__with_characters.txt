@@ -1,26 +1,23 @@
 <CLASSIFICATION>
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 </CLASSIFICATION>
 
 Scenario Premise:
 A peaceful clearing in the heart of an ancient forest.
 
-<INTENTION_OF_THIS_STORY>
-The overarching intention of this story. Use it to guide your decisions in the scene.
-
-<Mock name='mock.intent_state.intent' id='NORMALIZED'>
-</INTENTION_OF_THIS_STORY>
-
 <CHARACTERS>
 ### Elena
 name: Elena
+gender: female
+age: early 30s
+occupation: Healer
 
-A test character.
+A wandering healer with knowledge of ancient herbs.
 
 #### General character guide for Elena
-Speaks normally.
+Speaks calmly and with wisdom.
 </CHARACTERS>
 
 <SCENE>
@@ -45,6 +42,8 @@ Focus on descriptive prose and implied experiences.
 Embody the narrator's role completely, using a unique narrative voice.
 
 Provide information confidently and decisively through your perspective, without progressing the story.
+
+Maintain an informal, conversational tone.
 
 The length of your response must fit within 4 paragraphs.
 

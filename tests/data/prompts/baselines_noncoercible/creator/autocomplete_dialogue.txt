@@ -1,7 +1,7 @@
 ## Classification
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 
 Scenario Premise:
 A peaceful clearing in the heart of an ancient forest.
@@ -19,7 +19,7 @@ Marcus: What brings you to these woods?
 Elena: Hello there, traveler.
 
 ## Acting instructions for elena
-Speaks normally.
+Speaks calmly and with wisdom.
 
 ## Task
 You are assisting a script editor in writing the next line of dialogue or action for ELENA in the current scene.

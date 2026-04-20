@@ -12,74 +12,17 @@ from unittest.mock import Mock, AsyncMock, patch
 import talemate.instance as instance
 from talemate.agents.creator import CreatorAgent
 from talemate.agents.creator.assistant import ContentGenerationContext
-from .helpers import create_mock_scene
-
-
-class MockCharacter:
-    """A mock character class for isinstance checks."""
-
-    def __init__(self, name, is_player=False):
-        self.name = name
-        self.is_player = is_player
-        self.description = "A test character."
-        self.gender = "female"
-        self.greeting_text = "Hello there."
-        self.dialogue_instructions = "Speaks normally."
-        self.base_attributes = {"name": name}
-        self.details = {}
-        self.sheet = f"name: {name}"
-        self.example_dialogue = []
-        self.random_dialogue_example = ""
-
-    def set_detail(self, key, value):
-        """Mock set_detail for character details."""
-        self.details[key] = value
-
-    def filtered_sheet(self, *args, **kwargs):
-        """Mock filtered_sheet method."""
-        return self.sheet
-
-    def sheet_filtered(self, *args, **kwargs):
-        """Mock sheet_filtered method (alias for filtered_sheet)."""
-        return self.sheet
+from .helpers import create_scene_with_characters
 
 
 @pytest.fixture
 def mock_scene():
-    """Create a rich mock scene for testing."""
-    scene = create_mock_scene()
+    """Real Scene with Hero + Elena actors; IO-ish methods stubbed."""
+    scene = create_scene_with_characters()
 
-    # Add player character using MockCharacter class
-    player = MockCharacter(name="Hero", is_player=True)
-    npc = MockCharacter(name="Elena", is_player=False)
-
-    scene.get_player_character = Mock(return_value=player)
-    scene.get_npc_characters = Mock(return_value=[npc])
-    scene.get_characters = Mock(return_value=[player, npc])
-    scene.get_character = Mock(
-        side_effect=lambda name: player if name == "Hero" else npc
-    )
-    # writing_style must be None or a WritingStyle instance (not Mock) for pydantic validation
-    scene.writing_style = None
-    scene.agent_state = {}
-    scene.characters = [player, npc]
+    scene.push_history = AsyncMock()
     scene.snapshot = Mock(return_value="Current scene snapshot")
     scene.num_npc_characters = Mock(return_value=1)
-
-    # Mock Character class for isinstance check
-    scene.Character = MockCharacter
-
-    # Mock push_history for tests that need it
-    scene.push_history = AsyncMock()
-
-    # Mock intent_state for contextual generate
-    scene.intent_state = Mock()
-    scene.intent_state.active = False
-    scene.intent_state.scene_types = {}
-
-    # Mock log for autocomplete tests
-    scene.log = Mock()
-    scene.log.debug = Mock()
 
     return scene
 
@@ -118,6 +61,8 @@ def mock_memory_agent():
     memory = Mock()
     memory.query = AsyncMock(return_value="Mocked memory response")
     memory.multi_query = AsyncMock(return_value={})
+    memory.add_many = AsyncMock()
+    memory.delete = AsyncMock()
     return memory
 
 
@@ -453,8 +398,8 @@ class TestCreatorCharacterMethods:
         """Test that determine_character_goals calls the LLM client."""
         creator = active_context
         character = mock_scene.get_character("Elena")
-        # Make set_detail an async mock
-        character.set_detail = AsyncMock()
+        # Real ``Character.set_detail`` calls the memory agent, which is already
+        # mocked via ``setup_agents`` — no need to replace the bound method.
         creator.client.send_prompt.return_value = (
             "Elena wants to find a cure for the plague."
         )

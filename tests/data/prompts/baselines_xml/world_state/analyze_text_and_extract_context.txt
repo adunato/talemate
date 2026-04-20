@@ -1,7 +1,7 @@
 <CLASSIFICATION>
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 </CLASSIFICATION>
 
 <MAIN_CONTEXT>

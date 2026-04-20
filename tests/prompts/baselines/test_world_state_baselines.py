@@ -19,7 +19,6 @@ from ..test_world_state_templates import (  # noqa: F401
     world_state_agent,
     setup_agents,
     active_context,
-    MockCharacter,
 )
 from .conftest import capture_prompt
 
@@ -199,9 +198,6 @@ class TestWorldStateReinforcementBaselines:
             instructions="",
             insert="sequential",
         )
-        mock_scene.world_state.find_reinforcement = AsyncMock(
-            return_value=(0, reinforcement)
-        )
         mock_scene.world_state.reinforce = [reinforcement]
         await agent.update_reinforcement(
             question="What is the hero's mood?", character=None
@@ -222,9 +218,6 @@ class TestWorldStateReinforcementBaselines:
             character="Elena",
             instructions="",
             insert="conversation-context",
-        )
-        mock_scene.world_state.find_reinforcement = AsyncMock(
-            return_value=(0, reinforcement)
         )
         mock_scene.world_state.reinforce = [reinforcement]
         await agent.update_reinforcement(question="current mood", character="Elena")

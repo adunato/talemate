@@ -1,14 +1,10 @@
 <CLASSIFICATION>
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 </CLASSIFICATION>
 
-Elena's description: A test character.
-
-These entries were collected through semantic similarity matching and may or may not be relevant to the current context. Use them as such.
-query1
-</POTENTIALLY_RELEVANT_INFORMATION>
+Elena's description: A wandering healer with knowledge of ancient herbs.
 
 <SCENE>
 1. Elena: Hello there, traveler.

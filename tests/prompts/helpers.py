@@ -1,12 +1,63 @@
 """
-Shared helper functions for prompt template tests.
+Real-object helpers for prompt template tests.
 
-These utilities enable unit testing of Jinja2 templates with mocked objects,
-without requiring an LLM connection.
+These helpers build actual Scene, Character, Actor, WorldState, and GameState
+instances rather than Mocks, so template tests fail loudly when the
+underlying schemas change.
+
+LLM clients and most agents remain stubbed — they reach out to real
+infrastructure (network, filesystem) which template tests must not touch.
 """
 
+from typing import Iterable
 from unittest.mock import Mock
+
+from talemate.character import Character
 from talemate.prompts.base import Prompt
+from talemate.tale_mate import Actor, Player, Scene
+
+
+# Default rendered-history lines returned by ``Scene.context_history``. The real
+# method delegates to the summarizer agent, which pulls the LLM; template tests
+# just need a plausible iterable of strings.
+DEFAULT_CONTEXT_HISTORY = [
+    "Elena: Hello there, traveler.",
+    "The sun filters through the leaves above.",
+    "Marcus: What brings you to these woods?",
+]
+
+
+class MockScene(Scene):
+    """``Scene`` subclass with a writable ``writing_style`` for template tests.
+
+    The real ``Scene.writing_style`` is a read-only property that resolves
+    through the world-state template collection — that path requires a fully
+    wired scene on disk, which template tests don't have. Overriding the
+    property here lets tests set a truthy sentinel (string or template stub)
+    so templates that gate on ``scene.writing_style`` can render their
+    branches.
+    """
+
+    @property
+    def writing_style(self):
+        return getattr(self, "_mock_writing_style", None)
+
+    @writing_style.setter
+    def writing_style(self, value):
+        self._mock_writing_style = value
+
+    @property
+    def template_dir(self):
+        # Default: real property's value (``save_dir/templates``) — most tests
+        # don't need a real directory. Tests that load Jinja2 templates from
+        # disk can set an override via ``scene.template_dir = ...``.
+        if hasattr(self, "_mock_template_dir"):
+            return self._mock_template_dir
+        return super().template_dir  # type: ignore[misc]
+
+    @template_dir.setter
+    def template_dir(self, value):
+        self._mock_template_dir = value
 
 
 def create_mock_scene(
@@ -15,23 +66,18 @@ def create_mock_scene(
     intro: str = "You find yourself in a quiet forest clearing.",
     outline: str = "A meeting between travelers in the forest.",
     title: str = "The Forest Clearing",
-    history: list = None,
-) -> Mock:
-    """
-    Create a minimal mock scene for template testing.
+    history: list | None = None,
+) -> Scene:
+    """Create a real Scene, lightly populated with the scalar fields templates read.
 
-    Args:
-        context: Scene content classification/genre
-        description: Scene description
-        intro: Scene intro text
-        outline: Scene outline
-        title: Scene title
-        history: Optional list of history entries
-
-    Returns:
-        Mock scene object with all required attributes for template rendering
+    The returned scene has a real ``WorldState`` / ``GameState`` / ``SceneIntent``
+    attached via ``Scene.__init__``. ``context_history`` and ``last_message_of_type``
+    are stubbed with canned return values because their real implementations call
+    into the summarizer agent (which tests don't want to spin up). No actors are
+    added by default — use :func:`add_character` or :func:`create_scene_with_characters`
+    to populate.
     """
-    scene = Mock()
+    scene = MockScene()
     scene.context = context
     scene.description = description
     scene.intro = intro
@@ -39,48 +85,90 @@ def create_mock_scene(
     scene.title = title
     scene.ts = "PT2H30M"
     scene.environment = "scene"
-    scene.history = history or []
-    scene.archived_history = []
-    scene.active_pins = []
-    scene.active_characters = ["Hero", "Elena"]
+    # Default narrative perspective so templates gated on ``scene.perspective``
+    # (e.g. common/content-classification.jinja2) render their branches. Tests
+    # that want the section suppressed can set ``scene.perspective = ""``.
+    scene.perspective = "Third person limited, past tense."
+    if history:
+        scene.history = list(history)
 
-    # Mock methods
-    scene.context_history = Mock(
-        return_value=[
-            "Elena: Hello there, traveler.",
-            "The sun filters through the leaves above.",
-            "Marcus: What brings you to these woods?",
-        ]
-    )
+    # These delegate to the summarizer agent in production — stub them so
+    # template tests don't need a fully-wired agent registry.
+    scene.context_history = Mock(return_value=list(DEFAULT_CONTEXT_HISTORY))
     scene.last_message_of_type = Mock(return_value="Elena: Hello there, traveler.")
-    scene.get_characters = Mock(return_value=[])
-    scene.num_history_entries = 3
 
-    # Characters list (for templates that iterate over scene.characters)
-    scene.characters = []
-    scene.character_names = []
+    # Default SceneIntent has a prefilled "roleplay" phase — zero it out so
+    # the "Intention of the current scene" section stays empty unless a test
+    # explicitly configures phase/intent. Tests that need intent rendering can
+    # set ``scene.intent_state.phase`` / ``.intent`` themselves.
+    scene.intent_state.phase = None
+    return scene
 
-    # World state
-    scene.world_state = Mock()
-    scene.world_state.filter_reinforcements = Mock(return_value=[])
-    scene.world_state.description = "A fantastical medieval world"
 
-    # Game state
-    scene.game_state = Mock()
-    scene.game_state.state = {}
+def create_mock_character(
+    name: str = "Elena",
+    is_player: bool = False,
+    gender: str = "female",
+    description: str = "A wandering healer with knowledge of ancient herbs.",
+) -> Character:
+    """Create a real ``Character`` with sensible defaults for template tests."""
+    return Character(
+        name=name,
+        is_player=is_player,
+        description=description,
+        greeting_text="Hello there, traveler.",
+        dialogue_instructions="Speaks calmly and with wisdom.",
+        base_attributes={
+            "name": name,
+            "gender": gender,
+            "age": "early 30s",
+            "occupation": "Adventurer" if is_player else "Healer",
+        },
+        details={"background": "Trained by forest hermits from a young age."},
+        example_dialogue=[f"{name}: The forest provides all we need."],
+    )
 
+
+def add_character(scene: Scene, character: Character, agent=None) -> Actor:
+    """Attach a ``Character`` to a ``Scene`` as an active ``Actor`` / ``Player``.
+
+    Mirrors what ``Scene.add_actor`` does without requiring a real memory agent.
+    """
+    actor_cls = Player if character.is_player else Actor
+    actor = actor_cls(character=character, agent=agent)
+    scene.actors.append(actor)
+    scene.character_data[character.name] = character
+    if character.name not in scene.active_characters:
+        scene.active_characters.append(character.name)
+    actor.scene = scene
+    return actor
+
+
+def create_scene_with_characters(
+    characters: Iterable[Character] | None = None,
+    **scene_kwargs,
+) -> Scene:
+    """Build a scene and register the given characters as active actors.
+
+    When ``characters`` is None, registers a default Hero (player) +
+    Elena (NPC) pair.
+    """
+    scene = create_mock_scene(**scene_kwargs)
+    if characters is None:
+        characters = [
+            create_mock_character(name="Hero", is_player=True, gender="male"),
+            create_mock_character(name="Elena", is_player=False, gender="female"),
+        ]
+    for character in characters:
+        add_character(scene, character)
     return scene
 
 
 def create_mock_agent(agent_type: str = "narrator") -> Mock:
-    """
-    Create a minimal mock agent for template testing.
+    """Minimal stub agent for templates that need an ``agent`` variable.
 
-    Args:
-        agent_type: The type of agent (narrator, director, etc.)
-
-    Returns:
-        Mock agent object with required attributes
+    Agents talk to LLMs in production; template tests use a stub that only
+    exposes the attributes templates actually read.
     """
     agent = Mock()
     agent.state = {}
@@ -92,66 +180,16 @@ def create_mock_agent(agent_type: str = "narrator") -> Mock:
     return agent
 
 
-def create_mock_character(
-    name: str = "Elena",
-    is_player: bool = False,
-    gender: str = "female",
-    description: str = "A wandering healer with knowledge of ancient herbs.",
-) -> Mock:
-    """
-    Create a minimal mock character for template testing.
-
-    Args:
-        name: Character name
-        is_player: Whether this is a player character
-        gender: Character gender
-        description: Character description
-
-    Returns:
-        Mock character object with required attributes
-    """
-    char = Mock()
-    char.name = name
-    char.description = description
-    char.is_player = is_player
-    char.gender = gender
-    char.greeting_text = "Hello there, traveler."
-    char.dialogue_instructions = "Speaks calmly and with wisdom."
-    char.base_attributes = {
-        "name": name,
-        "gender": gender,
-        "age": "early 30s",
-        "occupation": "Healer" if not is_player else "Adventurer",
-    }
-    char.details = {"background": "Trained by forest hermits from a young age."}
-    char.sheet = f"name: {name}\ngender: {gender}\nage: early 30s"
-    char.example_dialogue = [f"{name}: The forest provides all we need."]
-    char.random_dialogue_example = f"{name}: The forest provides all we need."
-    return char
-
-
 def create_base_context(
-    scene: Mock = None,
+    scene: Scene | None = None,
     max_tokens: int = 4096,
     extra_instructions: str = "",
     technical: bool = False,
     decensor: bool = False,
 ) -> dict:
-    """
-    Create a base context dict for template rendering.
-
-    Args:
-        scene: Mock scene (created if not provided)
-        max_tokens: Token budget
-        extra_instructions: Additional instructions for the template
-        technical: Whether to use technical mode
-        decensor: Whether decensor is enabled
-
-    Returns:
-        Dict with common template variables
-    """
+    """Create a base context dict for template rendering."""
     return {
-        "scene": scene or create_mock_scene(),
+        "scene": scene if scene is not None else create_mock_scene(),
         "max_tokens": max_tokens,
         "extra_instructions": extra_instructions,
         "technical": technical,
@@ -159,48 +197,23 @@ def create_base_context(
     }
 
 
-def render_template(uid: str, vars: dict = None, client=None) -> str:
-    """
-    Helper to render a template with optional variables.
-
-    Args:
-        uid: Template UID in format "agent.template_name"
-        vars: Template variables
-        client: Optional mock client
-
-    Returns:
-        Rendered template string
-    """
+def render_template(uid: str, vars: dict | None = None, client=None) -> str:
+    """Render a template and return the rendered string."""
     prompt = Prompt.get(uid, vars=vars or {})
     if client:
         prompt.client = client
     return prompt.render()
 
 
-def assert_template_renders(uid: str, vars: dict = None, client=None):
-    """
-    Assert that a template renders without Jinja2 errors.
-
-    Args:
-        uid: Template UID in format "agent.template_name"
-        vars: Template variables
-        client: Optional mock client
-
-    Raises:
-        AssertionError: If template fails to render
-    """
+def assert_template_renders(uid: str, vars: dict | None = None, client=None):
+    """Assert that a template renders to a non-empty string."""
     result = render_template(uid, vars, client)
     assert result is not None, f"Template {uid} rendered to None"
     assert len(result) > 0, f"Template {uid} rendered to empty string"
 
 
-def assert_has_bot_token(uid: str, vars: dict = None, client=None):
-    """
-    Assert that a template uses set_prepared_response (contains <|BOT|>).
-
-    Templates that use set_prepared_response() will have the <|BOT|> marker
-    in their rendered output, indicating they expect to coerce the LLM response.
-    """
+def assert_has_bot_token(uid: str, vars: dict | None = None, client=None):
+    """Assert that a template uses ``set_prepared_response`` (emits <|BOT|>)."""
     result = render_template(uid, vars, client)
     prompt = Prompt.get(uid, vars=vars or {})
     if client:
@@ -211,13 +224,8 @@ def assert_has_bot_token(uid: str, vars: dict = None, client=None):
     assert has_bot_token, f"Template {uid} does not use set_prepared_response"
 
 
-def assert_has_data_response(uid: str, vars: dict = None, client=None):
-    """
-    Assert that a template uses set_data_response.
-
-    Templates that use set_data_response() will have data_response=True
-    set on the prompt after rendering.
-    """
+def assert_has_data_response(uid: str, vars: dict | None = None, client=None):
+    """Assert that a template uses ``set_data_response``."""
     prompt = Prompt.get(uid, vars=vars or {})
     if client:
         prompt.client = client

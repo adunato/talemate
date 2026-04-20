@@ -16,83 +16,19 @@ from unittest.mock import Mock, AsyncMock
 import talemate.instance as instance
 from talemate.agents.conversation import ConversationAgent
 from talemate.scene_message import CharacterMessage
-from .helpers import create_mock_scene
-
-
-class MockCharacter:
-    """A mock character class for isinstance checks."""
-
-    def __init__(self, name, is_player=False, actor=None):
-        self.name = name
-        self.is_player = is_player
-        self.description = "A test character."
-        self.gender = "female"
-        self.greeting_text = "Hello there."
-        self.dialogue_instructions = "Speaks normally."
-        self.base_attributes = {"name": name}
-        self.details = {}
-        self.sheet = f"name: {name}"
-        self.example_dialogue = []
-        self.random_dialogue_example = ""
-        self.current_avatar = None
-        self.actor = actor
-
-    def random_dialogue_examples(self, scene=None, num=2, strip_name=False):
-        """Return example dialogue lines."""
-        return ["Hello there.", "How are you?"]
-
-
-class MockActor:
-    """A mock actor class that wraps a character."""
-
-    def __init__(self, character, scene):
-        self.character = character
-        self.scene = scene
-        # Set the actor reference on the character
-        character.actor = self
+from .helpers import create_scene_with_characters
 
 
 @pytest.fixture
 def mock_scene():
-    """Create a rich mock scene for testing."""
-    scene = create_mock_scene()
+    """Real Scene with Hero + Elena actors; IO-ish methods stubbed.
 
-    # Add player character using MockCharacter class
-    player = MockCharacter(name="Hero", is_player=True)
-    npc = MockCharacter(name="Elena", is_player=False)
-
-    scene.get_player_character = Mock(return_value=player)
-    scene.get_npc_characters = Mock(return_value=[npc])
-    scene.get_characters = Mock(return_value=[player, npc])
-    scene.get_character = Mock(
-        side_effect=lambda name: player if name == "Hero" else npc
-    )
-    scene.writing_style = None
-    scene.agent_state = {}
+    ``create_scene_with_characters`` attaches real ``Actor`` instances for each
+    character and wires ``character.actor`` back — tests can use
+    ``scene.get_character(name).actor`` instead of constructing mock actors.
+    """
+    scene = create_scene_with_characters()
     scene.count_messages = Mock(return_value=10)
-
-    # Mock Character class for isinstance check - use MockCharacter
-    scene.Character = MockCharacter
-
-    # Mock main_character - needs to be an Actor with a character attribute
-    main_actor = Mock()
-    main_actor.character = player
-    scene.main_character = main_actor
-
-    # Add characters list for iteration
-    scene.characters = [player, npc]
-
-    # Mock intent_state
-    intent_state = Mock()
-    intent_state.active = False
-    intent_state.intent = ""
-    intent_state.instructions = ""
-    intent_state.instruction_template = None
-    intent_state.phase = Mock()
-    intent_state.phase.intent = ""
-    intent_state.current_scene_type = None
-    scene.intent_state = intent_state
-
     return scene
 
 
@@ -165,7 +101,7 @@ class TestConverseMethod:
         """Test that converse calls the LLM client with rendered prompt."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         messages = await agent.converse(actor)
 
@@ -189,7 +125,7 @@ class TestConverseMethod:
         """Test that converse includes instruction in the prompt."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
         instruction = "Express surprise about the weather"
 
         await agent.converse(actor, instruction=instruction)
@@ -217,7 +153,7 @@ class TestConverseMethod:
         """
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Ensure movie_script format is used
         agent.actions["generation_override"].config["format"].value = "movie_script"
@@ -258,7 +194,7 @@ class TestConverseMethod:
         """
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Set chat format
         agent.actions["generation_override"].config["format"].value = "chat"
@@ -298,7 +234,7 @@ class TestConverseMethod:
         """
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Set narrative format
         agent.actions["generation_override"].config["format"].value = "narrative"
@@ -328,7 +264,7 @@ class TestConverseMethod:
         """Test that converse includes character information in the prompt."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         await agent.converse(actor)
 
@@ -344,7 +280,7 @@ class TestConverseMethod:
         """Test that converse includes scene context in the prompt."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         await agent.converse(actor)
 
@@ -362,7 +298,7 @@ class TestConverseMethod:
         """Test converse with decensor enabled."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Enable decensor
         mock_llm_client.decensor_enabled = True
@@ -389,7 +325,7 @@ class TestConverseMethod:
         """
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Set specific response for this test
         mock_llm_client.send_prompt.return_value = (
@@ -413,7 +349,7 @@ class TestConverseMethod:
         """Test converse with custom task instructions."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Set custom task instructions
         agent.actions["generation_override"].config[
@@ -441,7 +377,7 @@ class TestConverseWithDifferentCharacters:
         agent = active_context
         npc = mock_scene.get_character("Elena")
         npc.dialogue_instructions = "Always speak in riddles and metaphors"
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         await agent.converse(actor)
 
@@ -546,7 +482,7 @@ class TestResponseExtraction:
         """Test that END-OF-LINE delimiter is stripped from extracted response."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Set a response with END-OF-LINE delimiter
         mock_llm_client.send_prompt.return_value = (
@@ -567,7 +503,7 @@ class TestResponseExtraction:
         """Test handling of multiple END-OF-LINE markers (takes content before first)."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Response with content after END-OF-LINE (should be discarded)
         mock_llm_client.send_prompt.return_value = (
@@ -592,7 +528,7 @@ class TestResponseExtraction:
         """
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Ensure movie_script format
         agent.actions["generation_override"].config["format"].value = "movie_script"
@@ -619,7 +555,7 @@ class TestResponseExtraction:
         """Test that chat format correctly handles 'Name:' prefix in response."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Set chat format
         agent.actions["generation_override"].config["format"].value = "chat"
@@ -646,7 +582,7 @@ class TestResponseExtraction:
         """Test that # comments are removed from extracted response."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Response with hash comment
         mock_llm_client.send_prompt.return_value = (
@@ -668,7 +604,7 @@ class TestResponseExtraction:
         """Test that (Internal markers are removed from extracted response."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Response with internal marker
         mock_llm_client.send_prompt.return_value = (
@@ -690,7 +626,7 @@ class TestResponseExtraction:
         """Test that multiline dialogue is correctly extracted and preserved."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Multiline response
         mock_llm_client.send_prompt.return_value = '*leans forward*\n"Listen carefully."\n*pauses*\n"This is important."\nEND-OF-LINE'
@@ -709,7 +645,7 @@ class TestResponseExtraction:
         """Test extraction works when LLM doesn't include END-OF-LINE."""
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Response without END-OF-LINE delimiter
         mock_llm_client.send_prompt.return_value = '"A simple greeting."'
@@ -731,7 +667,7 @@ class TestResponseExtraction:
         """
         agent = active_context
         npc = mock_scene.get_character("Elena")
-        actor = MockActor(npc, mock_scene)
+        actor = npc.actor
 
         # Set narrative format
         agent.actions["generation_override"].config["format"].value = "narrative"

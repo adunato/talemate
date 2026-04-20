@@ -1,7 +1,7 @@
 ## Classification
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 
 Scenario Premise:
 A peaceful clearing in the heart of an ancient forest.
@@ -10,23 +10,17 @@ A peaceful clearing in the heart of an ancient forest.
 
 ### Hero
 name: Hero
-
-A test character.
+gender: male
+age: early 30s
+occupation: Adventurer
 
 ### Elena
 name: Elena
+gender: female
+age: early 30s
+occupation: Healer
 
-A test character.
-
-## Intention of this story
-The overarching intention of this story. Use it to guide your decisions in the scene.
-
-<Mock name='mock.intent_state.intent' id='NORMALIZED'>
-
-## Intention of the current scene
-<Mock name='mock.intent_state.current_scene_type.description' id='NORMALIZED'>
-
-<Mock name='mock.intent_state.phase.intent' id='NORMALIZED'>
+A wandering healer with knowledge of ancient herbs.
 
 ## Scene
 

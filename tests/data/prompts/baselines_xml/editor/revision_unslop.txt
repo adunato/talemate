@@ -256,7 +256,7 @@ Elena: Hello there, traveler.
 </CHARACTER_DIRECTION>
 
 <ACTING_INSTRUCTIONS_FOR_ELENA>
-Speaks normally.
+Speaks calmly and with wisdom.
 </ACTING_INSTRUCTIONS_FOR_ELENA>
 
 <INTENTION_OF_THIS_STORY>
@@ -268,7 +268,7 @@ A fantasy adventure story.
 <CLASSIFICATION>
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 </CLASSIFICATION>
 
 <TASK>

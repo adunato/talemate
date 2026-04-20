@@ -2,20 +2,26 @@
 
 ### Hero
 name: Hero
+gender: male
+age: early 30s
+occupation: Adventurer
 
-A test character.
+A wandering healer with knowledge of ancient herbs.
 
 ### Elena
 name: Elena
+gender: female
+age: early 30s
+occupation: Healer
 
-A test character.
+A wandering healer with knowledge of ancient herbs.
 
 ## Additional information
 
 ## Classification
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 
 ## Intention of this story
 The overarching intention of this story. Use it to guide your decisions in the scene.
@@ -23,7 +29,7 @@ The overarching intention of this story. Use it to guide your decisions in the s
 A fantasy adventure story.
 
 ## Intention of the current scene
-An exploration scene
+Freeform dialogue between one or more characters with occasional narration.
 
 The hero explores the forest.
 

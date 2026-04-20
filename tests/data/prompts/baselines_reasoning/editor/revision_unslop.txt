@@ -254,7 +254,7 @@ Marcus: What brings you to these woods?
 Elena: Hello there, traveler.
 
 ## Acting instructions for elena
-Speaks normally.
+Speaks calmly and with wisdom.
 
 ## Intention of this story
 The overarching intention of this story. Use it to guide your decisions in the scene.
@@ -264,7 +264,7 @@ A fantasy adventure story.
 ## Classification
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 
 ## Task
 Fix bad AI writing by making it simpler, shorter, and more natural. 

@@ -1,3 +1,20 @@
+<CHARACTERS>
+### Hero
+name: Hero
+gender: male
+age: early 30s
+occupation: Adventurer
+
+A wandering healer with knowledge of ancient herbs.
+
+### Elena
+name: Elena
+gender: female
+age: early 30s
+occupation: Healer
+
+A wandering healer with knowledge of ancient herbs.
+</CHARACTERS>
 <HISTORY>
 Previously: The hero entered the dungeon.
 </HISTORY>

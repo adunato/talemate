@@ -1,7 +1,7 @@
 ## Classification
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 
 ## Main context
 The kingdom has been at war for a decade.

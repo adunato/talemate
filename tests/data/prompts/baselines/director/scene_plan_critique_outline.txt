@@ -5,9 +5,9 @@ Content Classification: Fantasy adventure story
 
 Active characters: Hero, Elena
 
-- Hero: A test character.
+- Hero: A wandering healer with knowledge of ancient herbs.
 
-- Elena: A test character.
+- Elena: A wandering healer with knowledge of ancient herbs.
 
 ## Scene history
 Elena: Hello there, traveler.

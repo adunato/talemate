@@ -13,7 +13,6 @@ from ..test_world_state_templates import (  # noqa: F401
     world_state_agent,
     setup_agents,
     active_context,
-    MockCharacter,
 )
 from ..baselines.test_world_state_baselines import (  # noqa: F401
     TestWorldStateAnalyzeBaselines,

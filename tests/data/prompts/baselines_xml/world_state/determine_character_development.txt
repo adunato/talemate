@@ -3,11 +3,12 @@
 name: Elena
 gender: female
 age: early 30s
+occupation: Healer
 
-background: A skilled warrior.
+background: Trained by forest hermits from a young age.
 
 ### Description Text
-A test character.
+A wandering healer with knowledge of ancient herbs.
 </CHARACTER>
 
 <STORY>

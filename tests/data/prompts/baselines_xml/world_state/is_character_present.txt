@@ -1,7 +1,5 @@
 <TEXT>
 You find yourself in a quiet forest clearing.
-
-The hero stands in the forest clearing.
 </TEXT>
 
 <TASK>

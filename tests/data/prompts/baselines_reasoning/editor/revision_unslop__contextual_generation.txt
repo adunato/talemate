@@ -146,7 +146,7 @@ A fantasy adventure story.
 ## Classification
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 
 ## Task
 Fix overwritten descriptions by making them cleaner and more readable while maintaining their descriptive purpose.

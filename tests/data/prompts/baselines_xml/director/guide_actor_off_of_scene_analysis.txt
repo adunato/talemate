@@ -1,19 +1,23 @@
 <CHARACTERS>
 ### Hero
 name: Hero
-
-A test character.
+gender: male
+age: early 30s
+occupation: Adventurer
 
 ### Elena
 name: Elena
+gender: female
+age: early 30s
+occupation: Healer
 
-A test character.
+A wandering healer with knowledge of ancient herbs.
 </CHARACTERS>
 
 <CLASSIFICATION>
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 </CLASSIFICATION>
 <SCENE>
 Elena: Hello there, traveler.
@@ -23,20 +27,10 @@ The sun filters through the leaves above.
 Marcus: What brings you to these woods?
 </SCENE>
 
-<INTENTION_OF_THIS_STORY>
-The overarching intention of this story. Use it to guide your decisions in the scene.
-
-A test story
-</INTENTION_OF_THIS_STORY>
-
-<INTENTION_OF_THE_CURRENT_SCENE>
-Test phase
-</INTENTION_OF_THE_CURRENT_SCENE>
-
 <ANALYSIS_OF_SCENE>
 The scene is tense and dramatic.
 </ANALYSIS_OF_SCENE>
-Speaks normally.
+Speaks calmly and with wisdom.
 </GENERAL_CHARACTER_GUIDE_FOR_ELENA>
 
 <TASK>

@@ -5,7 +5,10 @@ Marcus: What brings you to these woods?
 </SCENE>
 <CHARACTER>
 name: Elena
-A test character.
+gender: female
+age: early 30s
+occupation: Healer
+A wandering healer with knowledge of ancient herbs.
 </CHARACTER>
 
 <TASK>

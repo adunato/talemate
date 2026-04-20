@@ -7,106 +7,29 @@ to prompt rendering to LLM call, without making actual API calls.
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import talemate.instance as instance
 from talemate.agents.world_state import WorldStateAgent
-from talemate.world_state import Reinforcement, ContextPin
-from .helpers import create_mock_scene
-
-
-class MockCharacter:
-    """A mock character class for isinstance checks."""
-
-    def __init__(self, name, is_player=False):
-        self.name = name
-        self.is_player = is_player
-        self.description = "A test character."
-        self.gender = "female"
-        self.greeting_text = "Hello there."
-        self.dialogue_instructions = "Speaks normally."
-        self.base_attributes = {"name": name, "gender": "female", "age": "early 30s"}
-        self.details = {"background": "A skilled warrior."}
-        self.sheet = f"name: {name}\ngender: female\nage: early 30s"
-        self.example_dialogue = []
-        self.random_dialogue_example = ""
-        self.current_avatar = None
-
-    async def set_detail(self, key, value):
-        self.details[key] = value
-
-    async def set_base_attribute(self, key, value):
-        if value is None:
-            self.base_attributes.pop(key, None)
-        else:
-            self.base_attributes[key] = value
-
-    async def set_description(self, description):
-        self.description = description
+from talemate.world_state import ContextPin, Reinforcement
+from .helpers import create_scene_with_characters
 
 
 @pytest.fixture
 def mock_scene():
-    """Create a rich mock scene for testing."""
-    scene = create_mock_scene()
+    """Real Scene with Hero + Elena actors, with a few methods stubbed out.
 
-    # Add player character using MockCharacter class
-    player = MockCharacter(name="Hero", is_player=True)
-    npc = MockCharacter(name="Elena", is_player=False)
+    LLM-calling or IO-performing scene methods (push_history, load_active_pins,
+    emit_status, etc.) are replaced with Mocks so tests can assert against
+    them. Everything else — characters, world_state, game_state — is real.
+    """
+    scene = create_scene_with_characters()
 
-    scene.get_player_character = Mock(return_value=player)
-    scene.get_npc_characters = Mock(return_value=[npc])
-    scene.get_characters = Mock(return_value=[player, npc])
-    scene.get_character = Mock(
-        side_effect=lambda name: player if name == "Hero" else npc
-    )
-    scene.characters = [player, npc]
-    scene.character_names = ["Hero", "Elena"]
-    scene.npc_character_names = ["Elena"]
-    scene.writing_style = "descriptive"
-    scene.agent_state = {}
-
-    # Mock Character class for isinstance check - use MockCharacter
-    scene.Character = MockCharacter
-
-    # Mock push_history for tests that need it
+    # Stub out methods that tests assert against or that would perform IO.
     scene.push_history = AsyncMock()
-
-    # Mock pop_history for tests that need it
     scene.pop_history = Mock()
-
-    # Mock find_message for reinforcement tests
-    scene.find_message = Mock(return_value=None)
-
-    # Mock message_index for summarize_and_pin
-    scene.message_index = Mock(return_value=5)
-
-    # Mock snapshot
-    scene.snapshot = Mock(return_value="The hero stands in the forest clearing.")
-
-    # Add world_state with proper mocking
-    scene.world_state = Mock()
-    scene.world_state.filter_reinforcements = Mock(return_value=[])
-    scene.world_state.description = "A fantastical medieval world"
-    scene.world_state.reinforce = []
-    scene.world_state.pins = {}
-    scene.world_state.find_reinforcement = AsyncMock(return_value=(None, None))
-    scene.world_state.add_reinforcement = AsyncMock()
-    scene.world_state.emit = Mock()
-
-    # Mock world_state_manager
-    scene.world_state_manager = Mock()
-    scene.world_state_manager.save_world_entry = AsyncMock()
-    scene.world_state_manager.set_pin = AsyncMock()
-
-    # Mock load_active_pins
     scene.load_active_pins = AsyncMock()
-
-    # Mock emit_status
     scene.emit_status = Mock()
-
-    # Mock character_is_active
-    scene.character_is_active = Mock(return_value=True)
 
     return scene
 
@@ -117,6 +40,8 @@ def mock_memory_agent():
     memory = Mock()
     memory.query = AsyncMock(return_value="Mocked memory response")
     memory.multi_query = AsyncMock(return_value={"query1": "result1"})
+    memory.add_many = AsyncMock()
+    memory.delete = AsyncMock()
     return memory
 
 
@@ -525,9 +450,6 @@ class TestWorldStateAgentReinforcementMethods:
             instructions="",
             insert="sequential",
         )
-        mock_scene.world_state.find_reinforcement = AsyncMock(
-            return_value=(0, reinforcement)
-        )
         mock_scene.world_state.reinforce = [reinforcement]
 
         response = await agent.update_reinforcement(
@@ -565,9 +487,6 @@ class TestWorldStateAgentReinforcementMethods:
             instructions="",
             insert="conversation-context",
         )
-        mock_scene.world_state.find_reinforcement = AsyncMock(
-            return_value=(0, reinforcement)
-        )
         mock_scene.world_state.reinforce = [reinforcement]
 
         await agent.update_reinforcement(question="current mood", character="Elena")
@@ -593,9 +512,6 @@ class TestWorldStateAgentReinforcementMethods:
             question="Question 2", due=5, interval=10, insert="sequential"
         )
         mock_scene.world_state.reinforce = [reinforcement_due, reinforcement_not_due]
-        mock_scene.world_state.find_reinforcement = AsyncMock(
-            return_value=(0, reinforcement_due)
-        )
 
         await agent.update_reinforcements()
 

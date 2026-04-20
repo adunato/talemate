@@ -29,7 +29,7 @@ Provide a summarized narrative description of chapter 2.
 Use the previous context to inform your understanding of the whole story, but only summarize what is explicitly mentioned in chapter 2.Your response must follow this format:
 
 ANALYSIS: <brief analysis the cross over point from previous chapters to chapter 2. How does chapter 2 start and what should be in the summary.>
-WRITING STYLE: <brief understanding of the writing style requirements and the story intention. Note at least one example where you will apply it.>
+
 SUMMARY: <summary of chapter 2 based on analysis. Length: 1 - 2 paragraphs>
 
 The length of your final answer must fit within 6 paragraphs.

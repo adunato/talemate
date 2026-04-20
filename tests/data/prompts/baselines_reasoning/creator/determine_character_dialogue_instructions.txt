@@ -6,7 +6,10 @@ Marcus: What brings you to these woods?
 
 ## Character
 name: Elena
-A test character.
+gender: female
+age: early 30s
+occupation: Healer
+A wandering healer with knowledge of ancient herbs.
 
 ## Task
 Your task is to determine fitting dialogue instructions for Elena.

@@ -6,6 +6,9 @@ Marcus: What brings you to these woods?
 
 <CHARACTER>
 name: Elena
+gender: female
+age: early 30s
+occupation: Healer
 </CHARACTER>
 
 <TASK>

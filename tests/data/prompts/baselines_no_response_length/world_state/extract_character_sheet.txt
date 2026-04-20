@@ -2,11 +2,9 @@
 
 ### Hero
 
-A test character.
-
 ### Elena
 
-A test character.
+A wandering healer with knowledge of ancient herbs.
 
 ## Content
 A peaceful clearing in the heart of an ancient forest.Elena: Hello there, traveler.
@@ -19,8 +17,6 @@ Generate a real world character profile for Elena, one attribute per line. You a
 Expand on interesting details.
 
 Instructions for the character: A skilled healer with gentle manners.
-
-## Writing style
 
 You must only generate attributes for Elena. You are omniscient and can describe the character in detail.
 

@@ -13,50 +13,14 @@ import talemate.instance as instance
 from talemate.agents.narrator import NarratorAgent
 from talemate.agents.editor import EditorAgent
 from talemate.prompts.base import Prompt
-from .helpers import create_mock_scene
-
-
-class MockCharacter:
-    """A mock character class for isinstance checks."""
-
-    def __init__(self, name, is_player=False):
-        self.name = name
-        self.is_player = is_player
-        self.description = "A test character."
-        self.gender = "female"
-        self.greeting_text = "Hello there."
-        self.dialogue_instructions = "Speaks normally."
-        self.base_attributes = {"name": name}
-        self.details = {}
-        self.sheet = f"name: {name}"
-        self.example_dialogue = []
-        self.random_dialogue_example = ""
+from .helpers import create_scene_with_characters
 
 
 @pytest.fixture
 def mock_scene():
-    """Create a rich mock scene for testing."""
-    scene = create_mock_scene()
-
-    # Add player character using MockCharacter class
-    player = MockCharacter(name="Hero", is_player=True)
-    npc = MockCharacter(name="Elena", is_player=False)
-
-    scene.get_player_character = Mock(return_value=player)
-    scene.get_npc_characters = Mock(return_value=[npc])
-    scene.get_characters = Mock(return_value=[player, npc])
-    scene.get_character = Mock(
-        side_effect=lambda name: player if name == "Hero" else npc
-    )
-    scene.writing_style = "descriptive"
-    scene.agent_state = {}
-
-    # Mock Character class for isinstance check - use MockCharacter
-    scene.Character = MockCharacter
-
-    # Mock push_history for tests that need it
+    """Real Scene with Hero + Elena actors; IO-ish methods stubbed."""
+    scene = create_scene_with_characters()
     scene.push_history = AsyncMock()
-
     return scene
 
 

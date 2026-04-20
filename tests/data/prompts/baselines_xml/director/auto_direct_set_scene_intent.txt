@@ -1,7 +1,7 @@
 <CLASSIFICATION>
 Content Classification: Fantasy adventure story
 
-Narrative Perspective: <Mock name='mock.perspective' id='NORMALIZED'>
+Narrative Perspective: Third person limited, past tense.
 </CLASSIFICATION>
 
 Scenario Premise:
@@ -14,16 +14,6 @@ The sun filters through the leaves above.
 
 Marcus: What brings you to these woods?
 </SCENE>
-
-<INTENTION_OF_THIS_STORY>
-The overarching intention of this story. Use it to guide your decisions in the scene.
-
-A test story
-</INTENTION_OF_THIS_STORY>
-
-<INTENTION_OF_THE_CURRENT_SCENE>
-Test phase
-</INTENTION_OF_THE_CURRENT_SCENE>
 
 <FUNCTION_CALLING_INSTRUCTIONS>
 Call the following functions to execute your tasks. Each function is explained by documentation and some examples. Understand the schema and then use the examples to execute your tasks.
@@ -122,16 +112,6 @@ You may only call this function once.
 </SCENE_TYPES>
 <TASK>
 Determine whether or not a new scene intention is needed. If so, provide the type classification and intention of the new scene. If not, do nothing.
-
-Overarching Story Intention:A test story
-
-The current scene classification
-
-```
-type: `` - 
-
-intention: Test phase
-```
 
 Base your decision on the moment in the current scene and the overall story intent:
 ```
