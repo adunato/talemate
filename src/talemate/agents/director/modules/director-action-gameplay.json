@@ -88,8 +88,8 @@
         "typ": "int",
         "instructions": "Minimum value of the roll (inclusive). For a standard die, use 1 (e.g. d20 -> min=1, max=20; d6 -> min=1, max=6; percentile roll -> min=1, max=100)."
       },
-      "x": -9,
-      "y": 1451,
+      "x": 2,
+      "y": 1202,
       "width": 210,
       "height": 108,
       "collapsed": false,
@@ -105,8 +105,8 @@
         "typ": "str",
         "instructions": "A short natural-language description of what is being resolved by the roll \u2014 e.g. \"Elmer picks the lock\", \"surprise check\", \"arm-wrestling contest\". This is shown to the user as context for the roll."
       },
-      "x": -3,
-      "y": 1808,
+      "x": 8,
+      "y": 1559,
       "width": 210,
       "height": 108,
       "collapsed": false,
@@ -121,8 +121,8 @@
         "error_message": "`min` is required",
         "blank_string_is_unset": false
       },
-      "x": 333,
-      "y": 1451,
+      "x": 344,
+      "y": 1202,
       "width": 210,
       "height": 108,
       "collapsed": false,
@@ -130,62 +130,17 @@
       "registry": "validation/ValidateValueIsSet",
       "base_type": "core/Node"
     },
-    "872134b7-be67-4acb-b713-873190fe2b70": {
-      "title": "Roll Dice",
-      "id": "872134b7-be67-4acb-b713-873190fe2b70",
-      "properties": {},
-      "x": 719,
-      "y": 1745,
-      "width": 329,
-      "height": 174,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/director/gameplay/rollDice",
-      "base_type": "core/Graph"
-    },
     "816e5d36-a31c-4908-9104-1509189a78f2": {
       "title": "Return",
       "id": "816e5d36-a31c-4908-9104-1509189a78f2",
       "properties": {},
-      "x": 1079,
-      "y": 1745,
+      "x": 1090,
+      "y": 1496,
       "width": 210,
       "height": 60,
       "collapsed": false,
       "inherited": false,
       "registry": "core/functions/Return",
-      "base_type": "core/Node"
-    },
-    "953a9363-d461-4024-aacd-39b904824cd8": {
-      "title": "Metadata: roll_dice",
-      "id": "953a9363-d461-4024-aacd-39b904824cd8",
-      "properties": {
-        "instructions": "Roll a random integer between `min` and `max` (inclusive) to resolve a gameplay mechanic such as a skill check, contested action, or chance-driven outcome. Always provide a `reason` describing what is being resolved. Prefer standard die shapes (d4, d6, d8, d10, d12, d20, d100) unless a specific range is more appropriate. Returns a short human-readable summary string of the form `<reason>: rolled <n>` describing the outcome.",
-        "examples": [
-          {
-            "min": 1,
-            "max": 20,
-            "reason": "Elmer attempts to pick the lock on the gate"
-          },
-          {
-            "min": 1,
-            "max": 6,
-            "reason": "Surprise check as the party enters the cave"
-          },
-          {
-            "min": 1,
-            "max": 100,
-            "reason": "Contested arm-wrestling match between Klex and Brug"
-          }
-        ]
-      },
-      "x": 1439,
-      "y": 1745,
-      "width": 210,
-      "height": 86,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Metadata",
       "base_type": "core/Node"
     },
     "ca594239-746b-48bd-b807-0dce4891f723": {
@@ -194,8 +149,8 @@
       "properties": {
         "name": "roll_dice"
       },
-      "x": 1799,
-      "y": 1745,
+      "x": 1810,
+      "y": 1496,
       "width": 210,
       "height": 86,
       "collapsed": false,
@@ -406,8 +361,8 @@
       "title": "Return",
       "id": "20938973-cbf6-45ac-b6b8-3c5896091593",
       "properties": {},
-      "x": 720,
-      "y": 1186,
+      "x": 2084,
+      "y": -1,
       "width": 210,
       "height": 60,
       "collapsed": false,
@@ -419,8 +374,8 @@
       "title": "Director Action Summary",
       "id": "0e06046b-04c3-4a01-afd6-634b712bda9e",
       "properties": {},
-      "x": 360,
-      "y": 1186,
+      "x": 1724,
+      "y": -1,
       "width": 210,
       "height": 60,
       "collapsed": false,
@@ -435,8 +390,8 @@
         "name": "focal_calls",
         "scope": "local"
       },
-      "x": 0,
-      "y": 1190,
+      "x": 1364,
+      "y": 3,
       "width": 210,
       "height": 130,
       "collapsed": false,
@@ -452,8 +407,8 @@
         "typ": "int",
         "instructions": "Maximum value of the roll (inclusive). For a standard die, this is the die size (e.g. d20 -> max=20, d6 -> max=6)."
       },
-      "x": -7,
-      "y": 1621,
+      "x": 4,
+      "y": 1372,
       "width": 210,
       "height": 108,
       "collapsed": false,
@@ -467,8 +422,8 @@
       "properties": {
         "default": false
       },
-      "x": 341,
-      "y": 1985,
+      "x": 352,
+      "y": 1736,
       "width": 210,
       "height": 58,
       "collapsed": false,
@@ -482,8 +437,8 @@
       "properties": {
         "value": true
       },
-      "x": 720,
-      "y": 1715,
+      "x": 731,
+      "y": 1466,
       "width": 210,
       "height": 64,
       "collapsed": true,
@@ -498,8 +453,8 @@
         "error_message": "`max` is required",
         "blank_string_is_unset": false
       },
-      "x": 330,
-      "y": 1620,
+      "x": 341,
+      "y": 1371,
       "width": 210,
       "height": 108,
       "collapsed": false,
@@ -514,8 +469,8 @@
         "error_message": "`reason` is required",
         "blank_string_is_unset": true
       },
-      "x": 340,
-      "y": 1800,
+      "x": 351,
+      "y": 1551,
       "width": 210,
       "height": 108,
       "collapsed": false,
@@ -531,13 +486,45 @@
         "typ": "bool",
         "instructions": "Whether or not to show this roll to the user. Default is False."
       },
-      "x": 0,
-      "y": 1970,
+      "x": 11,
+      "y": 1721,
       "width": 210,
       "height": 108,
       "collapsed": false,
       "inherited": false,
       "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "665c926f-b9e2-4d9a-897f-06293e7bb692": {
+      "title": "modifier",
+      "id": "665c926f-b9e2-4d9a-897f-06293e7bb692",
+      "properties": {
+        "name": "modifier",
+        "typ": "int",
+        "instructions": "A static modifier to add to the roll. The value will be added to the random result. Optional. Can be negative."
+      },
+      "x": 11,
+      "y": 1901,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "16ccbc30-b374-4b38-b878-6f7303460b53": {
+      "title": "As Number",
+      "id": "16ccbc30-b374-4b38-b878-6f7303460b53",
+      "properties": {
+        "number_type": "int"
+      },
+      "x": 351,
+      "y": 1911,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/number/AsNumber",
       "base_type": "core/Node"
     },
     "0fb697ab-0e38-4825-9432-70c4cebc6c61": {
@@ -552,7 +539,8 @@
         "instruction_examples": [
           "Roll a d20 for Elmer's lockpick attempt. Show the roll to user(s).",
           "Quick d6 to help me determine my which way to go here.",
-          "Roll between 1 and 100 for the contested arm-wrestling match. Show the roll to user(s)."
+          "Roll between 1 and 100 for the contested arm-wrestling match. Show the roll to user(s).",
+          "Roll a d10 to see if Jennifer can see the little switch behind the vase. Add a +2 to the result."
         ],
         "availability": "both",
         "force_enabled": false
@@ -565,6 +553,59 @@
       "inherited": false,
       "registry": "agents/director/chat/DirectorChatSubAction",
       "base_type": "core/Node"
+    },
+    "953a9363-d461-4024-aacd-39b904824cd8": {
+      "title": "Metadata: roll_dice",
+      "id": "953a9363-d461-4024-aacd-39b904824cd8",
+      "properties": {
+        "instructions": "Roll a random integer between `min` and `max` (inclusive) to resolve a gameplay mechanic such as a skill check, contested action, or chance-driven outcome. Always provide a `reason` describing what is being resolved. Prefer standard die shapes (d4, d6, d8, d10, d12, d20, d100) unless a specific range is more appropriate. Returns a short human-readable summary string of the form `<reason>: rolled <n>` describing the outcome.",
+        "examples": [
+          {
+            "min": 1,
+            "max": 20,
+            "reason": "Elmer attempts to pick the lock on the gate",
+            "show_to_user": true
+          },
+          {
+            "min": 1,
+            "max": 6,
+            "reason": "Surprise check as the party enters the cave"
+          },
+          {
+            "min": 1,
+            "max": 100,
+            "reason": "Contested arm-wrestling match between Klex and Brug",
+            "show_to_user": true
+          },
+          {
+            "min": 1,
+            "max": 10,
+            "reason": "Perception check for Jennifer",
+            "modifier": 2
+          }
+        ]
+      },
+      "x": 1450,
+      "y": 1496,
+      "width": 210,
+      "height": 86,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Metadata",
+      "base_type": "core/Node"
+    },
+    "872134b7-be67-4acb-b713-873190fe2b70": {
+      "title": "Roll Dice",
+      "id": "872134b7-be67-4acb-b713-873190fe2b70",
+      "properties": {},
+      "x": 730,
+      "y": 1496,
+      "width": 329,
+      "height": 149,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/gameplay/rollDice",
+      "base_type": "core/Graph"
     }
   },
   "edges": {
@@ -586,14 +627,8 @@
     "1b7c3427-46d4-476d-aa94-ad0233905456.value": [
       "872134b7-be67-4acb-b713-873190fe2b70.min"
     ],
-    "872134b7-be67-4acb-b713-873190fe2b70.formatted_result": [
-      "816e5d36-a31c-4908-9104-1509189a78f2.value"
-    ],
     "816e5d36-a31c-4908-9104-1509189a78f2.value": [
       "953a9363-d461-4024-aacd-39b904824cd8.state"
-    ],
-    "953a9363-d461-4024-aacd-39b904824cd8.state": [
-      "ca594239-746b-48bd-b807-0dce4891f723.nodes"
     ],
     "0adb5233-376a-47f5-9cce-617b6833932d.fn": [
       "4cc8a45d-3208-466d-a431-2cc3e51a8303.fn"
@@ -658,8 +693,20 @@
     "460615fb-c111-4fbc-9e0a-c4a12cbdb11d.value": [
       "6aca0c36-b086-4f1d-8f4f-1c3ef95b6475.value"
     ],
+    "665c926f-b9e2-4d9a-897f-06293e7bb692.value": [
+      "16ccbc30-b374-4b38-b878-6f7303460b53.value"
+    ],
+    "16ccbc30-b374-4b38-b878-6f7303460b53.value": [
+      "872134b7-be67-4acb-b713-873190fe2b70.modifier"
+    ],
     "0fb697ab-0e38-4825-9432-70c4cebc6c61.state": [
       "7a73db2e-2fe1-4fcb-8e38-55c66727a5ce.item0"
+    ],
+    "953a9363-d461-4024-aacd-39b904824cd8.state": [
+      "ca594239-746b-48bd-b807-0dce4891f723.nodes"
+    ],
+    "872134b7-be67-4acb-b713-873190fe2b70.formatted_result": [
+      "816e5d36-a31c-4908-9104-1509189a78f2.value"
     ]
   },
   "groups": [
@@ -685,18 +732,18 @@
     },
     {
       "title": "Function: roll_dice",
-      "x": -26,
-      "y": 1376,
-      "width": 2060,
-      "height": 731,
+      "x": -23,
+      "y": 1122,
+      "width": 2068,
+      "height": 912,
       "color": "#b06634",
       "font_size": 24,
       "inherited": false
     },
     {
       "title": "Output",
-      "x": -25,
-      "y": 1121,
+      "x": 1339,
+      "y": -66,
       "width": 980,
       "height": 220,
       "color": "#8A8",
@@ -710,28 +757,28 @@
   "inputs": [],
   "outputs": [
     {
-      "id": "d505505c-f22f-4d6c-97d5-cfc05d9c41e4",
+      "id": "c4191015-b045-49de-9b25-276496ddc0f0",
       "name": "fn",
       "optional": false,
       "group": null,
       "socket_type": "function"
     },
     {
-      "id": "3b9e471a-c4ba-43e9-ab2a-829f21fe3434",
+      "id": "1daaedb5-4972-4926-88e3-1c2ee319a38e",
       "name": "name",
       "optional": false,
       "group": null,
       "socket_type": "str"
     },
     {
-      "id": "5ad79ca7-370e-442b-a670-bfd9bcb38958",
+      "id": "46d691a9-a259-4b30-86e1-d717a7564f74",
       "name": "allow_multiple_calls",
       "optional": false,
       "group": null,
       "socket_type": "bool"
     },
     {
-      "id": "712b4cac-5fe5-42a8-aa1d-fa3caa50ba12",
+      "id": "aaeedfcd-e87b-44cf-8caa-8f844572ddf4",
       "name": "ai_callback",
       "optional": false,
       "group": null,
