@@ -376,6 +376,10 @@ import ConfirmActionPrompt from './ConfirmActionPrompt.vue';
 import VisualAssetsMixin from './VisualAssetsMixin.js';
 import { isVisualAgentReady } from '../constants/visual.js';
 import { primaryModifierLabel } from '@/utils/keyboardModifiers';
+import {
+    getMessageColor as resolveMessageColor,
+    getMessageStyle as resolveMessageStyle,
+} from '@/utils/messageColors.js';
 
 const MESSAGE_FLAGS = {
     NONE: 0,
@@ -507,13 +511,6 @@ export default {
             primaryModifierLabel,
             messages: [],
             selectedForkMessageId: null,
-            defaultColors: {
-                "narrator": "#B39DDB",
-                "character": "#FFFFFF",
-                "director": "#FF5722",
-                "time": "#B39DDB",
-                "context_investigation": "#FFE0B2",
-            },
             // Track last effective asset ID per scope for "on_change" cadence
             lastEffectiveAssetIdByScope: {},
             // Debounce timer for reapplyMessageAssetCadence
@@ -642,12 +639,8 @@ export default {
     },
     methods: {
 
-        getMessageColor(typ,color) {
-            if(!this.appearanceConfig || !this.appearanceConfig.scene[`${typ}_messages`].color) {
-                return this.defaultColors[typ];
-            }
-
-            return color || this.appearanceConfig.scene[`${typ}_messages`].color;
+        getMessageColor(typ) {
+            return resolveMessageColor(this.appearanceConfig, typ);
         },
 
         getMessageTypeHidden(typ) {
@@ -664,16 +657,7 @@ export default {
         },
 
         getMessageStyle(typ) {
-            let styles = "";
-            let config = this.appearanceConfig.scene[`${typ}_messages`];
-            if (config.italic) {
-                styles += "font-style: italic;";
-            }
-            if (config.bold) {
-                styles += "font-weight: bold;";
-            }
-            styles += "color: " + this.getMessageColor(typ, config.color) + ";";
-            return styles;
+            return resolveMessageStyle(this.appearanceConfig, typ);
         },
 
         clear() {
@@ -1577,8 +1561,9 @@ export default {
                             type: 'ux',
                             element: el,
                         });
-                        // Track UX interaction start
-                        if (this.beginUxInteraction) {
+                        // Track UX interaction start — only for blocking elements.
+                        // Non-blocking (fire-and-forget) elements must not lock scene input.
+                        if (this.beginUxInteraction && el.blocking !== false) {
                             this.beginUxInteraction(id);
                         }
                         return;

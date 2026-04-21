@@ -710,28 +710,28 @@
   "inputs": [],
   "outputs": [
     {
-      "id": "15ecf58a-8fed-4aac-be58-ae43827fcc79",
+      "id": "d505505c-f22f-4d6c-97d5-cfc05d9c41e4",
       "name": "fn",
       "optional": false,
       "group": null,
       "socket_type": "function"
     },
     {
-      "id": "30586a55-e9e1-4b8b-9554-826f69abc196",
+      "id": "3b9e471a-c4ba-43e9-ab2a-829f21fe3434",
       "name": "name",
       "optional": false,
       "group": null,
       "socket_type": "str"
     },
     {
-      "id": "87b6031d-5d53-4397-b38c-5d9ee70a18b3",
+      "id": "5ad79ca7-370e-442b-a670-bfd9bcb38958",
       "name": "allow_multiple_calls",
       "optional": false,
       "group": null,
       "socket_type": "bool"
     },
     {
-      "id": "da949bec-6c74-4503-87d2-d78ce63572f5",
+      "id": "712b4cac-5fe5-42a8-aa1d-fa3caa50ba12",
       "name": "ai_callback",
       "optional": false,
       "group": null,

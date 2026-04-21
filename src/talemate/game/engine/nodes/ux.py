@@ -21,6 +21,7 @@ from talemate.game.engine.nodes.registry import register
 from talemate.game.engine.ux.schema import (
     UXChoiceElement,
     UXElement,
+    UXNoticeElement,
     UXSelection,
     UXTextInputElement,
 )
@@ -30,6 +31,7 @@ from talemate.util.ux import normalize_choices
 __all__ = [
     "BuildChoiceElement",
     "BuildTextInputElement",
+    "BuildNoticeElement",
     "StyleElement",
     "EmitElement",
 ]
@@ -133,7 +135,7 @@ class _BuildUxElementMixin:
 
 
 def _parse_ux_element(raw: Any) -> UXElement:
-    if isinstance(raw, (UXChoiceElement, UXTextInputElement)):
+    if isinstance(raw, (UXChoiceElement, UXTextInputElement, UXNoticeElement)):
         return raw
     return pydantic.TypeAdapter(UXElement).validate_python(raw)
 
@@ -416,6 +418,77 @@ class BuildTextInputElement(_BuildUxElementMixin, Node):
         )
 
 
+@register("ux/BuildNoticeElement")
+class BuildNoticeElement(_BuildUxElementMixin, Node):
+    """
+    Builds a notice (display-only) UX element payload.
+
+    Fire-and-forget: EmitElement emits and returns immediately. The frontend
+    renders the notice until the user dismisses it (when closable) or the
+    client-side timeout expires.
+
+    Inputs:
+    - state: any
+    - id: str (optional)
+    - closable: bool (optional)
+    - timeout_seconds: int (optional)
+    - title: str (optional)
+    - body: str (optional)
+
+    Outputs:
+    - state: any
+    - ux_id: str
+    - ux_element: dict
+    """
+
+    @pydantic.computed_field(description="Node style")
+    @property
+    def style(self) -> NodeStyle:
+        return NodeStyle(
+            node_color="#2d3a38",
+            title_color="#3a4d4a",
+            icon="F1B4F",
+        )
+
+    def __init__(self, title="Build Notice Element", **kwargs):
+        super().__init__(title=title, **kwargs)
+
+    class Fields:
+        closable = _UxBuildCommonFields.closable
+        timeout_seconds = _UxBuildCommonFields.timeout_seconds
+        element_title = _UxBuildCommonFields.element_title
+        element_body = _UxBuildCommonFields.element_body
+
+    def setup(self):
+        self._ux_build_setup_common()
+        self._ux_build_setup_tail_outputs()
+
+    async def run(self, state: GraphState):
+        state_value = self.get_input_value("state")
+        ux_id, closable, timeout_seconds, title, body = self._ux_build_resolve_common()
+
+        element = UXNoticeElement(
+            id=ux_id,
+            closable=closable,
+            timeout_seconds=timeout_seconds,
+            title=title,
+            body=body,
+        )
+
+        self.set_output_values(
+            {
+                "state": state_value,
+                "id": element.id,
+                "closable": element.closable,
+                "timeout_seconds": element.timeout_seconds,
+                "title": element.title or "",
+                "body": element.body or "",
+                "ux_id": element.id,
+                "ux_element": element.model_dump(),
+            }
+        )
+
+
 @register("ux/StyleElement")
 class StyleElement(Node):
     """
@@ -461,15 +534,23 @@ class StyleElement(Node):
             type="str",
             default="",
         )
+        apply_scene_colors = PropertyField(
+            name="apply_scene_colors",
+            description="When true, the body text is rendered through the scene-message parser and gets its per-category colors (quotes/emphasis/parentheses/brackets). When false, body renders with markdown formatting but inherits the element's color.",
+            type="bool",
+            default=False,
+        )
 
     def setup(self):
         self.add_input("state")
         self.add_input("ux_element", socket_type="ux_element")
         self.add_input("tint", socket_type="str", optional=True)
         self.add_input("icon", socket_type="str", optional=True)
+        self.add_input("apply_scene_colors", socket_type="bool", optional=True)
 
         self.set_property("tint", "muted")
         self.set_property("icon", "")
+        self.set_property("apply_scene_colors", False)
 
         self.add_output("state", socket_type="any")
         self.add_output("ux_id", socket_type="str")
@@ -494,12 +575,18 @@ class StyleElement(Node):
             if self.get_input_socket("icon").source
             else self.get_property("icon")
         )
+        apply_scene_colors = (
+            self.normalized_input_value("apply_scene_colors")
+            if self.get_input_socket("apply_scene_colors").source
+            else self.get_property("apply_scene_colors")
+        )
 
         color = (str(tint).strip() if tint is not None else "") or None
         icon = (str(icon).strip() if icon is not None else "") or None
 
         element.color = color
         element.icon = icon
+        element.apply_scene_colors = bool(apply_scene_colors)
 
         # Always sync to meta for backward compatibility
         if element.color is None:
@@ -747,6 +834,9 @@ class EmitElement(Node):
         cancelled = False
         timed_out = False
 
+        # Kind dispatch — which await/selection machinery to run. This is not a
+        # "should we block" check (use element.blocking for that); it's which
+        # shape-specific protocol (choices list, text input) this kind speaks.
         if element.kind in ("choice", "text_input"):
             scene = active_scene.get()
             selection, timed_out, aborted = await self.wait_for_interaction(

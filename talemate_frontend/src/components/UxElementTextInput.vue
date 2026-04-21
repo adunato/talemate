@@ -1,10 +1,11 @@
 <template>
-  <div>
+  <div class="text-grey-lighten-1">
     <div v-if="!isMultiline">
       <v-text-field
         v-model="text"
         density="compact"
         variant="outlined"
+        :color="tintColor"
         :placeholder="placeholder"
         hide-details
         @keydown.enter.prevent="submit"
@@ -16,6 +17,7 @@
         v-model="text"
         density="compact"
         variant="outlined"
+        :color="tintColor"
         :placeholder="placeholder"
         :rows="rows"
         hide-details

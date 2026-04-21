@@ -302,10 +302,10 @@ class NarratorMessage(SceneMessage):
 
 @dataclass
 class DirectorMessage(SceneMessage):
-    action: str = "actor_instruction"
+    action: Literal["actor_instruction", "user_direction"] = "actor_instruction"
     source: str = "ai"
     typ = "director"
-    subtype: str | None = None
+    subtype: Literal["function_call", "user_direction"] | None = None
 
     @property
     def character_name(self) -> str:

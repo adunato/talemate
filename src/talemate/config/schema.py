@@ -565,6 +565,7 @@ class SceneAppearance(pydantic.BaseModel):
     context_investigation_messages: HidableHistoryMessageStyle = (
         HidableHistoryMessageStyle()
     )
+    information_messages: HistoryMessageStyle = HistoryMessageStyle()
     quotes: MarkupMessageStyle = MarkupMessageStyle()
     parentheses: MarkupMessageStyle = MarkupMessageStyle()
     brackets: MarkupMessageStyle = MarkupMessageStyle()

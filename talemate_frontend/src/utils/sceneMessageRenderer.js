@@ -1,29 +1,30 @@
 import { marked, Marked } from 'marked';
+import { DEFAULT_APPEARANCE_COLORS } from './messageColors.js';
 
 const DEFAULTS = {
     quotes: {
-        color: "#FFFFFF",
+        color: DEFAULT_APPEARANCE_COLORS.quotes,
         italic: false,
         bold: false,
     },
     parentheses: {
-        color: "#DB9DC2",
+        color: DEFAULT_APPEARANCE_COLORS.parentheses,
         italic: false,
         bold: false,
     },
     brackets: {
-        color: "#DC5D5D",
+        color: DEFAULT_APPEARANCE_COLORS.brackets,
         italic: false,
         bold: true,
     },
     emphasis: {
-        color: "#B39DDB",
-        italic: false,        
+        color: DEFAULT_APPEARANCE_COLORS.emphasis,
+        italic: false,
         bold: false,
     },
     default: {
-        color: "#B39DDB",
-        italic: true,        
+        color: DEFAULT_APPEARANCE_COLORS.emphasis,
+        italic: true,
         bold: false,
     },
     prefix: {
@@ -33,19 +34,14 @@ const DEFAULTS = {
     },
 }
 
-// Default colors for different message types when no color is specified
-const MESSAGE_TYPE_DEFAULTS = {
-    context_investigation: "#D5C0A1",
-}
-
 export class SceneTextParser {
     constructor(config = {}) {
         // Determine default color:
         // 1. Use config.defaultColor if explicitly provided
-        // 2. Use message type default if messageType is specified
+        // 2. Use message type default from DEFAULT_APPEARANCE_COLORS if messageType is specified
         // 3. Otherwise use DEFAULTS.default.color
-        const defaultColor = config.defaultColor ?? 
-                            (config.messageType && MESSAGE_TYPE_DEFAULTS[config.messageType]) ?? 
+        const defaultColor = config.defaultColor ??
+                            (config.messageType && DEFAULT_APPEARANCE_COLORS[config.messageType]) ??
                             DEFAULTS.default.color;
         
         // Get the default message color from config.default if available

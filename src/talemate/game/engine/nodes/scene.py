@@ -944,6 +944,21 @@ class DirectorMessage(Node):
             description="Describes the director action",
             type="str",
             default="actor_instruction",
+            choices=[
+                "actor_instruction",
+                "user_direction",
+            ],
+        )
+
+        subtype = PropertyField(
+            name="subtype",
+            description="The subtype of the director message, used for further categorization of the message",
+            type="str",
+            default=UNRESOLVED,
+            choices=[
+                "function_call",
+                "user_direction",
+            ],
         )
 
     def __init__(self, title="Director Message", **kwargs):
@@ -955,18 +970,26 @@ class DirectorMessage(Node):
         self.add_input("meta", socket_type="dict", optional=True)
         self.add_input("character", socket_type="character", optional=True)
         self.add_input("action", socket_type="str", optional=True)
+        self.add_input("subtype", socket_type="str", optional=True)
 
         self.set_property("source", "ai")
         self.set_property("action", "actor_instruction")
+        self.set_property("subtype", UNRESOLVED)
 
         self.add_output("message", socket_type="message_object")
+        self.add_output("source", socket_type="str")
+        self.add_output("meta", socket_type="dict")
+        self.add_output("character", socket_type="character")
+        self.add_output("action", socket_type="str")
+        self.add_output("subtype", socket_type="str")
 
     async def run(self, state: GraphState):
-        message = self.get_input_value("message")
-        source = self.get_input_value("source")
-        action = self.get_input_value("action")
-        meta = self.get_input_value("meta")
-        character: "Character" = self.get_input_value("character")
+        message = self.normalized_input_value("message")
+        source = self.normalized_input_value("source")
+        action = self.normalized_input_value("action")
+        meta = self.normalized_input_value("meta")
+        subtype = self.normalized_input_value("subtype")
+        character: "Character" = self.normalized_input_value("character")
 
         extra = {}
 
@@ -974,13 +997,20 @@ class DirectorMessage(Node):
             extra["meta"] = meta
 
         message = scene_message.DirectorMessage(
-            message, source=source, action=action, **extra
+            message, source=source, action=action, subtype=subtype, **extra
         )
 
-        if character and character is not UNRESOLVED:
+        if character is not None:
             message.set_meta(character=character.name)
 
-        self.set_output_values({"message": message})
+        self.set_output_values({
+            "message": message,
+            "source": source,
+            "meta": meta,
+            "character": character,
+            "action": action,
+            "subtype": subtype,
+        })
 
 
 @register("scene/message/UnpackMeta")

@@ -1,5 +1,5 @@
 <template>
-  <v-alert  v-if="show" @mouseover="hovered=true" @mouseleave="hovered=false" @click="toggle()" class="clickable" variant="text" density="compact" :color="getMessageColor('context_investigation', null)">
+  <v-alert  v-if="show" @mouseover="hovered=true" @mouseleave="hovered=false" @click="toggle()" class="clickable" variant="text" density="compact" :color="getMessageColor('context_investigation')">
     <template v-slot:close>
       <v-btn size="small" icon variant="text" class="close-button" @click="deleteMessage" :disabled="uxLocked">
         <v-icon>mdi-close</v-icon>

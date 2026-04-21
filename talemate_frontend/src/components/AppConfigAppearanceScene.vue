@@ -94,6 +94,12 @@
                             <span v-html="renderedContextInvestigationPreview">
                             </span>
                         </div>
+                        <div class="mt-3 d-flex align-center" :style="buildCssStyles('information_messages', config.information_messages)">
+                            <v-icon class="mr-2" :color="getColor('information_messages', config.information_messages?.color)">mdi-information-outline</v-icon>
+                            <span>
+                                A heads-up or system notice for the player.
+                            </span>
+                        </div>
                     </div>
                 </v-card-text>
             </v-card>
@@ -108,6 +114,7 @@
 
 <script>
 import { SceneTextParser } from '@/utils/sceneMessageRenderer';
+import { DEFAULT_APPEARANCE_COLORS } from '@/utils/messageColors.js';
 
 export default {
     name: 'AppConfigAppearanceScene',
@@ -140,12 +147,12 @@ export default {
                 }
                 // Ensure new styling fields exist with defaults if missing
                 if (!sceneConfig.quotes) {
-                    sceneConfig.quotes = { color: this.defaultColors.quotes, italic: false, bold: false, override_color: true };
+                    sceneConfig.quotes = { color: DEFAULT_APPEARANCE_COLORS.quotes, italic: false, bold: false, override_color: true };
                 } else if (sceneConfig.quotes.override_color === undefined) {
                     sceneConfig.quotes.override_color = true;
                 }
                 if (!sceneConfig.parentheses) {
-                    sceneConfig.parentheses = { color: this.defaultColors.parentheses, italic: true, bold: false, override_color: true, show: true };
+                    sceneConfig.parentheses = { color: DEFAULT_APPEARANCE_COLORS.parentheses, italic: true, bold: false, override_color: true, show: true };
                 } else {
                     if (sceneConfig.parentheses.override_color === undefined) {
                         sceneConfig.parentheses.override_color = true;
@@ -155,7 +162,7 @@ export default {
                     }
                 }
                 if (!sceneConfig.brackets) {
-                    sceneConfig.brackets = { color: this.defaultColors.brackets, italic: true, bold: false, override_color: true, show: true };
+                    sceneConfig.brackets = { color: DEFAULT_APPEARANCE_COLORS.brackets, italic: true, bold: false, override_color: true, show: true };
                 } else {
                     if (sceneConfig.brackets.override_color === undefined) {
                         sceneConfig.brackets.override_color = true;
@@ -165,7 +172,7 @@ export default {
                     }
                 }
                 if (!sceneConfig.emphasis) {
-                    sceneConfig.emphasis = { color: this.defaultColors.emphasis, italic: true, bold: false, override_color: true };
+                    sceneConfig.emphasis = { color: DEFAULT_APPEARANCE_COLORS.emphasis, italic: true, bold: false, override_color: true };
                 } else if (sceneConfig.emphasis.override_color === undefined) {
                     sceneConfig.emphasis.override_color = true;
                 }
@@ -249,23 +256,13 @@ export default {
             colorPicker: null,
             color: "#000000",
             colorPickerTarget: null,
-            defaultColors: {
-                "narrator_messages": "#A180AE",
-                "actor_messages": "#B39DDB",
-                "director_messages": "#FF5722",
-                "time_messages": "#FFECB3",
-                "context_investigation_messages": "#D5C0A1",
-                "quotes": "#FFFFFF",
-                "parentheses": "#DB9DC2",
-                "brackets": "#DC5D5D",
-                "emphasis": "#B39DDB",
-            },
             typLabelMap: {
                 "narrator_messages": "Narrator Messages",
                 "actor_messages": "Actor Messages",
                 "director_messages": "Director Messages",
                 "time_messages": "Time Messages",
                 "context_investigation_messages": "Context Investigations",
+                "information_messages": "Information Messages",
                 "quotes": "Quotes",
                 "parentheses": "Parentheses",
                 "brackets": "Brackets",
@@ -280,6 +277,7 @@ export default {
                 "actor_messages": true,
                 "director_messages": true,
                 "context_investigation_messages": true,
+                "information_messages": true,
                 "quotes": true,
                 "parentheses": true,
                 "brackets": true,
@@ -292,6 +290,7 @@ export default {
                 "director_messages": true,
                 "time_messages": true,
                 "context_investigation_messages": true,
+                "information_messages": true,
                 "quotes": true,
                 "parentheses": true,
                 "brackets": true,
@@ -338,7 +337,11 @@ export default {
         getColor(typ, color) {
             // if color is None load the default color
             if (color === null) {
-                return this.defaultColors[typ];
+                // Message-type keys use the `_messages` suffix in the config UI
+                // (e.g. "narrator_messages") but DEFAULT_APPEARANCE_COLORS is
+                // keyed by bare type name — strip the suffix on lookup.
+                const key = typ.endsWith('_messages') ? typ.slice(0, -'_messages'.length) : typ;
+                return DEFAULT_APPEARANCE_COLORS[key];
             }
             return color;
         }
