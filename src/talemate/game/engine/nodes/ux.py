@@ -540,6 +540,12 @@ class StyleElement(Node):
             type="bool",
             default=False,
         )
+        compact = PropertyField(
+            name="compact",
+            description="When true, the frontend renders the element in a condensed layout: smaller icon and text, and the title leads inline into the body rather than sitting on its own row.",
+            type="bool",
+            default=False,
+        )
 
     def setup(self):
         self.add_input("state")
@@ -547,10 +553,12 @@ class StyleElement(Node):
         self.add_input("tint", socket_type="str", optional=True)
         self.add_input("icon", socket_type="str", optional=True)
         self.add_input("apply_scene_colors", socket_type="bool", optional=True)
+        self.add_input("compact", socket_type="bool", optional=True)
 
         self.set_property("tint", "muted")
         self.set_property("icon", "")
         self.set_property("apply_scene_colors", False)
+        self.set_property("compact", False)
 
         self.add_output("state", socket_type="any")
         self.add_output("ux_id", socket_type="str")
@@ -565,21 +573,10 @@ class StyleElement(Node):
         except Exception as exc:
             raise InputValueError(self, "ux_element", f"Invalid UX element: {exc}")
 
-        tint = (
-            self.normalized_input_value("tint")
-            if self.get_input_socket("tint").source
-            else self.get_property("tint")
-        )
-        icon = (
-            self.normalized_input_value("icon")
-            if self.get_input_socket("icon").source
-            else self.get_property("icon")
-        )
-        apply_scene_colors = (
-            self.normalized_input_value("apply_scene_colors")
-            if self.get_input_socket("apply_scene_colors").source
-            else self.get_property("apply_scene_colors")
-        )
+        tint = self.normalized_input_value("tint")
+        icon = self.normalized_input_value("icon")
+        apply_scene_colors = self.normalized_input_value("apply_scene_colors")
+        compact = self.normalized_input_value("compact")
 
         color = (str(tint).strip() if tint is not None else "") or None
         icon = (str(icon).strip() if icon is not None else "") or None
@@ -587,6 +584,7 @@ class StyleElement(Node):
         element.color = color
         element.icon = icon
         element.apply_scene_colors = bool(apply_scene_colors)
+        element.compact = bool(compact)
 
         # Always sync to meta for backward compatibility
         if element.color is None:

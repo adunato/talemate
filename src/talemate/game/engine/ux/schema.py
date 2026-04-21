@@ -46,6 +46,11 @@ class UXElementBase(pydantic.BaseModel):
     # via the `ux/StyleElement` node.
     apply_scene_colors: bool = False
 
+    # When true, the frontend renders the element in a condensed layout:
+    # smaller icon and text, and the title leads inline into the body instead
+    # of sitting on its own row. Authors flip this via `ux/StyleElement`.
+    compact: bool = False
+
     # Presentation hints for the frontend (Vuetify-style).
     # Kept optional for backward compatibility; frontend may also read these from `meta`.
     icon: str | None = None

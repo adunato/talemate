@@ -3,6 +3,7 @@
     variant="text"
     :closable="isClosable"
     class="ux-element-message"
+    :color="resolvedColor || alertColor"
   >
     <template v-if="isClosable" v-slot:close>
       <v-btn size="x-small" icon @click="cancel">
@@ -11,22 +12,62 @@
     </template>
 
     <v-card variant="text" class="ux-element-card">
-      <v-card-title v-if="element?.title || alertIcon" class="d-flex align-center pa-0 mb-2">
+      <!-- Compact: icon + inline "title: body" on a single condensed line -->
+      <div
+        v-if="compact && (element?.title || element?.body || alertIcon)"
+        class="d-flex align-start pa-0 mb-1 ux-element-compact"
+      >
+        <v-icon
+          v-if="alertIcon"
+          size="default"
+          :color="resolvedColor || alertColor"
+          class="mr-2 ux-element-compact-icon"
+        >{{ alertIcon }}</v-icon>
+        <div class="text-body-2 ux-element-compact-content">
+          <span
+            v-if="element?.title"
+            :class="['font-weight-bold', colorClass]"
+            :style="colorStyle"
+          >{{ element.title }}:&nbsp;</span>
+          <span
+            v-if="element?.body && applySceneColors"
+            :class="['ux-element-body', 'ux-element-body--inline']"
+            :style="colorStyle"
+            v-html="renderedBody"
+          ></span>
+          <span
+            v-else-if="element?.body"
+            :class="['ux-element-body-plain', 'ux-element-body--inline', colorClass]"
+            :style="colorStyle"
+            v-html="renderedPlainBody"
+          ></span>
+        </div>
+      </div>
+
+      <!-- Standard: title block + separate body block -->
+      <v-card-title
+        v-else-if="element?.title || alertIcon"
+        class="d-flex align-center pa-0 mb-2"
+      >
         <v-icon v-if="alertIcon" :color="resolvedColor || alertColor" class="mr-2">{{ alertIcon }}</v-icon>
-        <span :class="['text-subtitle-1', 'font-weight-bold', colorClass]" :style="colorStyle">
-          {{ element?.title || defaultTitle() }}
+        <span
+          v-if="element?.title"
+          :class="['text-subtitle-1', 'font-weight-bold', colorClass]"
+          :style="colorStyle"
+        >
+          {{ element.title }}
         </span>
       </v-card-title>
 
       <v-card-text class="pa-0">
         <div
-          v-if="element?.body && applySceneColors"
+          v-if="!compact && element?.body && applySceneColors"
           class="text-body-2 mb-2 ux-element-body"
           :style="colorStyle"
           v-html="renderedBody"
         ></div>
         <div
-          v-else-if="element?.body"
+          v-else-if="!compact && element?.body"
           :class="['text-body-2', 'mb-2', 'ux-element-body-plain', colorClass]"
           :style="colorStyle"
           v-html="renderedPlainBody"
@@ -208,6 +249,9 @@ export default {
     applySceneColors() {
       return this.element?.apply_scene_colors === true;
     },
+    compact() {
+      return this.element?.compact === true;
+    },
   },
   watch: {
     hasTimeoutTimer: {
@@ -231,12 +275,6 @@ export default {
     this._stopTimer();
   },
   methods: {
-    defaultTitle() {
-      if (this.element?.kind === "choice") return "Choose an option";
-      if (this.element?.kind === "text_input") return "Enter text";
-      if (this.element?.kind === "notice") return "Notice";
-      return "Interaction";
-    },
     _startTimer() {
       if (this._rafId) return;
       this.nowMs = Date.now();
@@ -333,6 +371,19 @@ export default {
 .ux-element-body :deep(li),
 .ux-element-body-plain :deep(li) {
   margin-bottom: 0.25em;
+}
+
+/* Compact layout: title flows into body on a single line. Collapse block
+   elements emitted by marked / SceneTextParser so they behave as inline. */
+.ux-element-compact-content {
+  line-height: 1.4;
+}
+
+.ux-element-body--inline :deep(.scene-paragraph),
+.ux-element-body--inline :deep(p),
+.ux-element-body--inline :deep(div) {
+  display: inline;
+  margin: 0;
 }
 </style>
 
