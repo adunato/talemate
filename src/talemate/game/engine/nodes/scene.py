@@ -1003,14 +1003,16 @@ class DirectorMessage(Node):
         if character is not None:
             message.set_meta(character=character.name)
 
-        self.set_output_values({
-            "message": message,
-            "source": source,
-            "meta": meta,
-            "character": character,
-            "action": action,
-            "subtype": subtype,
-        })
+        self.set_output_values(
+            {
+                "message": message,
+                "source": source,
+                "meta": meta,
+                "character": character,
+                "action": action,
+                "subtype": subtype,
+            }
+        )
 
 
 @register("scene/message/UnpackMeta")
