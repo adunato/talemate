@@ -361,6 +361,11 @@ class DirectorMessage(SceneMessage):
             self.message = instructions
             self.source = "player"
 
+        # Older saves dropped `subtype` from the serialized payload. Backfill it
+        # from `action` so the frontend can still route to the correct variant.
+        if self.subtype is None and self.action == "user_direction":
+            self.subtype = "user_direction"
+
         return self
 
     def __dict__(self) -> dict:
@@ -368,6 +373,8 @@ class DirectorMessage(SceneMessage):
 
         if self.action:
             rv["action"] = self.action
+        if self.subtype:
+            rv["subtype"] = self.subtype
 
         return rv
 
