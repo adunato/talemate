@@ -301,6 +301,7 @@
                         :character-colors="scene.data?.character_colors"
                         :player-character-name="getPlayerCharacterName()"
                         :active-characters="activeCharacters"
+                        :direction-available="directionAvailable"
                         @send="onInputSend"
                         @autocomplete-start="onAutocompleteStart"
                         @autocomplete-end="onAutocompleteEnd" />
@@ -765,7 +766,16 @@ export default {
     },
     uxInteractionActive() {
       return this.activeUxInteractionIds.length > 0;
-    }
+    },
+    // True when scene direction is usable — either the director agent has it
+    // enabled, or the currently-loaded scene forces it on via the intent
+    // state override (`direction.always_on`). Mirrors the backend's
+    // `direction_enabled_with_override` property.
+    directionAvailable() {
+      const agentEnabled = this.agentStatus?.director?.actions?.scene_direction?.enabled || false;
+      const sceneForced = this.scene?.data?.direction_always_on || false;
+      return agentEnabled || sceneForced;
+    },
   },
   mounted() {
     this.connect();

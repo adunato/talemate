@@ -36,6 +36,48 @@ import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifie
 
 const INPUT_HISTORY_MAX = 10;
 
+// Prefix-mode table: when the user's message starts with one of these
+// sequences, the input surfaces a mode-specific label / icon / color so they
+// know they've triggered a non-dialogue path before hitting Enter. The
+// backend is the one that actually interprets the prefix on send; this is
+// pure UX affordance.
+//
+// Longest-first ordering matters — '~~' must be checked before '~'.
+const PREFIXES = [
+  {
+    match: '~~',
+    mode: 'direct-yield',
+    icon: 'mdi-tilde',
+    color: 'director',
+    label: 'Talk to Director (keep turn)',
+    longHint: 'Send instruction to the director, then yield the turn back to you.',
+    requiresDirection: true,
+  },
+  {
+    match: '~',
+    mode: 'direct',
+    icon: 'mdi-tilde',
+    color: 'director',
+    label: 'Talk to Director (yield turn)',
+    longHint: 'Send instruction to the director. The scene continues after. Use ~~ to keep your turn.',
+    requiresDirection: true,
+  },
+  {
+    match: '!',
+    mode: 'command',
+    icon: 'mdi-powershell',
+    color: 'warning',
+    label: 'Command',
+    longHint: 'Executes a command on the scene engine.',
+  },
+  {
+    match: '@',
+    mode: 'action',
+    icon: 'mdi-at',
+    // color / label / longHint are resolved dynamically based on actAs
+  },
+];
+
 export default {
   name: 'SceneMessageInput',
   inject: ['autocompleteRequest'],
@@ -76,6 +118,10 @@ export default {
     playerCharacterName: { type: String, default: null },
     // Needed by cycleActAs (Tab) — the order determines cycle order.
     activeCharacters: { type: Array, default: () => [] },
+    // True when director scene direction is usable — either the agent has it
+    // enabled, or the current scene forces it on. Gates whether the `~`/`~~`
+    // prefixes surface as interactive mode affordances.
+    directionAvailable: { type: Boolean, default: false },
   },
   emits: [
     'update:modelValue',
@@ -109,30 +155,82 @@ export default {
     isWaitingForDialogInput() {
       return this.waitingForInput && this.inputRequestInfo && this.inputRequestInfo.reason === 'talk';
     },
-    // The floating textarea label — the speaker name for dialogue prompts,
-    // the server's message text for generic prompts, empty when idle.
+    // Active prefix mode, derived from the textarea's current content. Only
+    // surfaces while the server is actively soliciting a dialogue line —
+    // outside that context prefixes have no meaning. Returns null when no
+    // prefix matches or when a prefix is gated off (e.g. '~' with no
+    // director availability).
+    inputMode() {
+      if (!this.isWaitingForDialogInput) return null;
+      if (!this.inputValue) return null;
+
+      for (const p of PREFIXES) {
+        if (!this.inputValue.startsWith(p.match)) continue;
+
+        // Prefix matches but the mode is unavailable — surface a disabled
+        // affordance so the user knows their prefix won't do what they think.
+        if (p.requiresDirection && !this.directionAvailable) {
+          return {
+            ...p,
+            label: `${p.label} — unavailable`,
+            color: 'muted',
+            longHint: 'Scene direction is disabled. Enable it in the director agent settings or the scene direction config.',
+          };
+        }
+
+        if (p.mode === 'action') {
+          return {
+            ...p,
+            label: `${this.actAsDisplayName} acts`,
+            color: this.actAsColor || 'primary',
+            longHint: `Generate action or dialogue for ${this.actAsDisplayName}. Text after '@' is the directive.`,
+          };
+        }
+        return p;
+      }
+      return null;
+    },
+    // Display name for whoever we're currently speaking/acting as. Resolves
+    // '$narrator' → 'Narrator', null → the player character name.
+    actAsDisplayName() {
+      if (this.actAs === '$narrator') return 'Narrator';
+      return this.actAs || this.playerCharacterName || 'Player';
+    },
+    // Themed color for the current actAs, if one is configured. Falls back
+    // to null so callers can pick their own default.
+    actAsColor() {
+      if (this.actAs === '$narrator') return 'narrator';
+      const name = this.actAs || this.playerCharacterName;
+      return name ? this.characterColors?.[name] : null;
+    },
+    // The floating textarea label — prefix-mode label if one is active, else
+    // the speaker name for dialogue prompts, the server's message text for
+    // generic prompts, empty when idle.
     inputHint() {
+      if (this.inputMode) return this.inputMode.label;
       if (this.waitingForInput) {
         if (this.inputRequestInfo?.reason === 'talk') {
-          const characterName = this.actAs ? this.actAs : this.playerCharacterName;
-          if (characterName === '$narrator') return 'Narrator:';
-          return `${characterName}:`;
+          return `${this.actAsDisplayName}:`;
         }
         return this.inputRequestInfo?.message;
       }
       return '';
     },
-    // Keyboard-hint line shown below the textarea during dialogue prompts.
-    // Intentionally hidden for non-talk prompts to keep server messages clean.
+    // Keyboard-hint line shown below the textarea. Prefix-mode replaces it
+    // with a concrete description of what the prefix does; otherwise the
+    // standard dialogue keyboard shortcuts.
     inputLongHint() {
+      if (this.inputMode) return this.inputMode.longHint;
       if (this.waitingForInput && this.inputRequestInfo?.reason === 'talk') {
         return `${primaryModifierLabel}+Enter to autocomplete, Shift+Enter for newline, ${primaryModifierLabel}+Up/Down for history, Tab to act as another character. Start messages with '@' to do an action. (e.g., '@look at the door')`;
       }
       return '';
     },
-    // Prepend icon: warning glyph for generic prompts, speaker-type glyph for
-    // dialogue prompts, mdi-cancel when idle (signalling "skip turn" behavior).
+    // Prepend icon: prefix-mode icon when active, warning glyph for generic
+    // prompts, speaker-type glyph for dialogue prompts, mdi-cancel when idle
+    // (signalling "skip turn" behavior).
     inputIcon() {
+      if (this.inputMode) return this.inputMode.icon;
       if (this.waitingForInput) {
         if (this.inputRequestInfo?.reason !== 'talk') {
           return 'mdi-information-outline';
@@ -142,20 +240,14 @@ export default {
       }
       return 'mdi-cancel';
     },
-    // Textarea color: warning for generic prompts, per-character color for
-    // dialogue prompts when colors are configured, primary as fallback, null
-    // (inherits default) when idle.
+    // Textarea color: prefix-mode color when active, warning for generic
+    // prompts, per-character color for dialogue prompts when configured,
+    // primary as fallback, null (inherits default) when idle.
     inputColor() {
+      if (this.inputMode) return this.inputMode.color;
       if (!this.waitingForInput) return null;
       if (this.inputRequestInfo?.reason !== 'talk') return 'warning';
-      if (!this.characterColors || !this.characterColors[this.playerCharacterName]) {
-        return 'primary';
-      }
-      if (this.actAs) {
-        if (this.actAs === '$narrator') return 'narrator';
-        return this.characterColors[this.actAs];
-      }
-      return this.characterColors[this.playerCharacterName];
+      return this.actAsColor || 'primary';
     },
   },
   methods: {

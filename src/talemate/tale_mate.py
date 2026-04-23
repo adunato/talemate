@@ -1298,6 +1298,11 @@ class Scene(Emitter):
                 "agent_persona_names": self.agent_persona_names,
                 "intent": self.intent,
                 "story_intent": self.story_intent,
+                "direction_always_on": (
+                    self.intent_state.direction.always_on
+                    if self.intent_state
+                    else False
+                ),
                 "id": self.id,
                 "rev": self.rev,
                 "shared_context": self.shared_context.filename
