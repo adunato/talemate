@@ -119,7 +119,7 @@ export default {
                             title: "Notable Improvements",
                             items: [
                                 "Director: button in scene tools menu to manually trigger a direction turn; Ctrl+click for one-off instructions",
-                                "Player Direction: type ~text in the main input to insert a player-authored director message without taking a conversation turn; ~~text does the same while keeping your turn (requires Scene Direction enabled)",
+                                "Player Direction: type #text in the main input to insert a player-authored director message without taking a conversation turn; ##text does the same while keeping your turn (requires Scene Direction enabled)",
                                 "Scene Direction: general director and per-scene-type instructions can now reference a Jinja2 template from the scene's template directory, rendered alongside the raw instruction text",
                                 "Visual: organized tools menu into per-character submenus, matching the world scene tools pattern",
                                 "System Prompt: added {{ system_prompt }} template variable for app and client overrides",

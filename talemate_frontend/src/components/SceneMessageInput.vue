@@ -42,24 +42,24 @@ const INPUT_HISTORY_MAX = 10;
 // backend is the one that actually interprets the prefix on send; this is
 // pure UX affordance.
 //
-// Longest-first ordering matters — '~~' must be checked before '~'.
+// Longest-first ordering matters — '##' must be checked before '#'.
 const PREFIXES = [
   {
-    match: '~~',
+    match: '##',
     mode: 'direct-yield',
-    icon: 'mdi-tilde',
+    icon: 'mdi-pound',
     color: 'director',
     label: 'Talk to Director (keep turn)',
     longHint: 'Send instruction to the director, then yield the turn back to you.',
     requiresDirection: true,
   },
   {
-    match: '~',
+    match: '#',
     mode: 'direct',
-    icon: 'mdi-tilde',
+    icon: 'mdi-pound',
     color: 'director',
     label: 'Talk to Director (yield turn)',
-    longHint: 'Send instruction to the director. The scene continues after. Use ~~ to keep your turn.',
+    longHint: 'Send instruction to the director. The scene continues after. Use ## to keep your turn.',
     requiresDirection: true,
   },
   {
@@ -119,7 +119,7 @@ export default {
     // Needed by cycleActAs (Tab) — the order determines cycle order.
     activeCharacters: { type: Array, default: () => [] },
     // True when director scene direction is usable — either the agent has it
-    // enabled, or the current scene forces it on. Gates whether the `~`/`~~`
+    // enabled, or the current scene forces it on. Gates whether the `#`/`##`
     // prefixes surface as interactive mode affordances.
     directionAvailable: { type: Boolean, default: false },
   },
@@ -158,7 +158,7 @@ export default {
     // Active prefix mode, derived from the textarea's current content. Only
     // surfaces while the server is actively soliciting a dialogue line —
     // outside that context prefixes have no meaning. Returns null when no
-    // prefix matches or when a prefix is gated off (e.g. '~' with no
+    // prefix matches or when a prefix is gated off (e.g. '#' with no
     // director availability).
     inputMode() {
       if (!this.isWaitingForDialogInput) return null;

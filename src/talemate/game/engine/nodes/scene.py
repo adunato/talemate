@@ -1347,11 +1347,11 @@ class WaitForInput(Node):
         self, scene: "Scene", state: GraphState, raw_text: str
     ):
         """
-        Parse a ~/~~ prefixed input as a player-authored director message.
+        Parse a #/## prefixed input as a player-authored director message.
 
         Raises LoopContinue on empty payload; otherwise inserts the direction
-        and raises LoopBreak. The yield variant (~~) routes back to the player
-        input prompt; the plain variant (~) lets the scene loop advance.
+        and raises LoopBreak. The yield variant (##) routes back to the player
+        input prompt; the plain variant (#) lets the scene loop advance.
         """
         yield_back = raw_text.startswith(scene_message.DIRECTOR_INPUT_PREFIX_YIELD)
         prefix = (
@@ -1367,7 +1367,7 @@ class WaitForInput(Node):
         director = get_agent("director")
         if not director or not director.direction_enabled_with_override:
             scene.commands.system_message(
-                "Player directions (~ / ~~) require Scene Direction to be enabled on the Director agent."
+                "Player directions (# / ##) require Scene Direction to be enabled on the Director agent."
             )
             raise LoopContinue()
 

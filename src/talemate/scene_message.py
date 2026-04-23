@@ -23,8 +23,8 @@ __all__ = [
 # Prefixes the user can type in the main input box to route a message to the
 # director instead of having the player character speak/act. The yield variant
 # must be checked first since it shares the single-character prefix.
-DIRECTOR_INPUT_PREFIX = "~"
-DIRECTOR_INPUT_PREFIX_YIELD = "~~"
+DIRECTOR_INPUT_PREFIX = "#"
+DIRECTOR_INPUT_PREFIX_YIELD = "##"
 
 _message_id = 0
 

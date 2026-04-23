@@ -211,7 +211,7 @@ class SceneDirectionMixin:
 
         user_input = emission.message
 
-        # ~ and ~~ prefixed input is routed through WaitForInput as an explicit
+        # # and ## prefixed input is routed through WaitForInput as an explicit
         # player direction, which appends its own is_direction=True message.
         # Skip the default auto-append to avoid duplicate/noisy entries.
         if user_input.startswith(DIRECTOR_INPUT_PREFIX):

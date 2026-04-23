@@ -35,44 +35,44 @@ Scene Direction is disabled by default. To enable it:
 
 !!! info "New in 0.37.0"
 
-While Scene Direction is enabled, you can steer the director straight from the main player input box using two prefixes: `~` and `~~`. Both land as an explicit user instruction in the Direction Timeline (so the director actively takes them into account on its next turn) and as a **Player directs:** bubble (:material-account-voice:) in the scene feed.
+While Scene Direction is enabled, you can steer the director straight from the main player input box using two prefixes: `#` and `##`. Both land as an explicit user instruction in the Direction Timeline (so the director actively takes them into account on its next turn) and as a **Player directs:** bubble (:material-account-voice:) in the scene feed.
 
 ![Player direction bubble in the scene feed](../../../img/0.37.0/player-direction-bubble.png)
 
 The difference between the two prefixes is whether the direction replaces your turn or rides alongside it.
 
-### `~` — actively steer the scene without interacting with it
+### `#` — actively steer the scene without interacting with it
 
-Use a single tilde when the direction *is* your contribution this turn:
+Use a single `#` when the direction *is* your contribution this turn:
 
 ```
-~ slow the pacing down for a beat, let the tension build
+# slow the pacing down for a beat, let the tension build
 ```
 
 Your player character does not speak or act. The direction is inserted, and the scene loop advances — the next actor takes their turn, or the director plans its next move, based on the nudge you just left.
 
-Reach for `~` when you want to shape what happens next without stepping into the scene yourself.
+Reach for `#` when you want to shape what happens next without stepping into the scene yourself.
 
-### `~~` — passively steer the scene while still getting your turn
+### `##` — passively steer the scene while still getting your turn
 
-Use two tildes when the direction is a side hint and you still intend to take a normal turn:
+Use two `#` characters when the direction is a side hint and you still intend to take a normal turn:
 
 ```
-~~ Elmer is growing suspicious of the stranger
+## Elmer is growing suspicious of the stranger
 ```
 
 The same direction is inserted into the Direction Timeline and the scene feed, **but the floor stays with you** — the input box immediately becomes active again so you can type your character's action, dialogue, another direction, or a `!` command.
 
-Reach for `~~` when you want to pass the director useful subtext before playing your turn.
+Reach for `##` when you want to pass the director useful subtext before playing your turn.
 
 ### Requires Scene Direction
 
-Both prefixes need Scene Direction enabled on the Director agent. Typing `~` or `~~` with Scene Direction off produces a system message explaining the requirement and the input box re-opens — nothing is inserted.
+Both prefixes need Scene Direction enabled on the Director agent. Typing `#` or `##` with Scene Direction off produces a system message explaining the requirement and the input box re-opens — nothing is inserted.
 
-Empty directions (`~` or `~~` with no text, or only whitespace) are also silently ignored.
+Empty directions (`#` or `##` with no text, or only whitespace) are also silently ignored.
 
 !!! note "Consecutive directions in scene history"
-    The scene history only keeps the most recent player direction visible at any time — a second `~` direction replaces the first in the scene feed. The **Direction Timeline** keeps every one of them in order, so nothing is lost.
+    The scene history only keeps the most recent player direction visible at any time — a second `#` direction replaces the first in the scene feed. The **Direction Timeline** keeps every one of them in order, so nothing is lost.
 
 ## Manually triggering a turn
 
