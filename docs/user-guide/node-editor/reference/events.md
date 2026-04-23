@@ -13,14 +13,18 @@ List of currently supported events.
 
 | Event | Category |
 |-------|----------|
+| [`game_loop`](#game_loop) | Game Loop |
 | [`game_loop_actor_iter`](#game_loop_actor_iter) | Game Loop |
 | [`game_loop_ai_character_iter`](#game_loop_ai_character_iter) | Game Loop |
 | [`game_loop_player_character_iter`](#game_loop_player_character_iter) | Game Loop |
 | [`game_loop_new_message`](#game_loop_new_message) | Game Loop |
 | [`player_turn_start`](#player_turn_start) | Game Loop |
+| [`scene_init`](#scene_init) | Scene Loop |
 | [`scene_loop_init`](#scene_loop_init) | Scene Loop |
+| [`scene_loop_init_after`](#scene_loop_init_after) | Scene Loop |
 | [`scene_loop_start_cycle`](#scene_loop_start_cycle) | Scene Loop |
 | [`scene_loop_end_cycle`](#scene_loop_end_cycle) | Scene Loop |
+| [`scene_loop_error`](#scene_loop_error) | Scene Loop |
 | [`regenerate.msg.character`](#regeneratemsgcharacter) | Regenerate |
 | [`regenerate.msg.narrator`](#regeneratemsgnarrator) | Regenerate |
 | [`regenerate.msg.reinforcement`](#regeneratemsgreinforcement) | Regenerate |
@@ -45,6 +49,8 @@ List of currently supported events.
 | [`agent.director.generate_choices.before_generate`](#agentdirectorgenerate_choicesbefore_generate) | Director Agent |
 | [`agent.director.generate_choices.inject_instructions`](#agentdirectorgenerate_choicesinject_instructions) | Director Agent |
 | [`agent.director.generate_choices.generated`](#agentdirectorgenerate_choicesgenerated) | Director Agent |
+| [`agent.director.character_management.before_persist_character`](#agentdirectorcharacter_managementbefore_persist_character) | Director Agent |
+| [`agent.director.character_management.after_persist_character`](#agentdirectorcharacter_managementafter_persist_character) | Director Agent |
 | [`agent.world_state.time`](#agentworld_statetime) | World State Agent |
 | [`agent.summarization.scene_analysis.before`](#agentsummarizationscene_analysisbefore) | Summarization Agent |
 | [`agent.summarization.scene_analysis.cached`](#agentsummarizationscene_analysiscached) | Summarization Agent |
@@ -53,8 +59,31 @@ List of currently supported events.
 | [`agent.summarization.scene_analysis.after`](#agentsummarizationscene_analysisafter) | Summarization Agent |
 | [`agent.summarization.summarize.before`](#agentsummarizationsummarizebefore) | Summarization Agent |
 | [`agent.summarization.summarize.after`](#agentsummarizationsummarizeafter) | Summarization Agent |
+| [`agent.summarization.before_build_archive`](#agentsummarizationbefore_build_archive) | Summarization Agent |
+| [`agent.summarization.after_build_archive`](#agentsummarizationafter_build_archive) | Summarization Agent |
+| [`agent.summarization.layered_history.finalize`](#agentsummarizationlayered_historyfinalize) | Summarization Agent |
+| [`agent.summarization.rag_build_sub_instruction`](#agentsummarizationrag_build_sub_instruction) | Summarization Agent |
+| [`agent.tts.prepare.before`](#agentttspreparebefore) | TTS Agent |
+| [`agent.tts.prepare.after`](#agentttsprepareafter) | TTS Agent |
+| [`agent.tts.generate.before`](#agentttsgeneratebefore) | TTS Agent |
+| [`agent.tts.generate.after`](#agentttsgenerateafter) | TTS Agent |
+| [`agent.visual.generation.before_generate`](#agentvisualgenerationbefore_generate) | Visual Agent |
+| [`agent.visual.generation.after_generate`](#agentvisualgenerationafter_generate) | Visual Agent |
 
 ## Game Loop
+
+---
+
+### game_loop
+
+Triggered at the start of each game loop iteration, before the actor turns are processed. This is the master signal for the per-iteration game loop and runs once per scene loop cycle when the game loop is triggered.
+
+!!! payload "Payload"
+
+    | Name | Type | Description |
+    |------|------|-------------|
+    | `scene` | `Scene` | The scene object |
+    | `had_passive_narration` | `bool` | Whether passive narration has already fired this iteration |
 
 ---
 
@@ -68,6 +97,7 @@ Triggered after either a player or AI character has had a turn.
     |------|------|-------------|
     | `scene` | `Scene` | The scene object |
     | `actor` | `Actor` | The actor object |
+    | `game_loop` | `GameLoopEvent` | The parent game loop event for this iteration |
 
 ---
 
@@ -81,6 +111,7 @@ Triggered after the AI character has had a turn.
     |------|------|-------------|
     | `scene` | `Scene` | The scene object |
     | `character` | `Character` | The character object |
+    | `game_loop` | `GameLoopEvent` | The parent game loop event for this iteration |
 
 ---
 
@@ -94,6 +125,7 @@ Triggered after the player character has had a turn.
     |------|------|-------------|
     | `scene` | `Scene` | The scene object |
     | `character` | `Character` | The character object |
+    | `game_loop` | `GameLoopEvent` | The parent game loop event for this iteration |
 
 ---
 
@@ -124,9 +156,33 @@ Triggered when the user turn starts. User input has not yet happened at this poi
 
 ## Scene Loop
 
+### scene_init
+
+Triggered once during scene startup, before the scene loop begins running. Use this to perform one-time setup that needs to happen as soon as a scene is loaded.
+
+!!! payload "Payload"
+
+    | Name | Type | Description |
+    |------|------|-------------|
+    | `scene` | `Scene` | The scene object |
+
+---
+
 ### scene_loop_init
 
-Triggered when the scene loop is initialised.
+Triggered when the scene loop is initialised. Fires once at the start of the very first scene loop cycle, after agent nodes and commands have been registered.
+
+!!! payload "Payload"
+
+    | Name | Type | Description |
+    |------|------|-------------|
+    | `scene` | `Scene` | The scene object |
+
+---
+
+### scene_loop_init_after
+
+Fires immediately after [`scene_loop_init`](#scene_loop_init). Use this when you need to react to scene loop initialisation but want to run after handlers attached to `scene_loop_init` have completed.
 
 !!! payload "Payload"
 
@@ -151,6 +207,18 @@ Triggered when the scene loop starts a new cycle.
 ### scene_loop_end_cycle
 
 Triggered when the scene loop ends a cycle.
+
+!!! payload "Payload"
+
+    | Name | Type | Description |
+    |------|------|-------------|
+    | `scene` | `Scene` | The scene object |
+
+---
+
+### scene_loop_error
+
+Triggered when an unhandled exception escapes the scene loop. Internal control-flow exceptions (like `ActedAsCharacter` and `GenerationCancelled`) are handled before this fires, so this signal indicates a real error condition that listeners may want to log or recover from.
 
 !!! payload "Payload"
 
@@ -523,6 +591,34 @@ After choices text is ready.
     | `choices` | `list[str]` | **Mutable.** List of of generated choices |
     | `character` | `Character` | The character that the choices are for |
 
+---
+
+### agent.director.character_management.before_persist_character
+
+Emitted **before** a new character is persisted into the scene by the director's character management module. The blank `Character` instance has been created and is attached to the emission, but it has not yet been added to the scene as an actor and no attribute / detail / dialogue templates have been applied.
+
+Useful for adjusting the character object (e.g. seeding default attributes, voice assignment hints, color overrides) before the rest of the persist pipeline runs.
+
+!!! payload "Payload"
+
+    | Field | Type | Notes |
+    |-------|------|-------|
+    | `agent` | `DirectorAgent` | The agent instance |
+    | `character` | `Character` | **Mutable.** The character about to be persisted |
+
+---
+
+### agent.director.character_management.after_persist_character
+
+Emitted **after** the character has been fully persisted: actor added, generation templates applied, voice assigned (if enabled), character activated and committed to memory. The default `on-persist-character-generate-visual` module hooks into this signal to optionally generate a portrait.
+
+!!! payload "Payload"
+
+    | Field | Type | Notes |
+    |-------|------|-------|
+    | `agent` | `DirectorAgent` | The agent instance |
+    | `character` | `Character` | The character that was just persisted |
+
 ## World State Agent Events
 
 ### agent.world_state.time
@@ -653,3 +749,141 @@ Emitted after the summarizer performs a summarize prompt. Handlers can inspect o
     | `generation_options` | `GenerationOptions` | **Mutable.** Generation options |
     | `summarization_history` | `list[str]` | **Mutable.** any previous historical summaries |
     | `response` | `str` | **Mutable.** The summary text |
+
+---
+
+### agent.summarization.before_build_archive
+
+Fires at the very top of `build_archive`, before the summarizer decides whether new archive entries need to be produced. Handlers can short-circuit or instrument the archive-building pass.
+
+!!! payload "Payload"
+
+    | Field | Type | Notes |
+    |-------|------|-------|
+    | `agent` | `SummarizeAgent` | The agent instance |
+    | `generation_options` | `GenerationOptions \| None` | Generation options that will be used for any summarization prompts performed during the build |
+
+---
+
+### agent.summarization.after_build_archive
+
+Fires after `build_archive` has finished processing all eligible history entries (whether or not anything was actually summarized this pass).
+
+!!! payload "Payload"
+
+    | Field | Type | Notes |
+    |-------|------|-------|
+    | `agent` | `SummarizeAgent` | The agent instance |
+    | `generation_options` | `GenerationOptions \| None` | The generation options that were used during the build |
+
+---
+
+### agent.summarization.layered_history.finalize
+
+Emitted while finalizing a layered history archive entry. Handlers can inspect or replace the entry before it is added to the layered history. The emission exposes a `response` property that is a shortcut for `entry.text`, so handlers that only want to rewrite the summary text can mutate `response` directly.
+
+!!! payload "Payload"
+
+    | Field | Type | Notes |
+    |-------|------|-------|
+    | `agent` | `SummarizeAgent` | The agent instance |
+    | `entry` | `LayeredArchiveEntry \| None` | **Mutable.** The layered archive entry being finalized |
+    | `summarization_history` | `list[str]` | **Mutable.** Previous summaries used as context |
+    | `response` | `str \| None` | **Mutable.** Shortcut for `entry.text` |
+
+---
+
+### agent.summarization.rag_build_sub_instruction
+
+Fires when the summarizer assembles the additional sub-instruction used when fetching RAG context. Mixins (and external handlers) listen on this signal to append guidance about *how* the retrieved context should be interpreted.
+
+!!! payload "Payload"
+
+    | Field | Type | Notes |
+    |-------|------|-------|
+    | `agent` | `SummarizeAgent` | The agent instance |
+    | `sub_instruction` | `str \| None` | **Mutable.** Concatenated sub-instruction to attach to the RAG query |
+
+## TTS Agent Events
+
+### agent.tts.prepare.before
+
+Emitted **before** an optional `prepare_fn` runs against an audio chunk (e.g. text normalization, audio-tag rewriting, voice selection). Only fires for chunks that declare a `prepare_fn`.
+
+!!! payload "Payload"
+
+    | Field | Type | Notes |
+    |-------|------|-------|
+    | `chunk` | `Chunk` | The TTS chunk about to be prepared |
+    | `context` | `GenerationContext` | The full generation context (all chunks for the current request) |
+    | `wav_bytes` | `bytes \| None` | Always `None` at this point |
+
+---
+
+### agent.tts.prepare.after
+
+Fires after a chunk's `prepare_fn` has run but before audio generation starts. Handlers can inspect (or mutate) the now-prepared chunk.
+
+!!! payload "Payload"
+
+    | Field | Type | Notes |
+    |-------|------|-------|
+    | `chunk` | `Chunk` | The prepared TTS chunk |
+    | `context` | `GenerationContext` | The full generation context |
+    | `wav_bytes` | `bytes \| None` | Always `None` at this point |
+
+---
+
+### agent.tts.generate.before
+
+Emitted **immediately before** the chunk is sent to the active TTS backend for synthesis.
+
+!!! payload "Payload"
+
+    | Field | Type | Notes |
+    |-------|------|-------|
+    | `chunk` | `Chunk` | The TTS chunk about to be synthesised |
+    | `context` | `GenerationContext` | The full generation context |
+    | `wav_bytes` | `bytes \| None` | Always `None` at this point |
+
+---
+
+### agent.tts.generate.after
+
+Fires after the TTS backend returns audio for a chunk and before the audio is played back. Handlers can inspect (or replace) the produced audio via `wav_bytes`.
+
+!!! payload "Payload"
+
+    | Field | Type | Notes |
+    |-------|------|-------|
+    | `chunk` | `Chunk` | The TTS chunk that was synthesised |
+    | `context` | `GenerationContext` | The full generation context |
+    | `wav_bytes` | `bytes \| None` | **Mutable.** The synthesised audio bytes (None if generation failed) |
+
+## Visual Agent Events
+
+### agent.visual.generation.before_generate
+
+Emitted **before** the visual agent dispatches a generation request to the active backend (text-to-image or image-edit).
+
+!!! payload "Payload"
+
+    | Field | Type | Notes |
+    |-------|------|-------|
+    | `agent` | `VisualAgent` | The agent instance |
+    | `request` | `GenerationRequest` | The request that is about to be sent to the backend |
+    | `response` | `GenerationResponse` | A response shell with `id` populated; not yet filled in |
+
+---
+
+### agent.visual.generation.after_generate
+
+Fires after a generation request has completed and the resulting image has been delivered to the frontend (and optionally auto-saved as a scene asset). The same emission instance from `before_generate` is reused, so `response` now carries the generated image data.
+
+!!! payload "Payload"
+
+    | Field | Type | Notes |
+    |-------|------|-------|
+    | `agent` | `VisualAgent` | The agent instance |
+    | `request` | `GenerationRequest` | The original request |
+    | `response` | `GenerationResponse` | The completed response, including base64 image data |
