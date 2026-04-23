@@ -285,38 +285,25 @@
                         :visual-agent-ready="visualAgentReady"
                         :audioPlayedForMessageId="audioPlayedForMessageId" />
                       <CharacterSheet ref="characterSheet" />
-                      <v-textarea
-                        v-model="messageInput" 
-                        :label="messageInputHint()" 
-                        rows="1"
-                        auto-grow
-                        outlined 
-                        ref="messageInput" 
-                        @keydown.enter.prevent="sendMessage"
-                        @keydown.ctrl.up.prevent="onHistoryUp"
-                        @keydown.meta.up.prevent="onHistoryUp"
-                        @keydown.ctrl.down.prevent="onHistoryDown"
-                        @keydown.meta.down.prevent="onHistoryDown"
-                        @keydown.tab.prevent="cycleActAs"
-                        :hint="messageInputLongHint()"
-                        :disabled="busy || !ready || uxInteractionActive || isInputDisabled()"
-                        :loading="autocompleting"
-                        :prepend-inner-icon="messageInputIcon()"
-                        :color="messageInputColor()">
-                        <template v-slot:prepend v-if="sceneActive && scene.environment !== 'creative'">
-                          <!-- auto-complete button -->
-                          <v-btn @click="autocomplete" color="primary" icon variant="tonal" :disabled="!messageInput || busy || !ready || uxInteractionActive || isInputDisabled()">
-                            <v-icon>mdi-auto-fix</v-icon>
-                          </v-btn>
-                        </template>
-                        <template v-slot:append>
-                          <!-- send message button -->
-                          <v-btn @click="sendMessage" color="primary" icon variant="tonal" :disabled="busy || !ready || uxInteractionActive || isInputDisabled()">
-                            <v-icon v-if="messageInput">mdi-send</v-icon>
-                            <v-icon v-else>mdi-skip-next</v-icon>
-                          </v-btn>
-                        </template>
-                      </v-textarea>
+                      <SceneMessageInput
+                        ref="sceneMessageInput"
+                        v-model="messageInput"
+                        v-model:act-as="actAs"
+                        :busy="busy"
+                        :ready="ready"
+                        :ux-interaction-active="uxInteractionActive"
+                        :input-disabled="isInputDisabled()"
+                        :waiting-for-input="waitingForInput"
+                        :input-request-info="inputRequestInfo"
+                        :autocompleting="autocompleting"
+                        :scene-active="sceneActive"
+                        :scene-environment="scene.environment"
+                        :character-colors="scene.data?.character_colors"
+                        :player-character-name="getPlayerCharacterName()"
+                        :active-characters="activeCharacters"
+                        @send="onInputSend"
+                        @autocomplete-start="onAutocompleteStart"
+                        @autocomplete-end="onAutocompleteEnd" />
                     </div>
                   </div>
 
@@ -388,12 +375,13 @@
   
 <script>
 import AIClient from './AIClient.vue';
-import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
+import { primaryModifierLabel } from '@/utils/keyboardModifiers';
 import AIAgent from './AIAgent.vue';
 import AgentActivityBar from './AgentActivityBar.vue';
 import LoadScene from './LoadScene.vue';
 import SceneTools from './SceneTools.vue';
 import SceneMessages from './SceneMessages.vue';
+import SceneMessageInput from './SceneMessageInput.vue';
 import WorldState from './WorldState.vue';
 import CoverImage from './CoverImage.vue';
 import CharacterSheet from './CharacterSheet.vue';
@@ -425,8 +413,6 @@ import { debounce } from 'lodash';
 import { isVisualAgentReady, isImageEditAvailable, isImageCreateAvailable } from '../constants/visual.js';
 import { createSceneAssetsRequester } from './VisualAssetsMixin.js';
 
-const INPUT_HISTORY_MAX = 10;
-
 export default {
   components: {
     AIClient,
@@ -435,6 +421,7 @@ export default {
     LoadScene,
     SceneTools,
     SceneMessages,
+    SceneMessageInput,
     WorldState,
     CoverImage,
     CharacterSheet,
@@ -476,7 +463,7 @@ export default {
           click: () => {
             // on next tick, scroll to the bottom of the message list
             this.$nextTick(() => {
-              this.$refs.messageInput.$el.scrollIntoView(false);
+              this.$refs.sceneMessageInput?.scrollIntoView(false);
             });
           },
           value: 'main'
@@ -582,10 +569,6 @@ export default {
       visualBusyTimer: null,
       audioPlayedForMessageId: undefined,
       showSceneView: true,
-      // input history state
-      inputHistory: [],
-      historyIndex: 0, // 0 = draft, -1 = most recent history, -2 = older, ...
-      draftBeforeHistoryBrowse: '',
       templatesSelectedGroups: [],
       templatesSelected: null,
       mainTabScrollPosition: null,
@@ -634,9 +617,9 @@ export default {
                 if(this.mainTabScrollPosition !== null) {
                   // Restore saved scroll position
                   window.scrollTo({ top: this.mainTabScrollPosition, behavior: 'smooth' });
-                } else if(this.$refs.messageInput && this.$refs.messageInput.$el) {
+                } else if(this.$refs.sceneMessageInput) {
                   // No saved position, scroll input field into view
-                  this.$refs.messageInput.$el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  this.$refs.sceneMessageInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
               }, 100);
             }
@@ -798,6 +781,12 @@ export default {
       this.reconnect = false;
       this.websocket.close();
     }
+    // Drop the asset-load rescroll listener if its window is still open
+    if (this._assetLoadScrollHandler) {
+      document.removeEventListener('load', this._assetLoadScrollHandler, true);
+      this._assetLoadScrollHandler = null;
+    }
+    clearTimeout(this._assetLoadScrollTimer);
   },
   provide() {
     return {
@@ -1149,9 +1138,9 @@ export default {
           // Enable the input field when a request_input message comes in
           this.inputDisabled = false;
           this.$nextTick(() => {
-            if (this.$refs.messageInput)
+            if (this.$refs.sceneMessageInput)
               // Highlight the user text input element when a request_input message comes in
-              this.$refs.messageInput.focus();
+              this.$refs.sceneMessageInput.focus();
           });
         }
       }
@@ -1162,10 +1151,7 @@ export default {
         this.inputRequestInfo = null;
         this.waitingForInput = false;
       } else if (data.type === "character" || data.type === "system") {
-        this.$nextTick(() => {
-          if (this.$refs.messageInput && this.$refs.messageInput.$el)
-            this.$refs.messageInput.$el.scrollIntoView(false);
-        });
+        this.scrollInputIntoView();
       } else if(data.type == 'world_state_manager') {
         if(data.action == 'templates') {
           this.worldStateTemplates = data.data;
@@ -1281,84 +1267,44 @@ export default {
       }
     },
 
-    isWaitingForDialogInput() {
-      return this.waitingForInput && this.inputRequestInfo && this.inputRequestInfo.reason === "talk";
-    },
-
-    autocomplete() {
-      if(!this.isWaitingForDialogInput()) {
-        return;
-      }
-
-      this.autocompleting = true
+    onInputSend({ text, actAs }) {
+      this.websocket.send(JSON.stringify({ type: 'interact', text, act_as: actAs }));
       this.inputDisabled = true;
-
-      let context = "dialogue:player";
-
-      if(this.actAs) {
-        if(this.actAs === "$narrator") {
-          context = `narrative:`;
-        } else {
-          context = `dialogue:${this.actAs}`;
-        }
-      }
-
-      this.autocompleteRequest(
-        {
-          partial: this.messageInput,
-          context: context,
-          character: this.actAs,
-        }, 
-        (completion) => {
-          this.inputDisabled = false
-          this.autocompleting = false
-          this.messageInput += completion;
-        },
-        this.$refs.messageInput,
-        100,
-      );
+      this.waitingForInput = false;
     },
 
-    sendMessage(event) {
+    onAutocompleteStart() {
+      this.autocompleting = true;
+      this.inputDisabled = true;
+    },
 
-      // if ctrl/cmd+enter is pressed, request autocomplete
-      if (isPrimaryModifier(event) && event.key === 'Enter') {
-        return this.autocomplete();
+    onAutocompleteEnd(completion) {
+      this.inputDisabled = false;
+      this.autocompleting = false;
+      this.messageInput += completion;
+    },
+
+    scrollInputIntoView() {
+      const scroll = () => this.$refs.sceneMessageInput?.scrollIntoView(false);
+      this.$nextTick(scroll);
+
+      // Images (character portraits, scene art) load asynchronously and can
+      // push the input off-screen after our initial scroll. Listen for image
+      // load events in a short window and re-scroll when they fire. Capture
+      // phase is required because `load` doesn't bubble.
+      if (!this._assetLoadScrollHandler) {
+        this._assetLoadScrollHandler = (e) => {
+          if (e.target && e.target.tagName === 'IMG') scroll();
+        };
+        document.addEventListener('load', this._assetLoadScrollHandler, true);
       }
-
-      if (this.uxInteractionActive) {
-        return;
-      }
-
-      // if shift+enter is pressed, add a newline at the current cursor position
-      if (event.shiftKey && event.key === 'Enter') {
-        const textarea = this.$refs.messageInput.$el.querySelector('textarea');
-        const cursorPos = textarea.selectionStart;
-        this.messageInput = this.messageInput.slice(0, cursorPos) + "\n" + this.messageInput.slice(cursorPos);
-        // Set cursor position after the inserted newline
-        this.$nextTick(() => {
-          textarea.selectionStart = textarea.selectionEnd = cursorPos + 1;
-        });
-        return;
-      }
-
-      if (!this.inputDisabled) {
-        const sentText = this.messageInput;
-        this.websocket.send(JSON.stringify({ type: 'interact', text: sentText, act_as: this.actAs}));
-        // store to history (max 10)
-        const trimmed = (sentText || '').trim();
-        if (trimmed.length > 0) {
-          this.inputHistory.unshift(sentText);
-          if (this.inputHistory.length > INPUT_HISTORY_MAX) {
-            this.inputHistory.length = INPUT_HISTORY_MAX;
-          }
+      clearTimeout(this._assetLoadScrollTimer);
+      this._assetLoadScrollTimer = setTimeout(() => {
+        if (this._assetLoadScrollHandler) {
+          document.removeEventListener('load', this._assetLoadScrollHandler, true);
+          this._assetLoadScrollHandler = null;
         }
-        this.draftBeforeHistoryBrowse = '';
-        this.historyIndex = 0;
-        this.messageInput = '';
-        this.inputDisabled = true;
-        this.waitingForInput = false;
-      }
+      }, 3000);
     },
 
     requestWorldStateTemplates() {
@@ -1372,64 +1318,6 @@ export default {
         type: 'prompts',
         action: 'list_templates'
       }));
-    },
-
-    onHistoryUp(event) {
-      if (!this.inputHistory || this.inputHistory.length === 0) {
-        return;
-      }
-      const maxUp = this.inputHistory.length;
-      if (this.historyIndex <= -maxUp) {
-        return; // already at oldest
-      }
-      if (this.historyIndex === 0) {
-        this.draftBeforeHistoryBrowse = this.messageInput;
-      }
-      this.historyIndex -= 1;
-      const historyPos = -this.historyIndex - 1; // 0-based into inputHistory
-      const value = this.inputHistory[historyPos] ?? '';
-      this.messageInput = value;
-      this.$nextTick(() => {
-        const textarea = this.$refs.messageInput?.$el?.querySelector('textarea');
-        if (textarea) {
-          const len = value.length;
-          textarea.selectionStart = textarea.selectionEnd = len;
-        }
-      });
-    },
-
-    onHistoryDown(event) {
-      if (this.historyIndex === 0) {
-        return; // do not wrap
-      }
-      this.historyIndex += 1;
-      if (this.historyIndex === 0) {
-        const value = this.draftBeforeHistoryBrowse || '';
-        this.messageInput = value;
-        this.$nextTick(() => {
-          const textarea = this.$refs.messageInput?.$el?.querySelector('textarea');
-          if (textarea) {
-            const len = value.length;
-            textarea.selectionStart = textarea.selectionEnd = len;
-          }
-        });
-        return;
-      }
-      const historyPos = -this.historyIndex - 1;
-      if (historyPos < 0 || historyPos >= this.inputHistory.length) {
-        // Clamp, although logic should prevent this
-        this.historyIndex = 0;
-        return;
-      }
-      const value = this.inputHistory[historyPos] ?? '';
-      this.messageInput = value;
-      this.$nextTick(() => {
-        const textarea = this.$refs.messageInput?.$el?.querySelector('textarea');
-        if (textarea) {
-          const len = value.length;
-          textarea.selectionStart = textarea.selectionEnd = len;
-        }
-      });
     },
 
     autocompleteRequest(param, callback, focus_element, delay=500) {
@@ -1452,7 +1340,6 @@ export default {
     syncActAs() {
       // sets the appropriate actAs
 
-
       // acting as narrator, narrator is always valid, do nothing
       if(this.actAs == "$narrator") {
         return;
@@ -1469,62 +1356,7 @@ export default {
       }
 
       // at this point we need a change of actAs so cycle to next option
-      this.cycleActAs();
-    },
-
-    cycleActAs() {
-
-      // will cycle through activeCharacters, which is a dict of character names
-      // and set actAs to the next character name in the list
-      //
-      // if actAs is null it means the player is acting as themselves
-
-      const playerCharacterName = this.getPlayerCharacterName();
-
-      // if there are no characters, set actAs to $narrator
-      if(!this.activeCharacters || this.activeCharacters.length === 0) {
-        this.actAs = "$narrator";
-        return;
-      }
-
-      // if current actAs is $narrator, set actAs to the first character in the list
-      if(this.actAs === "$narrator") {
-        this.actAs = null;
-        return;
-      }
-
-      let selectedCharacter = null;
-      let foundActAs = false;
-
-      for(let characterName of this.activeCharacters) {
-        // actAs is $narrator so we take the first character in the list
-        if(this.actAs === "$narrator") {
-          selectedCharacter = characterName;
-          break;
-        }
-        // actAs is null, so we take the first character in the list that is not
-        // the player character
-        if(this.actAs === null && characterName !== playerCharacterName) {
-          selectedCharacter = characterName;
-          break;
-        }
-        // actAs is set, so we find the first non player character after the current actAs
-        // if actAs is the last character in the list, we set actAs to null
-        if(foundActAs) {
-          selectedCharacter = characterName;
-          break;
-        } else {
-          if(characterName === this.actAs) {
-            foundActAs = true;
-          }
-        }
-      }
-
-      if(selectedCharacter === null || selectedCharacter === playerCharacterName) {
-        this.actAs = "$narrator";
-      } else {
-        this.actAs = selectedCharacter;
-      }
+      this.$refs.sceneMessageInput?.cycleActAs();
     },
 
     autocompleteInfoMessage(active) {
@@ -1787,70 +1619,6 @@ export default {
       return templateString;
     },
 
-    messageInputHint() {
-      if(this.waitingForInput) {
-
-        if(this.inputRequestInfo.reason === "talk") {
-
-          let characterName = this.actAs ? this.actAs : this.scene.player_character_name;
-
-          if(characterName === "$narrator")
-            return "Narrator:";
-
-          return `${characterName}:`;
-        }
-
-        return this.inputRequestInfo.message;
-      }
-      return "";
-    },
-
-    messageInputLongHint() {
-      const DIALOG_HINT = `${primaryModifierLabel}+Enter to autocomplete, Shift+Enter for newline, ${primaryModifierLabel}+Up/Down for history, Tab to act as another character. Start messages with '@' to do an action. (e.g., '@look at the door')`;
-
-      if(this.waitingForInput) {
-        if(this.inputRequestInfo.reason === "talk") {
-          return DIALOG_HINT;
-        }
-      }
-      return "";
-    },
-
-    messageInputIcon() {
-      if (this.waitingForInput) {
-        if (this.inputRequestInfo.reason != "talk") {
-          return 'mdi-information-outline';
-        } else {
-          if(this.actAs === '$narrator')
-            return 'mdi-script-text-outline';
-          return 'mdi-comment-outline';
-        }
-      }
-      return 'mdi-cancel';
-    },
-
-    messageInputColor() {
-      if (this.waitingForInput) {
-        if (this.inputRequestInfo.reason != "talk") {
-          return 'warning';
-        } else {
-
-          if(!this.scene || !this.scene.data || !this.scene.data.character_colors || !this.scene.data.character_colors[this.scene.player_character_name]) {
-            return "primary";
-          }
-
-          if(this.actAs) {
-
-            if(this.actAs === "$narrator")
-              return "narrator";
-
-            return this.scene.data.character_colors[this.actAs];
-          }
-          return this.scene.data.character_colors[this.scene.player_character_name];
-        }
-      }
-      return null;
-    },
     resetViews() {
       if(this.$refs.worldStateManager)
         this.$refs.worldStateManager.reset()
