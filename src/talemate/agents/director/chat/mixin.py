@@ -223,15 +223,19 @@ class DirectorChatMixin:
         chats[chat.id] = chat.model_dump()
         self.chat_set_all_chats(chats)
 
-    def _chat_initial_message(self) -> str:
+    def _chat_initial_message(
+        self,
+        default_message: str = "Hey, how can I help you with this scene?",
+        persona_field: str = "initial_chat_message",
+    ) -> str:
         """Return initial Director chat message using persona override when present."""
-        default_message = "Hey, how can I help you with this scene?"
         persona = self.scene.agent_persona("director")
-        if persona and persona.initial_chat_message:
+        persona_value = getattr(persona, persona_field) if persona else None
+        if persona_value:
             try:
-                return persona.formatted("initial_chat_message", self.scene, "director")
+                return persona.formatted(persona_field, self.scene, "director")
             except Exception:
-                return persona.initial_chat_message or default_message
+                return persona_value or default_message
         return default_message
 
     def chat_list(self) -> list[DirectorChatListEntry]:
@@ -299,12 +303,12 @@ class DirectorChatMixin:
     ) -> DirectorChat:
         """Create a new chat in generate_arc mode with planning instructions as initial user message."""
         chat = DirectorChat(
-            # XXX: needs to support director persona openings
             messages=[
                 DirectorChatMessage(
-                    message=(
+                    message=self._chat_initial_message(
                         "I'm ready to plan and generate your scene. "
-                        "I'll create an outline, then execute each beat to produce the actual scene content."
+                        "I'll create an outline, then execute each beat to produce the actual scene content.",
+                        persona_field="initial_arc_chat_message",
                     ),
                     source="director",
                 ),

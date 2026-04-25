@@ -260,6 +260,7 @@ class TestChatCreateGenerateArc:
         # Mock scene with agent_state for chat persistence
         director.scene = Mock()
         director.scene.agent_state = {"director": {}}
+        director.scene.agent_persona.return_value = None
         return director
 
     def test_create_generate_arc_default_mode(self):

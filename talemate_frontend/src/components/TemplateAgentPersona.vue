@@ -31,10 +31,21 @@
                     rows="5">
                 </v-textarea>
 
-                <v-textarea 
+                <v-textarea
                     v-model="template.initial_chat_message"
                     label="Initial Director chat message (optional)"
                     hint="Overrides the first director message when starting or clearing a chat. Supports {player_name}."
+                    :color="dirty ? 'dirty' : ''"
+                    @update:model-value="dirty = true"
+                    @blur="save"
+                    auto-grow
+                    rows="3">
+                </v-textarea>
+
+                <v-textarea
+                    v-model="template.initial_arc_chat_message"
+                    label="Initial Director chat message when generating / planning long story arcs (optional)"
+                    hint="Overrides the first director message when generating / planning long story arcs. Should set the intention of planning and generating scene beats. Supports {player_name}."
                     :color="dirty ? 'dirty' : ''"
                     @update:model-value="dirty = true"
                     @blur="save"
@@ -70,6 +81,7 @@ export default {
                 description: '',
                 instructions: '',
                 initial_chat_message: '',
+                initial_arc_chat_message: '',
                 favorite: false
             },
             dirty: false,
@@ -84,6 +96,7 @@ export default {
                     description: newVal.description || '',
                     instructions: newVal.instructions || '',
                     initial_chat_message: newVal.initial_chat_message || '',
+                    initial_arc_chat_message: newVal.initial_arc_chat_message || '',
                     favorite: !!newVal.favorite,
                     uid: newVal.uid,
                     group: newVal.group,

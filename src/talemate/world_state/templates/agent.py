@@ -14,6 +14,10 @@ class AgentPersona(Template):
     # Optional initial greeting for Director Chat. If provided, this will be used
     # as the first director message when a chat is created or cleared.
     initial_chat_message: str | None = None
+    # Optional initial greeting for Director Chat in arc-generation mode. The
+    # opening sets the intention of the chat (planning + generating beats), so
+    # it is kept distinct from the normal greeting.
+    initial_arc_chat_message: str | None = None
 
     def render(self, scene: "Scene", agent_name: str | None = None):
         return self.formatted("instructions", scene, agent_name or "")
