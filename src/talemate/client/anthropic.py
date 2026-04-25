@@ -37,6 +37,7 @@ SUPPORTED_MODELS = [
     "claude-opus-4-1",
     "claude-opus-4-5",
     "claude-opus-4-6",
+    "claude-opus-4-7",
 ]
 
 DEFAULT_MODEL = "claude-haiku-4-5"
@@ -46,16 +47,26 @@ LIMITED_PARAM_MODELS = [
     "claude-haiku-4-5",
     "claude-sonnet-4-5",
     "claude-opus-4-1",
+    # Opus 4.7 rejects any non-default temperature/top_p/top_k with a 400.
+    "claude-opus-4-7",
 ]
 
 # Models that support adaptive thinking + effort control (Opus 4.6+)
 ADAPTIVE_THINKING_MODELS = [
     "claude-opus-4-6",
+    "claude-opus-4-7",
+]
+
+# Models that ONLY accept adaptive thinking. Sending thinking.type="enabled"
+# (budget_tokens) returns a 400 — Opus 4.7 dropped budget-mode support.
+ADAPTIVE_ONLY_THINKING_MODELS = [
+    "claude-opus-4-7",
 ]
 
 # Maximum output tokens per model family, matching Anthropic API limits.
 # Used as the max_tokens value when response length capping is disabled.
 MAX_OUTPUT_TOKENS = {
+    "claude-opus-4-7": 128000,
     "claude-opus-4-6": 128000,
     "claude-sonnet-4-6": 64000,
     "claude-opus-4-5": 64000,
@@ -79,7 +90,7 @@ class Defaults(EndpointOverride, CommonDefaults, pydantic.BaseModel):
 
 
 class ClientConfig(ConcurrentInference, EndpointOverride, BaseClientConfig):
-    effort_level: Literal["low", "medium", "high", "max"] = "high"
+    effort_level: Literal["low", "medium", "high", "xhigh", "max"] = "high"
     thinking_mode: Literal["budget", "adaptive"] = "budget"
 
 
@@ -108,7 +119,7 @@ class AnthropicClient(ConcurrentInferenceMixin, EndpointOverrideMixin, ClientBas
                 type="select",
                 label="Thinking Mode",
                 choices=["budget", "adaptive"],
-                description="'budget' uses fixed token budget (legacy), 'adaptive' lets the model decide when to think. Adaptive is recommended for Opus 4.6+.",
+                description="'budget' uses fixed token budget (legacy), 'adaptive' lets the model decide when to think. Adaptive is recommended for Opus 4.6+ and required for Opus 4.7+ (budget mode is ignored on those models).",
                 group=FieldGroup(
                     name="reasoning",
                     label="Reasoning",
@@ -121,8 +132,8 @@ class AnthropicClient(ConcurrentInferenceMixin, EndpointOverrideMixin, ClientBas
                 name="effort_level",
                 type="select",
                 label="Effort Level",
-                choices=["low", "medium", "high", "max"],
-                description="Controls thinking depth and cost trade-off. Higher effort = better quality but more cost/latency. Only applies with adaptive thinking mode.",
+                choices=["low", "medium", "high", "xhigh", "max"],
+                description="Controls thinking depth and cost trade-off. Higher effort = better quality but more cost/latency. Only applies with adaptive thinking mode. The 'xhigh' option (between high and max) is supported on Opus 4.7+.",
                 group=FieldGroup(
                     name="reasoning",
                     label="Reasoning",
@@ -183,21 +194,30 @@ class AnthropicClient(ConcurrentInferenceMixin, EndpointOverrideMixin, ClientBas
         return any(model in self.model_name for model in ADAPTIVE_THINKING_MODELS)
 
     @property
+    def requires_adaptive_thinking(self) -> bool:
+        """True if the model only accepts adaptive thinking (rejects budget mode)."""
+        return any(model in self.model_name for model in ADAPTIVE_ONLY_THINKING_MODELS)
+
+    @property
     def reasoning_display(self) -> ReasoningDisplay | None:
         """Returns reasoning display config based on what's actually used at runtime."""
         if not self.reason_enabled:
             return None
 
-        # Only show effort display if adaptive will ACTUALLY be used
-        # (thinking_mode == adaptive AND model supports it)
-        if self.thinking_mode == "adaptive" and self.supports_adaptive_thinking:
+        # Only show effort display if adaptive will ACTUALLY be used.
+        # Either the model forces adaptive (4.7+) or the user opted in and the
+        # model supports it.
+        adaptive_active = self.requires_adaptive_thinking or (
+            self.thinking_mode == "adaptive" and self.supports_adaptive_thinking
+        )
+        if adaptive_active:
             return ReasoningDisplay(
                 indicator_value=self.effort_level,
                 indicator_tooltip="Effort level",
                 show_token_slider=False,
                 show_effort_selector=True,
                 effort_level=self.effort_level,
-                effort_choices=["low", "medium", "high", "max"],
+                effort_choices=["low", "medium", "high", "xhigh", "max"],
             )
 
         # Fallback to budget display (even if adaptive is configured but model doesn't support it)
@@ -283,7 +303,12 @@ class AnthropicClient(ConcurrentInferenceMixin, EndpointOverrideMixin, ClientBas
             messages.append({"role": "assistant", "content": coercion_prompt.strip()})
 
         if self.reason_enabled:
-            if self.thinking_mode == "adaptive" and self.supports_adaptive_thinking:
+            # Opus 4.7+ rejects budget-mode thinking outright, so force adaptive
+            # whenever the model demands it.
+            use_adaptive = self.requires_adaptive_thinking or (
+                self.thinking_mode == "adaptive" and self.supports_adaptive_thinking
+            )
+            if use_adaptive:
                 # Opus 4.6+ adaptive thinking with effort control
                 parameters["thinking"] = {"type": "adaptive"}
                 parameters["output_config"] = {"effort": self.effort_level}

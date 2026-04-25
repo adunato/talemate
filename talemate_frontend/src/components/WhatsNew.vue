@@ -134,7 +134,8 @@ export default {
                                 "Embeddings: switching devices (e.g., CPU to CUDA) no longer requires a restart",
                                 "Context Formatting: the |condensed filter no longer permanently compacts multi-line context",
                                 "Debugging: set TALEMATE_LOG_PROMPTS=1 to write full prompt+response data to logs/prompt_log.jsonl",
-                                "NodeEditor: Asset Exists gains allow_partial (startswith matching); Prompt From Template gains dedupe toggle; new Dict Get (Path) node for dotted-path lookups"
+                                "NodeEditor: Asset Exists gains allow_partial (startswith matching); Prompt From Template gains dedupe toggle; new Dict Get (Path) node for dotted-path lookups",
+                                "Anthropic: added claude-opus-4-7 — adaptive-thinking only (budget mode auto-upgrades), no temperature/top_p/top_k, and a new 'xhigh' effort level between high and max"
                             ]
                         },
                         {
