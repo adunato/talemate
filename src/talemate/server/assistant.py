@@ -13,6 +13,7 @@ from talemate.instance import get_agent
 from talemate.load.character_card import analyze_character_card
 from talemate.regenerate import ensure_regenerate_allowed, regenerate
 from talemate.server.websocket_plugin import Plugin
+from talemate.status import set_loading
 
 log = structlog.get_logger("talemate.server.assistant")
 
@@ -117,6 +118,7 @@ class AssistantPlugin(Plugin):
         task = asyncio.create_task(_run())
         task.add_done_callback(_on_done)
 
+    @set_loading("Autocompleting", cancellable=True, as_async=True)
     async def handle_autocomplete(self, data: dict):
         data = ContentGenerationContext(**data)
         try:
@@ -157,6 +159,12 @@ class AssistantPlugin(Plugin):
             )
 
             emit("autocomplete_suggestion", completion)
+        except GenerationCancelled:
+            # Resolve the frontend's pending typeahead so its busy state clears,
+            # then re-raise so set_loading runs handle_generation_cancelled
+            # (resets scene.cancel_requested).
+            emit("autocomplete_suggestion", "")
+            raise
         except Exception:
             log.error("Error running autocomplete", error=traceback.format_exc())
             emit("autocomplete_suggestion", "")
