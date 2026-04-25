@@ -398,9 +398,9 @@ export default {
     },
     openModal(initialData = null) {
       this.state.currentClient = {
-        name: 'TextGenWebUI',
-        type: 'textgenwebui',
-        api_url: 'http://localhost:5000',
+        name: 'llama.cpp',
+        type: 'llamacpp',
+        api_url: 'http://localhost:8080',
         model_name: '',
         max_token_length: 8192,
         enforce_response_length: 'cap_tokens_and_instructions',
