@@ -154,7 +154,10 @@ export default {
                                 "Narrate Progress: fixed narration occasionally producing screenplay-style dialogue",
                                 "Advance Time: fixed non-functional toolbar time advancement and invalid ISO 8601 duration strings for 1/2 week options",
                                 "Node Graph: fixed data/MakeDict and data/MakeList leaking initial values as shared mutable references",
-                                "macOS Modifiers: Ctrl+click affordances now also accept Cmd (Meta) on macOS across the UI"
+                                "macOS Modifiers: Ctrl+click affordances now also accept Cmd (Meta) on macOS across the UI",
+                                "Contextual Generate: dialog now has a working Cancel button — generation runs as a background task so the interrupt is processed mid-generation",
+                                "Autocomplete: typeahead generation now runs as a background task with a cancel button on the status snackbar; fixes a deadlock where an empty model response froze the UI",
+                                "UI Lock: scene input no longer stays disabled after cancelling a background generation (autocomplete, narrator action, conversation turn, etc.)"
                             ]
                         }
                     ]
