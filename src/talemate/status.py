@@ -48,6 +48,11 @@ class set_loading:
                 log.warning("Generation cancelled", args=args, kwargs=kwargs)
                 if self.set_error:
                     emit("status", message=f"{self.message}: Cancelled", status="idle")
+                else:
+                    # Always clear the busy status on cancel. Without this the
+                    # frontend's notificatioonBusy lock (driven by status=='busy')
+                    # never resolves and the scene input stays disabled.
+                    emit("status", message="", status="idle")
                 handle_generation_cancelled(e)
             except Exception as e:
                 log.error("Error in set_loading wrapper", error=e)
