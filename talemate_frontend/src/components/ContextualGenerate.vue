@@ -55,6 +55,7 @@
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
+                <v-btn color="warning" variant="text" prepend-icon="mdi-stop-circle-outline" @click="cancel" :disabled="!busy">Cancel</v-btn>
                 <v-btn  v-if="withInstructions" color="primary" variant="text" prepend-icon="mdi-auto-fix" @click="generate" :disabled="busy">Generate</v-btn>
             </v-card-actions>
         </v-card>
@@ -314,9 +315,27 @@ export default {
             }));
         },
 
+        cancel() {
+            this.getWebsocket().send(JSON.stringify({ type: 'interrupt' }));
+        },
+
         handleMessage(message) {
+            if (message.type === "assistant" && message.action === "contextual_generate_cancelled") {
+                if(message.data.uid !== this.uid)
+                    return;
+                this.busy = false;
+                this.dialog = false;
+                return;
+            }
+            if (message.type === "assistant" && message.action === "contextual_generate_failed") {
+                if(message.data.uid !== this.uid)
+                    return;
+                this.busy = false;
+                this.dialog = false;
+                return;
+            }
             if (message.type === "assistant" && message.action === "contextual_generate_done") {
-                
+
                 if(message.data.uid !== this.uid)
                     return;
 

@@ -8,6 +8,7 @@ from talemate.agents.creator.assistant import ContentGenerationContext
 from talemate.client.context import ClientContext
 from talemate.context import RegenerationContext
 from talemate.emit import emit
+from talemate.exceptions import GenerationCancelled
 from talemate.instance import get_agent
 from talemate.load.character_card import analyze_character_card
 from talemate.regenerate import ensure_regenerate_allowed, regenerate
@@ -48,35 +49,73 @@ class AssistantPlugin(Plugin):
         self.websocket_handler = websocket_handler
 
     async def handle_contextual_generate(self, data: dict):
+        """
+        Run contextual_generate as a background task so the websocket receive loop
+        stays free to process inbound messages (notably `interrupt`) while the
+        generation is in flight.
+        """
         payload = ContentGenerationContext(**data)
         creator = get_agent("creator")
 
-        if payload.computed_context[0] == "acting_instructions":
-            content = await creator.determine_character_dialogue_instructions(
-                self.scene.get_character(payload.character),
-                instructions=payload.instructions,
+        async def _run() -> str:
+            if payload.computed_context[0] == "acting_instructions":
+                return await creator.determine_character_dialogue_instructions(
+                    self.scene.get_character(payload.character),
+                    instructions=payload.instructions,
+                )
+            return await creator.contextual_generate(payload)
+
+        # Inlined instead of using Plugin.create_task_done_callback because the
+        # success branch needs a uid-scoped payload + status emit. If a third
+        # handler ends up needing this same shape, generalize the helper to
+        # accept a custom success payload builder rather than copying again.
+        def _on_done(task: asyncio.Task):
+            try:
+                content = task.result()
+            except GenerationCancelled:
+                log.warning("contextual_generate cancelled", uid=payload.uid)
+                self.websocket_handler.queue_put(
+                    {
+                        "type": self.router,
+                        "action": "contextual_generate_cancelled",
+                        "data": {"uid": payload.uid},
+                    }
+                )
+                return
+            except Exception as e:
+                log.error(
+                    "Error running contextual_generate",
+                    error=traceback.format_exc(),
+                )
+                self.websocket_handler.queue_put(
+                    {
+                        "type": self.router,
+                        "action": "contextual_generate_failed",
+                        "data": {"uid": payload.uid, "message": str(e)},
+                    }
+                )
+                return
+
+            context_type, context_name = payload.computed_context
+            emit(
+                "status",
+                message=f"Generated {context_type}: {context_name}",
+                status="success",
             )
-        else:
-            content = await creator.contextual_generate(payload)
+            self.websocket_handler.queue_put(
+                {
+                    "type": self.router,
+                    "action": "contextual_generate_done",
+                    "data": {
+                        "generated_content": content,
+                        "uid": payload.uid,
+                        **payload.model_dump(),
+                    },
+                }
+            )
 
-        context_type, context_name = payload.computed_context
-        emit(
-            "status",
-            message=f"Generated {context_type}: {context_name}",
-            status="success",
-        )
-
-        self.websocket_handler.queue_put(
-            {
-                "type": self.router,
-                "action": "contextual_generate_done",
-                "data": {
-                    "generated_content": content,
-                    "uid": payload.uid,
-                    **payload.model_dump(),
-                },
-            }
-        )
+        task = asyncio.create_task(_run())
+        task.add_done_callback(_on_done)
 
     async def handle_autocomplete(self, data: dict):
         data = ContentGenerationContext(**data)

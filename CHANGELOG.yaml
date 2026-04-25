@@ -32,6 +32,7 @@
   - "Encryption: Fixed API keys in agent action configs (e.g., OpenAI-compatible TTS, visual backends) being stored in plaintext. The encryption walker now handles the nested AgentActionConfig structure where the key is wrapped in a {value: ...} dict."
   - "Agent Config: Stopped persisting unified_api_key fields to config.yaml. These are static reference pointers (e.g., 'openai.api_key') defined in code and never change, so saving them was unnecessary."
   - "Contextual Generate: Fixed list-type generation prefilling an empty line after '1.', which caused some LLMs to produce empty lists."
+  - "Contextual Generate: Added a Cancel button to the generate dialog and moved generation to a background task so the interrupt signal is actually processed mid-generation (previously the websocket receive loop was blocked until the generation finished, defeating the purpose of any cancel)."
   - "Narrate Progress: Fixed narration sometimes generating screenplay-style dialogue entries instead of continuous narrative prose."
   - "Advance Time: Fixed toolbar time advancement being completely non-functional due to a missing websocket handler. Also fixed invalid ISO 8601 duration strings for the 1 week and 2 weeks options."
   - "Prompts UI: Fixed the template preview CodeMirror editor being clipped at the bottom across the Active, group, and LLM prompt template tabs, so the bottom scrollbar is fully visible."
