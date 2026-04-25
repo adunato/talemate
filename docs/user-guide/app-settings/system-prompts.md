@@ -69,8 +69,6 @@ Clearing a field (or using the textarea's clear button) removes the override and
 
 If you want to add a line or two to the default prompt without rewriting the whole thing, use the `{{ system_prompt }}` template variable inside your override. When Talemate builds the final prompt for the model, every occurrence of `{{ system_prompt }}` is replaced with the default system prompt for the same kind and censorship mode.
 
-![Override that extends the default prompt with a short extra instruction](/talemate/img/0.37.0/system-prompts-variable-example.png)
-
 For example, in the **Conversation** override you could write:
 
 ```

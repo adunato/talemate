@@ -35,7 +35,7 @@ Scene Direction is disabled by default. To enable it:
 
 !!! info "New in 0.37.0"
 
-While Scene Direction is enabled, you can steer the director straight from the main player input box using two prefixes: `#` and `##`. Both land as an explicit user instruction in the Direction Timeline (so the director actively takes them into account on its next turn) and as a **Player directs:** bubble (:material-account-voice:) in the scene feed.
+While Scene Direction is enabled, you can steer the director straight from the main player input box using two prefixes: `#` and `##`. Both land as an explicit user instruction in the Direction Timeline (so the director actively takes them into account on its next turn) and as a **Message to the director** bubble in the scene feed.
 
 ![Player direction bubble in the scene feed](../../../img/0.37.0/player-direction-bubble.png)
 
