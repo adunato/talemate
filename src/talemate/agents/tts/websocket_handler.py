@@ -9,11 +9,11 @@ import structlog
 from typing import TYPE_CHECKING, Literal
 import base64
 import os
-import re
 
 import talemate.emit.async_signals as async_signals
 from talemate.instance import get_agent
 from talemate.server.websocket_plugin import Plugin
+from talemate.util import slugify
 
 import talemate.scene_message as scene_message
 
@@ -260,8 +260,8 @@ class TTSWebsocketHandler(Plugin):
             return
 
         provider = voice.provider
-        # check if porivder has a delete method
-        delete_method = getattr(tts_agent, f"{provider}_delete_voice", None)
+        # check if provider has a delete method
+        delete_method = tts_agent.api_method(provider, "delete_voice", None)
         if delete_method:
             delete_method(voice)
 
@@ -331,12 +331,12 @@ class TTSWebsocketHandler(Plugin):
             await self.signal_operation_failed(f"API '{voice.provider}' not ready")
             return
 
-        generate_fn = getattr(tts_agent, f"{voice.provider}_generate", None)
+        generate_fn = tts_agent.api_method(voice.provider, "generate", None)
         if not generate_fn:
             await self.signal_operation_failed("Provider not supported by TTS agent")
             return
 
-        prepare_fn = getattr(tts_agent, f"{voice.provider}_prepare_chunk", None)
+        prepare_fn = tts_agent.api_method(voice.provider, "prepare_chunk", None)
 
         # Use provided text or default
         test_text = payload.text or "This is a test of the selected voice."
@@ -421,7 +421,7 @@ class TTSWebsocketHandler(Plugin):
         mixer = VoiceMixer(voices=payload.voices)
 
         # Run test in background using the appropriate provider's test method
-        test_method = getattr(tts_agent, f"{payload.provider}_test_mix", None)
+        test_method = tts_agent.api_method(payload.provider, "test_mix", None)
         if not test_method:
             await self.signal_operation_failed(
                 f"{payload.provider} does not implement voice mixing"
@@ -463,10 +463,10 @@ class TTSWebsocketHandler(Plugin):
         mixer = VoiceMixer(voices=payload.voices)
 
         # Create a unique voice id for the mixed voice
-        voice_id = f"{payload.label.lower().replace(' ', '-')}"
+        voice_id = slugify(payload.label) or "voice"
 
         # Mix and save the voice using the appropriate provider's methods
-        save_method = getattr(tts_agent, f"{payload.provider}_save_mix", None)
+        save_method = tts_agent.api_method(payload.provider, "save_mix", None)
 
         if not save_method:
             await self.signal_operation_failed(
@@ -585,6 +585,45 @@ class TTSWebsocketHandler(Plugin):
             }
         )
 
+    async def handle_refresh_backend_voices(self, data: dict):
+        """Force a voice list refresh for an OpenAI-compatible backend."""
+
+        tts_agent: "TTSAgent" = get_agent("tts")
+        slug = data.get("slug") or ""
+
+        try:
+            count = await tts_agent.refresh_backend_voices(slug)
+        except Exception as e:
+            log.error("refresh_backend_voices failed", slug=slug, error=str(e))
+            await self.signal_operation_failed(str(e))
+            return
+
+        self.websocket_handler.queue_put(
+            {
+                "type": self.router,
+                "action": "backend_voices_refreshed",
+                "slug": slug,
+                "count": count,
+            }
+        )
+
+        if count > 0:
+            status_msg = {
+                "message": f"{slug}: fetched {count} voice{'s' if count != 1 else ''}",
+                "status": "success",
+            }
+        else:
+            status_msg = {
+                "message": (
+                    f"{slug}: no voice-listing endpoint responded. Add voices "
+                    "manually in the Voice Library."
+                ),
+                "status": "warning",
+            }
+        await self.signal_operation_done(
+            signal_only=True, emit_status_message=status_msg
+        )
+
     async def handle_stop_and_clear(self, data: dict):
         """Handle a request from the frontend to stop and clear the current TTS queue."""
 
@@ -636,11 +675,6 @@ class TTSWebsocketHandler(Plugin):
             return
 
         # Build filename from label
-        def slugify(text: str) -> str:
-            text = text.lower().strip()
-            text = re.sub(r"[^a-z0-9]+", "-", text)
-            return text.strip("-")
-
         filename_no_ext = slugify(payload.label or "voice") or "voice"
 
         # Determine media type and validate against provider

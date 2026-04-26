@@ -18,6 +18,7 @@ from talemate.files import list_scenes_directory
 from talemate.load import load_scene, SceneInitialization
 from talemate.scene_assets import Asset, get_media_type_from_file_path, VIS_TYPE
 from talemate.server import (
+    agent_config,
     assistant,
     character_importer,
     config,
@@ -59,6 +60,7 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
                 self
             ),
             config.ConfigPlugin.router: config.ConfigPlugin(self),
+            agent_config.AgentConfigPlugin.router: agent_config.AgentConfigPlugin(self),
             world_state_manager.WorldStateManagerPlugin.router: world_state_manager.WorldStateManagerPlugin(
                 self
             ),

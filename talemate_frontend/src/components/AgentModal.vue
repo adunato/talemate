@@ -21,7 +21,14 @@
         <v-row>
           <v-col cols="4">
             <v-tabs v-model="tab" color="primary" direction="vertical">
-              <v-tab v-for="item in tabs" :key="item.name" v-model="tab" :value="item.name" :prepend-icon="item.icon">
+              <v-tab
+                v-for="item in tabs"
+                :key="item.name"
+                v-model="tab"
+                :value="item.name"
+                :prepend-icon="item.parentKey ? 'mdi-subdirectory-arrow-right' : item.icon"
+                :class="item.parentKey ? 'pl-6 text-body-2' : ''"
+              >
                 <span>{{ item.label }}</span>
                 <v-chip class="ml-2" size="x-small" variant="tonal" label color="secondary" v-if="item.action.subtitle">{{ item.action.subtitle }}</v-chip>
               </v-tab>
@@ -31,8 +38,24 @@
             <v-window v-model="tab">
               <v-window-item :value="item.name" v-for="item in tabs" :key="item.name">
                 <v-select v-if="agent.data.requires_llm_client && tab === '_config'" v-model="selectedClient" :items="agent.data.client" label="Client"  @update:modelValue="save(false)"></v-select>
-        
-                <v-sheet v-for="(action, key) in actionsForTab" :key="key" density="compact">
+
+                <!-- Registry tab — render the agent-supplied custom
+                     component (if any), otherwise the generic registry. The
+                     component name is declared on the action via
+                     ``dynamic_registry_component`` (Python). -->
+                <component
+                  v-if="tab === item.name && isRegistryTab && agent.data.actions[item.name]"
+                  :is="resolveRegistryComponent(item.name)"
+                  :children="dynamicChildrenForCurrentTab"
+                  :description="agent.data.actions[item.name].description"
+                  @add="onAddDynamicChild(item.name, $event)"
+                  @remove="onRemoveDynamicChild(item.name, $event)"
+                  @rename="onRenameDynamicChild(item.name, $event[0], $event[1])"
+                  @refresh-voices="onRefreshBackendVoices"
+                />
+
+                <v-sheet v-for="(action, key) in actionsForTab" :key="key" density="compact"
+                         v-show="!(isRegistryTab && tab === item.name && key === item.name)">
                   <div v-if="testActionConditional(action)">
                     <div>
                       <v-checkbox v-if="!actionAlwaysVisible(key, action) && !action.container" :label="agent.data.actions[key].label" :messages="agent.data.actions[key].description" density="compact" color="primary" v-model="action.enabled" @update:modelValue="save(false)">
@@ -73,7 +96,7 @@
                       </div>
 
                       <div v-for="(action_config, config_key) in agent.data.actions[key].config" :key="config_key">
-                        <div v-if="(action.enabled || actionAlwaysVisible(key, action)) && testConfigConditional(action_config)">
+                        <div v-if="config_key !== 'dynamic_children' && (action.enabled || actionAlwaysVisible(key, action)) && testConfigConditional(action_config)">
                           <!-- render config widgets based on action_config.type (int, str, bool, float) -->
 
                           <div v-if="action_config.title">
@@ -339,7 +362,17 @@ import {getProperty} from 'dot-prop';
 import ConfigWidgetTable from './ConfigWidgetTable.vue';
 import ConfigWidgetUnifiedApiKey from './ConfigWidgetUnifiedApiKey.vue';
 import GraduatedSlider from './GraduatedSlider.vue';
+import DynamicAgentRegistry from './DynamicAgentRegistry.vue';
+import TTSOpenAICompatibleBackends from './TTSOpenAICompatibleBackends.vue';
 import { registerRuntimeCompiler } from 'vue';
+
+// Mapping from `AgentAction.dynamic_registry_component` (declared by the
+// Python agent action) to the Vue component that should render that
+// registry's management tab. Anything not in this map (or unset on the
+// action) falls back to the generic DynamicAgentRegistry.
+const REGISTRY_COMPONENTS = {
+  TTSOpenAICompatibleBackends,
+};
 
 export default {
   props: {
@@ -352,6 +385,8 @@ export default {
     ConfigWidgetTable,
     ConfigWidgetUnifiedApiKey,
     GraduatedSlider,
+    DynamicAgentRegistry,
+    TTSOpenAICompatibleBackends,
   },
   inject: ['state', 'getWebsocket', 'callAgentTool'],
   data() {
@@ -366,25 +401,62 @@ export default {
   computed: {
     tabs() {
       // will cycle through all actions, and each each action that has `container` = True, will be added to the tabs
-      // will always add a general tab for the general agent settings
+      // will always add a general tab for the general agent settings.
+      // Tabs whose action has a `parent_key` are grouped (rendered indented)
+      // immediately after their parent tab so dynamic-registry children
+      // appear visually attached to their registry tab.
 
-      let tabs = [{ name: "_config", label: "General", icon: "mdi-cog", action: {} }];
+      const tabs = [{ name: "_config", label: "General", icon: "mdi-cog", action: {}, parentKey: null }];
+      const childrenByParent = {};
 
-      console.log("Agent: ", this.agent);
+      for (const key in this.agent.actions) {
+        const action = this.agent.actions[key];
+        if (!action.container) continue;
+        if (this.testActionConditional(action) === false) continue;
 
-      for (let key in this.agent.actions) {
-        let action = this.agent.actions[key];
-        if (action.container) {
-
-          // if action has a condition, check if it is met
-          if(this.testActionConditional(action) === false)
-            continue;
-
-          tabs.push({ name: key, label: action.label, icon: action.icon, action:action });
+        if (action.parent_key) {
+          if (!childrenByParent[action.parent_key]) childrenByParent[action.parent_key] = [];
+          childrenByParent[action.parent_key].push({
+            name: key,
+            label: action.label,
+            icon: action.icon,
+            action,
+            parentKey: action.parent_key,
+          });
+          continue;
         }
+        tabs.push({ name: key, label: action.label, icon: action.icon, action, parentKey: null });
       }
 
-      return tabs;
+      // splice children in directly after their parent.
+      // Children keep their *insertion order* (the order they were added in
+      // the dynamic_children blob) — sorting by label would reorder tabs
+      // when a user renames a backend, which is jarring.
+      const result = [];
+      for (const tab of tabs) {
+        result.push(tab);
+        const children = childrenByParent[tab.name];
+        if (children && children.length) {
+          for (const child of children) result.push(child);
+        }
+      }
+      return result;
+    },
+
+    dynamicChildrenForCurrentTab() {
+      // For a registry tab, return the [{slug, label}] list of its children.
+      const action = this.agent.actions[this.tab];
+      if (!action || !action.config || !action.config.dynamic_children) return null;
+      try {
+        const parsed = JSON.parse(action.config.dynamic_children.value || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (_e) {
+        return [];
+      }
+    },
+
+    isRegistryTab() {
+      return this.dynamicChildrenForCurrentTab !== null;
     },
 
     actionsForTab() {
@@ -522,9 +594,71 @@ export default {
       this.$emit('save', this.agent);
     },
 
+    // ----------------------------------------------------------------
+    // Dynamic-action registry (e.g., TTS OpenAI-compatible backends)
+    // ----------------------------------------------------------------
+
+    onAddDynamicChild(actionKey, label) {
+      this.getWebsocket().send(JSON.stringify({
+        type: 'agent_config',
+        action: 'register_child',
+        agent_type: this.agent.name,
+        action_key: actionKey,
+        label,
+      }));
+    },
+
+    onRemoveDynamicChild(actionKey, slug) {
+      this.getWebsocket().send(JSON.stringify({
+        type: 'agent_config',
+        action: 'unregister_child',
+        agent_type: this.agent.name,
+        action_key: actionKey,
+        slug,
+      }));
+    },
+
+    onRenameDynamicChild(actionKey, slug, label) {
+      this.getWebsocket().send(JSON.stringify({
+        type: 'agent_config',
+        action: 'rename_child',
+        agent_type: this.agent.name,
+        action_key: actionKey,
+        slug,
+        label,
+      }));
+    },
+
+    onRefreshBackendVoices(slug) {
+      this.getWebsocket().send(JSON.stringify({
+        type: 'tts',
+        action: 'refresh_backend_voices',
+        slug,
+      }));
+    },
+
+    /**
+     * Resolve the Vue component used to render a registry tab. Looks at
+     * ``dynamic_registry_component`` declared by the agent action; falls back
+     * to the generic ``DynamicAgentRegistry`` when unset or unknown.
+     */
+    resolveRegistryComponent(actionKey) {
+      const declared = this.agent?.data?.actions?.[actionKey]?.dynamic_registry_component;
+      if (declared && REGISTRY_COMPONENTS[declared]) {
+        return REGISTRY_COMPONENTS[declared];
+      }
+      return DynamicAgentRegistry;
+    },
+
     /**
      * Updates only the choices arrays in the local agent object from updated agent data,
      * preserving all user-entered values to avoid overwriting unsaved changes.
+     *
+     * Also reconciles dynamic-action-registry membership: new children that
+     * appeared server-side (via Add Backend) get cloned into the local agent;
+     * children removed server-side get dropped; the registry's dynamic_children
+     * blob value is synced so a subsequent close-and-save round-trip preserves
+     * the new state.
      */
     updateChoicesOnly(updatedAgent) {
       if (!updatedAgent?.data?.actions || !this.agent?.data?.actions) {
@@ -543,7 +677,7 @@ export default {
         if (!this.agent.data.actions[actionKey].config) {
           this.agent.data.actions[actionKey].config = {};
         }
-        
+
         // Update choices for each config item
         for (const configKey in updatedAction.config) {
           const updatedConfig = updatedAction.config[configKey];
@@ -555,10 +689,67 @@ export default {
             }
             // Update only the choices property, preserving all other config properties
             // Create new array reference to ensure Vue reactivity
-            this.agent.data.actions[actionKey].config[configKey].choices = Array.isArray(updatedConfig.choices) 
-              ? [...updatedConfig.choices] 
+            this.agent.data.actions[actionKey].config[configKey].choices = Array.isArray(updatedConfig.choices)
+              ? [...updatedConfig.choices]
               : updatedConfig.choices;
           }
+        }
+      }
+
+      this.syncDynamicChildren(updatedAgent);
+    },
+
+    /**
+     * Reconcile dynamic-registry children between server state and the modal's
+     * editable copy. Touches only entries that have ``parent_key`` set
+     * (synthesized children) plus the ``dynamic_children`` blob value on the
+     * registry action — user edits to ordinary action config values are
+     * preserved.
+     */
+    syncDynamicChildren(updatedAgent) {
+      if (!updatedAgent?.actions || !this.agent?.actions) return;
+      const serverActions = updatedAgent.actions;
+      const serverDataActions = updatedAgent.data?.actions || {};
+
+      // 1. Sync dynamic_children blob values on every registry action
+      for (const actionKey in serverActions) {
+        const serverAction = serverActions[actionKey];
+        const serverBlobField = serverAction?.config?.dynamic_children;
+        if (!serverBlobField) continue;
+        if (!this.agent.actions[actionKey]?.config?.dynamic_children) continue;
+        this.agent.actions[actionKey].config.dynamic_children.value =
+          serverBlobField.value;
+        if (this.agent.data?.actions?.[actionKey]?.config?.dynamic_children) {
+          this.agent.data.actions[actionKey].config.dynamic_children.value =
+            serverBlobField.value;
+        }
+      }
+
+      // 2. Add any synthesized children that aren't in the local copy yet
+      for (const actionKey in serverActions) {
+        const serverAction = serverActions[actionKey];
+        if (!serverAction || !serverAction.parent_key) continue;
+        if (this.agent.actions[actionKey]) continue;
+        // Deep-clone so server-side mutations don't leak into the local copy
+        this.agent.actions[actionKey] = JSON.parse(JSON.stringify(serverAction));
+        if (serverDataActions[actionKey]) {
+          this.agent.data.actions[actionKey] = JSON.parse(
+            JSON.stringify(serverDataActions[actionKey])
+          );
+        }
+      }
+
+      // 3. Drop synthesized children that the server has removed
+      for (const actionKey of Object.keys(this.agent.actions)) {
+        const localAction = this.agent.actions[actionKey];
+        if (!localAction || !localAction.parent_key) continue;
+        if (!serverActions[actionKey]) {
+          delete this.agent.actions[actionKey];
+          if (this.agent.data?.actions?.[actionKey]) {
+            delete this.agent.data.actions[actionKey];
+          }
+          // If the deleted backend's tab was active, fall back to General
+          if (this.tab === actionKey) this.tab = '_config';
         }
       }
     },

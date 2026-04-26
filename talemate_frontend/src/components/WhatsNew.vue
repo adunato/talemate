@@ -105,7 +105,7 @@ export default {
                         },
                         {
                             title: "OpenAI Compatible TTS",
-                            description: "A new TTS backend that connects to any service exposing an OpenAI-compatible /v1/audio/speech endpoint (e.g. vLLM). Base URL, API key, and model are configurable. Voices are added manually through the voice library."
+                            description: "Connect to any number of OpenAI-compatible TTS servers. Each backend gets its own tab with its own base URL, API key, model, and voice list. Voices auto-fetch when the server supports listing them, otherwise add them manually in the Voice Library."
                         },
                         {
                             title: "Section Format",
