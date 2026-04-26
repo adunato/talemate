@@ -55,6 +55,18 @@ Generate voice automatically for narrator messages
 
 Generate voice automatically for context investigation messages
 
+##### Automatic Setup
+
+!!! info "New in 0.37.0"
+
+Default: **on**.
+
+When enabled, the Voice agent automatically registers an [OpenAI Compatible](openai-compatible.md) backend for any configured client that exposes a TTS endpoint, and keeps that backend's enabled state in sync with what the client currently has loaded.
+
+The clearest example is [KoboldCpp](../../clients/types/koboldcpp.md#tts-auto-setup): when a KoboldCpp client has a TTS model loaded, a matching backend appears on the OpenAI Compatible tab without any manual configuration. When the client restarts without a TTS model, the backend is dropped from [Enabled APIs](#enabled-apis) but its settings are preserved.
+
+Turning this off stops the agent from auto-registering or auto-toggling any backends. Existing backends — auto-managed or not — stay where they are; you take over enabling and disabling them yourself.
+
 ## Advanced Settings
 
 Advanced settings are configured per-API and can be found in the respective API configuration sections:

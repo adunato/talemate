@@ -108,6 +108,10 @@ export default {
                             description: "Connect to any number of OpenAI-compatible TTS servers. Each backend gets its own tab with its own base URL, API key, model, and voice list. Voices auto-fetch when the server supports listing them, otherwise add them manually in the Voice Library."
                         },
                         {
+                            title: "KoboldCpp TTS Auto-Setup",
+                            description: "If a KoboldCpp client has a TTS model loaded, it's auto-registered as a TTS backend. The backend stays around across restarts but auto-disables when the model isn't loaded and re-enables when it is."
+                        },
+                        {
                             title: "Section Format",
                             description: "Per-client setting that controls how prompt sections are formatted. Choose between Markdown (## headings) or XML (<SECTION>...</SECTION> tags). Found in the client configuration next to the data format setting."
                         },

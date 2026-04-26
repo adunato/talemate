@@ -207,6 +207,16 @@ class TTSAgent(
                         label="Auto-generate for context investigation",
                         description="Generate audio for context investigation messages",
                     ),
+                    "automatic_setup": AgentActionConfig(
+                        type="bool",
+                        value=True,
+                        label="Automatic Setup",
+                        description=(
+                            "Automatically add a backend for any configured "
+                            "client that exposes a TTS endpoint (e.g. KoboldCpp "
+                            "with a TTS model loaded)."
+                        ),
+                    ),
                 },
             ),
         }
@@ -374,6 +384,44 @@ class TTSAgent(
         # After config restore, re-extend the apis-flag choices so any saved
         # dynamic backends show up in the enable-toggle list.
         self._refresh_apis_choices()
+
+    @property
+    def automatic_setup(self) -> bool:
+        return self.actions["_config"].config["automatic_setup"].value
+
+    async def setup_check(self):
+        """Per-tick auto-setup of TTS backends from configured clients.
+
+        Iterates every configured client and asks each whether it can host an
+        OpenAI-compatible TTS backend (via the
+        ``tts_openai_compatible_setup`` capability method). Each capable
+        client gets to register its own backend. The setup is idempotent —
+        clients are responsible for skipping if they're already registered.
+        """
+        if not self.automatic_setup:
+            return False
+
+        any_changed = False
+        for client in instance.CLIENTS.values():
+            if not client or not getattr(client, "enabled", True):
+                continue
+            fn = getattr(client, "tts_openai_compatible_setup", None)
+            if not fn:
+                continue
+            try:
+                if await fn(self):
+                    any_changed = True
+            except Exception as exc:
+                log.error(
+                    "tts setup_check raised",
+                    client=getattr(client, "name", "?"),
+                    error=str(exc),
+                )
+
+        if any_changed:
+            await self.save_config()
+            await self.emit_status()
+        return any_changed
 
     async def refresh_backend_voices(self, slug: str) -> int:
         """Fetch voices for *slug* and union them into the global library.

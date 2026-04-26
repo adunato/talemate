@@ -1438,6 +1438,567 @@ class TestTTSAgentApiAttrFallback:
         )
 
 
+class TestAutoSetupClients:
+    """``TTSAgent.setup_check`` polls every configured client for a
+    ``tts_openai_compatible_setup`` capability method and lets each register
+    its own backend. Verifies the dispatch contract; client-side probe logic
+    lives in the koboldcpp tests below.
+    """
+
+    @pytest.mark.asyncio
+    async def test_skips_when_automatic_setup_off(
+        self, tts_agent, monkeypatch
+    ):
+        tts_agent.actions["_config"].config["automatic_setup"].value = False
+        called = {"count": 0}
+
+        class StubClient:
+            name = "stub"
+            enabled = True
+
+            async def tts_openai_compatible_setup(self_, agent):
+                called["count"] += 1
+                return True
+
+        monkeypatch.setattr(instance, "CLIENTS", {"stub": StubClient()})
+        result = await tts_agent.setup_check()
+        assert result is False
+        assert called["count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_skips_disabled_clients(self, tts_agent, monkeypatch):
+        called = {"count": 0}
+
+        class StubClient:
+            name = "stub"
+            enabled = False
+
+            async def tts_openai_compatible_setup(self_, agent):
+                called["count"] += 1
+                return True
+
+        monkeypatch.setattr(instance, "CLIENTS", {"stub": StubClient()})
+        await tts_agent.setup_check()
+        assert called["count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_calls_capability_method_on_every_capable_client(
+        self, tts_agent, monkeypatch
+    ):
+        # Two clients, both capable; both should be invoked.
+        invoked = []
+
+        class CapableClient:
+            def __init__(self, name):
+                self.name = name
+                self.enabled = True
+
+            async def tts_openai_compatible_setup(self, agent):
+                invoked.append(self.name)
+                return False  # nothing changed
+
+        class IncapableClient:
+            name = "no-tts"
+            enabled = True
+            # No tts_openai_compatible_setup method
+
+        monkeypatch.setattr(
+            instance,
+            "CLIENTS",
+            {
+                "kobold-1": CapableClient("kobold-1"),
+                "no-tts": IncapableClient(),
+                "kobold-2": CapableClient("kobold-2"),
+            },
+        )
+        await tts_agent.setup_check()
+        assert sorted(invoked) == ["kobold-1", "kobold-2"]
+
+    @pytest.mark.asyncio
+    async def test_persists_and_emits_when_any_client_changed_state(
+        self, tts_agent, monkeypatch
+    ):
+        # When at least one client returns True, save_config + emit_status fire.
+        save_called = {"count": 0}
+        emit_called = {"count": 0}
+
+        async def _save():
+            save_called["count"] += 1
+
+        async def _emit():
+            emit_called["count"] += 1
+
+        monkeypatch.setattr(tts_agent, "save_config", _save)
+        monkeypatch.setattr(tts_agent, "emit_status", _emit)
+
+        class ChangingClient:
+            name = "kobold"
+            enabled = True
+
+            async def tts_openai_compatible_setup(self_, agent):
+                return True
+
+        class IdempotentClient:
+            name = "kobold-2"
+            enabled = True
+
+            async def tts_openai_compatible_setup(self_, agent):
+                return False
+
+        monkeypatch.setattr(
+            instance,
+            "CLIENTS",
+            {"kobold": ChangingClient(), "kobold-2": IdempotentClient()},
+        )
+        result = await tts_agent.setup_check()
+        assert result is True
+        assert save_called["count"] == 1
+        assert emit_called["count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_no_persist_when_nothing_changed(
+        self, tts_agent, monkeypatch
+    ):
+        save_called = {"count": 0}
+
+        async def _save():
+            save_called["count"] += 1
+
+        monkeypatch.setattr(tts_agent, "save_config", _save)
+        monkeypatch.setattr(
+            tts_agent, "emit_status", AsyncMock(return_value=None)
+        )
+
+        class IdempotentClient:
+            name = "kobold"
+            enabled = True
+
+            async def tts_openai_compatible_setup(self_, agent):
+                return False
+
+        monkeypatch.setattr(
+            instance, "CLIENTS", {"kobold": IdempotentClient()}
+        )
+        await tts_agent.setup_check()
+        assert save_called["count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_one_client_raising_does_not_break_loop(
+        self, tts_agent, monkeypatch
+    ):
+        invoked = []
+
+        class BoomClient:
+            name = "boom"
+            enabled = True
+
+            async def tts_openai_compatible_setup(self_, agent):
+                invoked.append("boom")
+                raise RuntimeError("nope")
+
+        class OkClient:
+            name = "ok"
+            enabled = True
+
+            async def tts_openai_compatible_setup(self_, agent):
+                invoked.append("ok")
+                return False
+
+        monkeypatch.setattr(
+            instance,
+            "CLIENTS",
+            {"boom": BoomClient(), "ok": OkClient()},
+        )
+        # Doesn't raise; the OK client still got its turn.
+        await tts_agent.setup_check()
+        assert "ok" in invoked
+
+
+class TestKoboldCppTTSSetup:
+    """Direct exercise of ``KoboldCppClient._tts_openai_compatible_setup_impl``.
+
+    The bound method is invoked against a SimpleNamespace stand-in for the
+    client (only needs ``connected``, ``url``, ``name``). httpx is mocked
+    via monkeypatch so no network hits.
+    """
+
+    @pytest_asyncio.fixture
+    async def fake_client(self):
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        ns = types.SimpleNamespace(
+            connected=True,
+            url="http://localhost:5001",
+            name="My Kobold",
+        )
+        # The impl method calls self._probe_kcpp_tts_loaded — bind the real
+        # method onto the namespace so it can run unchanged.
+        ns._probe_kcpp_tts_loaded = types.MethodType(
+            KoboldCppClient._probe_kcpp_tts_loaded, ns
+        )
+        return ns
+
+    @staticmethod
+    def _patch_httpx(monkeypatch, status: int, payload):
+        """Monkeypatch ``httpx.AsyncClient`` so any GET returns ``payload``.
+
+        The stub answers every URL with the same response, which is fine
+        for the capabilities probe in isolation. Tests that exercise the
+        ``tts: true`` branch (which then triggers ``refresh_backend_voices``
+        — itself an httpx caller) MUST also stub ``refresh_backend_voices``
+        on the agent (e.g., via ``AsyncMock``) so the voice fetch doesn't
+        accidentally consume the same payload.
+        """
+        from talemate.client import koboldcpp as kobold_module
+
+        class _Resp:
+            status_code = status
+
+            def json(self_):
+                if isinstance(payload, Exception):
+                    raise payload
+                return payload
+
+        class _AsyncClient:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                return False
+
+            async def get(self, **kwargs):
+                return _Resp()
+
+        monkeypatch.setattr(kobold_module.httpx, "AsyncClient", _AsyncClient)
+
+    @pytest.mark.asyncio
+    async def test_skips_when_disconnected(
+        self, tts_agent, fresh_voice_library, fake_client, monkeypatch
+    ):
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        fake_client.connected = False
+
+        result = await KoboldCppClient._tts_openai_compatible_setup_impl(
+            fake_client, tts_agent
+        )
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_no_register_when_kobold_reports_tts_false(
+        self, tts_agent, fresh_voice_library, fake_client, monkeypatch
+    ):
+        # Capabilities probe returns tts=False (definitive: no TTS loaded).
+        # No backend exists for this URL → no register, no state change.
+        self._patch_httpx(monkeypatch, 200, {"result": "KoboldCpp", "tts": False})
+
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        result = await KoboldCppClient._tts_openai_compatible_setup_impl(
+            fake_client, tts_agent
+        )
+        assert result is False
+        assert tts_agent.dynamic_child_slugs("openai_compatible") == []
+
+    @pytest.mark.asyncio
+    async def test_no_change_on_404(
+        self, tts_agent, fresh_voice_library, fake_client, monkeypatch
+    ):
+        # /api/extra/version returns 404 (older kobold build without the
+        # endpoint) → probe inconclusive → state untouched.
+        self._patch_httpx(monkeypatch, 404, {})
+
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        result = await KoboldCppClient._tts_openai_compatible_setup_impl(
+            fake_client, tts_agent
+        )
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_no_change_when_capabilities_payload_missing_tts_field(
+        self, tts_agent, fresh_voice_library, fake_client, monkeypatch
+    ):
+        # Defensive: a response without the ``tts`` field is treated as
+        # uncertain — never toggle state on it.
+        self._patch_httpx(monkeypatch, 200, {"result": "KoboldCpp"})
+
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        # Pre-existing enabled backend; should remain enabled.
+        tts_agent.register_dynamic_child(
+            "openai_compatible", "kobold", "kobold"
+        )
+        tts_agent.actions["kobold"].config[
+            "api_url"
+        ].value = "http://localhost:5001/v1"
+        tts_agent.actions["_config"].config["apis"].value = ["kobold"]
+
+        result = await KoboldCppClient._tts_openai_compatible_setup_impl(
+            fake_client, tts_agent
+        )
+        assert result is False
+        assert tts_agent.actions["_config"].config["apis"].value == ["kobold"]
+
+    @pytest.mark.asyncio
+    async def test_registers_backend_when_voices_present(
+        self, tts_agent, fresh_voice_library, fake_client, monkeypatch
+    ):
+        self._patch_httpx(
+            monkeypatch,
+            200,
+            {"result": "KoboldCpp", "tts": True},
+        )
+
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        # Stub out the voice refresh (it uses real httpx — different mock surface).
+        monkeypatch.setattr(
+            tts_agent,
+            "refresh_backend_voices",
+            AsyncMock(return_value=2),
+        )
+
+        result = await KoboldCppClient._tts_openai_compatible_setup_impl(
+            fake_client, tts_agent
+        )
+        assert result is True
+
+        # Slug derived from client name; backend created and pointed at the
+        # /v1 base URL.
+        slugs = tts_agent.dynamic_child_slugs("openai_compatible")
+        assert "my-kobold" in slugs
+        backend = tts_agent.actions["my-kobold"]
+        assert backend.config["api_url"].value == "http://localhost:5001/v1"
+
+        # Auto-enabled in apis flags so the narrator-voice dropdown sees it.
+        assert "my-kobold" in (
+            tts_agent.actions["_config"].config["apis"].value or []
+        )
+
+        # Voice refresh fired once.
+        tts_agent.refresh_backend_voices.assert_awaited_once_with("my-kobold")
+
+    @pytest.mark.asyncio
+    async def test_idempotent_when_backend_already_tracking_and_enabled(
+        self, tts_agent, fresh_voice_library, fake_client, monkeypatch
+    ):
+        # Backend already points at this kobold and is in apis.value — no
+        # change.
+        tts_agent.register_dynamic_child(
+            "openai_compatible", "manual", "Manual"
+        )
+        tts_agent.actions["manual"].config[
+            "api_url"
+        ].value = "http://localhost:5001/v1"
+        tts_agent.actions["_config"].config["apis"].value = ["manual"]
+
+        self._patch_httpx(
+            monkeypatch,
+            200,
+            {"result": "KoboldCpp", "tts": True},
+        )
+
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        result = await KoboldCppClient._tts_openai_compatible_setup_impl(
+            fake_client, tts_agent
+        )
+        assert result is False
+        assert tts_agent.dynamic_child_slugs("openai_compatible") == ["manual"]
+        assert tts_agent.actions["_config"].config["apis"].value == ["manual"]
+
+    @pytest.mark.asyncio
+    async def test_re_enables_existing_backend_when_voices_appear(
+        self, tts_agent, fresh_voice_library, fake_client, monkeypatch
+    ):
+        # Backend exists for this URL but is currently disabled (kobold was
+        # restarted with TTS unloaded earlier). Now voices are back: should
+        # auto-re-enable without creating a duplicate.
+        tts_agent.register_dynamic_child(
+            "openai_compatible", "kobold", "kobold"
+        )
+        tts_agent.actions["kobold"].config[
+            "api_url"
+        ].value = "http://localhost:5001/v1"
+        # apis.value is empty → backend is currently disabled.
+        tts_agent.actions["_config"].config["apis"].value = []
+
+        self._patch_httpx(
+            monkeypatch,
+            200,
+            {"result": "KoboldCpp", "tts": True},
+        )
+
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        result = await KoboldCppClient._tts_openai_compatible_setup_impl(
+            fake_client, tts_agent
+        )
+        assert result is True
+        assert tts_agent.actions["_config"].config["apis"].value == ["kobold"]
+        # Single backend; no duplicate registered.
+        assert tts_agent.dynamic_child_slugs("openai_compatible") == ["kobold"]
+
+    @pytest.mark.asyncio
+    async def test_auto_disables_backend_when_kobold_has_no_voices(
+        self, tts_agent, fresh_voice_library, fake_client, monkeypatch
+    ):
+        # Backend exists for this URL and is currently enabled. Kobold up
+        # but reports empty voices list (TTS model unloaded after restart).
+        # Should drop slug from apis.value but keep the backend's config.
+        tts_agent.register_dynamic_child(
+            "openai_compatible", "kobold", "kobold"
+        )
+        tts_agent.actions["kobold"].config[
+            "api_url"
+        ].value = "http://localhost:5001/v1"
+        tts_agent.actions["kobold"].config["api_key"].value = "stay-please"
+        tts_agent.actions["_config"].config["apis"].value = ["kobold"]
+
+        self._patch_httpx(monkeypatch, 200, {"result": "KoboldCpp", "tts": False})
+
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        result = await KoboldCppClient._tts_openai_compatible_setup_impl(
+            fake_client, tts_agent
+        )
+        assert result is True
+        assert tts_agent.actions["_config"].config["apis"].value == []
+        # Backend kept (config preserved).
+        assert "kobold" in tts_agent.dynamic_child_slugs("openai_compatible")
+        assert (
+            tts_agent.actions["kobold"].config["api_key"].value
+            == "stay-please"
+        )
+
+    @pytest.mark.asyncio
+    async def test_no_change_when_already_disabled_and_no_voices(
+        self, tts_agent, fresh_voice_library, fake_client, monkeypatch
+    ):
+        tts_agent.register_dynamic_child(
+            "openai_compatible", "kobold", "kobold"
+        )
+        tts_agent.actions["kobold"].config[
+            "api_url"
+        ].value = "http://localhost:5001/v1"
+        tts_agent.actions["_config"].config["apis"].value = []
+
+        self._patch_httpx(monkeypatch, 200, {"result": "KoboldCpp", "tts": False})
+
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        result = await KoboldCppClient._tts_openai_compatible_setup_impl(
+            fake_client, tts_agent
+        )
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_network_blip_does_not_toggle_state(
+        self, tts_agent, fresh_voice_library, fake_client, monkeypatch
+    ):
+        # Backend currently enabled. The probe raises (uncertain). State
+        # must not change — otherwise transient network errors would flap
+        # the user's setup.
+        tts_agent.register_dynamic_child(
+            "openai_compatible", "kobold", "kobold"
+        )
+        tts_agent.actions["kobold"].config[
+            "api_url"
+        ].value = "http://localhost:5001/v1"
+        tts_agent.actions["_config"].config["apis"].value = ["kobold"]
+
+        from talemate.client import koboldcpp as kobold_module
+
+        class _BoomClient:
+            def __init__(self, *a, **kw):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *a):
+                return False
+
+            async def get(self, **kwargs):
+                raise RuntimeError("flaky network")
+
+        monkeypatch.setattr(kobold_module.httpx, "AsyncClient", _BoomClient)
+
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        result = await KoboldCppClient._tts_openai_compatible_setup_impl(
+            fake_client, tts_agent
+        )
+        assert result is False
+        # apis.value untouched.
+        assert tts_agent.actions["_config"].config["apis"].value == ["kobold"]
+
+    @pytest.mark.asyncio
+    async def test_slug_collision_appends_numeric_suffix(
+        self, tts_agent, fresh_voice_library, fake_client, monkeypatch
+    ):
+        # Collision against an unrelated slug forces a numeric suffix.
+        tts_agent.register_dynamic_child(
+            "openai_compatible", "my-kobold", "Different Kobold"
+        )
+        # That existing one points elsewhere, so idempotency check passes.
+        tts_agent.actions["my-kobold"].config[
+            "api_url"
+        ].value = "http://other:5001/v1"
+
+        self._patch_httpx(
+            monkeypatch,
+            200,
+            {"result": "KoboldCpp", "tts": True},
+        )
+        monkeypatch.setattr(
+            tts_agent,
+            "refresh_backend_voices",
+            AsyncMock(return_value=1),
+        )
+
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        result = await KoboldCppClient._tts_openai_compatible_setup_impl(
+            fake_client, tts_agent
+        )
+        assert result is True
+        # New backend slug is the suffixed one.
+        slugs = tts_agent.dynamic_child_slugs("openai_compatible")
+        assert "my-kobold" in slugs
+        assert "my-kobold-2" in slugs
+
+    @pytest.mark.asyncio
+    async def test_voice_refresh_failure_does_not_undo_setup(
+        self, tts_agent, fresh_voice_library, fake_client, monkeypatch
+    ):
+        self._patch_httpx(
+            monkeypatch,
+            200,
+            {"result": "KoboldCpp", "tts": True},
+        )
+
+        async def _boom(*args, **kwargs):
+            raise RuntimeError("network down")
+
+        monkeypatch.setattr(tts_agent, "refresh_backend_voices", _boom)
+
+        from talemate.client.koboldcpp import KoboldCppClient
+
+        result = await KoboldCppClient._tts_openai_compatible_setup_impl(
+            fake_client, tts_agent
+        )
+        # Setup still succeeded — the voice fetch is best-effort.
+        assert result is True
+        assert "my-kobold" in tts_agent.dynamic_child_slugs(
+            "openai_compatible"
+        )
+
+
 class TestRefreshBackendVoices:
     """``refresh_backend_voices`` should:
       - fetch via api_method("fetch_voices")
