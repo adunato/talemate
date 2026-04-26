@@ -4,83 +4,82 @@ import subprocess
 import argparse
 
 
+EXCLUDED_DIRS = {"update-progress"}
+
+REFERENCE_PATTERNS = [
+    r"!\[.*?\]\((.*?)\)",  # markdown ![alt](url)
+    r"""<img[^>]*\bsrc=["']([^"']+)["']""",  # html <img src="...">
+]
+
+
 def find_image_references(md_file):
-    """Find all image references in a markdown file."""
+    """Find all image references in a markdown file (markdown + HTML syntax)."""
     with open(md_file, "r", encoding="utf-8") as f:
         content = f.read()
 
-    pattern = r"!\[.*?\]\((.*?)\)"
-    matches = re.findall(pattern, content)
-
     cleaned_paths = []
-    for match in matches:
-        path = match.lstrip("/")
-        if "img/" in path:
-            path = path[path.index("img/") + 4 :]
-            # Only keep references to versioned images
-            parts = os.path.normpath(path).split(os.sep)
-            if len(parts) >= 2 and parts[0].replace(".", "").isdigit():
-                cleaned_paths.append(path)
+    for pattern in REFERENCE_PATTERNS:
+        for match in re.findall(pattern, content):
+            path = match.lstrip("/")
+            if "img/" in path:
+                cleaned_paths.append(path[path.index("img/") + 4 :])
 
     return cleaned_paths
 
 
-def scan_markdown_files(docs_dir):
-    """Recursively scan all markdown files in the docs directory."""
+def scan_markdown_files(docs_dir, project_root):
+    """Recursively scan markdown files in docs_dir, plus root-level *.md files."""
     md_files = []
-    for root, _, files in os.walk(docs_dir):
+    for root, dirs, files in os.walk(docs_dir):
+        dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS]
         for file in files:
             if file.endswith(".md"):
                 md_files.append(os.path.join(root, file))
+    for file in os.listdir(project_root):
+        full_path = os.path.join(project_root, file)
+        if file.endswith(".md") and os.path.isfile(full_path):
+            md_files.append(full_path)
     return md_files
 
 
+def find_img_dirs(docs_dir):
+    """Yield every directory named 'img' under docs_dir, excluding EXCLUDED_DIRS."""
+    for root, dirs, _ in os.walk(docs_dir):
+        dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS]
+        for d in dirs:
+            if d == "img":
+                yield os.path.join(root, d)
+
+
 def find_all_images(img_dir):
-    """Find all image files in version subdirectories."""
-    image_files = []
+    """Yield (img_dir, rel_path) for every image under img_dir."""
     for root, _, files in os.walk(img_dir):
-        # Get the relative path from img_dir to current directory
-        rel_dir = os.path.relpath(root, img_dir)
-
-        # Skip if we're in the root img directory
-        if rel_dir == ".":
-            continue
-
-        # Check if the immediate parent directory is a version number
-        parent_dir = rel_dir.split(os.sep)[0]
-        if not parent_dir.replace(".", "").isdigit():
-            continue
-
         for file in files:
             if file.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".svg")):
                 rel_path = os.path.relpath(os.path.join(root, file), img_dir)
-                image_files.append(rel_path)
-    return image_files
+                yield (img_dir, rel_path)
 
 
 def grep_check_image(docs_dir, image_path):
     """
-    Check if versioned image is referenced anywhere using grep.
+    Check if an image is referenced anywhere using grep.
     Returns True if any reference is found, False otherwise.
     """
     try:
-        # Split the image path to get version and filename
+        # Build a pattern that requires each path segment in order with any
+        # separator between them — works for both versioned (0.37.0/foo.png)
+        # and flat (subdir/foo.png) images.
         parts = os.path.normpath(image_path).split(os.sep)
-        version = parts[0]  # e.g., "0.29.0"
-        filename = parts[-1]  # e.g., "world-state-suggestions-2.png"
-
-        # For versioned images, require both version and filename to match
-        version_pattern = f"{version}.*{filename}"
+        pattern = ".*".join(parts)
         try:
+            exclude_args = [f"--exclude-dir={d}" for d in EXCLUDED_DIRS]
             result = subprocess.run(
-                ["grep", "-r", "-l", version_pattern, docs_dir],
+                ["grep", "-r", "-l", *exclude_args, pattern, docs_dir],
                 capture_output=True,
                 text=True,
             )
             if result.stdout.strip():
-                print(
-                    f"Found reference to {image_path} with version pattern: {version_pattern}"
-                )
+                print(f"Found reference to {image_path} with pattern: {pattern}")
                 return True
         except subprocess.CalledProcessError:
             pass
@@ -93,13 +92,7 @@ def grep_check_image(docs_dir, image_path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Find and optionally delete unused versioned images in MkDocs project"
-    )
-    parser.add_argument(
-        "--docs-dir", type=str, required=True, help="Path to the docs directory"
-    )
-    parser.add_argument(
-        "--img-dir", type=str, required=True, help="Path to the images directory"
+        description="Find and optionally delete unused images in the MkDocs project"
     )
     parser.add_argument("--delete", action="store_true", help="Delete unused images")
     parser.add_argument(
@@ -110,15 +103,17 @@ def main():
     )
     args = parser.parse_args()
 
-    # Convert paths to absolute paths
-    docs_dir = os.path.abspath(args.docs_dir)
-    img_dir = os.path.abspath(args.img_dir)
+    docs_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(docs_dir)
+    img_dirs = list(find_img_dirs(docs_dir))
 
-    print(f"Scanning markdown files in: {docs_dir}")
-    print(f"Looking for versioned images in: {img_dir}")
+    print(f"Scanning markdown files in: {docs_dir} (+ root-level *.md)")
+    print(f"Found {len(img_dirs)} img directories:")
+    for d in img_dirs:
+        print(f"  - {os.path.relpath(d, project_root)}")
 
     # Get all markdown files
-    md_files = scan_markdown_files(docs_dir)
+    md_files = scan_markdown_files(docs_dir, project_root)
     print(f"Found {len(md_files)} markdown files")
 
     # Collect all image references
@@ -127,58 +122,65 @@ def main():
         refs = find_image_references(md_file)
         used_images.update(refs)
 
-    # Get all actual images (only from version directories)
-    all_images = set(find_all_images(img_dir))
+    # Collect every physical image across every img dir
+    all_image_entries = [
+        entry for img_dir in img_dirs for entry in find_all_images(img_dir)
+    ]
 
     if args.verbose:
-        print("\nAll versioned image references found in markdown:")
+        print("\nAll image references found in markdown:")
         for img in sorted(used_images):
             print(f"- {img}")
 
-        print("\nAll versioned images in directory:")
-        for img in sorted(all_images):
-            print(f"- {img}")
+        print("\nAll images on disk:")
+        for img_dir, rel_path in sorted(all_image_entries):
+            print(f"- {os.path.relpath(os.path.join(img_dir, rel_path), project_root)}")
 
     # Find potentially unused images
-    unused_images = all_images - used_images
+    unused_entries = [
+        (img_dir, rel_path)
+        for img_dir, rel_path in all_image_entries
+        if rel_path not in used_images
+    ]
 
     # Additional grep validation if not skipped
-    if not args.skip_grep and unused_images:
+    if not args.skip_grep and unused_entries:
         print("\nPerforming additional grep validation...")
-        actually_unused = set()
-        for img in unused_images:
-            if not grep_check_image(docs_dir, img):
-                actually_unused.add(img)
+        actually_unused = [
+            (img_dir, rel_path)
+            for img_dir, rel_path in unused_entries
+            if not grep_check_image(docs_dir, rel_path)
+        ]
 
-        if len(actually_unused) != len(unused_images):
+        if len(actually_unused) != len(unused_entries):
             print(
-                f"\nGrep validation found {len(unused_images) - len(actually_unused)} additional image references!"
+                f"\nGrep validation found {len(unused_entries) - len(actually_unused)} additional image references!"
             )
-        unused_images = actually_unused
+        unused_entries = actually_unused
 
     # Report findings
     print("\nResults:")
-    print(f"Total versioned images found: {len(all_images)}")
-    print(f"Versioned images referenced in markdown: {len(used_images)}")
-    print(f"Unused versioned images: {len(unused_images)}")
+    print(f"Total images found: {len(all_image_entries)}")
+    print(f"Images referenced in markdown: {len(used_images)}")
+    print(f"Unused images: {len(unused_entries)}")
 
-    if unused_images:
-        print("\nUnused versioned images:")
-        for img in sorted(unused_images):
-            print(f"- {img}")
+    if unused_entries:
+        print("\nUnused images:")
+        for img_dir, rel_path in sorted(unused_entries):
+            print(f"- {os.path.relpath(os.path.join(img_dir, rel_path), project_root)}")
 
         if args.delete:
-            print("\nDeleting unused versioned images...")
-            for img in unused_images:
-                full_path = os.path.join(img_dir, img)
+            print("\nDeleting unused images...")
+            for img_dir, rel_path in unused_entries:
+                full_path = os.path.join(img_dir, rel_path)
                 try:
                     os.remove(full_path)
-                    print(f"Deleted: {img}")
+                    print(f"Deleted: {os.path.relpath(full_path, project_root)}")
                 except Exception as e:
-                    print(f"Error deleting {img}: {e}")
+                    print(f"Error deleting {full_path}: {e}")
             print("\nDeletion complete")
     else:
-        print("\nNo unused versioned images found!")
+        print("\nNo unused images found!")
 
 
 if __name__ == "__main__":
