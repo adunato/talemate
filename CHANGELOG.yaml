@@ -26,6 +26,7 @@
   - Fixed "No episodes available" placeholder being selectable in the episode list.
   - Fixed response extraction failing when only a closing anchor tag was present in the LLM response (e.g., `</PHASE_INTENT>` without `<PHASE_INTENT>`).
   - "Text-Generation-WebUI / KoboldCpp: Fixed SSE streaming crash caused by unhandled [DONE] sentinel event, which resulted in a JSONDecodeError that discarded the entire generated response."
+  - "TabbyAPI: Fixed empty responses caused by the streaming parser only appending content on chunks that contained a usage block. Since usage is only sent on the final chunk (and only when explicitly requested), all content chunks were silently discarded. Content is now appended on every chunk, and the completions endpoint also requests `stream_options.include_usage` so token counters are populated."
   - "Director actions: Removed redundant fix_instructions LLM call from direct_scene actor path. The FOCAL callback metadata already prevents verbatim dialogue in director instructions."
   - "Introduce Character: Fixed the advanced introduce dialog (Ctrl+click) sending scene context as instructions to the determine-character-name template instead of the actual user instructions. The instructions textarea is now always visible in the advanced dialog."
   - "Unslop: Fixed a bug where the unslop revision could hallucinate extra content, adding duplication and redundancy from previous entries. Fixes that are substantially longer than the original text are now discarded."
