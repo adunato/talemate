@@ -106,9 +106,7 @@ class _DynamicTestAgent(Agent):
         return f"{slug}-{n * 2}"
 
     # Lifecycle spy hooks
-    def on_dynamic_child_added(
-        self, registry_key: str, slug: str, label: str
-    ) -> None:
+    def on_dynamic_child_added(self, registry_key: str, slug: str, label: str) -> None:
         self.added.append((slug, label))
 
     def on_dynamic_child_removed(self, registry_key: str, slug: str) -> None:
@@ -189,9 +187,7 @@ class TestDynamicChildrenEntries:
         assert agent.dynamic_child_slugs(REGISTRY_KEY) == []
 
     def test_garbage_json_returns_empty_with_warning(self, agent, caplog):
-        agent.actions[REGISTRY_KEY].config[
-            DYNAMIC_CHILDREN_FIELD
-        ].value = "{not json"
+        agent.actions[REGISTRY_KEY].config[DYNAMIC_CHILDREN_FIELD].value = "{not json"
         # Should not raise — just return [] and log a warning.
         assert agent.dynamic_children_entries(REGISTRY_KEY) == []
         assert agent.dynamic_child_slugs(REGISTRY_KEY) == []
@@ -201,16 +197,14 @@ class TestDynamicChildrenEntries:
             {"slug": "alpha", "label": "Alpha"},
             {"slug": "beta", "label": "Beta"},
         ]
-        agent.actions[REGISTRY_KEY].config[
-            DYNAMIC_CHILDREN_FIELD
-        ].value = json.dumps(entries)
+        agent.actions[REGISTRY_KEY].config[DYNAMIC_CHILDREN_FIELD].value = json.dumps(
+            entries
+        )
         assert agent.dynamic_children_entries(REGISTRY_KEY) == entries
         assert agent.dynamic_child_slugs(REGISTRY_KEY) == ["alpha", "beta"]
 
     def test_entries_without_slug_filtered_out(self, agent):
-        agent.actions[REGISTRY_KEY].config[
-            DYNAMIC_CHILDREN_FIELD
-        ].value = json.dumps(
+        agent.actions[REGISTRY_KEY].config[DYNAMIC_CHILDREN_FIELD].value = json.dumps(
             [
                 {"slug": "alpha", "label": "Alpha"},
                 {"label": "Missing slug"},
@@ -234,9 +228,7 @@ class TestDynamicChildrenEntries:
 
 class TestInstallDynamicChildren:
     def test_synthesizes_one_action_per_entry(self, agent):
-        agent.actions[REGISTRY_KEY].config[
-            DYNAMIC_CHILDREN_FIELD
-        ].value = json.dumps(
+        agent.actions[REGISTRY_KEY].config[DYNAMIC_CHILDREN_FIELD].value = json.dumps(
             [
                 {"slug": "alpha", "label": "Alpha"},
                 {"slug": "beta", "label": "Beta"},
@@ -249,16 +241,16 @@ class TestInstallDynamicChildren:
         assert agent.actions["beta"].label == "Beta"
 
     def test_installed_children_carry_parent_key(self, agent):
-        agent.actions[REGISTRY_KEY].config[
-            DYNAMIC_CHILDREN_FIELD
-        ].value = json.dumps([{"slug": "alpha", "label": "Alpha"}])
+        agent.actions[REGISTRY_KEY].config[DYNAMIC_CHILDREN_FIELD].value = json.dumps(
+            [{"slug": "alpha", "label": "Alpha"}]
+        )
         agent.install_dynamic_children(REGISTRY_KEY)
         assert agent.actions["alpha"].parent_key == REGISTRY_KEY
 
     def test_idempotent_second_call_is_a_no_op(self, agent):
-        agent.actions[REGISTRY_KEY].config[
-            DYNAMIC_CHILDREN_FIELD
-        ].value = json.dumps([{"slug": "alpha", "label": "Alpha"}])
+        agent.actions[REGISTRY_KEY].config[DYNAMIC_CHILDREN_FIELD].value = json.dumps(
+            [{"slug": "alpha", "label": "Alpha"}]
+        )
         agent.install_dynamic_children(REGISTRY_KEY)
         first = agent.actions["alpha"]
         # Mutate a child config value and re-install — value must survive,
@@ -269,9 +261,7 @@ class TestInstallDynamicChildren:
         assert agent.actions["alpha"].config["value"].value == "user-edited"
 
     def test_stale_entries_pruned_when_blob_shrinks(self, agent):
-        agent.actions[REGISTRY_KEY].config[
-            DYNAMIC_CHILDREN_FIELD
-        ].value = json.dumps(
+        agent.actions[REGISTRY_KEY].config[DYNAMIC_CHILDREN_FIELD].value = json.dumps(
             [
                 {"slug": "alpha", "label": "Alpha"},
                 {"slug": "beta", "label": "Beta"},
@@ -281,18 +271,18 @@ class TestInstallDynamicChildren:
         assert "beta" in agent.actions
 
         # Remove "beta" from the blob and re-install — it should be dropped.
-        agent.actions[REGISTRY_KEY].config[
-            DYNAMIC_CHILDREN_FIELD
-        ].value = json.dumps([{"slug": "alpha", "label": "Alpha"}])
+        agent.actions[REGISTRY_KEY].config[DYNAMIC_CHILDREN_FIELD].value = json.dumps(
+            [{"slug": "alpha", "label": "Alpha"}]
+        )
         agent.install_dynamic_children(REGISTRY_KEY)
         assert "alpha" in agent.actions
         assert "beta" not in agent.actions
 
     def test_does_not_remove_unrelated_actions(self, agent):
         # Static action exists; install should not touch it.
-        agent.actions[REGISTRY_KEY].config[
-            DYNAMIC_CHILDREN_FIELD
-        ].value = json.dumps([{"slug": "alpha", "label": "Alpha"}])
+        agent.actions[REGISTRY_KEY].config[DYNAMIC_CHILDREN_FIELD].value = json.dumps(
+            [{"slug": "alpha", "label": "Alpha"}]
+        )
         agent.install_dynamic_children(REGISTRY_KEY)
         assert "static_action" in agent.actions
 
@@ -344,9 +334,7 @@ class TestRegisterDynamicChild:
 
     def test_rejects_reserved_slug(self, agent, monkeypatch):
         # Patch reserved_slugs_for_registry on this instance to claim "alpha".
-        monkeypatch.setattr(
-            agent, "reserved_slugs_for_registry", lambda key: {"alpha"}
-        )
+        monkeypatch.setattr(agent, "reserved_slugs_for_registry", lambda key: {"alpha"})
         with pytest.raises(ValueError, match="reserved"):
             agent.register_dynamic_child(REGISTRY_KEY, "alpha", "Alpha")
 
@@ -509,9 +497,7 @@ class TestApplyConfigPrePass:
                     "enabled": True,
                     "config": {
                         DYNAMIC_CHILDREN_FIELD: {
-                            "value": json.dumps(
-                                [{"slug": "alpha", "label": "Alpha"}]
-                            ),
+                            "value": json.dumps([{"slug": "alpha", "label": "Alpha"}]),
                         },
                     },
                 },
@@ -524,10 +510,7 @@ class TestApplyConfigPrePass:
             }
         }
         asyncio.run(agent.apply_config(**saved_kwargs))
-        assert (
-            agent.actions["alpha"].config["value"].value
-            == "restored-from-disk"
-        )
+        assert agent.actions["alpha"].config["value"].value == "restored-from-disk"
 
     def test_blob_value_restored_before_synthesis(self, agent):
         saved_kwargs = {

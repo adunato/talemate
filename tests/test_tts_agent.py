@@ -15,7 +15,7 @@ import json
 import os
 import types
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pydantic
 import pytest
@@ -23,24 +23,19 @@ import pytest_asyncio
 
 import talemate.agents.tts.voice_library as voice_library
 import talemate.instance as instance
-import talemate.util.dialogue as dialogue_utils
 from talemate.agents.tts import TTSAgent
 from talemate.agents.tts.openai_compatible import (
-    OpenAICompatibleMixin,
     _parse_voices_payload,
     _resolve_voices_url,
 )
 from talemate.agents.tts.schema import (
-    APIStatus,
     Chunk,
-    GenerationContext,
     MAX_TAG_LENGTH,
     MAX_TAGS_PER_VOICE,
     Voice,
     VoiceLibrary,
 )
 from talemate.agents.tts.voice_library import (
-    VoiceLibrary as VoiceLibrarySchema,
     _apply_default_voice_migration,
     load_scene_voice_library,
     save_scene_voice_library,
@@ -49,10 +44,9 @@ from talemate.agents.tts.voice_library import (
 )
 from talemate.scene_message import (
     CharacterMessage,
-    ContextInvestigationMessage,
     NarratorMessage,
 )
-from talemate.ux.schema import Action, Note
+from talemate.ux.schema import Action
 
 
 # ---------------------------------------------------------------------------
@@ -66,9 +60,7 @@ def _make_voice(
     provider_id: str = "vid",
     **kwargs,
 ) -> Voice:
-    return Voice(
-        label=label, provider=provider, provider_id=provider_id, **kwargs
-    )
+    return Voice(label=label, provider=provider, provider_id=provider_id, **kwargs)
 
 
 @pytest.fixture
@@ -125,9 +117,7 @@ class FakeScene:
 
 class TestVoiceSchema:
     def test_id_is_provider_colon_provider_id(self):
-        voice = Voice(
-            label="Adam", provider="kokoro", provider_id="am_adam"
-        )
+        voice = Voice(label="Adam", provider="kokoro", provider_id="am_adam")
         assert voice.id == "kokoro:am_adam"
 
     def test_id_changes_when_provider_changes(self):
@@ -198,9 +188,7 @@ class TestChunk:
         assert "and laughed, loudly" in cleaned
 
     def test_cleaned_text_collapses_whitespace(self):
-        chunk = Chunk(
-            text=["Hello   world\t\twith\nmany   spaces"], type="exposition"
-        )
+        chunk = Chunk(text=["Hello   world\t\twith\nmany   spaces"], type="exposition")
         cleaned = chunk.cleaned_text
         # only single spaces between words
         assert "  " not in cleaned
@@ -273,9 +261,7 @@ class TestVoiceLibraryMigration:
             "openai:alloy": Voice(
                 label="Alloy", provider="openai", provider_id="alloy"
             ),
-            "openai:echo": Voice(
-                label="Echo", provider="openai", provider_id="echo"
-            ),
+            "openai:echo": Voice(label="Echo", provider="openai", provider_id="echo"),
         }
         monkeypatch.setattr(voice_library, "DEFAULT_VOICES", defaults)
 
@@ -291,15 +277,11 @@ class TestVoiceLibraryMigration:
             "openai:alloy": Voice(
                 label="Alloy", provider="openai", provider_id="alloy"
             ),
-            "openai:echo": Voice(
-                label="Echo", provider="openai", provider_id="echo"
-            ),
+            "openai:echo": Voice(label="Echo", provider="openai", provider_id="echo"),
         }
         monkeypatch.setattr(voice_library, "DEFAULT_VOICES", defaults)
 
-        existing = Voice(
-            label="Custom", provider="openai", provider_id="custom"
-        )
+        existing = Voice(label="Custom", provider="openai", provider_id="custom")
         library = VoiceLibrary(voices={existing.id: existing})
 
         changed = _apply_default_voice_migration(library)
@@ -320,9 +302,7 @@ class TestVoiceLibraryMigration:
         monkeypatch.setattr(voice_library, "DEFAULT_VOICES", defaults)
 
         # User has an openai voice but no kokoro voices
-        existing = Voice(
-            label="Custom", provider="openai", provider_id="custom"
-        )
+        existing = Voice(label="Custom", provider="openai", provider_id="custom")
         library = VoiceLibrary(voices={existing.id: existing})
 
         changed = _apply_default_voice_migration(library)
@@ -448,9 +428,7 @@ class TestSceneVoiceLibrary:
         # info_dir does not exist yet
         scene = FakeScene(info_dir=str(tmp_path / "info"))
         v = Voice(label="A", provider="kokoro", provider_id="a")
-        await save_scene_voice_library(
-            scene, VoiceLibrary(voices={v.id: v})
-        )
+        await save_scene_voice_library(scene, VoiceLibrary(voices={v.id: v}))
         assert (Path(scene.info_dir) / "voice-library.json").exists()
 
 
@@ -471,9 +449,7 @@ class TestTTSAgentApiHelpers:
         assert tts_agent.api_configured("kokoro") is True
 
         # Dynamic backend: configured iff its api_url is set on the child action.
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         tts_agent.actions["test-be"].config["api_url"].value = ""
         assert tts_agent.api_configured("test-be") is False
         tts_agent.actions["test-be"].config[
@@ -486,9 +462,7 @@ class TestTTSAgentApiHelpers:
         assert tts_agent.api_configured("does_not_exist") is True
 
     def test_api_ready_requires_enabled_and_configured(self, tts_agent):
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         # Registering injected the backend slug into apis.choices as a
         # dynamic-marked dict — flip the apis-enabled list to enable it.
         choices = tts_agent.actions["_config"].config["apis"].choices
@@ -518,9 +492,7 @@ class TestTTSAgentApiHelpers:
     def test_ready_apis_only_includes_ready(self, tts_agent):
         # enable kokoro (always configured) and a dynamic backend (only if
         # api_url set)
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         tts_agent.actions["_config"].config["apis"].value = [
             "kokoro",
             "test-be",
@@ -563,17 +535,13 @@ class TestTTSAgentApiUsed:
 
     def test_returns_false_when_no_match(self, tts_agent, fresh_voice_library):
         # narrator not configured to a real voice in library
-        tts_agent.actions["_config"].config[
-            "narrator_voice_id"
-        ].value = "nope:nope"
+        tts_agent.actions["_config"].config["narrator_voice_id"].value = "nope:nope"
         tts_agent.scene = FakeScene(characters=[])
 
         assert tts_agent.api_used("kokoro") is False
 
     def test_returns_false_when_no_scene(self, tts_agent, fresh_voice_library):
-        tts_agent.actions["_config"].config[
-            "narrator_voice_id"
-        ].value = "nope:nope"
+        tts_agent.actions["_config"].config["narrator_voice_id"].value = "nope:nope"
         # ensure no scene attribute
         if hasattr(tts_agent, "scene"):
             delattr(tts_agent, "scene")
@@ -607,16 +575,12 @@ class TestUseAIAssistedSpeakerSeparation:
     def test_simple_with_quotes_still_false(self, tts_agent):
         self._set(tts_agent, "simple")
         msg = CharacterMessage(message='Alice: "hi"', source="ai")
-        assert (
-            tts_agent.use_ai_assisted_speaker_separation('Alice: "hi"', msg) is False
-        )
+        assert tts_agent.use_ai_assisted_speaker_separation('Alice: "hi"', msg) is False
 
     def test_player_source_always_false(self, tts_agent):
         self._set(tts_agent, "ai_assisted")
         msg = CharacterMessage(message='Alice: "hi"', source="player")
-        assert (
-            tts_agent.use_ai_assisted_speaker_separation('Alice: "hi"', msg) is False
-        )
+        assert tts_agent.use_ai_assisted_speaker_separation('Alice: "hi"', msg) is False
 
     def test_no_message_no_quotes_false(self, tts_agent):
         self._set(tts_agent, "ai_assisted")
@@ -646,7 +610,9 @@ class TestUseAIAssistedSpeakerSeparation:
         bad = object()  # accessing .source raises AttributeError
         # Bypass the no-message branch by ensuring text contains quotes AND
         # message is truthy; this means we hit the message.source line and raise.
-        assert tts_agent.use_ai_assisted_speaker_separation('he "said" hi', bad) is False
+        assert (
+            tts_agent.use_ai_assisted_speaker_separation('he "said" hi', bad) is False
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -655,9 +621,7 @@ class TestUseAIAssistedSpeakerSeparation:
 
 
 class TestNarratorVoiceIdChoices:
-    def test_only_includes_voices_for_ready_apis(
-        self, tts_agent, fresh_voice_library
-    ):
+    def test_only_includes_voices_for_ready_apis(self, tts_agent, fresh_voice_library):
         # Only kokoro ready by default
         v_kokoro = Voice(label="Adam", provider="kokoro", provider_id="am_adam")
         v_openai = Voice(label="Alloy", provider="openai", provider_id="alloy")
@@ -741,9 +705,7 @@ class TestOpenAICompatibleMixin:
         tts_agent.actions[self.SLUG].config[
             "api_url"
         ].value = "http://localhost:8000/v1"
-        assert (
-            tts_agent._openai_compatible_not_configured_reason(self.SLUG) is None
-        )
+        assert tts_agent._openai_compatible_not_configured_reason(self.SLUG) is None
 
     def test_not_configured_action_targets_settings(self, tts_agent):
         self._register(tts_agent)
@@ -759,9 +721,7 @@ class TestOpenAICompatibleMixin:
         tts_agent.actions[self.SLUG].config[
             "api_url"
         ].value = "http://localhost:8000/v1"
-        assert (
-            tts_agent._openai_compatible_not_configured_action(self.SLUG) is None
-        )
+        assert tts_agent._openai_compatible_not_configured_action(self.SLUG) is None
 
     def test_agent_details_error_when_not_configured(self, tts_agent):
         self._register(tts_agent)
@@ -816,9 +776,7 @@ class TestApiStatus:
     def test_enabled_ready_configured_flags_reflect_state(self, tts_agent):
         # Register a dynamic OpenAI-compatible backend; it should appear in
         # api_status alongside the static APIs.
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         tts_agent.actions["_config"].config["apis"].value = ["kokoro"]
         # Ensure the dynamic backend is not configured
         tts_agent.actions["test-be"].config["api_url"].value = ""
@@ -839,9 +797,7 @@ class TestApiStatus:
     def test_surfaces_not_configured_reason_as_error_note(self, tts_agent):
         # A registered dynamic backend with no api_url should surface the
         # "API base URL not set" reason as an error note in api_status.
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         tts_agent.actions["_config"].config["apis"].value = ["test-be"]
         tts_agent.actions["test-be"].config["api_url"].value = ""
 
@@ -927,9 +883,7 @@ async def generate_agent(tts_agent, fresh_voice_library, monkeypatch):
     tts_agent.scene = FakeScene(characters=[])
 
     # Suppress emit / set_processing emission noise
-    monkeypatch.setattr(
-        "talemate.agents.tts.emit", MagicMock(), raising=False
-    )
+    monkeypatch.setattr("talemate.agents.tts.emit", MagicMock(), raising=False)
 
     # Replace _generate_chunk with a recording AsyncMock so we capture what
     # would be sent for synthesis without actually generating audio.
@@ -984,9 +938,7 @@ class TestTTSAgentGenerate:
         char_voice = Voice(label="Char", provider="kokoro", provider_id="cv")
         fresh_voice_library.voices[char_voice.id] = char_voice
 
-        generate_agent.actions["_config"].config[
-            "speaker_separation"
-        ].value = "none"
+        generate_agent.actions["_config"].config["speaker_separation"].value = "none"
         char = FakeCharacter("Alice", voice=char_voice)
         generate_agent.scene = FakeScene(characters=[char])
 
@@ -1010,9 +962,7 @@ class TestTTSAgentGenerate:
         fresh_voice_library.voices[char_voice.id] = char_voice
         char = FakeCharacter("Alice", voice=char_voice)
         generate_agent.scene = FakeScene(characters=[char])
-        generate_agent.actions["_config"].config[
-            "speaker_separation"
-        ].value = "none"
+        generate_agent.actions["_config"].config["speaker_separation"].value = "none"
 
         await generate_agent.generate("hi", character=char)
         await _drain_queue(generate_agent)
@@ -1027,9 +977,7 @@ class TestTTSAgentGenerate:
     async def test_simple_separation_splits_dialogue_and_exposition(
         self, generate_agent
     ):
-        generate_agent.actions["_config"].config[
-            "speaker_separation"
-        ].value = "simple"
+        generate_agent.actions["_config"].config["speaker_separation"].value = "simple"
 
         text = 'She walked away. "Goodbye!" he called after her.'
         await generate_agent.generate(text)
@@ -1044,9 +992,7 @@ class TestTTSAgentGenerate:
 
     @pytest.mark.asyncio
     async def test_oversized_chunk_split_by_size(self, generate_agent):
-        generate_agent.actions["_config"].config[
-            "speaker_separation"
-        ].value = "none"
+        generate_agent.actions["_config"].config["speaker_separation"].value = "none"
         # Force a small max_generation_length via chunk_size <= max
         generate_agent.actions["kokoro"].config["chunk_size"].value = 64
 
@@ -1077,9 +1023,7 @@ class TestTTSAgentGenerate:
             called.append(list(chunks))
 
         generate_agent._inject_audio_tags = spy
-        generate_agent.actions["_config"].config[
-            "speaker_separation"
-        ].value = "none"
+        generate_agent.actions["_config"].config["speaker_separation"].value = "none"
         await generate_agent.generate("Hello world")
         await _drain_queue(generate_agent)
         assert len(called) == 1
@@ -1088,9 +1032,7 @@ class TestTTSAgentGenerate:
     async def test_chunk_generate_and_prepare_fn_resolved_via_getattr(
         self, generate_agent
     ):
-        generate_agent.actions["_config"].config[
-            "speaker_separation"
-        ].value = "none"
+        generate_agent.actions["_config"].config["speaker_separation"].value = "none"
         await generate_agent.generate("hi")
         await _drain_queue(generate_agent)
 
@@ -1110,9 +1052,7 @@ class TestTTSAgentGenerate:
 class TestQueueLifecycle:
     @pytest.mark.asyncio
     async def test_stop_and_clear_resets_state(self, generate_agent):
-        generate_agent.actions["_config"].config[
-            "speaker_separation"
-        ].value = "none"
+        generate_agent.actions["_config"].config["speaker_separation"].value = "none"
 
         # Enqueue multiple items by making _generate_chunk slow
         block = asyncio.Event()
@@ -1138,9 +1078,7 @@ class TestQueueLifecycle:
 
     @pytest.mark.asyncio
     async def test_back_to_back_generate_appends_to_same_queue(self, generate_agent):
-        generate_agent.actions["_config"].config[
-            "speaker_separation"
-        ].value = "none"
+        generate_agent.actions["_config"].config["speaker_separation"].value = "none"
 
         # Block processing so the queue stays alive between calls
         block = asyncio.Event()
@@ -1171,9 +1109,7 @@ class TestQueueLifecycle:
 
     @pytest.mark.asyncio
     async def test_queue_drains_naturally_resets_state(self, generate_agent):
-        generate_agent.actions["_config"].config[
-            "speaker_separation"
-        ].value = "none"
+        generate_agent.actions["_config"].config["speaker_separation"].value = "none"
         # default _generate_chunk is an AsyncMock that returns immediately
         await generate_agent.generate("just one")
         await _drain_queue(generate_agent)
@@ -1249,22 +1185,16 @@ class TestTTSAgentDynamicBackends:
     """
 
     def test_register_appends_slug_to_dynamic_child_slugs(self, tts_agent):
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         assert "test-be" in tts_agent.dynamic_child_slugs("openai_compatible")
 
     def test_synthesized_child_has_parent_key(self, tts_agent):
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         assert "test-be" in tts_agent.actions
         assert tts_agent.actions["test-be"].parent_key == "openai_compatible"
 
     def test_synthesized_child_carries_full_per_backend_config(self, tts_agent):
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         config = tts_agent.actions["test-be"].config
         # Per-backend config that used to live on the management tab now
         # lives here.
@@ -1272,33 +1202,23 @@ class TestTTSAgentDynamicBackends:
             assert key in config
 
     def test_apis_choices_gains_dynamic_marker_entry(self, tts_agent):
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         choices = tts_agent.actions["_config"].config["apis"].choices
-        match = next(
-            (c for c in choices if c.get("value") == "test-be"), None
-        )
+        match = next((c for c in choices if c.get("value") == "test-be"), None)
         assert match is not None
         assert match.get("label") == "Test Backend"
         assert match.get("_dynamic_backend") is True
 
     def test_api_attr_configured_reflects_api_url(self, tts_agent):
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         tts_agent.actions["test-be"].config["api_url"].value = ""
         assert tts_agent.api_attr("test-be", "configured") is False
 
-        tts_agent.actions["test-be"].config[
-            "api_url"
-        ].value = "http://example/v1"
+        tts_agent.actions["test-be"].config["api_url"].value = "http://example/v1"
         assert tts_agent.api_attr("test-be", "configured") is True
 
     def test_api_method_returns_callable_for_generate(self, tts_agent):
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         method = tts_agent.api_method("test-be", "generate")
         assert callable(method)
 
@@ -1308,9 +1228,7 @@ class TestTTSAgentDynamicBackends:
         import pytest as _pytest
 
         with _pytest.raises(ValueError, match="reserved"):
-            tts_agent.register_dynamic_child(
-                "openai_compatible", "kokoro", "My Kokoro"
-            )
+            tts_agent.register_dynamic_child("openai_compatible", "kokoro", "My Kokoro")
 
     def test_rejects_slug_collision_with_registry_key(self, tts_agent):
         import pytest as _pytest
@@ -1330,17 +1248,13 @@ class TestTTSAgentDynamicBackendLifecycle:
     """
 
     def test_unregister_removes_synthesized_action(self, tts_agent):
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         assert "test-be" in tts_agent.actions
         tts_agent.unregister_dynamic_child("openai_compatible", "test-be")
         assert "test-be" not in tts_agent.actions
 
     def test_unregister_strips_slug_from_apis_value(self, tts_agent):
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         tts_agent.actions["_config"].config["apis"].value = [
             "kokoro",
             "test-be",
@@ -1361,9 +1275,7 @@ class TestTTSAgentDynamicBackendLifecycle:
 
         monkeypatch.setattr(voice_library, "save_voice_library", _fake_save)
 
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
 
         # Seed library: a voice from the dynamic backend, a voice from kokoro
         # (must survive), and a voice from another backend slug.
@@ -1386,9 +1298,7 @@ class TestTTSAgentDynamicBackendLifecycle:
         assert v_other.id in fresh_voice_library.voices
 
     def test_unregister_apis_value_only_drops_slug_if_present(self, tts_agent):
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         # apis.value does NOT contain test-be — unregister still works.
         tts_agent.actions["_config"].config["apis"].value = ["kokoro"]
         tts_agent.unregister_dynamic_child("openai_compatible", "test-be")
@@ -1407,9 +1317,7 @@ class TestTTSAgentApiAttrFallback:
         assert tts_agent.kokoro_configured is True
 
     def test_dynamic_api_resolves_through_registry(self, tts_agent):
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
         # Set the per-backend api_url, then ask api_attr — it must dispatch
         # to _openai_compatible_configured("test-be") rather than to a
         # nonexistent "test-be_configured" attribute.
@@ -1432,10 +1340,7 @@ class TestTTSAgentApiAttrFallback:
         sentinel = object()
         # "ghost" is not a registered slug and not a static api — falls
         # through to getattr with the default.
-        assert (
-            tts_agent.api_attr("ghost", "configured", default=sentinel)
-            is sentinel
-        )
+        assert tts_agent.api_attr("ghost", "configured", default=sentinel) is sentinel
 
 
 class TestAutoSetupClients:
@@ -1446,9 +1351,7 @@ class TestAutoSetupClients:
     """
 
     @pytest.mark.asyncio
-    async def test_skips_when_automatic_setup_off(
-        self, tts_agent, monkeypatch
-    ):
+    async def test_skips_when_automatic_setup_off(self, tts_agent, monkeypatch):
         tts_agent.actions["_config"].config["automatic_setup"].value = False
         called = {"count": 0}
 
@@ -1556,18 +1459,14 @@ class TestAutoSetupClients:
         assert emit_called["count"] == 1
 
     @pytest.mark.asyncio
-    async def test_no_persist_when_nothing_changed(
-        self, tts_agent, monkeypatch
-    ):
+    async def test_no_persist_when_nothing_changed(self, tts_agent, monkeypatch):
         save_called = {"count": 0}
 
         async def _save():
             save_called["count"] += 1
 
         monkeypatch.setattr(tts_agent, "save_config", _save)
-        monkeypatch.setattr(
-            tts_agent, "emit_status", AsyncMock(return_value=None)
-        )
+        monkeypatch.setattr(tts_agent, "emit_status", AsyncMock(return_value=None))
 
         class IdempotentClient:
             name = "kobold"
@@ -1576,16 +1475,12 @@ class TestAutoSetupClients:
             async def tts_openai_compatible_setup(self_, agent):
                 return False
 
-        monkeypatch.setattr(
-            instance, "CLIENTS", {"kobold": IdempotentClient()}
-        )
+        monkeypatch.setattr(instance, "CLIENTS", {"kobold": IdempotentClient()})
         await tts_agent.setup_check()
         assert save_called["count"] == 0
 
     @pytest.mark.asyncio
-    async def test_one_client_raising_does_not_break_loop(
-        self, tts_agent, monkeypatch
-    ):
+    async def test_one_client_raising_does_not_break_loop(self, tts_agent, monkeypatch):
         invoked = []
 
         class BoomClient:
@@ -1729,12 +1624,8 @@ class TestKoboldCppTTSSetup:
         from talemate.client.koboldcpp import KoboldCppClient
 
         # Pre-existing enabled backend; should remain enabled.
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "kobold", "kobold"
-        )
-        tts_agent.actions["kobold"].config[
-            "api_url"
-        ].value = "http://localhost:5001/v1"
+        tts_agent.register_dynamic_child("openai_compatible", "kobold", "kobold")
+        tts_agent.actions["kobold"].config["api_url"].value = "http://localhost:5001/v1"
         tts_agent.actions["_config"].config["apis"].value = ["kobold"]
 
         result = await KoboldCppClient._tts_openai_compatible_setup_impl(
@@ -1775,9 +1666,7 @@ class TestKoboldCppTTSSetup:
         assert backend.config["api_url"].value == "http://localhost:5001/v1"
 
         # Auto-enabled in apis flags so the narrator-voice dropdown sees it.
-        assert "my-kobold" in (
-            tts_agent.actions["_config"].config["apis"].value or []
-        )
+        assert "my-kobold" in (tts_agent.actions["_config"].config["apis"].value or [])
 
         # Voice refresh fired once.
         tts_agent.refresh_backend_voices.assert_awaited_once_with("my-kobold")
@@ -1788,12 +1677,8 @@ class TestKoboldCppTTSSetup:
     ):
         # Backend already points at this kobold and is in apis.value — no
         # change.
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "manual", "Manual"
-        )
-        tts_agent.actions["manual"].config[
-            "api_url"
-        ].value = "http://localhost:5001/v1"
+        tts_agent.register_dynamic_child("openai_compatible", "manual", "Manual")
+        tts_agent.actions["manual"].config["api_url"].value = "http://localhost:5001/v1"
         tts_agent.actions["_config"].config["apis"].value = ["manual"]
 
         self._patch_httpx(
@@ -1818,12 +1703,8 @@ class TestKoboldCppTTSSetup:
         # Backend exists for this URL but is currently disabled (kobold was
         # restarted with TTS unloaded earlier). Now voices are back: should
         # auto-re-enable without creating a duplicate.
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "kobold", "kobold"
-        )
-        tts_agent.actions["kobold"].config[
-            "api_url"
-        ].value = "http://localhost:5001/v1"
+        tts_agent.register_dynamic_child("openai_compatible", "kobold", "kobold")
+        tts_agent.actions["kobold"].config["api_url"].value = "http://localhost:5001/v1"
         # apis.value is empty → backend is currently disabled.
         tts_agent.actions["_config"].config["apis"].value = []
 
@@ -1850,12 +1731,8 @@ class TestKoboldCppTTSSetup:
         # Backend exists for this URL and is currently enabled. Kobold up
         # but reports empty voices list (TTS model unloaded after restart).
         # Should drop slug from apis.value but keep the backend's config.
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "kobold", "kobold"
-        )
-        tts_agent.actions["kobold"].config[
-            "api_url"
-        ].value = "http://localhost:5001/v1"
+        tts_agent.register_dynamic_child("openai_compatible", "kobold", "kobold")
+        tts_agent.actions["kobold"].config["api_url"].value = "http://localhost:5001/v1"
         tts_agent.actions["kobold"].config["api_key"].value = "stay-please"
         tts_agent.actions["_config"].config["apis"].value = ["kobold"]
 
@@ -1870,21 +1747,14 @@ class TestKoboldCppTTSSetup:
         assert tts_agent.actions["_config"].config["apis"].value == []
         # Backend kept (config preserved).
         assert "kobold" in tts_agent.dynamic_child_slugs("openai_compatible")
-        assert (
-            tts_agent.actions["kobold"].config["api_key"].value
-            == "stay-please"
-        )
+        assert tts_agent.actions["kobold"].config["api_key"].value == "stay-please"
 
     @pytest.mark.asyncio
     async def test_no_change_when_already_disabled_and_no_voices(
         self, tts_agent, fresh_voice_library, fake_client, monkeypatch
     ):
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "kobold", "kobold"
-        )
-        tts_agent.actions["kobold"].config[
-            "api_url"
-        ].value = "http://localhost:5001/v1"
+        tts_agent.register_dynamic_child("openai_compatible", "kobold", "kobold")
+        tts_agent.actions["kobold"].config["api_url"].value = "http://localhost:5001/v1"
         tts_agent.actions["_config"].config["apis"].value = []
 
         self._patch_httpx(monkeypatch, 200, {"result": "KoboldCpp", "tts": False})
@@ -1903,12 +1773,8 @@ class TestKoboldCppTTSSetup:
         # Backend currently enabled. The probe raises (uncertain). State
         # must not change — otherwise transient network errors would flap
         # the user's setup.
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "kobold", "kobold"
-        )
-        tts_agent.actions["kobold"].config[
-            "api_url"
-        ].value = "http://localhost:5001/v1"
+        tts_agent.register_dynamic_child("openai_compatible", "kobold", "kobold")
+        tts_agent.actions["kobold"].config["api_url"].value = "http://localhost:5001/v1"
         tts_agent.actions["_config"].config["apis"].value = ["kobold"]
 
         from talemate.client import koboldcpp as kobold_module
@@ -1946,9 +1812,7 @@ class TestKoboldCppTTSSetup:
             "openai_compatible", "my-kobold", "Different Kobold"
         )
         # That existing one points elsewhere, so idempotency check passes.
-        tts_agent.actions["my-kobold"].config[
-            "api_url"
-        ].value = "http://other:5001/v1"
+        tts_agent.actions["my-kobold"].config["api_url"].value = "http://other:5001/v1"
 
         self._patch_httpx(
             monkeypatch,
@@ -1994,23 +1858,19 @@ class TestKoboldCppTTSSetup:
         )
         # Setup still succeeded — the voice fetch is best-effort.
         assert result is True
-        assert "my-kobold" in tts_agent.dynamic_child_slugs(
-            "openai_compatible"
-        )
+        assert "my-kobold" in tts_agent.dynamic_child_slugs("openai_compatible")
 
 
 class TestRefreshBackendVoices:
     """``refresh_backend_voices`` should:
-      - fetch via api_method("fetch_voices")
-      - union new voices into the global library
-      - preserve user-customized voices (tags / non-default labels)
-      - drop auto-fetched voices the server no longer reports
+    - fetch via api_method("fetch_voices")
+    - union new voices into the global library
+    - preserve user-customized voices (tags / non-default labels)
+    - drop auto-fetched voices the server no longer reports
     """
 
     @pytest.mark.asyncio
-    async def test_returns_zero_for_unknown_slug(
-        self, tts_agent, fresh_voice_library
-    ):
+    async def test_returns_zero_for_unknown_slug(self, tts_agent, fresh_voice_library):
         # No registered backend with that slug.
         count = await tts_agent.refresh_backend_voices("nope")
         assert count == 0
@@ -2026,9 +1886,7 @@ class TestRefreshBackendVoices:
 
         monkeypatch.setattr(voice_library, "save_voice_library", _fake_save)
 
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
 
         fetched = [
             Voice(label="alpha", provider="test-be", provider_id="alpha"),
@@ -2066,9 +1924,7 @@ class TestRefreshBackendVoices:
 
         monkeypatch.setattr(voice_library, "save_voice_library", _fake_save)
 
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
 
         # User has manually customized "alpha" with a non-default label and
         # tags. The backend still reports "alpha" — the customization must
@@ -2095,9 +1951,7 @@ class TestRefreshBackendVoices:
         async def _fake_fetch(*args, **kwargs):
             # Server reports a fresh "alpha" with default label; the user's
             # customized entry should remain unchanged.
-            return [
-                Voice(label="alpha", provider="test-be", provider_id="alpha")
-            ]
+            return [Voice(label="alpha", provider="test-be", provider_id="alpha")]
 
         monkeypatch.setattr(
             tts_agent,
@@ -2125,9 +1979,7 @@ class TestRefreshBackendVoices:
 
         monkeypatch.setattr(voice_library, "save_voice_library", _fake_save)
 
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
 
         # An auto-fetched voice (no tags, label == provider_id) the server
         # no longer reports — must be dropped.
@@ -2139,9 +1991,7 @@ class TestRefreshBackendVoices:
         fresh_voice_library.voices[keep.id] = keep
 
         async def _fake_fetch(*args, **kwargs):
-            return [
-                Voice(label="alpha", provider="test-be", provider_id="alpha")
-            ]
+            return [Voice(label="alpha", provider="test-be", provider_id="alpha")]
 
         monkeypatch.setattr(
             tts_agent,
@@ -2164,9 +2014,7 @@ class TestRefreshBackendVoices:
         # Hard failures (HTTP errors, JSON shape mismatches, etc.) must
         # propagate so the websocket plugin can surface the real error to
         # the UI rather than rendering "no listing endpoint" copy.
-        tts_agent.register_dynamic_child(
-            "openai_compatible", "test-be", "Test Backend"
-        )
+        tts_agent.register_dynamic_child("openai_compatible", "test-be", "Test Backend")
 
         async def _boom(*args, **kwargs):
             raise RuntimeError("simulated network failure")
@@ -2197,9 +2045,7 @@ class TestParseVoicesPayload:
         ]
 
     def test_list_of_id_dicts(self):
-        voices = _parse_voices_payload(
-            [{"id": "alpha"}, {"id": "beta"}], "test-be"
-        )
+        voices = _parse_voices_payload([{"id": "alpha"}, {"id": "beta"}], "test-be")
         assert [v.provider_id for v in voices] == ["alpha", "beta"]
         # No display name → label falls back to id.
         assert all(v.label == v.provider_id for v in voices)
@@ -2260,24 +2106,18 @@ class TestResolveVoicesUrl:
     """
 
     def test_relative_path_appends_under_versioned_base(self):
-        url = _resolve_voices_url(
-            "https://api.openai.com/v1", "audio/speech/voices"
-        )
+        url = _resolve_voices_url("https://api.openai.com/v1", "audio/speech/voices")
         assert url == "https://api.openai.com/v1/audio/speech/voices"
 
     def test_relative_path_works_with_trailing_slash_base(self):
-        url = _resolve_voices_url(
-            "https://api.openai.com/v1/", "voices"
-        )
+        url = _resolve_voices_url("https://api.openai.com/v1/", "voices")
         assert url == "https://api.openai.com/v1/voices"
 
     def test_absolute_path_anchors_to_host_root(self):
         # Leading "/" on the candidate means: replace the base URL's path,
         # use the host root. This lets users opt into endpoints that don't
         # live underneath /v1.
-        url = _resolve_voices_url(
-            "https://api.openai.com/v1", "/custom/voices"
-        )
+        url = _resolve_voices_url("https://api.openai.com/v1", "/custom/voices")
         assert url == "https://api.openai.com/custom/voices"
 
     def test_full_url_passes_through(self):

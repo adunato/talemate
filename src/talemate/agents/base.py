@@ -612,7 +612,9 @@ class Agent(ABC):
         """Return True if the named action is a dynamic-children registry."""
         actions = getattr(self, "actions", None) or {}
         action = actions.get(action_key)
-        return bool(action and action.config and DYNAMIC_CHILDREN_FIELD in action.config)
+        return bool(
+            action and action.config and DYNAMIC_CHILDREN_FIELD in action.config
+        )
 
     def dynamic_registry_keys(self) -> list[str]:
         actions = getattr(self, "actions", None) or {}
@@ -693,9 +695,7 @@ class Agent(ABC):
     # persisting external state to disk), override
     # ``persist_dynamic_external_state`` instead — it's awaited by the
     # websocket plugin after the sync hook fires.
-    def on_dynamic_child_added(
-        self, registry_key: str, slug: str, label: str
-    ) -> None:
+    def on_dynamic_child_added(self, registry_key: str, slug: str, label: str) -> None:
         return None
 
     def on_dynamic_child_removed(self, registry_key: str, slug: str) -> None:
@@ -730,9 +730,7 @@ class Agent(ABC):
         return set()
 
     # Mutation helpers.
-    def register_dynamic_child(
-        self, registry_key: str, slug: str, label: str
-    ) -> None:
+    def register_dynamic_child(self, registry_key: str, slug: str, label: str) -> None:
         if not self.is_dynamic_registry(registry_key):
             raise ValueError(f"'{registry_key}' is not a dynamic registry")
         if not slug:
@@ -776,9 +774,7 @@ class Agent(ABC):
         self.on_dynamic_child_renamed(registry_key, slug, label or slug)
 
     # Resolver helpers — used by agents that dispatch via name-prefixed methods.
-    def dynamic_attr(
-        self, registry_key: str, slug: str, name: str, default=None
-    ):
+    def dynamic_attr(self, registry_key: str, slug: str, name: str, default=None):
         """Resolve a property-like helper for a dynamic child.
 
         Looks up ``self._<registry_key>_<name>`` and invokes it with the
@@ -789,9 +785,7 @@ class Agent(ABC):
             return default
         return fn(slug)
 
-    def dynamic_method(
-        self, registry_key: str, slug: str, name: str, default=None
-    ):
+    def dynamic_method(self, registry_key: str, slug: str, name: str, default=None):
         """Resolve a callable helper for a dynamic child.
 
         Returns a partial that pre-binds the slug, so callers can invoke it

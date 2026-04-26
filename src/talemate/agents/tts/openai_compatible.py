@@ -244,8 +244,7 @@ class OpenAICompatibleMixin:
                 icon="mdi-link",
                 value="API URL not set",
                 description=(
-                    f"Set the base URL of the '{backend}' OpenAI-compatible "
-                    "TTS server."
+                    f"Set the base URL of the '{backend}' OpenAI-compatible TTS server."
                 ),
                 color="error",
             ).model_dump()
@@ -300,9 +299,7 @@ class OpenAICompatibleMixin:
         headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
 
         custom = self._openai_compatible_voices_endpoint(backend)
-        candidates = (
-            [custom] if custom else list(DEFAULT_VOICE_LISTING_PATHS)
-        )
+        candidates = [custom] if custom else list(DEFAULT_VOICE_LISTING_PATHS)
 
         attempted: list[str] = []
         async with httpx.AsyncClient(timeout=10.0) as http:

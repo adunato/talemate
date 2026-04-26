@@ -51,7 +51,10 @@ from .chatterbox import ChatterboxMixin
 from .websocket_handler import TTSWebsocketHandler
 from .f5tts import F5TTSMixin
 from .pocket_tts import PocketTTSMixin
-from .openai_compatible import OpenAICompatibleMixin, REGISTRY_KEY as OPENAI_COMPAT_REGISTRY_KEY  # noqa: F811
+from .openai_compatible import (
+    OpenAICompatibleMixin,
+    REGISTRY_KEY as OPENAI_COMPAT_REGISTRY_KEY,
+)  # noqa: F811
 from .audio_tags import AudioTagsMixin
 from .util import parse_chunks, rejoin_chunks
 
@@ -313,8 +316,7 @@ class TTSAgent(
         choices = [
             c
             for c in choices
-            if c.get("value") not in backend_entries
-            and not c.get("_dynamic_backend")
+            if c.get("value") not in backend_entries and not c.get("_dynamic_backend")
         ]
         for slug, label in backend_entries.items():
             choices.append(
@@ -327,9 +329,7 @@ class TTSAgent(
             )
         self.actions["_config"].config["apis"].choices = choices
 
-    def on_dynamic_child_added(
-        self, registry_key: str, slug: str, label: str
-    ) -> None:
+    def on_dynamic_child_added(self, registry_key: str, slug: str, label: str) -> None:
         if registry_key != OPENAI_COMPAT_REGISTRY_KEY:
             return
         self._refresh_apis_choices()

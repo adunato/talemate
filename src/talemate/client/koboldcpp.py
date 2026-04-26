@@ -590,9 +590,7 @@ class KoboldCppClient(OpenAIVisionMixin, ClientBase):
                 log.error("TTS setup task failed", exc=exc)
                 return False
 
-    async def _tts_openai_compatible_setup_impl(
-        self, tts_agent: "TTSAgent"
-    ) -> bool:
+    async def _tts_openai_compatible_setup_impl(self, tts_agent: "TTSAgent") -> bool:
         """Internal: keep the TTS agent's enabled-apis state in sync with
         what this KoboldCpp instance currently has loaded.
 
@@ -636,9 +634,7 @@ class KoboldCppClient(OpenAIVisionMixin, ClientBase):
         if voices_loaded is None:
             return False
 
-        apis_value = list(
-            tts_agent.actions["_config"].config["apis"].value or []
-        )
+        apis_value = list(tts_agent.actions["_config"].config["apis"].value or [])
 
         if voices_loaded:
             if existing_slug is None:
@@ -647,11 +643,7 @@ class KoboldCppClient(OpenAIVisionMixin, ClientBase):
                 reserved = tts_agent.reserved_slugs_for_registry(
                     OPENAI_COMPAT_REGISTRY_KEY
                 )
-                taken = set(
-                    tts_agent.dynamic_child_slugs(
-                        OPENAI_COMPAT_REGISTRY_KEY
-                    )
-                )
+                taken = set(tts_agent.dynamic_child_slugs(OPENAI_COMPAT_REGISTRY_KEY))
                 slug, n = base_slug, 2
                 while slug in taken or slug in reserved:
                     slug = f"{base_slug}-{n}"
@@ -669,9 +661,7 @@ class KoboldCppClient(OpenAIVisionMixin, ClientBase):
                 tts_agent.actions[slug].config["api_url"].value = target_url
                 if slug not in apis_value:
                     apis_value.append(slug)
-                    tts_agent.actions["_config"].config[
-                        "apis"
-                    ].value = apis_value
+                    tts_agent.actions["_config"].config["apis"].value = apis_value
                 # Best-effort voice refresh; failure doesn't undo setup.
                 # Bounded so a hung server can't pin the periodic status
                 # loop that calls into setup_check.
