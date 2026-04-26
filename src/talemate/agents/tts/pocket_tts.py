@@ -26,6 +26,50 @@ def _import_heavy_deps():
     from pocket_tts import TTSModel
 
 
+# Valid pocket-tts v2 language identifiers (mutually exclusive with custom YAML config).
+_VALID_LANGUAGES = frozenset(
+    {
+        "english",
+        "english_2026-01",
+        "english_2026-04",
+        "french_24l",
+        "german",
+        "german_24l",
+        "italian",
+        "italian_24l",
+        "portuguese",
+        "portuguese_24l",
+        "spanish",
+        "spanish_24l",
+    }
+)
+
+# Known pocket-tts v1 variant hex IDs mapped to their v2 language equivalent.
+# v1's default "b6369a24" variant corresponds to the english_2026-01 architecture
+# (matches its config signature). Map there explicitly so existing users keep voice
+# parity instead of silently jumping to the newer "english" (= english_2026-04) model.
+_V1_VARIANT_TO_LANGUAGE = {
+    "b6369a24": "english_2026-01",
+}
+
+
+def _migrate_variant_to_language(value: str) -> str:
+    """Migrate persisted pocket-tts v1 variant hex IDs to v2 language identifiers.
+
+    Wired up as the ``value_migration`` callback on the language AgentActionConfig
+    so it runs at agent-load time on every startup.
+    """
+    if value in _VALID_LANGUAGES:
+        return value
+    if value in _V1_VARIANT_TO_LANGUAGE:
+        return _V1_VARIANT_TO_LANGUAGE[value]
+    log.warning(
+        "pocket_tts: unknown variant value, defaulting to 'english'",
+        value=value,
+    )
+    return "english"
+
+
 POCKET_TTS_INFO = """
 Pocket TTS is a local CPU text-to-speech model from Kyutai.
 
@@ -117,11 +161,12 @@ class PocketTTSProvider(VoiceProvider):
 
 class PocketTTSInstance(pydantic.BaseModel):
     model: "TTSModel"
-    model_variant: str
+    model_language: str
     temp: float
     lsd_decode_steps: int
     noise_clamp: float | None
     eos_threshold: float
+    quantize: bool
     voice_states: dict[str, dict] = pydantic.Field(default_factory=dict)
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -147,9 +192,27 @@ class PocketTTSMixin:
             config={
                 "variant": AgentActionConfig(
                     type="text",
-                    value="b6369a24",
-                    label="Variant",
-                    description="Pocket TTS model variant identifier (downloads weights on first use).",
+                    value="english",
+                    label="Language / Model",
+                    choices=[
+                        {
+                            "value": "english",
+                            "label": "English (default, 6-layer distilled)",
+                        },
+                        {"value": "english_2026-04", "label": "English 2026-04"},
+                        {"value": "english_2026-01", "label": "English 2026-01"},
+                        {"value": "french_24l", "label": "French (24-layer)"},
+                        {"value": "german", "label": "German"},
+                        {"value": "german_24l", "label": "German (24-layer)"},
+                        {"value": "italian", "label": "Italian"},
+                        {"value": "italian_24l", "label": "Italian (24-layer)"},
+                        {"value": "portuguese", "label": "Portuguese"},
+                        {"value": "portuguese_24l", "label": "Portuguese (24-layer)"},
+                        {"value": "spanish", "label": "Spanish"},
+                        {"value": "spanish_24l", "label": "Spanish (24-layer)"},
+                    ],
+                    description="Pocket TTS language/model. Distilled 6-layer for English; 24-layer variants give better quality on other languages.",
+                    value_migration=_migrate_variant_to_language,
                 ),
                 "temp": AgentActionConfig(
                     type="number",
@@ -196,6 +259,12 @@ class PocketTTSMixin:
                     label="Frames after EOS",
                     description="0 = auto. If >0, generates additional frames after EOS detection.",
                 ),
+                "quantize": AgentActionConfig(
+                    type="bool",
+                    value=False,
+                    label="Quantize (int8)",
+                    description="Apply dynamic int8 quantization. ~30% faster on most CPUs with minor quality impact.",
+                ),
                 "chunk_size": AgentActionConfig(
                     type="number",
                     min=0,
@@ -219,8 +288,12 @@ class PocketTTSMixin:
         return 512
 
     @property
-    def pocket_tts_variant(self) -> str:
+    def pocket_tts_language(self) -> str:
         return self.actions["pocket_tts"].config["variant"].value
+
+    @property
+    def pocket_tts_quantize(self) -> bool:
+        return bool(self.actions["pocket_tts"].config["quantize"].value)
 
     @property
     def pocket_tts_temp(self) -> float:
@@ -272,7 +345,7 @@ class PocketTTSMixin:
 
         details["pocket_tts_model"] = AgentDetail(
             icon="mdi-brain",
-            value=f"{instance.model_variant}@{instance.model.device}",
+            value=f"{instance.model_language}@{instance.model.device}",
             description="Loaded Pocket TTS model and device",
         ).model_dump()
 
@@ -321,36 +394,50 @@ class PocketTTSMixin:
 
         reload_model = (
             instance is None
-            or instance.model_variant != self.pocket_tts_variant
+            or instance.model_language != self.pocket_tts_language
             or instance.temp != self.pocket_tts_temp
             or instance.lsd_decode_steps != self.pocket_tts_lsd_decode_steps
             or instance.noise_clamp != self.pocket_tts_noise_clamp
             or instance.eos_threshold != self.pocket_tts_eos_threshold
+            or instance.quantize != self.pocket_tts_quantize
         )
 
         if reload_model:
+            # Voice clone embeddings are tied to the underlying language model, so
+            # they survive sampling-param changes (temp, eos_threshold, quantize, ...)
+            # but must be discarded when the language itself changes.
+            preserved_voice_states = (
+                instance.voice_states
+                if instance is not None
+                and instance.model_language == self.pocket_tts_language
+                else {}
+            )
             log.debug(
                 "Loading Pocket TTS model",
-                variant=self.pocket_tts_variant,
+                language=self.pocket_tts_language,
                 temp=self.pocket_tts_temp,
                 lsd_decode_steps=self.pocket_tts_lsd_decode_steps,
                 noise_clamp=self.pocket_tts_noise_clamp,
                 eos_threshold=self.pocket_tts_eos_threshold,
+                quantize=self.pocket_tts_quantize,
             )
             model = TTSModel.load_model(
-                config=self.pocket_tts_variant,
+                language=self.pocket_tts_language,
                 temp=self.pocket_tts_temp,
                 lsd_decode_steps=self.pocket_tts_lsd_decode_steps,
                 noise_clamp=self.pocket_tts_noise_clamp,
                 eos_threshold=self.pocket_tts_eos_threshold,
+                quantize=self.pocket_tts_quantize,
             )
             instance = PocketTTSInstance(
                 model=model,
-                model_variant=self.pocket_tts_variant,
+                model_language=self.pocket_tts_language,
                 temp=self.pocket_tts_temp,
                 lsd_decode_steps=self.pocket_tts_lsd_decode_steps,
                 noise_clamp=self.pocket_tts_noise_clamp,
                 eos_threshold=self.pocket_tts_eos_threshold,
+                quantize=self.pocket_tts_quantize,
+                voice_states=preserved_voice_states,
             )
             self.pocket_tts_instance = instance
 

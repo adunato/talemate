@@ -1,16 +1,19 @@
 # Pocket TTS
 
+!!! info "Updated in 0.37.0"
+    Pocket TTS now ships on top of pocket-tts v2. The "Variant" text field has been replaced with a **Language / Model** dropdown, and a new **Quantize (int8)** toggle is available for faster CPU inference. Existing configurations are migrated automatically — see [Upgrading from v1](#upgrading-from-v1).
+
 Pocket TTS is a local CPU-based text-to-speech model from [Kyutai](https://kyutai.org/) that supports voice cloning from audio files. Unlike other local TTS options that require a GPU, Pocket TTS runs efficiently on your CPU, making it accessible on a wider range of hardware.
 
-![Pocket TTS API settings](/talemate/img/0.35.0/pocket-tts-api-settings.png)
+![Pocket TTS API settings](/talemate/img/0.37.0/pocket-tts-api-settings.png)
 
 ## Key Features
 
 - **CPU-only** - No GPU required, runs on standard computer hardware
 - **Voice cloning** - Clone voices from short audio samples (.wav files)
-- **Low resource usage** - Uses only 2 CPU cores with a small 100M parameter model
+- **Low resource usage** - Small ~100M parameter model, runs on a couple of CPU cores
 - **Built-in voices** - Includes several ready-to-use voice samples
-- **English only** - Currently supports English language generation
+- **Multiple languages** - English (fast distilled model) plus French, German, Italian, Portuguese, and Spanish (full 24-layer models). In practice most Talemate scenes are English, so the default is the distilled English model.
 
 ## First-Time Setup
 
@@ -26,9 +29,19 @@ The first time you generate audio with Pocket TTS, it will automatically downloa
 
 ## Configuration
 
-##### Variant
+##### Language / Model
 
-The model variant identifier. The default `b6369a24` is the current recommended version.
+Selects which Pocket TTS model to load. English uses a fast 6-layer distilled model; the other languages use full 24-layer models for higher quality at the cost of slower generation. All models run locally on CPU (or GPU if available).
+
+| Value | Description |
+|-------|-------------|
+| English (default, 6-layer distilled) | Fastest. Alias for the latest English release. Recommended for most users. |
+| English 2026-04 | The current dated English release the default points at. |
+| English 2026-01 | Earlier English release. Used by configs migrated from v1 (see [Upgrading from v1](#upgrading-from-v1)). |
+| French / German / Italian / Portuguese / Spanish | Standard models for those languages. |
+| French / German / Italian / Portuguese / Spanish (24-layer) | Higher-quality 24-layer variants. Slower but better fidelity. |
+
+Changing the language reloads the model on the next generation and clears any cached voice clone embeddings, since they are tied to the underlying model.
 
 ##### Temperature
 
@@ -50,9 +63,22 @@ End-of-sequence detection threshold. Controls when the model stops generating au
 
 Number of additional audio frames to generate after detecting the end of speech. 0 uses automatic detection. Default is 0.
 
+##### Quantize (int8)
+
+Applies dynamic int8 quantization to the model. Roughly **30% faster** on most CPUs at the cost of a minor quality drop. Toggling this reloads the model on the next generation. Default is off.
+
 ##### Chunk Size
 
 Text is split into chunks of this size for processing. Smaller values increase responsiveness but may affect natural flow between chunks. 0 disables chunking. Default is 256.
+
+## Upgrading from v1
+
+If you used Pocket TTS in earlier Talemate versions, your existing configuration is migrated automatically the next time the agent loads — there is nothing to do manually:
+
+- The old default variant `b6369a24` is mapped to **English 2026-01**, which uses the same underlying model. Voices you cloned previously will still sound the way they did before.
+- Any other unrecognised variant value falls back to **English** (the current default) with a warning in the log.
+
+If you want to try the newer English release or the int8 speedup, switch the **Language / Model** dropdown to "English (default, 6-layer distilled)" and/or enable **Quantize (int8)**.
 
 ## Built-in Voices
 
