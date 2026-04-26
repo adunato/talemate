@@ -147,6 +147,7 @@ export default {
                                 "Fixed blank page on some Windows 10 systems caused by incorrect MIME type on JS module scripts",
                                 "Fixed response extraction when only a closing anchor tag was present (e.g., </PHASE_INTENT>)",
                                 "Text-Generation-WebUI / KoboldCpp: fixed SSE streaming crash on unhandled [DONE] sentinel",
+                                "TabbyAPI: fixed empty responses caused by the streaming parser only appending content on chunks that contained a usage block",
                                 "Director actions: removed redundant fix_instructions LLM call from the direct_scene actor path",
                                 "Introduce Character: advanced dialog (Ctrl+click) now sends actual user instructions instead of scene context",
                                 "Unslop: revisions substantially longer than the original are now discarded to prevent hallucinated duplication",
