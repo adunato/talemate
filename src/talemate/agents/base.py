@@ -69,13 +69,14 @@ class AgentActionConfig(pydantic.BaseModel):
         "number",
         "text",
         "vector2",
+        "weights",
         "wstemplate",
         "password",
         "unified_api_key",
     ]
     label: str
     description: str = ""
-    value: int | float | str | bool | list | None = None
+    value: int | float | str | bool | list | dict | None = None
     default_value: int | float | str | bool | None = None
     max: int | float | None = None
     min: int | float | None = None

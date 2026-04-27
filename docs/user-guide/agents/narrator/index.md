@@ -35,3 +35,7 @@ For more details on configuring scene direction, see [World Editor - Scene Direc
 The narrator agent can be influenced by one of your writing style templates.
 
 Make sure a writing style is selected in the [Scene Settings](/talemate/user-guide/world-editor/scene/settings) to apply the writing style to the generated content.
+
+## :material-script-text-play: Auto Narration
+
+The narrator can fire narration on its own during the scene loop, with a configurable chance and a weighted choice between Progress Story, Narrate Scene, and Narrate Environment. See [Auto Narration](/talemate/user-guide/agents/narrator/auto-narration) for the full description and configuration. Replaces the previous Narrate after Dialogue action.

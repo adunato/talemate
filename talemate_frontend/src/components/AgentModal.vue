@@ -306,6 +306,17 @@
                           <!-- table -->
                           <ConfigWidgetTable v-else-if="action_config.type === 'table'" :columns="action_config.columns" :default_values="action.config[config_key].value" :label="action_config.label" :description="action_config.description" @save="(values) => { action.config[config_key].value = values; save(false); }" />
 
+                          <!-- weights (sliders that always sum to 1.0) -->
+                          <ConfigWidgetWeights
+                            v-else-if="action_config.type === 'weights'"
+                            :model-value="action.config[config_key].value"
+                            :choices="action_config.choices"
+                            :label="action_config.label"
+                            :description="action_config.description"
+                            :step="action_config.step || 0.05"
+                            @update:modelValue="(values) => { action.config[config_key].value = values; save(false); }"
+                          />
+
                           <!-- unified_api_key -->
                           <ConfigWidgetUnifiedApiKey
                             v-else-if="action_config.type === 'unified_api_key'"
@@ -361,6 +372,7 @@
 import {getProperty} from 'dot-prop';
 import ConfigWidgetTable from './ConfigWidgetTable.vue';
 import ConfigWidgetUnifiedApiKey from './ConfigWidgetUnifiedApiKey.vue';
+import ConfigWidgetWeights from './ConfigWidgetWeights.vue';
 import GraduatedSlider from './GraduatedSlider.vue';
 import DynamicAgentRegistry from './DynamicAgentRegistry.vue';
 import TTSOpenAICompatibleBackends from './TTSOpenAICompatibleBackends.vue';
@@ -384,6 +396,7 @@ export default {
   components: {
     ConfigWidgetTable,
     ConfigWidgetUnifiedApiKey,
+    ConfigWidgetWeights,
     GraduatedSlider,
     DynamicAgentRegistry,
     TTSOpenAICompatibleBackends,

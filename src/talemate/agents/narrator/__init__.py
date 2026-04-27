@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses
-import random
 from functools import wraps
 from typing import TYPE_CHECKING
 
@@ -27,8 +26,8 @@ from talemate.agents.base import set_processing as _set_processing
 from talemate.agents.context import active_agent
 from talemate.agents.world_state import TimePassageEmission
 from talemate.agents.memory.rag import MemoryRAGMixin
+from talemate.agents.narrator.auto_narration import AutoNarrationMixin
 from talemate.emit import emit
-from talemate.events import GameLoopActorIterEvent
 from talemate.prompts import Prompt
 from talemate.scene_message import NarratorMessage
 
@@ -95,7 +94,7 @@ def set_processing(fn):
 
 
 @register()
-class NarratorAgent(MemoryRAGMixin, Agent):
+class NarratorAgent(MemoryRAGMixin, AutoNarrationMixin, Agent):
     """
     Handles narration of the story
     """
@@ -245,37 +244,10 @@ class NarratorAgent(MemoryRAGMixin, Agent):
                     )
                 },
             ),
-            "narrate_dialogue": AgentAction(
-                enabled=False,
-                container=True,
-                can_be_disabled=True,
-                label="Narrate after Dialogue",
-                icon="mdi-forum-plus-outline",
-                description="Narrator will get a chance to narrate after every line of dialogue",
-                config={
-                    "ai_dialog": AgentActionConfig(
-                        type="number",
-                        label="AI Dialogue",
-                        description="Chance to narrate after every line of dialogue, 1 = always, 0 = never",
-                        value=0.0,
-                        min=0.0,
-                        max=1.0,
-                        step=0.1,
-                    ),
-                    "player_dialog": AgentActionConfig(
-                        type="number",
-                        label="Player Dialogue",
-                        description="Chance to narrate after every line of dialogue, 1 = always, 0 = never",
-                        value=0.1,
-                        min=0.0,
-                        max=1.0,
-                        step=0.1,
-                    ),
-                },
-            ),
         }
 
         MemoryRAGMixin.add_actions(actions)
+        AutoNarrationMixin.add_actions(actions)
         return actions
 
     def __init__(
@@ -312,18 +284,6 @@ class NarratorAgent(MemoryRAGMixin, Agent):
     @property
     def narrate_time_passage_enabled(self) -> bool:
         return self.actions["narrate_time_passage"].enabled
-
-    @property
-    def narrate_dialogue_enabled(self) -> bool:
-        return self.actions["narrate_dialogue"].enabled
-
-    @property
-    def narrate_dialogue_ai_chance(self) -> float:
-        return self.actions["narrate_dialogue"].config["ai_dialog"].value
-
-    @property
-    def narrate_dialogue_player_chance(self) -> float:
-        return self.actions["narrate_dialogue"].config["player_dialog"].value
 
     @property
     def content_use_scene_intent(self) -> bool:
@@ -400,7 +360,6 @@ class NarratorAgent(MemoryRAGMixin, Agent):
         talemate.emit.async_signals.get("agent.world_state.time").connect(
             self.on_time_passage
         )
-        talemate.emit.async_signals.get("game_loop_actor_iter").connect(self.on_dialog)
 
     async def on_time_passage(self, event: TimePassageEmission):
         """
@@ -427,57 +386,6 @@ class NarratorAgent(MemoryRAGMixin, Agent):
         )
         emit("narrator", narrator_message)
         await self.scene.push_history(narrator_message)
-
-    async def on_dialog(self, event: GameLoopActorIterEvent):
-        """
-        Handles dialogue narration, if enabled
-        """
-
-        if not self.narrate_dialogue_enabled:
-            return
-
-        if event.game_loop.had_passive_narration:
-            log.debug(
-                "narrate on dialog",
-                skip=True,
-                had_passive_narration=event.game_loop.had_passive_narration,
-            )
-            return
-
-        narrate_on_ai_chance = self.narrate_dialogue_ai_chance
-        narrate_on_player_chance = self.narrate_dialogue_player_chance
-        narrate_on_ai = random.random() < narrate_on_ai_chance
-        narrate_on_player = random.random() < narrate_on_player_chance
-
-        log.debug(
-            "narrate on dialog",
-            narrate_on_ai=narrate_on_ai,
-            narrate_on_ai_chance=narrate_on_ai_chance,
-            narrate_on_player=narrate_on_player,
-            narrate_on_player_chance=narrate_on_player_chance,
-        )
-
-        if event.actor.character.is_player and not narrate_on_player:
-            return
-
-        if not event.actor.character.is_player and not narrate_on_ai:
-            return
-
-        response = await self.narrate_after_dialogue(event.actor.character)
-        narrator_message = NarratorMessage(
-            response,
-            meta={
-                "agent": "narrator",
-                "function": "narrate_after_dialogue",
-                "arguments": {
-                    "character": event.actor.character.name,
-                },
-            },
-        )
-        emit("narrator", narrator_message)
-        await self.scene.push_history(narrator_message)
-
-        event.game_loop.had_passive_narration = True
 
     @set_processing
     @store_context_state(

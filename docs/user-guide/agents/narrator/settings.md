@@ -60,11 +60,33 @@ Wheneever you indicate a passage of time using the [Scene tools](/talemate/user-
 
 This allows you to explain what happens during the passage of time.
 
-## :material-forum-plus-outline: Narrate after dialogue
+## :material-script-text-play: Auto Narration
 
-![Narrator agent after dialogue settings](/talemate/img/0.29.0/narrator-narrate-after-dialogue-settings.png)
+!!! info "New in 0.37.0"
 
-Whenever a character speaks, the narrator will automatically narrate the scene after.
+    Replaces the **Narrate after Dialogue** action. The old auto-trigger fired a single, fixed narration type after every character turn; Auto Narration is a probability-gated dispatcher that can fire any one of three narration types — including the same post-dialogue narration that the old action ran.
+
+Container action that fires narration on its own during the scene loop. Disabled by default; quick toggle available next to the agent's General settings.
+
+See [Auto Narration](/talemate/user-guide/agents/narrator/auto-narration) for the full description, weights breakdown, and gating rules.
+
+##### Chance
+
+Master probability that anything fires on a given actor turn. Range `0.0`–`1.0`, step `0.05`. `0` never fires; `1` fires every turn. The chance roll is the last gate — feature-disabled, scene-direction suppression, and zero weights all skip the roll entirely.
+
+##### Action Weights
+
+Relative likelihood of each action when auto narration fires. Three sliders that auto-rebalance to always sum to `1.0`:
+
+- **Progress Story** — moves the story forward (uses `progress_story`).
+- **Narrate Scene** — visually-focused description of what is currently happening (uses `narrate_scene`).
+- **Narrate Environment** — post-dialogue ambience and reactions, focused on sensory information (uses `narrate_after_dialogue` internally; the response length budget for it lives under [Generation Length Per Narration Type](#generation-length-per-narration-type) → **After dialogue**).
+
+Drag any slider to set its weight; the other two redistribute proportionally to make the total stay at `1.0`. The slider you released last is "pinned" (a small :material-pin: icon appears next to its label) so you can adjust a third slider without disturbing the value you just set. A weight of `0` removes that action from the pool entirely — the chance roll still happens, but the action is not eligible to be picked.
+
+##### Disable during scene direction
+
+Default on. When the [director's Scene Direction](/talemate/user-guide/agents/director/scene-direction) is enabled — either via the agent toggle or a scene-level always-on override — Auto Narration is skipped. Turn this off if you want both systems running at once.
 
 ## :material-brain: Long Term Memory
 

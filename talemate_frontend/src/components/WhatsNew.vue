@@ -96,6 +96,11 @@ export default {
                             description: "The director can now plan and track multi-step work. In director chat it keeps a short todo list while it works through a task.\n\nA new Generate long progress dialog on the scene tool bar kicks off longer arcs — generating a multi-beat outline and playing it out beat by beat."
                         },
                         {
+                            title: "Auto Narration",
+                            description: "Replaces the old \"Narrate after Dialogue\" toggle on the Narrator agent. A master chance slider decides whether the narrator fires on a given actor turn, and a weighted mix picks which action runs — Progress Story, Narrate Scene, or Narrate Environment. Suppresses itself while scene direction is active by default.",
+                            default_state: "disabled"
+                        },
+                        {
                             title: "LLM Prompt Templates Manager",
                             description: "A dedicated UI tab for viewing, creating, editing, and deleting LLM prompt templates. Built-in templates are read-only but can be copied to user templates. User templates are stored in std/user/ and gitignored. GGUF/llama.cpp chat templates can be used directly."
                         },

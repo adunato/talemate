@@ -143,7 +143,7 @@ ClientType = TypeVar("ClientType", bound=Client)
 
 
 class AgentActionConfig(pydantic.BaseModel):
-    value: Union[int, float, str, bool, list, None] = None
+    value: Union[int, float, str, bool, list, dict, None] = None
 
 
 class AgentAction(pydantic.BaseModel):
