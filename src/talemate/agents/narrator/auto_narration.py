@@ -110,9 +110,7 @@ class AutoNarrationMixin:
             if director.direction_enabled_with_override:
                 return []
         return [
-            name
-            for name, weight in self.auto_narration_weights.items()
-            if weight > 0.0
+            name for name, weight in self.auto_narration_weights.items() if weight > 0.0
         ]
 
     @property
