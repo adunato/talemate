@@ -88,10 +88,6 @@ export default {
                     version: '0.37.0',
                     items: [
                         {
-                            title: "Upgrade Notes",
-                            description: "Frontend default port is now 8082 (was 8080) to avoid conflicting with llama.cpp. Update bookmarks and reverse-proxy configs, or set TALEMATE_FRONTEND_PORT=8080 to keep the old port.\n\nDocker Compose environment variables have been renamed with the TALEMATE_ prefix: FRONTEND_PORT → TALEMATE_FRONTEND_PORT, BACKEND_PORT → TALEMATE_BACKEND_PORT. Rename them in any .env files or shell exports."
-                        },
-                        {
                             title: "Director Planning",
                             description: "The director can now plan and track multi-step work. In director chat it keeps a short todo list while it works through a task.\n\nA new Generate long progress dialog on the scene tool bar kicks off longer arcs — generating a multi-beat outline and playing it out beat by beat."
                         },
@@ -117,10 +113,6 @@ export default {
                             description: "If a KoboldCpp client has a TTS model loaded, it's auto-registered as a TTS backend. The backend stays around across restarts but auto-disables when the model isn't loaded and re-enables when it is."
                         },
                         {
-                            title: "Section Format",
-                            description: "Per-client setting that controls how prompt sections are formatted. Choose between Markdown (## headings) or XML (<SECTION>...</SECTION> tags). Found in the client configuration next to the data format setting."
-                        },
-                        {
                             title: "Model Testing Harness",
                             description: "A bundled scene that runs a suite of minimum-viability tests against a connected language model client."
                         },
@@ -128,48 +120,60 @@ export default {
                             title: "Notable Improvements",
                             items: [
                                 "Director: button in scene tools menu to manually trigger a direction turn; Ctrl+click for one-off instructions",
-                                "Player Direction: type #text in the main input to insert a player-authored director message without taking a conversation turn; ##text does the same while keeping your turn (requires Scene Direction enabled)",
-                                "Scene Direction: general director and per-scene-type instructions can now reference a Jinja2 template from the scene's template directory, rendered alongside the raw instruction text",
-                                "Visual: organized tools menu into per-character submenus, matching the world scene tools pattern",
+                                "Director: gameplay actions now include a Roll Dice action — the director can roll a die and use the result to drive the next beat",
+                                "Player Direction: type #text in the main input to insert a player-authored director message without taking a turn; ##text does the same while keeping your turn (requires Scene Direction enabled)",
+                                "Scene Direction: general and per-scene-type director instructions can now reference a Jinja2 template, rendered alongside the raw instruction text",
+                                "Scene Direction Node: default scene loop now respects the director's configured max_actions_per_turn instead of hardcoding 10",
+                                "Director Chat: action confirmation timeout is now configurable (0–60 minutes, default 3; 0 waits indefinitely)",
                                 "System Prompt: added {{ system_prompt }} template variable for app and client overrides",
                                 "System Prompt: override list now shows a pencil icon next to entries with an active override",
-                                "Scene Outline: added a perspective field for narrative perspective and tense (e.g., \"Third person limited, past tense\")",
-                                "Advance Time: moved time tools into a dedicated sub-component with grouped presets and a custom time dialog",
+                                "Prompts: top-level tab shows a warning icon when active template overrides are outdated",
+                                "Template Preview: new Override in… menu (user, scene, or custom group) and a Go to source button that jumps to the resolved template",
+                                "Prompt Templates: added a Gemma 4 template with thinking-mode toggle support",
+                                "Scene Outline: new perspective field for narrative perspective and tense (e.g., \"Third person limited, past tense\")",
+                                "Visual: organized tools menu into per-character submenus",
+                                "Advance Time: time tools grouped into Minutes/Hours/Days/Weeks/Months/Years presets with a custom duration dialog",
                                 "Client Config: moved Inference Presets, Data Format, Section Format, Length Enforcement, Prompt Caching, and Rate Limit into a dedicated Advanced tab",
-                                "Prompts: top-level tab now shows a warning icon when any active template overrides are outdated",
-                                "Director Chat: action confirmation timeout is now configurable (0–60 minutes, default 3; 0 waits indefinitely)",
-                                "Rewrite Revision: collapsed the targeted rewrite from two prompts into one, with a length guardrail and dynamic response length budget",
-                                "Context Database: added a Search Strictness slider; distance_mod preset is now a float (0.1–2.0)",
-                                "Embeddings: switching devices (e.g., CPU to CUDA) no longer requires a restart",
-                                "Context Formatting: the |condensed filter no longer permanently compacts multi-line context",
+                                "Section Format: new per-client setting controlling prompt section formatting — Markdown (## headings) or XML (<SECTION>...</SECTION>)",
+                                "Rewrite Revision: collapsed the targeted rewrite from two LLM calls into one, with a length guardrail",
+                                "Context Database: new Search Strictness slider; distance_mod preset is now a float (0.1–2.0)",
+                                "Embeddings: switching devices (e.g., CPU ↔ CUDA) no longer requires a restart",
+                                "Context Formatting: the |condensed filter no longer permanently flattens multi-line context",
+                                "Anthropic: added claude-opus-4-7 (adaptive-thinking only — no temperature/top_p/top_k) and a new 'xhigh' effort level between high and max",
+                                "Pocket TTS: upgraded to v2 with an int8 quantize toggle for ~30% faster CPU inference; existing configs auto-migrate",
+                                "Host/Port: backend and frontend host/port can now be configured via TALEMATE_BACKEND_HOST/PORT and TALEMATE_FRONTEND_HOST/PORT environment variables (#254)",
                                 "Debugging: set TALEMATE_LOG_PROMPTS=1 to write full prompt+response data to logs/prompt_log.jsonl",
-                                "NodeEditor: Asset Exists gains allow_partial (startswith matching); Prompt From Template gains dedupe toggle; new Dict Get (Path) node for dotted-path lookups",
-                                "Anthropic: added claude-opus-4-7 — adaptive-thinking only (budget mode auto-upgrades), no temperature/top_p/top_k, and a new 'xhigh' effort level between high and max",
-                                "Pocket TTS: upgraded to v2 with an int8 quantize toggle for ~30% faster CPU inference; existing configs auto-migrate"
+                                "NodeEditor: Asset Exists gains allow_partial (startswith matching); Prompt From Template gains a dedupe toggle; new Dict Get (Path) node for dotted-path lookups"
                             ]
                         },
                         {
                             title: "Bug Fixes",
                             items: [
-                                "Regenerating a failed message no longer permanently removes the original; it is restored on failure",
-                                "Anthropic: fixed missing max_tokens when response length capping is disabled; cleaned up outdated model IDs",
-                                "Fixed crash in the voice library character manager when a character was deactivated",
-                                "Fixed blank page on some Windows 10 systems caused by incorrect MIME type on JS module scripts",
-                                "Fixed response extraction when only a closing anchor tag was present (e.g., </PHASE_INTENT>)",
-                                "Text-Generation-WebUI / KoboldCpp: fixed SSE streaming crash on unhandled [DONE] sentinel",
-                                "TabbyAPI: fixed empty responses caused by the streaming parser only appending content on chunks that contained a usage block",
-                                "Director actions: removed redundant fix_instructions LLM call from the direct_scene actor path",
-                                "Introduce Character: advanced dialog (Ctrl+click) now sends actual user instructions instead of scene context",
-                                "Unslop: revisions substantially longer than the original are now discarded to prevent hallucinated duplication",
-                                "Encryption: API keys in nested agent action configs (e.g., OpenAI-compatible TTS, visual backends) are now encrypted",
+                                "Message Regeneration: a failed regeneration no longer permanently loses the original — it is restored to history and UI on failure",
+                                "Contextual Generate: added a Cancel button; generation runs as a background task so cancel takes effect mid-generation",
                                 "Contextual Generate: fixed list-type generation prefilling an empty line after 1.",
-                                "Narrate Progress: fixed narration occasionally producing screenplay-style dialogue",
+                                "Autocomplete: typeahead generation now runs as a background task with a cancel button on the status snackbar; fixes a deadlock where an empty model response froze the input",
+                                "UI Lock: scene input no longer stays disabled after cancelling any background generation",
+                                "Narrate Progress: fixed narration occasionally producing screenplay-style dialogue instead of prose",
+                                "Response Extraction: fixed failure when only a closing anchor tag was present (e.g., </PHASE_INTENT>)",
+                                "Unslop: revisions substantially longer than the original are now discarded",
+                                "Anthropic: fixed missing max_tokens when response length capping is disabled; cleaned up outdated model IDs",
+                                "Reasoning Pattern: blanking the pattern no longer silently re-saves as .*?</think>; template-derived patterns (e.g. Gemma 4's <channel|>) are now adopted when the stored pattern is empty",
+                                "TabbyAPI: fixed empty responses caused by the streaming parser only appending content on chunks with a usage block",
+                                "Text-Generation-WebUI / KoboldCpp: fixed SSE streaming crash on unhandled [DONE] sentinel",
+                                "Introduce Character: advanced dialog (Ctrl+click) now sends actual user instructions instead of scene context",
+                                "Director actions: removed redundant fix_instructions LLM call from the direct_scene actor path",
+                                "Encryption: API keys in agent action configs (e.g., OpenAI-compatible TTS, visual backends) are no longer stored in plaintext",
+                                "Agent Config: stopped persisting unified_api_key fields to config.yaml",
+                                "Voice Library: fixed crash in the character manager when a character was deactivated",
+                                "Episodes: fixed \"No episodes available\" placeholder being selectable",
+                                "Prompts UI: fixed the template preview editor being clipped at the bottom across all tabs",
+                                "Character Visuals: fixed an infinite loop in the cover image and portrait tabs that spammed scene_assets/search when a character had no fallback assets",
+                                "Windows 10: fixed blank page caused by JS files being served with incorrect MIME type",
+                                "macOS Modifiers: Ctrl+click affordances now also accept Cmd on macOS across the UI (#261)",
+                                "Game Loop: game_loop_actor_iter now fires for every actor iteration instead of only player turns, so passive narration no longer skips AI turns",
                                 "Advance Time: fixed non-functional toolbar time advancement and invalid ISO 8601 duration strings for 1/2 week options",
-                                "Node Graph: fixed data/MakeDict and data/MakeList leaking initial values as shared mutable references",
-                                "macOS Modifiers: Ctrl+click affordances now also accept Cmd (Meta) on macOS across the UI",
-                                "Contextual Generate: dialog now has a working Cancel button — generation runs as a background task so the interrupt is processed mid-generation",
-                                "Autocomplete: typeahead generation now runs as a background task with a cancel button on the status snackbar; fixes a deadlock where an empty model response froze the UI",
-                                "UI Lock: scene input no longer stays disabled after cancelling a background generation (autocomplete, narrator action, conversation turn, etc.)"
+                                "Node Graph: data/MakeDict and data/MakeList no longer leak initial values between runs"
                             ]
                         }
                     ]
