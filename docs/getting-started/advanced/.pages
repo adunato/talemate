@@ -1,4 +1,5 @@
 nav:
+    - environment-variables.md
     - change-host-and-port.md
     - debug-logging.md
     - prompt-logging.md
