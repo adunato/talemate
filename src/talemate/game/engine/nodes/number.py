@@ -86,6 +86,7 @@ class AsNumber(NumberNode):
     Inputs:
 
     - value: The value to convert to a number
+    - default: Fallback value used when ``value`` is unresolved or None
 
     Outputs:
 
@@ -102,7 +103,8 @@ class AsNumber(NumberNode):
         )
 
     def setup(self):
-        self.add_input("value", socket_type="any")
+        self.add_input("value", socket_type="any", group="value")
+        self.add_input("default", socket_type="any", group="value")
         self.set_property("number_type", "int")
         self.add_output("value", socket_type="int,float")
 
@@ -113,6 +115,8 @@ class AsNumber(NumberNode):
             valid_types = (float,)
 
         value = self.normalized_number_input("value", valid_types)
+        if value is UNRESOLVED:
+            value = self.normalized_number_input("default", valid_types)
         self.set_output_values({"value": value})
 
 

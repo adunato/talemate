@@ -257,8 +257,8 @@ class FunctionArgument(Node):
         self.add_output("value")
 
     def _convert_value(
-        self, value: str | int | float | bool
-    ) -> str | int | float | bool:
+        self, value: str | int | float | bool | None
+    ) -> str | int | float | bool | None:
         # if type is str any value that isnt part of str | int | float | bool
         # is passed through as is
 
@@ -278,8 +278,12 @@ class FunctionArgument(Node):
                 return value.split("\n")
             return value
         elif self.get_property("typ") == "int":
+            if value is None:
+                return value
             return int(value)
         elif self.get_property("typ") == "float":
+            if value is None:
+                return value
             return float(value)
         elif self.get_property("typ") == "bool":
             if isinstance(value, str):

@@ -191,7 +191,8 @@ export default {
                                     items: [
                                         "Asset Exists gains allow_partial (startswith matching)",
                                         "Prompt From Template gains a dedupe toggle (default on)",
-                                        "New Dict Get (Path) node for dotted-path lookups into nested dicts/lists"
+                                        "New Dict Get (Path) node for dotted-path lookups into nested dicts/lists",
+                                        "As Number gains a default input socket — grouped with value, so either satisfies the input and the default substitutes when value is None or unresolved"
                                     ]
                                 }
                             ]
@@ -256,7 +257,8 @@ export default {
                                     items: [
                                         "Game Loop: game_loop_actor_iter now fires for every actor iteration instead of only player turns, so passive narration no longer skips AI turns",
                                         "Advance Time: fixed non-functional toolbar time advancement and invalid ISO 8601 duration strings for 1/2 week options",
-                                        "Node Graph: data/MakeDict and data/MakeList no longer leak initial values between runs"
+                                        "Node Graph: data/MakeDict and data/MakeList no longer leak initial values between runs",
+                                        "Function Argument: fixed a TypeError when a function callback (e.g., roll_dice) received a None argument value typed as int or float — None now passes through unchanged for numeric types"
                                     ]
                                 }
                             ]

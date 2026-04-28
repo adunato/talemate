@@ -40,7 +40,7 @@
         "num": 1
       },
       "x": 0,
-      "y": 270,
+      "y": 269,
       "width": 210,
       "height": 154,
       "collapsed": false,
@@ -59,7 +59,7 @@
         "num": 2
       },
       "x": 0,
-      "y": 472,
+      "y": 471,
       "width": 210,
       "height": 154,
       "collapsed": false,
@@ -78,7 +78,7 @@
         "num": 3
       },
       "x": 0,
-      "y": 674,
+      "y": 673,
       "width": 210,
       "height": 154,
       "collapsed": false,
@@ -111,8 +111,8 @@
         "output_name": "max",
         "num": 2
       },
-      "x": 1357,
-      "y": 410,
+      "x": 1774,
+      "y": 347,
       "width": 210,
       "height": 108,
       "collapsed": false,
@@ -128,8 +128,8 @@
         "output_name": "reason",
         "num": 3
       },
-      "x": 1357,
-      "y": 590,
+      "x": 1774,
+      "y": 527,
       "width": 210,
       "height": 108,
       "collapsed": false,
@@ -145,8 +145,8 @@
         "output_name": "emit_system_message",
         "num": 4
       },
-      "x": 1357,
-      "y": 770,
+      "x": 1774,
+      "y": 707,
       "width": 210,
       "height": 108,
       "collapsed": false,
@@ -162,8 +162,8 @@
         "output_name": "result",
         "num": 5
       },
-      "x": 1357,
-      "y": 950,
+      "x": 1774,
+      "y": 887,
       "width": 210,
       "height": 108,
       "collapsed": false,
@@ -177,8 +177,8 @@
       "properties": {
         "stage": 0
       },
-      "x": 720,
-      "y": 573,
+      "x": 883,
+      "y": 576,
       "width": 210,
       "height": 130,
       "collapsed": false,
@@ -194,7 +194,7 @@
         "scope": "local"
       },
       "x": 360,
-      "y": 270,
+      "y": 269,
       "width": 210,
       "height": 130,
       "collapsed": false,
@@ -210,7 +210,7 @@
         "scope": "local"
       },
       "x": 360,
-      "y": 472,
+      "y": 471,
       "width": 210,
       "height": 130,
       "collapsed": false,
@@ -226,7 +226,7 @@
         "scope": "local"
       },
       "x": 360,
-      "y": 674,
+      "y": 673,
       "width": 210,
       "height": 130,
       "collapsed": false,
@@ -241,8 +241,8 @@
         "name": "max",
         "scope": "local"
       },
-      "x": 997,
-      "y": 410,
+      "x": 1414,
+      "y": 347,
       "width": 210,
       "height": 130,
       "collapsed": false,
@@ -257,8 +257,8 @@
         "name": "reason",
         "scope": "local"
       },
-      "x": 997,
-      "y": 590,
+      "x": 1414,
+      "y": 527,
       "width": 210,
       "height": 130,
       "collapsed": false,
@@ -273,8 +273,8 @@
         "name": "emit_system_message",
         "scope": "local"
       },
-      "x": 997,
-      "y": 770,
+      "x": 1414,
+      "y": 707,
       "width": 244,
       "height": 130,
       "collapsed": false,
@@ -289,8 +289,8 @@
         "name": "result",
         "scope": "local"
       },
-      "x": 997,
-      "y": 950,
+      "x": 1414,
+      "y": 887,
       "width": 210,
       "height": 130,
       "collapsed": false,
@@ -305,8 +305,8 @@
         "name": "formatted_result",
         "scope": "local"
       },
-      "x": 997,
-      "y": 1130,
+      "x": 1414,
+      "y": 1067,
       "width": 218,
       "height": 130,
       "collapsed": false,
@@ -322,8 +322,8 @@
         "output_name": "formatted_result",
         "num": 6
       },
-      "x": 1357,
-      "y": 1130,
+      "x": 1774,
+      "y": 1067,
       "width": 210,
       "height": 108,
       "collapsed": false,
@@ -342,7 +342,7 @@
         "num": 4
       },
       "x": 0,
-      "y": 876,
+      "y": 875,
       "width": 210,
       "height": 154,
       "collapsed": false,
@@ -357,7 +357,7 @@
         "default": false
       },
       "x": 240,
-      "y": 908,
+      "y": 907,
       "width": 210,
       "height": 58,
       "collapsed": false,
@@ -373,7 +373,7 @@
         "scope": "local"
       },
       "x": 490,
-      "y": 888,
+      "y": 887,
       "width": 244,
       "height": 130,
       "collapsed": false,
@@ -389,8 +389,8 @@
         "output_name": "min",
         "num": 1
       },
-      "x": 1361,
-      "y": 234,
+      "x": 1778,
+      "y": 171,
       "width": 210,
       "height": 108,
       "collapsed": false,
@@ -405,78 +405,13 @@
         "name": "min",
         "scope": "local"
       },
-      "x": 1008,
-      "y": 224,
+      "x": 1425,
+      "y": 161,
       "width": 210,
       "height": 130,
       "collapsed": false,
       "inherited": false,
       "registry": "state/GetState",
-      "base_type": "core/Node"
-    },
-    "efa684e8-6910-4b16-8228-0d47c0d2d74f": {
-      "title": "IN modifier",
-      "id": "efa684e8-6910-4b16-8228-0d47c0d2d74f",
-      "properties": {
-        "input_type": "int",
-        "input_name": "modifier",
-        "input_optional": true,
-        "input_group": "",
-        "num": 5
-      },
-      "x": 2,
-      "y": 1108,
-      "width": 210,
-      "height": 154,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/Input",
-      "base_type": "core/Node"
-    },
-    "2749ed93-7ba6-4449-91e1-29859f7aaab5": {
-      "title": "SET local.modifier",
-      "id": "2749ed93-7ba6-4449-91e1-29859f7aaab5",
-      "properties": {
-        "name": "modifier",
-        "scope": "local"
-      },
-      "x": 490,
-      "y": 1120,
-      "width": 210,
-      "height": 122,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "state/SetState",
-      "base_type": "core/Node"
-    },
-    "5455d9d6-9456-41e2-9444-b05926051442": {
-      "title": "As Number",
-      "id": "5455d9d6-9456-41e2-9444-b05926051442",
-      "properties": {
-        "number_type": "int"
-      },
-      "x": 240,
-      "y": 1140,
-      "width": 210,
-      "height": 58,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "data/number/AsNumber",
-      "base_type": "core/Node"
-    },
-    "8799626b-675d-4675-adba-c444373d4d17": {
-      "title": "Stage 0",
-      "id": "8799626b-675d-4675-adba-c444373d4d17",
-      "properties": {
-        "stage": 0
-      },
-      "x": 720,
-      "y": 1130,
-      "width": 210,
-      "height": 130,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/Stage",
       "base_type": "core/Node"
     },
     "f74fd488-8f90-4cf4-84d1-44ba5511cf9d": {
@@ -957,10 +892,91 @@
       "x": 580,
       "y": 1920,
       "width": 210,
-      "height": 58,
+      "height": 78,
       "collapsed": false,
       "inherited": false,
       "registry": "data/number/AsNumber",
+      "base_type": "core/Node"
+    },
+    "8799626b-675d-4675-adba-c444373d4d17": {
+      "title": "Stage 0",
+      "id": "8799626b-675d-4675-adba-c444373d4d17",
+      "properties": {
+        "stage": 0
+      },
+      "x": 900,
+      "y": 1130,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "efa684e8-6910-4b16-8228-0d47c0d2d74f": {
+      "title": "IN modifier",
+      "id": "efa684e8-6910-4b16-8228-0d47c0d2d74f",
+      "properties": {
+        "input_type": "int",
+        "input_name": "modifier",
+        "input_optional": true,
+        "input_group": "",
+        "num": 5
+      },
+      "x": 2,
+      "y": 1107,
+      "width": 210,
+      "height": 154,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Input",
+      "base_type": "core/Node"
+    },
+    "6311d600-4617-44e0-bfc7-280a0fcf8e18": {
+      "title": "Zero",
+      "id": "6311d600-4617-44e0-bfc7-280a0fcf8e18",
+      "properties": {
+        "value": 0,
+        "number_type": "int"
+      },
+      "x": 240,
+      "y": 1220,
+      "width": 210,
+      "height": 82,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "data/number/Make",
+      "base_type": "core/Node"
+    },
+    "5455d9d6-9456-41e2-9444-b05926051442": {
+      "title": "As Number",
+      "id": "5455d9d6-9456-41e2-9444-b05926051442",
+      "properties": {
+        "number_type": "int"
+      },
+      "x": 380,
+      "y": 1140,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/number/AsNumber",
+      "base_type": "core/Node"
+    },
+    "2749ed93-7ba6-4449-91e1-29859f7aaab5": {
+      "title": "SET local.modifier",
+      "id": "2749ed93-7ba6-4449-91e1-29859f7aaab5",
+      "properties": {
+        "name": "modifier",
+        "scope": "local"
+      },
+      "x": 640,
+      "y": 1120,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
       "base_type": "core/Node"
     }
   },
@@ -1012,15 +1028,6 @@
     ],
     "b276aa84-c8f7-4fa7-aa06-475ec3193681.value": [
       "173d3100-8427-411a-95a0-87e4c306171f.value"
-    ],
-    "efa684e8-6910-4b16-8228-0d47c0d2d74f.value": [
-      "5455d9d6-9456-41e2-9444-b05926051442.value"
-    ],
-    "2749ed93-7ba6-4449-91e1-29859f7aaab5.value": [
-      "8799626b-675d-4675-adba-c444373d4d17.state"
-    ],
-    "5455d9d6-9456-41e2-9444-b05926051442.value": [
-      "2749ed93-7ba6-4449-91e1-29859f7aaab5.value"
     ],
     "f74fd488-8f90-4cf4-84d1-44ba5511cf9d.value": [
       "3a1c1e34-5f7d-4bfc-934c-f57ddace7b57.max"
@@ -1102,6 +1109,18 @@
     ],
     "9b688401-3c9f-4b81-a0ed-2b0d0c5d3d01.value": [
       "ab330fcd-2e25-4fac-a95d-9c406f5c5e22.value"
+    ],
+    "efa684e8-6910-4b16-8228-0d47c0d2d74f.value": [
+      "5455d9d6-9456-41e2-9444-b05926051442.value"
+    ],
+    "6311d600-4617-44e0-bfc7-280a0fcf8e18.value": [
+      "5455d9d6-9456-41e2-9444-b05926051442.default"
+    ],
+    "5455d9d6-9456-41e2-9444-b05926051442.value": [
+      "2749ed93-7ba6-4449-91e1-29859f7aaab5.value"
+    ],
+    "2749ed93-7ba6-4449-91e1-29859f7aaab5.value": [
+      "8799626b-675d-4675-adba-c444373d4d17.state"
     ]
   },
   "groups": [
@@ -1118,17 +1137,17 @@
     {
       "title": "Stage 0",
       "x": -25,
-      "y": 190,
-      "width": 980,
-      "height": 1097,
+      "y": 189,
+      "width": 1149,
+      "height": 1101,
       "color": "#3f789e",
       "font_size": 24,
       "inherited": false
     },
     {
       "title": "Output",
-      "x": 972,
-      "y": 164,
+      "x": 1389,
+      "y": 101,
       "width": 646,
       "height": 1129,
       "color": "#8A8",
