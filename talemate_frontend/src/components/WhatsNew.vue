@@ -46,7 +46,20 @@
                                                 height="150"
                                             ></v-img>
                                             <div v-if="feature.description" class="content text-white mt-1">{{ feature.description }}</div>
-                                            <div v-if="feature.items" class="items-list">
+                                            <div v-if="feature.groups" class="items-list">
+                                                <div v-for="(group, gIndex) in feature.groups"
+                                                    :key="gIndex"
+                                                    class="group-entry">
+                                                    <div class="group-title text-secondary">{{ group.title }}</div>
+                                                    <div v-for="(subitem, index) in group.items"
+                                                        :key="index"
+                                                        class="item-entry">
+                                                        <span class="bullet">•</span>
+                                                        <span class="item-text">{{ subitem }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div v-else-if="feature.items" class="items-list">
                                                 <div v-for="(subitem, index) in feature.items"
                                                     :key="index"
                                                     class="item-entry">
@@ -118,62 +131,134 @@ export default {
                         },
                         {
                             title: "Notable Improvements",
-                            items: [
-                                "Director: button in scene tools menu to manually trigger a direction turn; Ctrl+click for one-off instructions",
-                                "Director: gameplay actions now include a Roll Dice action — the director can roll a die and use the result to drive the next beat",
-                                "Player Direction: type #text in the main input to insert a player-authored director message without taking a turn; ##text does the same while keeping your turn (requires Scene Direction enabled)",
-                                "Scene Direction: general and per-scene-type director instructions can now reference a Jinja2 template, rendered alongside the raw instruction text",
-                                "Scene Direction Node: default scene loop now respects the director's configured max_actions_per_turn instead of hardcoding 10",
-                                "Director Chat: action confirmation timeout is now configurable (0–60 minutes, default 3; 0 waits indefinitely)",
-                                "System Prompt: added {{ system_prompt }} template variable for app and client overrides",
-                                "System Prompt: override list now shows a pencil icon next to entries with an active override",
-                                "Prompts: top-level tab shows a warning icon when active template overrides are outdated",
-                                "Template Preview: new Override in… menu (user, scene, or custom group) and a Go to source button that jumps to the resolved template",
-                                "Prompt Templates: added a Gemma 4 template with thinking-mode toggle support",
-                                "Scene Outline: new perspective field for narrative perspective and tense (e.g., \"Third person limited, past tense\")",
-                                "Visual: organized tools menu into per-character submenus",
-                                "Advance Time: time tools grouped into Minutes/Hours/Days/Weeks/Months/Years presets with a custom duration dialog",
-                                "Client Config: moved Inference Presets, Data Format, Section Format, Length Enforcement, Prompt Caching, and Rate Limit into a dedicated Advanced tab",
-                                "Section Format: new per-client setting controlling prompt section formatting — Markdown (## headings) or XML (<SECTION>...</SECTION>)",
-                                "Rewrite Revision: collapsed the targeted rewrite from two LLM calls into one, with a length guardrail",
-                                "Context Database: new Search Strictness slider; distance_mod preset is now a float (0.1–2.0)",
-                                "Embeddings: switching devices (e.g., CPU ↔ CUDA) no longer requires a restart",
-                                "Context Formatting: the |condensed filter no longer permanently flattens multi-line context",
-                                "Anthropic: added claude-opus-4-7 (adaptive-thinking only — no temperature/top_p/top_k) and a new 'xhigh' effort level between high and max",
-                                "Pocket TTS: upgraded to v2 with an int8 quantize toggle for ~30% faster CPU inference; existing configs auto-migrate",
-                                "Host/Port: backend and frontend host/port can now be configured via TALEMATE_BACKEND_HOST/PORT and TALEMATE_FRONTEND_HOST/PORT environment variables (#254)",
-                                "Debugging: set TALEMATE_LOG_PROMPTS=1 to write full prompt+response data to logs/prompt_log.jsonl",
-                                "NodeEditor: Asset Exists gains allow_partial (startswith matching); Prompt From Template gains a dedupe toggle; new Dict Get (Path) node for dotted-path lookups"
+                            groups: [
+                                {
+                                    title: "Director & Scene Direction",
+                                    items: [
+                                        "Director: button in scene tools menu to manually trigger a direction turn; Ctrl+click for one-off instructions",
+                                        "Director: gameplay actions now include a Roll Dice action — the director can roll a die and use the result to drive the next beat",
+                                        "Player Direction: type #text in the main input to insert a player-authored director message without taking a turn; ##text does the same while keeping your turn (requires Scene Direction enabled)",
+                                        "Scene Direction: general and per-scene-type director instructions can now reference a Jinja2 template, rendered alongside the raw instruction text",
+                                        "Scene Direction Node: default scene loop now respects the director's configured max_actions_per_turn instead of hardcoding 10",
+                                        "Director Chat: action confirmation timeout is now configurable (0–60 minutes, default 3; 0 waits indefinitely)"
+                                    ]
+                                },
+                                {
+                                    title: "Prompts & Templates",
+                                    items: [
+                                        "System Prompt: added {{ system_prompt }} template variable for app and client overrides",
+                                        "System Prompt: override list now shows a pencil icon next to entries with an active override",
+                                        "Prompts: top-level tab shows a warning icon when active template overrides are outdated",
+                                        "Template Preview: new Override in… menu (user, scene, or custom group) and a Go to source button that jumps to the resolved template",
+                                        "Prompt Templates: added a Gemma 4 template with thinking-mode toggle support"
+                                    ]
+                                },
+                                {
+                                    title: "Scene & UI",
+                                    items: [
+                                        "Scene Outline: new perspective field for narrative perspective and tense (e.g., \"Third person limited, past tense\")",
+                                        "Visual: organized tools menu into per-character submenus",
+                                        "Advance Time: time tools grouped into Minutes/Hours/Days/Weeks/Months/Years presets with a custom duration dialog"
+                                    ]
+                                },
+                                {
+                                    title: "Clients & Generation",
+                                    items: [
+                                        "Client Config: moved Inference Presets, Data Format, Section Format, Length Enforcement, Prompt Caching, and Rate Limit into a dedicated Advanced tab",
+                                        "Section Format: new per-client setting controlling prompt section formatting — Markdown (## headings) or XML (<SECTION>...</SECTION>)",
+                                        "Rewrite Revision: collapsed the targeted rewrite from two LLM calls into one, with a length guardrail",
+                                        "Anthropic: added claude-opus-4-7 (adaptive-thinking only — no temperature/top_p/top_k) and a new 'xhigh' effort level between high and max",
+                                        "Pocket TTS: upgraded to v2 with an int8 quantize toggle for ~30% faster CPU inference; existing configs auto-migrate"
+                                    ]
+                                },
+                                {
+                                    title: "Context & Memory",
+                                    items: [
+                                        "Context Database: new Search Strictness slider; distance_mod preset is now a float (0.1–2.0)",
+                                        "Embeddings: switching devices (e.g., CPU ↔ CUDA) no longer requires a restart",
+                                        "Context Formatting: the |condensed filter no longer permanently flattens multi-line context"
+                                    ]
+                                },
+                                {
+                                    title: "Infrastructure",
+                                    items: [
+                                        "Host/Port: backend and frontend host/port can now be configured via TALEMATE_BACKEND_HOST/PORT and TALEMATE_FRONTEND_HOST/PORT environment variables (#254)",
+                                        "Debugging: set TALEMATE_LOG_PROMPTS=1 to write full prompt+response data to logs/prompt_log.jsonl"
+                                    ]
+                                },
+                                {
+                                    title: "Node Editor",
+                                    items: [
+                                        "Asset Exists gains allow_partial (startswith matching)",
+                                        "Prompt From Template gains a dedupe toggle (default on)",
+                                        "New Dict Get (Path) node for dotted-path lookups into nested dicts/lists"
+                                    ]
+                                }
                             ]
                         },
                         {
                             title: "Bug Fixes",
-                            items: [
-                                "Message Regeneration: a failed regeneration no longer permanently loses the original — it is restored to history and UI on failure",
-                                "Contextual Generate: added a Cancel button; generation runs as a background task so cancel takes effect mid-generation",
-                                "Contextual Generate: fixed list-type generation prefilling an empty line after 1.",
-                                "Autocomplete: typeahead generation now runs as a background task with a cancel button on the status snackbar; fixes a deadlock where an empty model response froze the input",
-                                "UI Lock: scene input no longer stays disabled after cancelling any background generation",
-                                "Narrate Progress: fixed narration occasionally producing screenplay-style dialogue instead of prose",
-                                "Response Extraction: fixed failure when only a closing anchor tag was present (e.g., </PHASE_INTENT>)",
-                                "Unslop: revisions substantially longer than the original are now discarded",
-                                "Anthropic: fixed missing max_tokens when response length capping is disabled; cleaned up outdated model IDs",
-                                "Reasoning Pattern: blanking the pattern no longer silently re-saves as .*?</think>; template-derived patterns (e.g. Gemma 4's <channel|>) are now adopted when the stored pattern is empty",
-                                "TabbyAPI: fixed empty responses caused by the streaming parser only appending content on chunks with a usage block",
-                                "Text-Generation-WebUI / KoboldCpp: fixed SSE streaming crash on unhandled [DONE] sentinel",
-                                "Introduce Character: advanced dialog (Ctrl+click) now sends actual user instructions instead of scene context",
-                                "Director actions: removed redundant fix_instructions LLM call from the direct_scene actor path",
-                                "Encryption: API keys in agent action configs (e.g., OpenAI-compatible TTS, visual backends) are no longer stored in plaintext",
-                                "Agent Config: stopped persisting unified_api_key fields to config.yaml",
-                                "Voice Library: fixed crash in the character manager when a character was deactivated",
-                                "Episodes: fixed \"No episodes available\" placeholder being selectable",
-                                "Prompts UI: fixed the template preview editor being clipped at the bottom across all tabs",
-                                "Character Visuals: fixed an infinite loop in the cover image and portrait tabs that spammed scene_assets/search when a character had no fallback assets",
-                                "Windows 10: fixed blank page caused by JS files being served with incorrect MIME type",
-                                "macOS Modifiers: Ctrl+click affordances now also accept Cmd on macOS across the UI (#261)",
-                                "Game Loop: game_loop_actor_iter now fires for every actor iteration instead of only player turns, so passive narration no longer skips AI turns",
-                                "Advance Time: fixed non-functional toolbar time advancement and invalid ISO 8601 duration strings for 1/2 week options",
-                                "Node Graph: data/MakeDict and data/MakeList no longer leak initial values between runs"
+                            groups: [
+                                {
+                                    title: "Generation & Cancellation",
+                                    items: [
+                                        "Message Regeneration: a failed regeneration no longer permanently loses the original — it is restored to history and UI on failure",
+                                        "Contextual Generate: added a Cancel button; generation runs as a background task so cancel takes effect mid-generation",
+                                        "Contextual Generate: fixed list-type generation prefilling an empty line after 1.",
+                                        "Autocomplete: typeahead generation now runs as a background task with a cancel button on the status snackbar; fixes a deadlock where an empty model response froze the input",
+                                        "UI Lock: scene input no longer stays disabled after cancelling any background generation"
+                                    ]
+                                },
+                                {
+                                    title: "Output Quality",
+                                    items: [
+                                        "Narrate Progress: fixed narration occasionally producing screenplay-style dialogue instead of prose",
+                                        "Response Extraction: fixed failure when only a closing anchor tag was present (e.g., </PHASE_INTENT>)",
+                                        "Unslop: revisions substantially longer than the original are now discarded"
+                                    ]
+                                },
+                                {
+                                    title: "Backends",
+                                    items: [
+                                        "Anthropic: fixed missing max_tokens when response length capping is disabled; cleaned up outdated model IDs",
+                                        "Reasoning Pattern: blanking the pattern no longer silently re-saves as .*?</think>; template-derived patterns (e.g. Gemma 4's <channel|>) are now adopted when the stored pattern is empty",
+                                        "TabbyAPI: fixed empty responses caused by the streaming parser only appending content on chunks with a usage block",
+                                        "Text-Generation-WebUI / KoboldCpp: fixed SSE streaming crash on unhandled [DONE] sentinel"
+                                    ]
+                                },
+                                {
+                                    title: "Director",
+                                    items: [
+                                        "Introduce Character: advanced dialog (Ctrl+click) now sends actual user instructions instead of scene context",
+                                        "Director actions: removed redundant fix_instructions LLM call from the direct_scene actor path"
+                                    ]
+                                },
+                                {
+                                    title: "Security & Config",
+                                    items: [
+                                        "Encryption: API keys in agent action configs (e.g., OpenAI-compatible TTS, visual backends) are no longer stored in plaintext",
+                                        "Agent Config: stopped persisting unified_api_key fields to config.yaml"
+                                    ]
+                                },
+                                {
+                                    title: "UI",
+                                    items: [
+                                        "Voice Library: fixed crash in the character manager when a character was deactivated",
+                                        "Episodes: fixed \"No episodes available\" placeholder being selectable",
+                                        "Prompts UI: fixed the template preview editor being clipped at the bottom across all tabs",
+                                        "Character Visuals: fixed an infinite loop in the cover image and portrait tabs that spammed scene_assets/search when a character had no fallback assets",
+                                        "Windows 10: fixed blank page caused by JS files being served with incorrect MIME type",
+                                        "macOS Modifiers: Ctrl+click affordances now also accept Cmd on macOS across the UI (#261)"
+                                    ]
+                                },
+                                {
+                                    title: "Loop, Time & Nodes",
+                                    items: [
+                                        "Game Loop: game_loop_actor_iter now fires for every actor iteration instead of only player turns, so passive narration no longer skips AI turns",
+                                        "Advance Time: fixed non-functional toolbar time advancement and invalid ISO 8601 duration strings for 1/2 week options",
+                                        "Node Graph: data/MakeDict and data/MakeList no longer leak initial values between runs"
+                                    ]
+                                }
                             ]
                         }
                     ]
@@ -656,6 +741,19 @@ export default {
 }
 .items-list {
     margin-top: 8px;
+}
+.group-entry {
+    margin-bottom: 10px;
+}
+.group-entry:last-child {
+    margin-bottom: 0;
+}
+.group-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
 }
 .item-entry {
     display: flex;
