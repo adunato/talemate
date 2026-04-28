@@ -39,7 +39,7 @@ class AutoNarrationMixin:
                     type="number",
                     label="Chance",
                     description="Master chance for auto narration to fire on a tick. 1 = always, 0 = never.",
-                    value=0.0,
+                    value=0.3,
                     min=0.0,
                     max=1.0,
                     step=0.05,
