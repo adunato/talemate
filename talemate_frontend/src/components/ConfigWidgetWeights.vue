@@ -31,7 +31,7 @@
                 class="flex-grow-1"
             >
                 <template v-slot:thumb-label="{ modelValue }">
-                    {{ formatPct(modelValue) }}
+                    {{ formatWeight(modelValue) }}
                 </template>
             </v-slider>
         </div>
@@ -74,8 +74,9 @@ export default {
             const v = this.modelValue?.[key];
             return typeof v === 'number' ? v : 0;
         },
-        formatPct(v) {
-            return `${Math.round(v * 100)}%`;
+        formatWeight(v) {
+            const precision = Math.max(0, Math.round(-Math.log10(this.step)));
+            return Number(v).toFixed(precision);
         },
         onSlide(changedKey, newValue) {
             const keys = this.choices.map(c => c.value);
