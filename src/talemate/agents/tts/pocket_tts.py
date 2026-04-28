@@ -45,11 +45,12 @@ _VALID_LANGUAGES = frozenset(
 )
 
 # Known pocket-tts v1 variant hex IDs mapped to their v2 language equivalent.
-# v1's default "b6369a24" variant corresponds to the english_2026-01 architecture
-# (matches its config signature). Map there explicitly so existing users keep voice
-# parity instead of silently jumping to the newer "english" (= english_2026-04) model.
+# v1's default "b6369a24" maps to the latest "english" alias rather than the
+# matching english_2026-01 model: v2 stores weights under different HF paths
+# than v1, so either choice forces a fresh download. Given the download is
+# unavoidable, give upgrading users the newer/recommended model.
 _V1_VARIANT_TO_LANGUAGE = {
-    "b6369a24": "english_2026-01",
+    "b6369a24": "english",
 }
 
 

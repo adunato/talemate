@@ -37,7 +37,7 @@ Selects which Pocket TTS model to load. English uses a fast 6-layer distilled mo
 |-------|-------------|
 | English (default, 6-layer distilled) | Fastest. Alias for the latest English release. Recommended for most users. |
 | English 2026-04 | The current dated English release the default points at. |
-| English 2026-01 | Earlier English release. Used by configs migrated from v1 (see [Upgrading from v1](#upgrading-from-v1)). |
+| English 2026-01 | Earlier English release. |
 | French / German / Italian / Portuguese / Spanish | Standard models for those languages. |
 | French / German / Italian / Portuguese / Spanish (24-layer) | Higher-quality 24-layer variants. Slower but better fidelity. |
 
@@ -75,10 +75,10 @@ Text is split into chunks of this size for processing. Smaller values increase r
 
 If you used Pocket TTS in earlier Talemate versions, your existing configuration is migrated automatically the next time the agent loads — there is nothing to do manually:
 
-- The old default variant `b6369a24` is mapped to **English 2026-01**, which uses the same underlying model. Voices you cloned previously will still sound the way they did before.
-- Any other unrecognised variant value falls back to **English** (the current default) with a warning in the log.
+- The old default variant `b6369a24` is mapped to **English** (the current default and recommended model). Pocket TTS v2 stores its weights under a different path than v1, so a fresh model download is unavoidable on first launch regardless of which English variant you end up on.
+- Any other unrecognised variant value also falls back to **English** with a warning in the log.
 
-If you want to try the newer English release or the int8 speedup, switch the **Language / Model** dropdown to "English (default, 6-layer distilled)" and/or enable **Quantize (int8)**.
+The first generation after upgrading will download the new English model weights. Subsequent generations use the cached weights as before.
 
 ## Built-in Voices
 
