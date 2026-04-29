@@ -115,7 +115,7 @@ export default {
                         },
                         {
                             title: "Character Folders",
-                            description: "The World State Manager character list can now be organized into collapsible folders. Folders are assigned from the character editor and synced across scenes that share the same world context."
+                            description: "The world editor character list can now be organized into collapsible folders. Folders are assigned from the character editor and synced across scenes that share the same world context."
                         },
                         {
                             title: "OpenAI Compatible TTS",
