@@ -11,7 +11,7 @@ Override example:
 <|SECTION:CHARACTERS|>
 {% for character in characters %}
 ### {{ character.name }}
-{{ character.sheet }}
+{{ character.sheet_filtered("description") }}
 
 {{ character.description }}
 {% endfor %}

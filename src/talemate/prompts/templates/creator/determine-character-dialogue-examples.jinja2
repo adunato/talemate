@@ -6,7 +6,7 @@
 {# CHARACTER CONTEXT #}
 {% set character_context %}
 <|SECTION:CHARACTER|>
-{{ character.sheet }}
+{{ character.sheet_filtered("description") }}
 {{ character.description }}
 <|CLOSE_SECTION|>
 {% endset %}

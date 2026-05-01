@@ -103,7 +103,7 @@
 {{ character.description }}
 
 {% if not character or not character.name %}name: {{ character_name }}{% endif %}
-{{ character.sheet_filtered(context_name) }}
+{{ character.sheet_filtered(context_name, "description") }}
 {% else %}
 {{ character.sheet }}
 {% endif %}

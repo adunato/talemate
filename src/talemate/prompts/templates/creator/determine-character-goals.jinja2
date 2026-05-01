@@ -14,7 +14,7 @@ Override example:
 <|SECTION:CHARACTERS|>
 {% for character in scene.characters %}
 ### {{ character.name }}
-{{ character.sheet }}
+{{ character.sheet_filtered("description") }}
 
 {{ character.description }}
 {% endfor %}

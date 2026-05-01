@@ -140,10 +140,11 @@ class Character(pydantic.BaseModel):
             "description": self.description,
         }
 
+        exclude_lower = {e.lower() for e in exclude}
         sheet_list = []
 
         for key, value in sheet.items():
-            if key not in exclude:
+            if key.lower() not in exclude_lower:
                 sheet_list.append(f"{key}: {value}")
 
         return "\n".join(sheet_list)

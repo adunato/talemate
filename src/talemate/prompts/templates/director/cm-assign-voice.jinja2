@@ -5,7 +5,7 @@
 <|SECTION:CHARACTER DETAILS - {{ character.name }}|>
 {{ character.description }}
 
-{{ character.sheet }}
+{{ character.sheet_filtered("description") }}
 <|CLOSE_SECTION|>
 <|SECTION:VOICES|>
 {% for voice in voices %}
