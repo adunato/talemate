@@ -50,6 +50,9 @@ DEFAULT_MODEL = "google/gemini-3-flash-preview"
 MODELS_FETCHED = False
 PROVIDERS_FETCHED = False
 
+_MODELS_LOCK = asyncio.Lock()
+_PROVIDERS_LOCK = asyncio.Lock()
+
 
 async def fetch_available_models(api_key: str = None):
     """Fetch available models from OpenRouter API"""
@@ -58,30 +61,36 @@ async def fetch_available_models(api_key: str = None):
     if MODELS_FETCHED:
         return AVAILABLE_MODELS
 
-    try:
-        log.debug("Fetching models from OpenRouter")
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                "https://openrouter.ai/api/v1/models", timeout=10.0
-            )
-            if response.status_code == 200:
-                data = response.json()
-                models = []
-                for model in data.get("data", []):
-                    model_id = model.get("id")
-                    if model_id:
-                        models.append(model_id)
-                AVAILABLE_MODELS = sorted(models)
-                log.debug(f"Fetched {len(AVAILABLE_MODELS)} models from OpenRouter")
-            else:
-                log.warning(
-                    f"Failed to fetch models from OpenRouter: {response.status_code}"
-                )
-    except Exception as e:
-        log.error(f"Error fetching models from OpenRouter: {e}")
+    async with _MODELS_LOCK:
+        if MODELS_FETCHED:
+            return AVAILABLE_MODELS
 
-    MODELS_FETCHED = True
-    return AVAILABLE_MODELS
+        try:
+            log.debug("Fetching models from OpenRouter")
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    "https://openrouter.ai/api/v1/models", timeout=10.0
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    models = []
+                    for model in data.get("data", []):
+                        model_id = model.get("id")
+                        if model_id:
+                            models.append(model_id)
+                    AVAILABLE_MODELS = sorted(models)
+                    log.debug(
+                        f"Fetched {len(AVAILABLE_MODELS)} models from OpenRouter"
+                    )
+                else:
+                    log.warning(
+                        f"Failed to fetch models from OpenRouter: {response.status_code}"
+                    )
+        except Exception as e:
+            log.error(f"Error fetching models from OpenRouter: {e}")
+
+        MODELS_FETCHED = True
+        return AVAILABLE_MODELS
 
 
 async def fetch_available_providers(api_key: str = None):
@@ -91,42 +100,46 @@ async def fetch_available_providers(api_key: str = None):
     if PROVIDERS_FETCHED:
         return AVAILABLE_PROVIDERS
 
-    if not api_key:
-        api_key = get_config().openrouter.api_key
+    async with _PROVIDERS_LOCK:
+        if PROVIDERS_FETCHED:
+            return AVAILABLE_PROVIDERS
 
-    if not api_key:
-        log.warning("No OpenRouter API key available, cannot fetch providers")
+        if not api_key:
+            api_key = get_config().openrouter.api_key
+
+        if not api_key:
+            log.warning("No OpenRouter API key available, cannot fetch providers")
+            PROVIDERS_FETCHED = True
+            return AVAILABLE_PROVIDERS
+
+        try:
+            log.debug("Fetching providers from OpenRouter")
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    "https://openrouter.ai/api/v1/providers",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    timeout=10.0,
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    providers = []
+                    for provider in data.get("data", []):
+                        provider_name = provider.get("name")
+                        if provider_name:
+                            providers.append(provider_name)
+                    AVAILABLE_PROVIDERS = sorted(providers)
+                    log.info(
+                        f"Fetched {len(AVAILABLE_PROVIDERS)} providers from OpenRouter"
+                    )
+                else:
+                    log.error(
+                        f"Failed to fetch providers from OpenRouter: HTTP {response.status_code}"
+                    )
+        except Exception as e:
+            log.error(f"Error fetching providers from OpenRouter: {e}")
+
         PROVIDERS_FETCHED = True
         return AVAILABLE_PROVIDERS
-
-    try:
-        log.debug("Fetching providers from OpenRouter")
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                "https://openrouter.ai/api/v1/providers",
-                headers={"Authorization": f"Bearer {api_key}"},
-                timeout=10.0,
-            )
-            if response.status_code == 200:
-                data = response.json()
-                providers = []
-                for provider in data.get("data", []):
-                    provider_name = provider.get("name")
-                    if provider_name:
-                        providers.append(provider_name)
-                AVAILABLE_PROVIDERS = sorted(providers)
-                log.info(
-                    f"Fetched {len(AVAILABLE_PROVIDERS)} providers from OpenRouter"
-                )
-            else:
-                log.error(
-                    f"Failed to fetch providers from OpenRouter: HTTP {response.status_code}"
-                )
-    except Exception as e:
-        log.error(f"Error fetching providers from OpenRouter: {e}")
-
-    PROVIDERS_FETCHED = True
-    return AVAILABLE_PROVIDERS
 
 
 def on_talemate_started(event):
