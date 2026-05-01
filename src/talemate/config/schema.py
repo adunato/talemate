@@ -89,6 +89,13 @@ class Client(pydantic.BaseModel):
     # by non-standard context ordering.
     optimize_prompt_caching: bool = False
 
+    # when enabled, prompt-level deduplication strips near-duplicate lines
+    # from the rendered prompt before sending. Off by default — modern
+    # context windows make the token savings negligible and the rewrites
+    # break prompt caching. Useful when RAG injection produces substantial
+    # duplication and the model's context window is tight.
+    dedupe_enabled: bool = False
+
     # Controls whether token caps and/or response length instructions are
     # sent with prompts. Options:
     #   "uncapped" - no token cap, no instructions

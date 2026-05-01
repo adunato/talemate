@@ -261,7 +261,10 @@ class Prompt:
         default_factory=lambda: DEFAULT_SECTIONING_HANDLER
     )
 
-    dedupe_enabled: bool = True
+    # None = follow the client's `dedupe_enabled` setting (resolved in `send`);
+    # True/False = explicit per-prompt override that ignores the client setting.
+    # Clientless renders treat None as "off" (the default).
+    dedupe_enabled: bool | None = None
     strip_mode: StripMode = StripMode.BOTH
     captured_context: str = dataclasses.field(default="", init=False)
 
@@ -685,12 +688,16 @@ class Prompt:
         return Prompt.get(uid, vars=vars)
 
     def render_and_request(
-        self, prompt: "Prompt", kind: str = "create", dedupe_enabled: bool = True
+        self,
+        prompt: "Prompt",
+        kind: str = "create",
+        dedupe_enabled: bool | None = None,
     ) -> str:
         if not self.client:
             raise ValueError("Prompt has no client set.")
 
-        prompt.dedupe_enabled = dedupe_enabled
+        if dedupe_enabled is not None:
+            prompt.dedupe_enabled = dedupe_enabled
 
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(prompt.send(self.client, kind=kind))
@@ -1456,8 +1463,10 @@ class Prompt:
             kind (str): The kind of prompt to send.
             response_spec (ResponseSpec | None): Response spec for extraction. If not provided,
                 defaults to AsIsExtractor for "response" field.
-            dedupe_enabled (bool | None): Whether to enable deduplication (currently unused,
-                reserved for future implementation).
+            dedupe_enabled (bool | None): Force prompt deduplication on/off for this
+                send. None (default) honors any explicit value already set on the
+                prompt and otherwise falls back to the client's `dedupe_enabled`
+                setting (default off).
 
         Returns:
             tuple[str, dict]: The response and extracted fields. If data_response=True,
@@ -1466,6 +1475,12 @@ class Prompt:
         """
 
         self.client = client
+
+        # Resolve dedupe: explicit arg > existing prompt setting > client default.
+        if dedupe_enabled is not None:
+            self.dedupe_enabled = dedupe_enabled
+        elif self.dedupe_enabled is None:
+            self.dedupe_enabled = bool(getattr(client, "dedupe_enabled", False))
 
         # Apply client's section format preference if set
         client_section_format = getattr(client, "section_format", None)

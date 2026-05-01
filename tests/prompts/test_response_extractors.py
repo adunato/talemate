@@ -967,7 +967,7 @@ Thinking about this...
 
     @pytest.mark.asyncio
     async def test_dedupe_enabled_parameter_accepted(self, mock_client):
-        """Test that dedupe_enabled parameter is accepted (reserved for future use)."""
+        """Test that dedupe_enabled parameter is accepted as an explicit per-send override."""
         from talemate.prompts.base import Prompt
 
         mock_client.send_prompt.return_value = "Simple response"

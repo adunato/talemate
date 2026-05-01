@@ -142,6 +142,7 @@ class CommonDefaults(pydantic.BaseModel):
     reason_tokens: int = 1024
     reason_response_pattern: str | None = None
     reason_prefill: str | None = None
+    dedupe_enabled: bool = False
 
 
 class Defaults(CommonDefaults, pydantic.BaseModel):
@@ -415,6 +416,10 @@ class ClientBase:
     @property
     def optimize_prompt_caching(self) -> bool:
         return self.client_config.optimize_prompt_caching
+
+    @property
+    def dedupe_enabled(self) -> bool:
+        return self.client_config.dedupe_enabled
 
     @property
     def enforce_response_length(self) -> str:
@@ -986,6 +991,7 @@ class ClientBase:
             "lock_template": self.lock_template,
             "system_prompts": self.system_prompts.model_dump(),
             "optimize_prompt_caching": self.optimize_prompt_caching,
+            "dedupe_enabled": self.dedupe_enabled,
             "enforce_response_length": self.enforce_response_length,
             "vision_capable": self.vision_capable,
             "vision_enabled": self.vision_enabled,

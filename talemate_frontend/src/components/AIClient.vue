@@ -577,6 +577,7 @@ export default {
           client.embeddings_model_name = data.data.embeddings_model_name;
           client.dedicated_default_template = data.data.dedicated_default_template;
           client.optimize_prompt_caching = data.data.optimize_prompt_caching;
+          client.dedupe_enabled = data.data.dedupe_enabled;
           client.enforce_response_length = data.data.enforce_response_length;
           for (let key in client.data.meta.extra_fields) {
             if (client.data[key] === null || client.data[key] === undefined) {
@@ -622,6 +623,7 @@ export default {
             reasoning_display: data.data.reasoning_display,
             dedicated_default_template: data.data.dedicated_default_template,
             optimize_prompt_caching: data.data.optimize_prompt_caching,
+            dedupe_enabled: data.data.dedupe_enabled,
             enforce_response_length: data.data.enforce_response_length,
           });
 

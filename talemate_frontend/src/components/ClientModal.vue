@@ -296,6 +296,12 @@
                       <v-checkbox v-model="client.optimize_prompt_caching" color="primary" label="Optimize for Prompt Caching" hint="Place volatile context after the scene history for better prompt caching. Recommended for remote API backends. May confuse weaker models." persistent-hint></v-checkbox>
                     </v-col>
                   </v-row>
+                  <!-- DEDUPE PROMPT -->
+                  <v-row>
+                    <v-col cols="12">
+                      <v-checkbox v-model="client.dedupe_enabled" color="primary" label="Deduplicate Prompts" hint="Strip near-duplicate lines from rendered prompts before sending. Off by default — modern context windows make the token savings negligible and the rewrites break prompt caching. Enable only if RAG injection is producing substantial duplication and the context window is tight." persistent-hint></v-checkbox>
+                    </v-col>
+                  </v-row>
                   <!-- RATE LIMIT -->
                   <v-row>
                     <v-col cols="12">
@@ -598,6 +604,7 @@ export default {
         this.client.requires_reasoning_pattern = defaults.requires_reasoning_pattern || false;
         this.client.lock_template = defaults.lock_template || false;
         this.client.optimize_prompt_caching = defaults.optimize_prompt_caching || false;
+        this.client.dedupe_enabled = defaults.dedupe_enabled || false;
         this.client.enforce_response_length = defaults.enforce_response_length || 'cap_tokens_and_instructions';
         this.client.template_file = defaults.template_file || null;
         // loop and build name from prefix, checking against current clients

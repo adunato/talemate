@@ -15,7 +15,7 @@ def create(scene: "Scene", client: "ClientBase") -> "ScopedAPI":
         def request(
             self,
             template_name: str,
-            dedupe_enabled: bool = True,
+            dedupe_enabled: bool | None = None,
             kind: str = "create",
             **kwargs,
         ) -> str:
@@ -27,7 +27,8 @@ def create(scene: "Scene", client: "ClientBase") -> "ScopedAPI":
 
             - template_name: str - The name of the template to render
               This should be the name of a template file without the extension
-            - dedupe_enabled: bool - Whether to dedupe the prompt
+            - dedupe_enabled: bool | None - Force prompt dedupe on/off.
+              None (default) follows the client's `dedupe_enabled` setting.
             - kind: str - The kind of prompt to render
             - kwargs: dict - The arguments to pass to the template
 
@@ -38,7 +39,7 @@ def create(scene: "Scene", client: "ClientBase") -> "ScopedAPI":
 
             class Arguments(pydantic.BaseModel):
                 template_name: str
-                dedupe_enabled: bool
+                dedupe_enabled: bool | None
                 kind: str
                 kwargs: dict
 
@@ -51,7 +52,8 @@ def create(scene: "Scene", client: "ClientBase") -> "ScopedAPI":
 
             prompt = Prompt.get(validated.template_name, validated.kwargs)
             prompt.client = client
-            prompt.dedupe_enabled = validated.dedupe_enabled
+            if validated.dedupe_enabled is not None:
+                prompt.dedupe_enabled = validated.dedupe_enabled
             return run_async(prompt.send(client, validated.kind))
 
     return API()
