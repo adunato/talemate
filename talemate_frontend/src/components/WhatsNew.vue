@@ -148,7 +148,8 @@ export default {
                                         "New {{ system_prompt }} variable for use inside prompt overrides",
                                         "Active overrides show a pencil icon; outdated overrides surface a warning on the Prompts tab",
                                         "Template preview can jump to source or create an override (user, scene, or custom groups) directly",
-                                        "Added a Gemma 4 prompt template with thinking-mode toggle support"
+                                        "Added a Gemma 4 prompt template with thinking-mode toggle support",
+                                        "New per-client Deduplicate Prompts toggle (off by default) — dedupe rarely pays off with modern context windows and breaks prompt caching"
                                     ]
                                 },
                                 {
@@ -213,7 +214,9 @@ export default {
                                     items: [
                                         "Story progress narration no longer occasionally produces screenplay-style dialogue",
                                         "Fixed response parsing when only a closing tag was present",
-                                        "Rewrites that balloon past the original are now discarded"
+                                        "Rewrites that balloon past the original are now discarded",
+                                        "Unslop revisions no longer hallucinate extra content from previous entries",
+                                        "Character descriptions are no longer duplicated in dialogue, narrator, director, and creator prompts"
                                     ]
                                 },
                                 {
@@ -222,7 +225,8 @@ export default {
                                         "Anthropic: fixed generation when response length capping is off; cleaned up outdated model IDs",
                                         "Reasoning Pattern: blanking it no longer silently restores the old default; template-derived patterns are now picked up",
                                         "TabbyAPI: fixed empty responses during streaming",
-                                        "Text-Generation-WebUI / KoboldCpp: fixed crash on the streaming end signal"
+                                        "Text-Generation-WebUI / KoboldCpp: fixed crash on the streaming end signal",
+                                        "OpenRouter: fixed redundant provider/model list fetches when multiple OpenRouter clients were configured"
                                     ]
                                 },
                                 {
@@ -256,6 +260,12 @@ export default {
                                         "Fixed toolbar time advancement and the broken 1- and 2-week options",
                                         "Node graph dictionary and list nodes no longer leak values between runs",
                                         "Fixed a crash when a function callback (e.g., roll dice) received None for a numeric argument"
+                                    ]
+                                },
+                                {
+                                    title: "Memory & RAG",
+                                    items: [
+                                        "RAG query generation now respects the volatile context placement setting, restoring prompt caching for long-term memory retrieval"
                                     ]
                                 }
                             ]
