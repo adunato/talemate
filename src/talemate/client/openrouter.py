@@ -79,9 +79,7 @@ async def fetch_available_models(api_key: str = None):
                         if model_id:
                             models.append(model_id)
                     AVAILABLE_MODELS = sorted(models)
-                    log.debug(
-                        f"Fetched {len(AVAILABLE_MODELS)} models from OpenRouter"
-                    )
+                    log.debug(f"Fetched {len(AVAILABLE_MODELS)} models from OpenRouter")
                 else:
                     log.warning(
                         f"Failed to fetch models from OpenRouter: {response.status_code}"
