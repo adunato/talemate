@@ -52,7 +52,7 @@ YOU MUST ONLY WRITE NEW DIALOGUE FOR ELENA.
 The length of your response must fit within 4 paragraphs.
 
 **TENSE**: Examine the existing conversation history and maintain the EXACT same tense (past/present) used in previous messages. **NEVER switch tenses mid-conversation**.
-**PERSPECTIVE**: Match the narrative perspective of the existing story. If the story uses third person ("he walked", "she said"), write Elena's actions and thoughts in third person. If the story uses first person ("I walked"), maintain that viewpoint. The character whose turn it is does NOT automatically become the first-person narrator.
+**PERSPECTIVE**: The narrative perspective for this scene is — Third person limited, past tense.. Apply it consistently to Elena's actions and thoughts.
 
 (Instructions for Elena's next part in the scene: Express surprise about the weather)
 
