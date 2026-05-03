@@ -390,19 +390,12 @@ class Character(pydantic.BaseModel):
         items = []
 
         if not self.base_attributes or "description" not in self.base_attributes:
-            if not self.description:
-                self.description = ""
-            description_chunks = [
-                chunk.strip() for chunk in self.description.split("\n") if chunk.strip()
-            ]
-
-            for idx in range(len(description_chunks)):
-                chunk = description_chunks[idx]
-
+            description = (self.description or "").strip()
+            if description:
                 items.append(
                     {
-                        "text": f"{self.name}: {chunk}",
-                        "id": f"{self.name}.description.{idx}",
+                        "text": f"{self.name}'s description: {description}",
+                        "id": f"{self.name}.description",
                         "meta": {
                             "character": self.name,
                             "attr": "description",
