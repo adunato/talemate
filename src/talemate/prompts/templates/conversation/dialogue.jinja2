@@ -72,7 +72,11 @@ Override example:
 {# FINAL ACTING INSTRUCTIONS #}
 {% set acting_instructions -%}
 **TENSE**: Examine the existing conversation history and maintain the EXACT same tense (past/present) used in previous messages. **NEVER switch tenses mid-conversation**.
-{% if scene.perspective %}**PERSPECTIVE**: Match the narrative perspective of the existing story. If the story uses third person ("he walked", "she said"), write {{ talking_character.name }}'s actions and thoughts in third person. If the story uses first person ("I walked"), maintain that viewpoint. The character whose turn it is does NOT automatically become the first-person narrator.{% endif %}
+{% if scene.perspective -%}
+**PERSPECTIVE**: The narrative perspective for this scene is — {{ scene.perspective }}. Apply it consistently to {{ talking_character.name }}'s actions and thoughts.
+{%- else -%}
+**PERSPECTIVE**: Match the narrative perspective of the existing story. If the story uses third person ("he walked", "she said"), write {{ talking_character.name }}'s actions and thoughts in third person. If the existing story has already established {{ talking_character.name }} as a first-person narrator ("I walked"), keep that voice for them. Do not switch a character to first person just because it is their turn — only characters the scene has already established as first-person narrators may use that voice.
+{%- endif %}
 
 
 {% if scene.count_messages() < actor_instructions_offset or actor_instructions_offset == 0 %}
