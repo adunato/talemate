@@ -28,8 +28,12 @@ Override example:
 {% set rendered_context_tokens = count_tokens(rendered_context) %}
 {% set volatile_context_tokens = count_tokens(volatile_context_text) %}
 {% set scene_history = scene.context_history(budget=max_tokens-200-rendered_context_tokens-volatile_context_tokens, keep_context_investigation=False) -%}
+{% if scene_history %}
 {% set last_message = scene_history[-1] %}
 {% set last_message_is_reinforcement = ("internal notes" in last_message.lower() and question in last_message) %}
+{% else %}
+{% set last_message_is_reinforcement = false %}
+{% endif %}
 {% if not last_message_is_reinforcement %}{% set final_line_number=len(scene_history) %}{% else %}{% set final_line_number=len(scene_history)-1 %}{% endif %}
 {# END PREPARE SCENE HISTORY #}
 
@@ -66,7 +70,7 @@ No dialogue so far
 
 <|SECTION:TASK|>
 {# QUESTION #}
-{%- if question.strip()[-1] == '?' %}
+{%- if question.strip() and question.strip()[-1] == '?' %}
 Shortly answer the following question: {{ question }}
 
 Consider the entire context and honor the sequentiality of the dialogue. Answer based on the final state of the dialogue.
