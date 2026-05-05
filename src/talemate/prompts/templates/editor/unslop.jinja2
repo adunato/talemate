@@ -237,7 +237,7 @@ Marcus entered the room, his boots clicking against the marble floor. He needed 
 </REPETITION ISSUES>
 
 <ANALYSIS>
-- Thought process: The AI has repeated an exact sentence from earlier - "Marcus entered the room, his boots clicking against the marble floor." This is lazy writing that needs to be replaced with something that moves the scene forward instead of repeating what already happened.
+- Thought process: The AI has repeated an exact sentence from earlier - "Marcus entered the room, his boots clicking against the marble floor." The flagged sentence will be removed entirely. The surrounding text still reads naturally without it.
 - Purple prose: MINOR - "dancing shadows," "vast space"
 - Unnatural dialogue: NO - dialogue is natural
 - Over-description: MINOR - some unnecessary detail
@@ -246,14 +246,14 @@ Marcus entered the room, his boots clicking against the marble floor. He needed 
 - Mature content: N/A
 - Name overuse: NO - names used appropriately
 - Talking vs Showing: OK
-- Repetition: YES - exact sentence repeated from earlier in the scene
+- Repetition: YES - flagged sentence will be deleted, not rewritten
 </ANALYSIS>
 
 <FIX>
 Marcus entered the room, his boots clicking against the marble floor. The chandelier cast shadows across the walls as he surveyed the scene.
 "What happened here?" he demanded.
 Sarah looked up from where she knelt beside the broken vase. "I don't know. I just got here myself."
-He crossed to the window, checking if it had been forced open. "Someone was looking for something specific."
+He needed answers, and he needed them now.
 </FIX>
 
 {% endif %}---
@@ -376,7 +376,7 @@ Fix bad AI writing by making it simpler, shorter, and more natural.
    ONLY use actual names when talking ABOUT someone who isn't there.
 {{ li() }}. SHOW don't tell - Use actions and natural dialogue instead of having characters announce their feelings or narrate their actions
 {% if repetition %}
-{{ li() }}. REMOVE REPETITION - Address the repetition issues. These sentences have been classified as repetition and must either be substantially rewritten or removed. When replacing a sentence, substitute something else, that's meaningful to the story and context.
+{{ li() }}. REMOVE REPETITION - Sentences listed in <REPETITION> have been flagged as repeating earlier content. Repetition here is detected by similarity threshold - it may be verbatim, but it also includes semantic repetition (the same idea, action, or beat expressed in different words). Trust the flag: if a sentence appears in <REPETITION>, treat it as repetition regardless of how different the wording looks. Delete the flagged sentences entirely from the FIX. Do NOT rewrite, paraphrase, or substitute new content in their place - just remove them and let the surrounding text flow on without them.
 {% endif %}
 {% if bad_prose %}
 {{ li() }}. REMOVE UNWANTED PROSE - Address the unwanted prose issues. These phrases have been identified by the director as bad, and MUST be changed accordingly.
