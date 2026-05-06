@@ -54,14 +54,20 @@ class EditorWebsocketHandler(Plugin):
         if not message:
             raise Exception("Message not found")
 
-        with RevisionContext(message.id):
-            info = RevisionInformation(
-                text=message.message,
-                character=character,
-            )
-            revised = await editor.revision_revise(info)
-            if isinstance(message, CharacterMessage):
-                if not revised.startswith(character.name + ":"):
-                    revised = f"{character.name}: {revised}"
+        # Run in a background task so the websocket receive loop stays free
+        # to dispatch the cancel/retry/ignore dialog response — otherwise
+        # awaiting the dialog future inside this handler deadlocks the loop.
+        async def task_wrapper():
+            with RevisionContext(message.id):
+                info = RevisionInformation(
+                    text=message.message,
+                    character=character,
+                )
+                revised = await editor.revision_revise(info)
+                if isinstance(message, CharacterMessage):
+                    if not revised.startswith(character.name + ":"):
+                        revised = f"{character.name}: {revised}"
 
-        scene.edit_message(message.id, revised)
+            scene.edit_message(message.id, revised)
+
+        self.run_in_background(task_wrapper, "Revising message")

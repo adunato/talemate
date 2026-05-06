@@ -429,6 +429,12 @@ export default {
             else if (message.action === 'character_detail_reinforcement_deleted') {
                 this.$emit('require-scene-save');
             }
+            else if (message.action === 'operation_done') {
+                // Clear busy on cancel/error too — the success-specific
+                // character_detail_reinforcement_run message isn't sent
+                // when the operation fails or is cancelled.
+                this.busy = false;
+            }
             else if (message.action === 'template_applied' && message.source === this.source){
                 
                 if(this.templateApplicatorCallback && message.status === 'done') {

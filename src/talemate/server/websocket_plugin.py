@@ -1,7 +1,8 @@
 import structlog
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Awaitable, Callable
 from talemate.emit import emit
 from talemate.exceptions import GenerationCancelled
+from talemate.status import set_loading
 import traceback
 import pydantic
 import asyncio
@@ -50,6 +51,43 @@ class Plugin:
     def clear_sub_handlers(cls):
         if hasattr(cls, "sub_handlers"):
             cls.sub_handlers = {}
+
+    @staticmethod
+    def consume_task_exception(task: asyncio.Task) -> None:
+        """
+        Mark a background task's exception as retrieved to suppress the
+        "Task exception was never retrieved" warning at GC time. The
+        exception itself is already logged by the set_loading wrapper
+        (or the underlying coroutine's own error handling).
+        """
+        if task.cancelled():
+            return
+        # Calling exception() is enough to mark it retrieved; the return value
+        # is intentionally discarded.
+        task.exception()
+
+    def run_in_background(
+        self,
+        coro_fn: Callable[[], Awaitable[None]],
+        message: str,
+        *,
+        cancellable: bool = True,
+        set_error: bool = True,
+    ) -> asyncio.Task:
+        """
+        Schedule coro_fn() as a background task wrapped in set_loading,
+        with consume_task_exception attached as a done-callback.
+
+        The handler that calls this can return immediately, freeing the
+        websocket receive loop to dispatch follow-up messages such as the
+        cancel/retry/ignore dialog response from the LLM client.
+        """
+        wrapped = set_loading(
+            message, cancellable=cancellable, set_error=set_error
+        )(coro_fn)
+        task = asyncio.create_task(wrapped())
+        task.add_done_callback(self.consume_task_exception)
+        return task
 
     async def signal_operation_failed(self, message: str, emit_status: bool = True):
         self.websocket_handler.queue_put(

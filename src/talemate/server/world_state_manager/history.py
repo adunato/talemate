@@ -161,24 +161,22 @@ class HistoryMixin:
 
         log.debug("regenerate_history_entry", payload=payload)
 
-        try:
+        # Run in a background task so the websocket receive loop stays free
+        # to dispatch the cancel/retry/ignore dialog response — otherwise
+        # awaiting the dialog future inside this handler deadlocks the loop.
+        async def task_wrapper():
             entry = await regenerate_history_entry(self.scene, payload.entry)
-        except Exception as e:
-            log.error("regenerate_history_entry", error=e)
-            await self.signal_operation_failed(str(e))
-            return
+            log.debug("regenerate_history_entry (done)", entry=entry)
+            self.websocket_handler.queue_put(
+                {
+                    "type": "world_state_manager",
+                    "action": "history_entry_regenerated",
+                    "data": entry.model_dump(),
+                }
+            )
+            await self.signal_operation_done()
 
-        log.debug("regenerate_history_entry (done)", entry=entry)
-
-        self.websocket_handler.queue_put(
-            {
-                "type": "world_state_manager",
-                "action": "history_entry_regenerated",
-                "data": entry.model_dump(),
-            }
-        )
-
-        await self.signal_operation_done()
+        self.run_in_background(task_wrapper, "Regenerating history entry")
 
     async def handle_inspect_history_entry(self, data):
         """
