@@ -19,6 +19,7 @@ from talemate.history import (
 )
 from talemate.scene_message import TimePassageMessage
 from talemate.server.world_state_manager import world_state_templates
+from talemate.status import background_task
 from talemate.util.time import (
     amount_unit_to_iso8601_duration,
     iso8601_duration_to_human,
@@ -152,6 +153,7 @@ class HistoryMixin:
 
         await self.signal_operation_done()
 
+    @background_task("Regenerating history entry")
     async def handle_regenerate_history_entry(self, data):
         """
         Regenerate a single history entry.
@@ -161,22 +163,16 @@ class HistoryMixin:
 
         log.debug("regenerate_history_entry", payload=payload)
 
-        # Run in a background task so the websocket receive loop stays free
-        # to dispatch the cancel/retry/ignore dialog response — otherwise
-        # awaiting the dialog future inside this handler deadlocks the loop.
-        async def task_wrapper():
-            entry = await regenerate_history_entry(self.scene, payload.entry)
-            log.debug("regenerate_history_entry (done)", entry=entry)
-            self.websocket_handler.queue_put(
-                {
-                    "type": "world_state_manager",
-                    "action": "history_entry_regenerated",
-                    "data": entry.model_dump(),
-                }
-            )
-            await self.signal_operation_done()
-
-        self.run_in_background(task_wrapper, "Regenerating history entry")
+        entry = await regenerate_history_entry(self.scene, payload.entry)
+        log.debug("regenerate_history_entry (done)", entry=entry)
+        self.websocket_handler.queue_put(
+            {
+                "type": "world_state_manager",
+                "action": "history_entry_regenerated",
+                "data": entry.model_dump(),
+            }
+        )
+        await self.signal_operation_done()
 
     async def handle_inspect_history_entry(self, data):
         """

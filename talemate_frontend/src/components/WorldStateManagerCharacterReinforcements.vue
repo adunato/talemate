@@ -432,7 +432,9 @@ export default {
             else if (message.action === 'operation_done') {
                 // Clear busy on cancel/error too — the success-specific
                 // character_detail_reinforcement_run message isn't sent
-                // when the operation fails or is cancelled.
+                // when the operation fails or is cancelled. The backend's
+                // @background_task done-callback always posts operation_done
+                // on cancel and error so this fires reliably.
                 this.busy = false;
             }
             else if (message.action === 'template_applied' && message.source === this.source){

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from talemate.instance import get_agent
 from talemate.server.websocket_plugin import Plugin
 from talemate.scene_message import CharacterMessage
+from talemate.status import background_task
 from talemate.agents.editor.revision import RevisionContext, RevisionInformation
 
 if TYPE_CHECKING:
@@ -32,6 +33,7 @@ class EditorWebsocketHandler(Plugin):
     def editor(self):
         return get_agent("editor")
 
+    @background_task("Revising message")
     async def handle_request_revision(self, data: dict):
         """
         Generate clickable actions for the user
@@ -54,20 +56,14 @@ class EditorWebsocketHandler(Plugin):
         if not message:
             raise Exception("Message not found")
 
-        # Run in a background task so the websocket receive loop stays free
-        # to dispatch the cancel/retry/ignore dialog response — otherwise
-        # awaiting the dialog future inside this handler deadlocks the loop.
-        async def task_wrapper():
-            with RevisionContext(message.id):
-                info = RevisionInformation(
-                    text=message.message,
-                    character=character,
-                )
-                revised = await editor.revision_revise(info)
-                if isinstance(message, CharacterMessage):
-                    if not revised.startswith(character.name + ":"):
-                        revised = f"{character.name}: {revised}"
+        with RevisionContext(message.id):
+            info = RevisionInformation(
+                text=message.message,
+                character=character,
+            )
+            revised = await editor.revision_revise(info)
+            if isinstance(message, CharacterMessage):
+                if not revised.startswith(character.name + ":"):
+                    revised = f"{character.name}: {revised}"
 
-            scene.edit_message(message.id, revised)
-
-        self.run_in_background(task_wrapper, "Revising message")
+        scene.edit_message(message.id, revised)

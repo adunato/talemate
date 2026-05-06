@@ -1,8 +1,7 @@
 import structlog
-from typing import TYPE_CHECKING, Awaitable, Callable
+from typing import TYPE_CHECKING, Callable
 from talemate.emit import emit
 from talemate.exceptions import GenerationCancelled
-from talemate.status import set_loading
 import traceback
 import pydantic
 import asyncio
@@ -51,43 +50,6 @@ class Plugin:
     def clear_sub_handlers(cls):
         if hasattr(cls, "sub_handlers"):
             cls.sub_handlers = {}
-
-    @staticmethod
-    def consume_task_exception(task: asyncio.Task) -> None:
-        """
-        Mark a background task's exception as retrieved to suppress the
-        "Task exception was never retrieved" warning at GC time. The
-        exception itself is already logged by the set_loading wrapper
-        (or the underlying coroutine's own error handling).
-        """
-        if task.cancelled():
-            return
-        # Calling exception() is enough to mark it retrieved; the return value
-        # is intentionally discarded.
-        task.exception()
-
-    def run_in_background(
-        self,
-        coro_fn: Callable[[], Awaitable[None]],
-        message: str,
-        *,
-        cancellable: bool = True,
-        set_error: bool = True,
-    ) -> asyncio.Task:
-        """
-        Schedule coro_fn() as a background task wrapped in set_loading,
-        with consume_task_exception attached as a done-callback.
-
-        The handler that calls this can return immediately, freeing the
-        websocket receive loop to dispatch follow-up messages such as the
-        cancel/retry/ignore dialog response from the LLM client.
-        """
-        wrapped = set_loading(
-            message, cancellable=cancellable, set_error=set_error
-        )(coro_fn)
-        task = asyncio.create_task(wrapped())
-        task.add_done_callback(self.consume_task_exception)
-        return task
 
     async def signal_operation_failed(self, message: str, emit_status: bool = True):
         self.websocket_handler.queue_put(
@@ -175,6 +137,43 @@ class Plugin:
 
         return on_done
 
+    def _on_background_task_done(self, task: asyncio.Task) -> None:
+        """
+        Done-callback for handlers decorated with @background_task. Posts an
+        operation_done envelope on the router for the cancel and error paths
+        so the frontend's per-component busy state clears even when the
+        handler bailed before reaching its trailing signal_operation_done().
+
+        - Success: the handler's own signal_operation_done() already ran,
+          nothing to do here.
+        - Cancel (GenerationCancelled): post a bare operation_done envelope.
+        - Error: post operation_done with an error envelope. set_loading
+          already emitted the "Failed" status snackbar (set_error=True), so
+          we skip the duplicate emit here.
+
+        Implemented as direct queue_put rather than scheduling another task
+        so we don't orphan a follow-up coroutine inside a done-callback.
+        """
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc is None:
+            # Success — handler called signal_operation_done() itself.
+            return
+        if isinstance(exc, GenerationCancelled):
+            self.websocket_handler.queue_put(
+                {"type": self.router, "action": "operation_done", "data": {}}
+            )
+            return
+        # Real exception — error envelope.
+        self.websocket_handler.queue_put(
+            {
+                "type": self.router,
+                "action": "operation_done",
+                "error": {"message": str(exc)},
+            }
+        )
+
     async def handle(self, data: dict):
         action: str = data.get("action")
         log.info(f"{self.router} action", action=action)
@@ -196,7 +195,7 @@ class Plugin:
             return
 
         try:
-            await fn(data)
+            result = await fn(data)
         except Exception as e:
             action_name = data.get("action")
             log.error(
@@ -206,3 +205,13 @@ class Plugin:
                 traceback=traceback.format_exc(),
             )
             await self.signal_operation_failed(f"Error during {action_name}: {e}")
+            return
+
+        # Handlers decorated with @background_task return a Task. Attach a
+        # done-callback so cancellations and synchronous failures inside the
+        # task body (e.g. pydantic validation, missing-character lookups)
+        # still post an operation_done envelope on the router and the
+        # frontend can clear any local busy state it set when sending the
+        # request.
+        if isinstance(result, asyncio.Task):
+            result.add_done_callback(self._on_background_task_done)

@@ -11,7 +11,7 @@ from talemate.game.schema import ConditionGroup
 from talemate.export import ExportOptions, export
 from talemate.instance import get_agent
 from talemate.world_state.manager import WorldStateManager, Suggestion
-from talemate.status import set_loading
+from talemate.status import background_task, set_loading
 import talemate.game.focal as focal
 from talemate.config import save_config
 from talemate.server.websocket_plugin import Plugin
@@ -408,6 +408,7 @@ class WorldStateManagerPlugin(
         await self.handle_get_character_details({"name": payload.name})
         await self.signal_operation_done()
 
+    @background_task("Refreshing reinforcement")
     async def handle_run_character_detail_reinforcement(self, data):
         payload = CharacterDetailReinforcementPayload(**data)
 
@@ -418,27 +419,21 @@ class WorldStateManagerPlugin(
             reset=payload.reset,
         )
 
-        # Run in a background task so the websocket receive loop stays free
-        # to dispatch the cancel/retry/ignore dialog response — otherwise
-        # awaiting the dialog future inside this handler deadlocks the loop.
-        async def task_wrapper():
-            await self.world_state_manager.run_detail_reinforcement(
-                payload.name, payload.question, reset=payload.reset
-            )
+        await self.world_state_manager.run_detail_reinforcement(
+            payload.name, payload.question, reset=payload.reset
+        )
 
-            self.websocket_handler.queue_put(
-                {
-                    "type": "world_state_manager",
-                    "action": "character_detail_reinforcement_run",
-                    "data": payload.model_dump(),
-                }
-            )
+        self.websocket_handler.queue_put(
+            {
+                "type": "world_state_manager",
+                "action": "character_detail_reinforcement_run",
+                "data": payload.model_dump(),
+            }
+        )
 
-            # resend character details
-            await self.handle_get_character_details({"name": payload.name})
-            await self.signal_operation_done()
-
-        self.run_in_background(task_wrapper, "Refreshing reinforcement")
+        # resend character details
+        await self.handle_get_character_details({"name": payload.name})
+        await self.signal_operation_done()
 
     async def handle_delete_character_detail_reinforcement(self, data):
         payload = CharacterDetailReinforcementPayload(**data)
@@ -612,42 +607,37 @@ class WorldStateManagerPlugin(
         await self.handle_get_world({})
         await self.signal_operation_done()
 
+    @background_task("Refreshing world state")
     async def handle_run_world_state_reinforcement(self, data):
         payload = WorldEntryReinforcementPayload(**data)
 
-        # Run in a background task so the websocket receive loop stays free
-        # to dispatch the cancel/retry/ignore dialog response — otherwise
-        # awaiting the dialog future inside this handler deadlocks the loop.
-        async def task_wrapper():
-            await self.world_state_manager.run_detail_reinforcement(
-                None, payload.question, payload.reset
-            )
+        await self.world_state_manager.run_detail_reinforcement(
+            None, payload.question, payload.reset
+        )
 
-            (
-                _,
-                reinforcement,
-            ) = await self.world_state_manager.world_state.find_reinforcement(
-                payload.question, None
-            )
+        (
+            _,
+            reinforcement,
+        ) = await self.world_state_manager.world_state.find_reinforcement(
+            payload.question, None
+        )
 
-            if not reinforcement:
-                log.error("Reinforcement not found", question=payload.question)
-                await self.signal_operation_done()
-                return
-
-            self.websocket_handler.queue_put(
-                {
-                    "type": "world_state_manager",
-                    "action": "world_state_reinforcement_ran",
-                    "data": reinforcement.model_dump(),
-                }
-            )
-
-            # resend world
-            await self.handle_get_world({})
+        if not reinforcement:
+            log.error("Reinforcement not found", question=payload.question)
             await self.signal_operation_done()
+            return
 
-        self.run_in_background(task_wrapper, "Refreshing world state")
+        self.websocket_handler.queue_put(
+            {
+                "type": "world_state_manager",
+                "action": "world_state_reinforcement_ran",
+                "data": reinforcement.model_dump(),
+            }
+        )
+
+        # resend world
+        await self.handle_get_world({})
+        await self.signal_operation_done()
 
     async def handle_delete_world_state_reinforcement(self, data):
         payload = WorldEntryReinforcementPayload(**data)
@@ -814,36 +804,31 @@ class WorldStateManagerPlugin(
         await self.scene.load_active_pins()
         self.scene.emit_status()
 
+    @background_task("Applying template")
     async def handle_apply_template(self, data):
         payload = ApplyWorldStateTemplatePayload(**data)
 
         log.debug("Apply world state template", payload=payload)
 
-        # Run in a background task so the websocket receive loop stays free
-        # to dispatch the cancel/retry/ignore dialog response — otherwise
-        # awaiting the dialog future inside this handler deadlocks the loop.
-        async def task_wrapper():
-            result = await self.world_state_manager.apply_template(
-                template=payload.template,
-                character_name=payload.character_name or "",
-                run_immediately=payload.run_immediately,
-            )
+        result = await self.world_state_manager.apply_template(
+            template=payload.template,
+            character_name=payload.character_name or "",
+            run_immediately=payload.run_immediately,
+        )
 
-            self.websocket_handler.queue_put(
-                {
-                    "type": "world_state_manager",
-                    "action": "template_applied",
-                    "status": "done",
-                    "data": payload.model_dump(),
-                    "result": result.model_dump() if result else None,
-                }
-            )
+        self.websocket_handler.queue_put(
+            {
+                "type": "world_state_manager",
+                "action": "template_applied",
+                "status": "done",
+                "data": payload.model_dump(),
+                "result": result.model_dump() if result else None,
+            }
+        )
 
-            await self.handle_get_world({})
-            await self.handle_get_templates({})
-            await self.signal_operation_done()
-
-        self.run_in_background(task_wrapper, "Applying template")
+        await self.handle_get_world({})
+        await self.handle_get_templates({})
+        await self.signal_operation_done()
 
     async def handle_save_template(self, data):
         payload = SaveWorldStateTemplatePayload(**data)
@@ -886,6 +871,7 @@ class WorldStateManagerPlugin(
         await self.handle_get_templates({})
         await self.signal_operation_done()
 
+    @background_task("Applying templates")
     async def handle_apply_templates(self, data):
         payload = ApplyWorldStateTemplatesPayload(**data)
 
@@ -913,33 +899,27 @@ class WorldStateManagerPlugin(
                 }
             )
 
-        # Run in a background task so the websocket receive loop stays free
-        # to dispatch the cancel/retry/ignore dialog response — otherwise
-        # awaiting the dialog future inside this handler deadlocks the loop.
-        async def task_wrapper():
-            await self.world_state_manager.apply_templates(
-                payload.templates,
-                callback_start=callback_start,
-                callback_done=callback_done,
-                character_name=payload.character_name,
-                run_immediately=payload.run_immediately,
-                generation_options=payload.generation_options,
-            )
+        await self.world_state_manager.apply_templates(
+            payload.templates,
+            callback_start=callback_start,
+            callback_done=callback_done,
+            character_name=payload.character_name,
+            run_immediately=payload.run_immediately,
+            generation_options=payload.generation_options,
+        )
 
-            self.websocket_handler.queue_put(
-                {
-                    "type": "world_state_manager",
-                    "action": "templates_applied",
-                    "source": payload.source,
-                    "data": payload.model_dump(),
-                }
-            )
+        self.websocket_handler.queue_put(
+            {
+                "type": "world_state_manager",
+                "action": "templates_applied",
+                "source": payload.source,
+                "data": payload.model_dump(),
+            }
+        )
 
-            await self.handle_get_world({})
-            await self.handle_get_templates({})
-            await self.signal_operation_done()
-
-        self.run_in_background(task_wrapper, "Applying templates")
+        await self.handle_get_world({})
+        await self.handle_get_templates({})
+        await self.signal_operation_done()
 
     async def handle_save_template_group(self, data):
         payload = SaveWorldStateTemplateGroupPayload(**data)
@@ -978,6 +958,7 @@ class WorldStateManagerPlugin(
         await self.handle_get_templates({})
         await self.signal_operation_done()
 
+    @background_task("Generating dialogue instructions")
     async def handle_generate_character_dialogue_instructions(self, data):
         payload = SelectiveCharacterPayload(**data)
 
@@ -991,33 +972,27 @@ class WorldStateManagerPlugin(
 
         creator = get_agent("creator")
 
-        # Run in a background task so the websocket receive loop stays free
-        # to dispatch the cancel/retry/ignore dialog response — otherwise
-        # awaiting the dialog future inside this handler deadlocks the loop.
-        async def task_wrapper():
-            instructions = await creator.determine_character_dialogue_instructions(
-                character
-            )
+        instructions = await creator.determine_character_dialogue_instructions(
+            character
+        )
 
-            character.dialogue_instructions = instructions
+        character.dialogue_instructions = instructions
 
-            self.websocket_handler.queue_put(
-                {
-                    "type": "world_state_manager",
-                    "action": "character_dialogue_instructions_generated",
-                    "data": {
-                        "name": payload.name,
-                        "instructions": instructions,
-                    },
-                }
-            )
+        self.websocket_handler.queue_put(
+            {
+                "type": "world_state_manager",
+                "action": "character_dialogue_instructions_generated",
+                "data": {
+                    "name": payload.name,
+                    "instructions": instructions,
+                },
+            }
+        )
 
-            # signal_operation_done already emits scene status on the
-            # non-auto-save branch (and scene.save() emits it on the auto-save
-            # branch), so no trailing emit_status() is needed here.
-            await self.signal_operation_done()
-
-        self.run_in_background(task_wrapper, "Generating dialogue instructions")
+        # signal_operation_done already emits scene status on the
+        # non-auto-save branch (and scene.save() emits it on the auto-save
+        # branch), so no trailing emit_status() is needed here.
+        await self.signal_operation_done()
 
     async def handle_delete_character(self, data):
         payload = SelectiveCharacterPayload(**data)

@@ -293,10 +293,26 @@ export default {
             });
         },
         handleMessage(message) {
-            if (message.type !== 'world_state_manager' || message.source !== this.source) {
+            if (message.type !== 'world_state_manager') {
                 return;
-            }  
-            else if (message.action === 'template_applying') {
+            }
+            if (message.action === 'operation_done') {
+                // Clear all local busy state on cancel/error — the success-only
+                // template_applied / templates_applied messages don't fire when
+                // the apply is interrupted, leaving spinners stuck on the
+                // currently-applying template and group.
+                if (this.busy || this.busyTemplateUID || this.busyGroupUID) {
+                    this.busy = false;
+                    this.busyTemplateUID = null;
+                    this.busyGroupUID = null;
+                    this.$emit('done');
+                }
+                return;
+            }
+            if (message.source !== this.source) {
+                return;
+            }
+            if (message.action === 'template_applying') {
                 this.busyTemplateUID = message.data.uid;
                 this.busyGroupUID = message.data.group;
             }
