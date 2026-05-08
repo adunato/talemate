@@ -16,8 +16,14 @@ from talemate.util.path import get_path_value
 AGENT = "common"
 
 
-def _render_template(value, *, path="player/status", title="GAMESTATE",
-                    max_gamestate_tokens=1024, data_format="json") -> str:
+def _render_template(
+    value,
+    *,
+    path="player/status",
+    title="GAMESTATE",
+    max_gamestate_tokens=1024,
+    data_format="json",
+) -> str:
     prompt = Prompt.get(
         "gamestate-context-path",
         vars={
@@ -77,9 +83,7 @@ class TestGamestatePathTemplate:
         baseline_checker(out, AGENT, "gamestate_path_missing_value")
 
     def test_custom_title(self, baseline_checker):
-        out = _render_template(
-            {"hp": 12}, path="player/status", title="PLAYER_STATUS"
-        )
+        out = _render_template({"hp": 12}, path="player/status", title="PLAYER_STATUS")
         baseline_checker(out, AGENT, "gamestate_path_custom_title")
 
     def test_budget_exceeded(self, baseline_checker):
