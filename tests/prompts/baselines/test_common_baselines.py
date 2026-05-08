@@ -9,6 +9,7 @@ and snapshot the output. Run with --update-baselines to create/update.
 
 from unittest.mock import Mock
 
+from talemate.context import active_scene
 from talemate.prompts.base import Prompt
 from talemate.util.path import get_path_value
 
@@ -37,11 +38,35 @@ def _render_template(
     return prompt.render()
 
 
-def _render_via_global(template_text: str, vars: dict, client=None) -> str:
-    prompt = Prompt.from_text(template_text, vars=vars)
+def _render_via_global(
+    template_text: str,
+    *,
+    scene_variables: dict | None = None,
+    vars: dict | None = None,
+    client=None,
+) -> str:
+    """Render a template that calls `render_game_state(...)`.
+
+    `scene_variables`, when provided, populates `active_scene.game_state.variables`
+    for the duration of the render — that is the SoT the helper reads from.
+    `vars` is forwarded to the prompt for any other template needs (rarely used
+    here since `render_game_state` no longer reads vars).
+    """
+    prompt = Prompt.from_text(template_text, vars=vars or {})
     if client is not None:
         prompt.client = client
-    return prompt.render()
+
+    if scene_variables is None:
+        return prompt.render()
+
+    scene = Mock()
+    scene.game_state = Mock()
+    scene.game_state.variables = scene_variables
+    token = active_scene.set(scene)
+    try:
+        return prompt.render()
+    finally:
+        active_scene.reset(token)
 
 
 def _client_with_format(data_format: str) -> Mock:
@@ -105,40 +130,51 @@ class TestGamestatePathTemplate:
 
 class TestRenderGameStateGlobal:
     """Snapshot the full chain: outer template → render_game_state global
-    → get_path_value → sub-Prompt render."""
+    → active_scene.game_state.variables → get_path_value → sub-Prompt render.
+
+    `render_game_state` reads strictly from the SoT (active scene's game state)
+    and ignores any `gamestate` value passed via prompt vars."""
 
     def test_resolves_nested_path(self, baseline_checker):
         out = _render_via_global(
             'BEFORE\n{{ render_game_state("player/status") }}\nAFTER',
-            vars={"gamestate": {"player": {"status": {"hp": 12, "mana": 5}}}},
+            scene_variables={"player": {"status": {"hp": 12, "mana": 5}}},
         )
         baseline_checker(out, AGENT, "gamestate_path_global_resolves")
+
+    def test_resolves_single_segment_path(self, baseline_checker):
+        # Top-level key with no slashes — common shape for flat gamestates.
+        out = _render_via_global(
+            '{{ render_game_state("player_stats") }}',
+            scene_variables={"player_stats": {"hp": 12, "mana": 5}},
+        )
+        baseline_checker(out, AGENT, "gamestate_path_global_single_segment")
 
     def test_missing_path_renders_empty(self, baseline_checker):
         out = _render_via_global(
             'BEFORE\n{{ render_game_state("nope/missing") }}\nAFTER',
-            vars={"gamestate": {"player": {"hp": 12}}},
+            scene_variables={"player": {"hp": 12}},
         )
         baseline_checker(out, AGENT, "gamestate_path_global_missing")
 
-    def test_no_gamestate_var_renders_empty(self, baseline_checker):
+    def test_no_active_scene_renders_empty(self, baseline_checker):
+        # No scene set + no scene_variables → renders empty, no crash.
         out = _render_via_global(
             'BEFORE\n{{ render_game_state("player") }}\nAFTER',
-            vars={},
         )
         baseline_checker(out, AGENT, "gamestate_path_global_no_gamestate_var")
 
     def test_custom_title(self, baseline_checker):
         out = _render_via_global(
             '{{ render_game_state("player/status", title="PLAYER") }}',
-            vars={"gamestate": {"player": {"status": {"hp": 12}}}},
+            scene_variables={"player": {"status": {"hp": 12}}},
         )
         baseline_checker(out, AGENT, "gamestate_path_global_custom_title")
 
     def test_leading_slash_tolerated(self, baseline_checker):
         out = _render_via_global(
             '{{ render_game_state("/player/status") }}',
-            vars={"gamestate": {"player": {"status": {"hp": 12}}}},
+            scene_variables={"player": {"status": {"hp": 12}}},
         )
         baseline_checker(out, AGENT, "gamestate_path_global_leading_slash")
 
@@ -147,9 +183,32 @@ class TestRenderGameStateGlobal:
         # treated as unresolvable and the section is omitted.
         out = _render_via_global(
             'BEFORE\n{{ render_game_state("world/inner") }}\nAFTER',
-            vars={"gamestate": {"world": "flat"}},
+            scene_variables={"world": "flat"},
         )
         baseline_checker(out, AGENT, "gamestate_path_global_intermediate_non_dict")
+
+    def test_reads_from_active_scene(self, baseline_checker):
+        # The canonical case: the user puts `{{ render_game_state("vegu_status") }}`
+        # in a custom override (e.g. dialogue.jinja2) and the helper resolves
+        # against scene.game_state.variables without any bridging boilerplate.
+        out = _render_via_global(
+            '{{ render_game_state("vegu_status") }}',
+            scene_variables={
+                "vegu_status": {"time": "17:00", "health": "normal"},
+            },
+        )
+        baseline_checker(out, AGENT, "gamestate_path_global_active_scene_fallback")
+
+    def test_vars_gamestate_is_ignored(self, baseline_checker):
+        # Even if a caller passes a `gamestate` var, the SoT (active scene's
+        # game state) still wins. This guarantees rendered output cannot
+        # diverge from the live state.
+        out = _render_via_global(
+            '{{ render_game_state("vegu_status") }}',
+            scene_variables={"vegu_status": {"from": "scene"}},
+            vars={"gamestate": {"vegu_status": {"from": "vars"}}},
+        )
+        baseline_checker(out, AGENT, "gamestate_path_global_vars_ignored")
 
     def test_yaml_format_propagates_from_client(self, baseline_checker):
         # When the parent prompt has a client with data_format='yaml', the
@@ -157,7 +216,7 @@ class TestRenderGameStateGlobal:
         # block renders as YAML rather than the json default.
         out = _render_via_global(
             '{{ render_game_state("player/status") }}',
-            vars={"gamestate": {"player": {"status": {"hp": 12, "mana": 5}}}},
+            scene_variables={"player": {"status": {"hp": 12, "mana": 5}}},
             client=_client_with_format("yaml"),
         )
         baseline_checker(out, AGENT, "gamestate_path_global_yaml_via_client")
@@ -168,7 +227,7 @@ class TestRenderGameStateGlobal:
         # both directions, not just yaml.
         out = _render_via_global(
             '{{ render_game_state("player/status") }}',
-            vars={"gamestate": {"player": {"status": {"hp": 12, "mana": 5}}}},
+            scene_variables={"player": {"status": {"hp": 12, "mana": 5}}},
             client=_client_with_format("json"),
         )
         baseline_checker(out, AGENT, "gamestate_path_global_json_via_client")

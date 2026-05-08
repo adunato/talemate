@@ -698,12 +698,19 @@ class Prompt:
         """
         Render a slice of game state at a slash-delimited `path` using the same
         formatting as gamestate-context.jinja2. Renders empty if the path does
-        not resolve to a value in the current `gamestate` vars.
+        not resolve.
+
+        Always reads from the source of truth — `active_scene.get().game_state.variables`
+        — and intentionally ignores any `gamestate` value passed via prompt vars,
+        so the helper's output cannot drift from the live game state.
 
         The parent's client is propagated so `data_format_type()` (yaml/json)
         resolves consistently with the surrounding prompt.
         """
-        value = get_path_value(self.vars.get("gamestate"), path)
+        scene = active_scene.get()
+        game_state = getattr(scene, "game_state", None) if scene else None
+        gamestate = getattr(game_state, "variables", None)
+        value = get_path_value(gamestate, path)
         sub_prompt = Prompt.get(
             "gamestate-context-path",
             vars={

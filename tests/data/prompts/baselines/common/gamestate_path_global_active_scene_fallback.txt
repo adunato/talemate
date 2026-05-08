@@ -1,0 +1,10 @@
+## Gamestate
+Path: vegu_status
+Data format: json
+
+```json
+{
+  "time": "17:00",
+  "health": "normal"
+}
+```
