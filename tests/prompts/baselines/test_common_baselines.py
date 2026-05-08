@@ -17,27 +17,6 @@ from talemate.util.path import get_path_value
 AGENT = "common"
 
 
-def _render_template(
-    value,
-    *,
-    path="player/status",
-    title="GAMESTATE",
-    max_gamestate_tokens=1024,
-    data_format="json",
-) -> str:
-    prompt = Prompt.get(
-        "gamestate-context-path",
-        vars={
-            "path": path,
-            "title": title,
-            "value": value,
-            "max_gamestate_tokens": max_gamestate_tokens,
-        },
-    )
-    prompt.data_format_type = data_format
-    return prompt.render()
-
-
 def _render_via_global(
     template_text: str,
     *,
@@ -49,8 +28,8 @@ def _render_via_global(
 
     `scene_variables`, when provided, populates `active_scene.game_state.variables`
     for the duration of the render — that is the SoT the helper reads from.
-    `vars` is forwarded to the prompt for any other template needs (rarely used
-    here since `render_game_state` no longer reads vars).
+    `vars` is forwarded to the prompt for any other template needs (only used
+    by the precedence test that asserts vars are ignored).
     """
     prompt = Prompt.from_text(template_text, vars=vars or {})
     if client is not None:
@@ -76,51 +55,6 @@ def _client_with_format(data_format: str) -> Mock:
     client.can_be_coerced = True
     client.reason_enabled = False
     return client
-
-
-# ---------------------------------------------------------------------------
-# Direct template snapshots: gamestate-context-path.jinja2
-# ---------------------------------------------------------------------------
-
-
-class TestGamestatePathTemplate:
-    """Snapshot the rendered output of gamestate-context-path.jinja2 directly."""
-
-    def test_json_dict(self, baseline_checker):
-        out = _render_template({"hp": 12, "mana": 5})
-        baseline_checker(out, AGENT, "gamestate_path_json_dict")
-
-    def test_yaml_dict(self, baseline_checker):
-        out = _render_template({"hp": 12, "mana": 5}, data_format="yaml")
-        baseline_checker(out, AGENT, "gamestate_path_yaml_dict")
-
-    def test_scalar_value(self, baseline_checker):
-        out = _render_template("ready", path="player/state")
-        baseline_checker(out, AGENT, "gamestate_path_scalar_value")
-
-    def test_list_value(self, baseline_checker):
-        out = _render_template(["sword", "potion", "key"], path="inventory")
-        baseline_checker(out, AGENT, "gamestate_path_list_value")
-
-    def test_missing_value(self, baseline_checker):
-        # value=None means the path didn't resolve — must render empty.
-        out = _render_template(None, path="player/missing")
-        baseline_checker(out, AGENT, "gamestate_path_missing_value")
-
-    def test_custom_title(self, baseline_checker):
-        out = _render_template({"hp": 12}, path="player/status", title="PLAYER_STATUS")
-        baseline_checker(out, AGENT, "gamestate_path_custom_title")
-
-    def test_budget_exceeded(self, baseline_checker):
-        # Tiny budget — large value gets dropped.
-        big = {f"item_{i}": "x" * 50 for i in range(40)}
-        out = _render_template(big, path="inventory", max_gamestate_tokens=10)
-        baseline_checker(out, AGENT, "gamestate_path_budget_exceeded")
-
-    def test_budget_zero_means_unlimited(self, baseline_checker):
-        # max_gamestate_tokens=0 is falsy → bypass the cap, always render.
-        out = _render_template({"hp": 12}, max_gamestate_tokens=0)
-        baseline_checker(out, AGENT, "gamestate_path_budget_zero")
 
 
 # ---------------------------------------------------------------------------
@@ -209,6 +143,55 @@ class TestRenderGameStateGlobal:
             vars={"gamestate": {"vegu_status": {"from": "vars"}}},
         )
         baseline_checker(out, AGENT, "gamestate_path_global_vars_ignored")
+
+    def test_resolves_scalar_leaf(self, baseline_checker):
+        # Path resolves to a non-container value — must still render.
+        out = _render_via_global(
+            '{{ render_game_state("player/state") }}',
+            scene_variables={"player": {"state": "ready"}},
+        )
+        baseline_checker(out, AGENT, "gamestate_path_global_scalar")
+
+    def test_resolves_list_leaf(self, baseline_checker):
+        out = _render_via_global(
+            '{{ render_game_state("inventory") }}',
+            scene_variables={"inventory": ["sword", "potion", "key"]},
+        )
+        baseline_checker(out, AGENT, "gamestate_path_global_list")
+
+    def test_budget_exceeded_renders_empty(self, baseline_checker):
+        # Tiny budget against a large value — the section drops out entirely.
+        big = {f"item_{i}": "x" * 50 for i in range(40)}
+        out = _render_via_global(
+            '{{ render_game_state("inventory", budget=10) }}',
+            scene_variables={"inventory": big},
+        )
+        baseline_checker(out, AGENT, "gamestate_path_global_budget_exceeded")
+
+    def test_budget_zero_means_unlimited(self, baseline_checker):
+        # budget=0 is falsy in the template → cap is bypassed, value renders.
+        out = _render_via_global(
+            '{{ render_game_state("player/status", budget=0) }}',
+            scene_variables={"player": {"status": {"hp": 12}}},
+        )
+        baseline_checker(out, AGENT, "gamestate_path_global_budget_zero")
+
+    def test_note_renders_above_data_block(self, baseline_checker):
+        # `note` reaches the sub-Prompt and lands between the Path: line and
+        # the Data format: line, with blank-line separation on both sides.
+        out = _render_via_global(
+            '{{ render_game_state("player/status", note="Updated each turn from sensors.") }}',
+            scene_variables={"player": {"status": {"hp": 12, "mana": 5}}},
+        )
+        baseline_checker(out, AGENT, "gamestate_path_global_with_note")
+
+    def test_multiline_note_renders_verbatim(self, baseline_checker):
+        out = _render_via_global(
+            '{{ render_game_state("player/status", note=note) }}',
+            scene_variables={"player": {"status": {"hp": 12}}},
+            vars={"note": "Player status snapshot.\nUpdated each turn from sensors."},
+        )
+        baseline_checker(out, AGENT, "gamestate_path_global_with_multiline_note")
 
     def test_yaml_format_propagates_from_client(self, baseline_checker):
         # When the parent prompt has a client with data_format='yaml', the

@@ -1,6 +1,9 @@
 {% set gamestate_text %}
 {% if value is not none %}<|SECTION:{{ title }}|>
-Path: {{ path }}
+Path: {{ path }}{% if note %}
+
+{{ note }}
+{% endif %}
 Data format: {{ data_format_type() }}
 {% if data_format_type() == "yaml" %}
 ```yaml

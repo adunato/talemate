@@ -693,6 +693,7 @@ class Prompt:
         self,
         path: str,
         title: str = "GAMESTATE",
+        note: str | None = None,
         budget: int = 1024,
     ) -> "Prompt":
         """
@@ -703,6 +704,9 @@ class Prompt:
         Always reads from the source of truth — `active_scene.get().game_state.variables`
         — and intentionally ignores any `gamestate` value passed via prompt vars,
         so the helper's output cannot drift from the live game state.
+
+        Pass `note` to inject a free-form line of context (e.g. an instruction
+        or description) above the data block.
 
         The parent's client is propagated so `data_format_type()` (yaml/json)
         resolves consistently with the surrounding prompt.
@@ -716,6 +720,7 @@ class Prompt:
             vars={
                 "path": path,
                 "title": title,
+                "note": note,
                 "value": value,
                 "max_gamestate_tokens": budget,
             },

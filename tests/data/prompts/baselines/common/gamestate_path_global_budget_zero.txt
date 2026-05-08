@@ -4,7 +4,6 @@ Data format: json
 
 ```json
 {
-  "hp": 12,
-  "mana": 5
+  "hp": 12
 }
 ```
