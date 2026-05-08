@@ -59,6 +59,7 @@ A bundled scene that runs a suite of minimum-viability tests against a connected
 **Prompts & Templates**
 
 - New `{{ system_prompt }}` template variable for use inside system prompt overrides at app and client level.
+- New `{{ render_game_state("path/to/var") }}` Jinja helper renders a targeted slice of the game state with optional title and token budget.
 - Active overrides show a pencil icon, and the Prompts tab surfaces a warning when any override is outdated.
 - Active Templates preview gains shortcuts to create or edit overrides and to jump to the resolved template's source.
 - Added a Gemma 4 prompt template with a thinking-mode toggle.
@@ -105,6 +106,7 @@ A bundled scene that runs a suite of minimum-viability tests against a connected
 - Autocomplete moved to a background task: it can be cancelled, no longer freezes the input on empty responses, and the snackbar shows a cancel button.
 - Scene input no longer stays disabled after cancelling any background generation.
 - Contextual Generate no longer prefills an empty line after `1.` in list-type generation.
+- World State Manager: cancelling an LLM connection error during Refresh/Reset State, Apply Templates, Generate Dialogue Instructions, Regenerate History Entry, or Revise Message no longer hangs the card.
 
 **Output Quality**
 
@@ -129,6 +131,7 @@ A bundled scene that runs a suite of minimum-viability tests against a connected
 **Memory & RAG**
 
 - RAG Query Generation now respects the volatile context placement setting, restoring prompt-cache hit rates on the long-term memory retrieval flow.
+- Character memory: multi-line character descriptions are now stored as a single vectordb entry instead of one entry per line, matching how other base attributes are committed.
 
 **Security & Config**
 
