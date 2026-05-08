@@ -1,0 +1,17 @@
+{% set gamestate_text %}
+{% if value is not none %}<|SECTION:{{ title }}|>
+Path: {{ path }}
+Data format: {{ data_format_type() }}
+{% if data_format_type() == "yaml" %}
+```yaml
+{{ yaml(value) }}```
+{% else %}
+```json
+{{ json(value) }}
+```
+{% endif %}
+<|CLOSE_SECTION|>{% endif %}
+{% endset %}
+{% if value is not none and (not max_gamestate_tokens or count_tokens(gamestate_text) <= max_gamestate_tokens) %}
+{{ gamestate_text }}
+{% endif %}

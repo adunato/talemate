@@ -39,6 +39,7 @@ from talemate.util import (
     iso8601_diff_to_human,
 )
 from talemate.util.data import extract_data_auto, DataParsingError
+from talemate.util.path import get_path_value
 from talemate.util.prompt import (
     condensed_for_dedupe,
     expand_condensed,
@@ -536,6 +537,7 @@ class Prompt:
         }
 
         env.globals["render_template"] = self.render_template
+        env.globals["render_game_state"] = self.render_game_state
         env.globals["render_and_request"] = self.render_and_request
         env.globals["prompt_instance"] = self
         env.globals["debug"] = lambda *a, **kw: log.debug(*a, **kw)
@@ -686,6 +688,33 @@ class Prompt:
         vars = self.vars.copy()
         vars.update(kwargs)
         return Prompt.get(uid, vars=vars)
+
+    def render_game_state(
+        self,
+        path: str,
+        title: str = "GAMESTATE",
+        budget: int = 1024,
+    ) -> "Prompt":
+        """
+        Render a slice of game state at a slash-delimited `path` using the same
+        formatting as gamestate-context.jinja2. Renders empty if the path does
+        not resolve to a value in the current `gamestate` vars.
+
+        The parent's client is propagated so `data_format_type()` (yaml/json)
+        resolves consistently with the surrounding prompt.
+        """
+        value = get_path_value(self.vars.get("gamestate"), path)
+        sub_prompt = Prompt.get(
+            "gamestate-context-path",
+            vars={
+                "path": path,
+                "title": title,
+                "value": value,
+                "max_gamestate_tokens": budget,
+            },
+        )
+        sub_prompt.client = self.client
+        return sub_prompt
 
     def render_and_request(
         self,

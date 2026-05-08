@@ -1,6 +1,6 @@
 from typing import Any
 
-__all__ = ["split_state_path", "get_path_parent"]
+__all__ = ["split_state_path", "get_path_parent", "get_path_value"]
 
 
 def split_state_path(name: str) -> list[str]:
@@ -82,3 +82,29 @@ def get_path_parent(
                 raise ValueError(error_msg)
 
     return current, leaf_key
+
+
+def get_path_value(container: Any, path: str, default: Any = None) -> Any:
+    """
+    Lenient nested lookup: traverse a slash-delimited `path` through `container`
+    and return the value at the leaf, or `default` if any segment is missing or
+    non-traversable. Never raises for unresolvable paths.
+
+    Use this for read-only consumers (e.g. prompt templates) that want a
+    "render empty if not present" semantic. For node code that should surface
+    structural errors, call `split_state_path` + `get_path_parent` directly.
+    """
+    if container is None or not path:
+        return default
+    try:
+        parts = split_state_path(path)
+        parent_container, leaf_key = get_path_parent(container, parts, create=False)
+    except ValueError:
+        return default
+    if parent_container is None:
+        return default
+    if hasattr(parent_container, "get"):
+        return parent_container.get(leaf_key, default)
+    if leaf_key in parent_container:
+        return parent_container[leaf_key]
+    return default
