@@ -133,10 +133,10 @@ class TestLatestRevisionAt:
     def test_returns_none_when_no_revisions_exist(self, mock_scene):
         assert latest_revision_at(mock_scene, at_ts=999_999) is None
 
-    def test_returns_revision_within_timestamp_window(self, mock_scene):
-        # The function iterates entries (sorted by rev DESC, which in normal
-        # operation also implies ts DESC) and returns the LAST rev whose ts
-        # is <= at_ts before encountering a ts > at_ts (which triggers break).
+    def test_returns_greatest_revision_within_timestamp_window(self, mock_scene):
+        # `list_revision_entries` returns entries sorted DESC by rev. The
+        # function returns the first rev whose ts is <= at_ts, i.e. the
+        # GREATEST rev satisfying the constraint.
         log_path = _changelog_log_path(mock_scene, 0)
         log_data = {
             "deltas": [
@@ -149,15 +149,11 @@ class TestLatestRevisionAt:
         with open(log_path, "w") as f:
             json.dump(log_data, f)
 
-        # at_ts=350: all entries pass, loop runs to completion → best ends as
-        # the last (lowest-rev) one: 1.
-        assert latest_revision_at(mock_scene, at_ts=350) == 1
-        # at_ts=250: rev 3 (ts 300) > 250 triggers break before update; then
-        # rev 2 (ts 200) <= 250 sets best=2; rev 1 (ts 100) <= 250 sets best=1.
-        # But entries are iterated in DESC-by-rev: rev 3 first → ts 300 > 250
-        # → "else: break" runs immediately → best_rev stays None.
-        assert latest_revision_at(mock_scene, at_ts=250) is None
-        # at_ts=99: rev 3 ts 300 > 99 → break → None.
+        # at_ts=350: all three qualify; greatest rev is 3.
+        assert latest_revision_at(mock_scene, at_ts=350) == 3
+        # at_ts=250: rev 3 (ts 300) doesn't qualify; rev 2 (ts 200) does.
+        assert latest_revision_at(mock_scene, at_ts=250) == 2
+        # at_ts=99: nothing qualifies.
         assert latest_revision_at(mock_scene, at_ts=99) is None
 
     def test_with_only_old_entries_returns_oldest(self, mock_scene):

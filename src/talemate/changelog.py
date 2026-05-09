@@ -774,14 +774,15 @@ def latest_revision_at(scene: "Scene", at_ts: int) -> int | None:
     Returns:
         int | None: revision number or None if none exist
     """
-    entries = list_revision_entries(scene)
-    best_rev = None
-    for e in entries:
+    # `list_revision_entries` returns entries sorted DESC by rev. Walk from
+    # highest rev downward and return the first whose ts is <= at_ts. Don't
+    # break on a ts > at_ts: with monotonic ts↔rev ordering it will never
+    # appear before a match, but with non-monotonic data we still want to
+    # find any older rev that does qualify.
+    for e in list_revision_entries(scene):
         if e["ts"] <= at_ts:
-            best_rev = e["rev"]
-        else:
-            break
-    return best_rev
+            return e["rev"]
+    return None
 
 
 def delete_changelog_files(scene: "Scene") -> dict:

@@ -554,10 +554,14 @@ class TestPinManagement:
         await manager.remove_pin("does-not-exist")  # should not raise
 
     @pytest.mark.asyncio
-    async def test_is_pin_active_returns_true_when_pin_exists(self, scene, manager):
+    async def test_is_pin_active_returns_true_for_active_pin(self, scene, manager):
         await manager.set_pin("entry1", active=True)
-        # NOTE: per the source, this returns whether the pin EXISTS, not active
         assert await manager.is_pin_active("entry1") is True
+
+    @pytest.mark.asyncio
+    async def test_is_pin_active_returns_false_for_inactive_pin(self, scene, manager):
+        await manager.set_pin("entry1", active=False)
+        assert await manager.is_pin_active("entry1") is False
 
     @pytest.mark.asyncio
     async def test_is_pin_active_false_when_no_pin(self, manager):

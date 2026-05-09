@@ -37,22 +37,18 @@ def get_config() -> Config:
     return CONFIG
 
 
-async def update_config(other_config: Config | dict):
-    if isinstance(other_config, dict):
-        keys = list(other_config.keys())
-        other_config = Config.model_validate(other_config)
-    else:
-        keys = None
+async def update_config(other_config: dict):
+    """Apply a partial config update from a dict.
+
+    Each top-level key in ``other_config`` replaces the corresponding field
+    on the active ``Config`` (validated through pydantic first).
+    """
+    keys = list(other_config.keys())
+    validated = Config.model_validate(other_config)
 
     config: Config = get_config()
-
-    # if keys is None, do full update
-    if keys is None:
-        for field in Config.model_fields:
-            setattr(config, field.name, getattr(other_config, field.name))
-    else:
-        for key in keys:
-            setattr(config, key, getattr(other_config, key))
+    for key in keys:
+        setattr(config, key, getattr(validated, key))
 
     await config.set_dirty()
 

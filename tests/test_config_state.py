@@ -4,7 +4,7 @@ Unit tests for `talemate.config.state` — config persistence helpers.
 Covers:
 - `_load_config` (reads yaml, decrypts, builds Config).
 - `get_config` (lazy initialization).
-- `update_config` (full + partial via dict + Config).
+- `update_config` (partial via dict).
 - `save_config` (round-trip + cleanup of inference defaults / unchanged
   presets / unified_api_key configs / dangling preset_groups).
 - `cleanup_removed_clients`, `cleanup_removed_agents`,
@@ -160,19 +160,6 @@ class TestUpdateConfig:
         assert "new_only" in config_state.CONFIG.agents
         assert "keep" not in config_state.CONFIG.agents
         assert "original" in config_state.CONFIG.clients
-
-    @pytest.mark.asyncio
-    async def test_full_update_with_config_object_currently_broken(
-        self, isolated_config
-    ):
-        """Documents an existing bug: passing a Config (not dict) to
-        update_config raises because the code iterates `Config.model_fields`
-        as if its values were FieldInfo objects (`.name`), but in pydantic v2
-        `model_fields` is a dict of {name: FieldInfo}. Iterating it yields
-        the keys (strings)."""
-        replacement = Config()
-        with pytest.raises(AttributeError):
-            await config_state.update_config(replacement)
 
     @pytest.mark.asyncio
     async def test_marks_config_dirty(self, isolated_config):

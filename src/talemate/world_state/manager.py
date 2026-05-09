@@ -713,13 +713,14 @@ class WorldStateManager:
 
     async def is_pin_active(self, entry_id: str | ContextIDItem) -> bool:
         """
-        Checks if a pin is active.
+        Checks if a pin is active. Returns False if the pin doesn't exist.
         """
         if isinstance(entry_id, ContextIDItem):
             entry_id = entry_id.memory_id
             if not entry_id:
                 raise ValueError(f"Context ID item {entry_id} cannot be pinned.")
-        return entry_id in self.world_state.pins
+        if entry_id not in self.world_state.pins:
+            return False
         return self.world_state.pins[entry_id].active
 
     async def get_templates(
