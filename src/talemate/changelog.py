@@ -750,7 +750,7 @@ def list_revision_entries(scene: "Scene") -> list[dict]:
     Get a list of revision entries with timestamps.
 
     Returns:
-        list[dict]: [{"rev": int, "ts": int} ...] sorted by rev ascending
+        list[dict]: [{"rev": int, "ts": int} ...] sorted by rev descending
     """
     entries: list[dict] = []
     files = _get_changelog_files(scene)
