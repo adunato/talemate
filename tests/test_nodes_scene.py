@@ -743,6 +743,20 @@ async def test_toggle_message_context_visibility_hides_message(scene):
     assert out["message"] is msg
 
 
+@pytest.mark.asyncio
+async def test_toggle_message_context_visibility_unhides_message(scene):
+    msg = scene_message.NarratorMessage("Some narration", source="ai")
+    msg.hide()
+    assert bool(msg.hidden)
+
+    node = ToggleMessageContextVisibility()
+    node.set_property("hidden", False)
+    out = await _run_node(node, scene, inputs={"message": msg})
+
+    assert not msg.hidden
+    assert out["message"] is msg
+
+
 # ---------------------------------------------------------------------------
 # ActivateCharacter / DeactivateCharacter
 # ---------------------------------------------------------------------------

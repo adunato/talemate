@@ -355,6 +355,6 @@ def create(scene: "Scene") -> "ScopedAPI":
                 return
 
             message = scene.history[idx]
-            message.show()
+            message.unhide()
 
     return API()

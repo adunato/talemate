@@ -273,12 +273,10 @@ class TestSanitizeData:
         # name was missing -> set to first 8 chars of template_id
         assert g.templates["abcdefghijkl"].name == "abcdefgh"
 
-    def test_loads_drops_template_with_no_template_type(self):
-        # NOTE: there is a known bug in sanitize_data where a template with no
-        # template_type triggers a double-delete; once the first delete branch
-        # removes the entry, the second branch errors with KeyError. Until that
-        # is fixed we use a template with a *non-registered* template_type
-        # (which only triggers the second delete branch).
+    def test_loads_drops_template_with_missing_template_type(self):
+        # A template with no `template_type` field should be dropped (the
+        # missing-type branch deletes and `continue`s, so it doesn't fall
+        # into the invalid-type branch and double-delete).
         path = os.path.join(TEMPLATE_TEST_PATH, "g.yaml")
         self._write(path, {
             "author": "a",
@@ -288,7 +286,7 @@ class TestSanitizeData:
                 "tid1": {
                     "name": "no-type",
                     "uid": "tid1",
-                    "template_type": "totally-bogus",
+                    # template_type intentionally absent
                 }
             },
             "uid": "g-uid",

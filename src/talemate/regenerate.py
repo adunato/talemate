@@ -82,14 +82,14 @@ def ensure_regenerate_allowed(scene: "Scene", idx: int = -1) -> tuple[bool, str 
 
 async def regenerate_character_message(
     message: CharacterMessage, scene: "Scene"
-) -> CharacterMessage:
+) -> list[CharacterMessage] | None:
     character: "Character | None" = scene.get_character(message.character_name)
 
     if not character:
         log.error(
             "regenerate_character_message: Could not find character", message=message
         )
-        return message
+        return None
 
     agent = get_agent("conversation")
 
@@ -98,7 +98,7 @@ async def regenerate_character_message(
             "regenerate_character_message: Static user message, no regeneration possible",
             message=message,
         )
-        return
+        return None
 
     messages = await agent.converse(character.actor, instruction=message.from_choice)
 
@@ -119,6 +119,13 @@ async def regenerate_message(
     if isinstance(message, CharacterMessage):
         # character messages need specific handling
         messages = await regenerate_character_message(message, scene)
+        # The character path can return None when the character is missing
+        # or the message is a static player line — both are non-recoverable
+        # without caller-side intervention. The outer `regenerate()` handles
+        # a None return by restoring the original message and emitting a
+        # status; mirror that here so direct callers get the same contract.
+        if messages is None:
+            return None
     else:
         # all other message types
 

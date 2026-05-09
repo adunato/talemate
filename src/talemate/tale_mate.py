@@ -1066,6 +1066,9 @@ class Scene(Emitter):
         if isinstance(character, str):
             character = self.get_character(character)
 
+        if character is None:
+            return False
+
         return character.name in self.character_names
 
     def get_character(self, character_name: str, partial: bool = False):

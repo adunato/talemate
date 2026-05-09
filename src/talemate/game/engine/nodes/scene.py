@@ -1096,7 +1096,7 @@ class ToggleMessageContextVisibility(Node):
         if hidden:
             message.hide()
         else:
-            message.show()
+            message.unhide()
 
         self.set_output_values({"message": message})
 

@@ -339,6 +339,12 @@ class TestCharacterAccessors:
         real_scene.character_data["Ghost"] = ghost
         assert real_scene.character_is_active("Ghost") is False
 
+    def test_character_is_active_returns_false_for_unknown_name(self, real_scene):
+        # get_character returns None for unknown names. character_is_active
+        # should treat that as "not active" rather than crashing on
+        # `None.name`.
+        assert real_scene.character_is_active("Nonexistent") is False
+
     def test_inactive_characters_excludes_active(self, real_scene):
         _add_char(real_scene, "Alice")
         ghost = Character(name="Ghost")

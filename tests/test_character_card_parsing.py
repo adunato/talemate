@@ -674,12 +674,13 @@ class TestCharacterFromCharaData:
         c = character_from_chara_data(data)
         assert "Bob: Hi!" in c.example_dialogue
 
-    def test_gender_field_currently_unsupported(self):
-        # 'gender' is a read-only @property on Character, so cards including
-        # it will raise AttributeError. Document and pin this behavior so
-        # any future change must be intentional.
-        with pytest.raises(AttributeError):
-            character_from_chara_data({"name": "X", "gender": "female"})
+    def test_gender_field_persists_to_base_attributes(self):
+        # 'gender' on Character is a read-only @property backed by
+        # base_attributes; the loader writes to base_attributes so the
+        # value round-trips through the property.
+        c = character_from_chara_data({"name": "X", "gender": "female"})
+        assert c.base_attributes["gender"] == "female"
+        assert c.gender == "female"
 
     def test_non_string_fields_are_left_untouched_during_char_substitution(self):
         # Branch: data[key] is not a string -> .replace() is skipped.
@@ -744,14 +745,15 @@ class TestLoadCharacterFromJSON:
         assert c.name == "V1 Hero"
         assert c.description == "A V1 card."
 
-    def test_v0_card_raises_unknown_data_spec(self, tmp_path):
-        # V0 cards have no spec field but expose first_mes at top level.
-        # load_character_from_json only handles V1/V2/V3 explicitly, so V0
-        # cards take the UnknownDataSpec path.
+    def test_v0_card_loads_from_top_level(self, tmp_path):
+        # V0 cards have no spec field but expose first_mes at top level —
+        # `identify_import_spec` recognises them, and the loader now
+        # treats V0 the same as V1 (top-level fields, no `data` wrapper).
         f = tmp_path / "card.json"
         f.write_text(json.dumps(_v0_card()))
-        with pytest.raises(UnknownDataSpec):
-            load_character_from_json(str(f))
+        c = load_character_from_json(str(f))
+        assert c.name == "V0 Hero"
+        assert c.greeting_text == "Greetings."
 
     def test_talemate_scene_raises_unknown_data_spec(self, tmp_path):
         # Random JSON without first_mes is identified as 'talemate' which

@@ -115,27 +115,24 @@ async def test_debounce_returns_none_immediately():
     assert rv is None
 
 
-async def test_debounce_multiple_calls_all_eventually_fire():
-    """Each call schedules its own delayed execution.
-
-    Note: the current implementation does NOT actually cancel the previous task
-    (the create_task return value is not assigned), so all calls eventually fire.
-    This test pins down current behavior.
-    """
+async def test_debounce_multiple_calls_only_last_fires():
+    """Each call cancels the previous one. Only the last call's delayed
+    execution survives — the earlier ones are cancelled before their
+    asyncio.sleep returns."""
     counter = CallCounter()
 
-    @debounce(0.02)
+    @debounce(0.05)
     async def wrapped(x):
         return await counter.coro(x)
 
     await wrapped(1)
     await wrapped(2)
     await wrapped(3)
-    # Wait for all scheduled tasks
+    # Wait for the surviving delayed task to fire.
     await asyncio.sleep(0.15)
-    # All three tasks ran (in some order)
-    args_seen = sorted(call[0][0] for call in counter.calls)
-    assert args_seen == [1, 2, 3]
+    # Only the last call ran.
+    args_seen = [call[0][0] for call in counter.calls]
+    assert args_seen == [3]
 
 
 # ---------------------------------------------------------------------------
@@ -146,9 +143,7 @@ async def test_debounce_multiple_calls_all_eventually_fire():
 async def test_shared_debounce_immediate_runs_first_call_synchronously():
     """With immediate=True, the first call runs the body before returning."""
     counter = CallCounter()
-    # NOTE: shared_debounce treats falsy `tasks` as "use global TASKS",
-    # so we pre-seed the dict with a sentinel to ensure isolation.
-    tasks = {"__sentinel__": None}
+    tasks: dict = {}
 
     @shared_debounce(0.05, task_key="t1", tasks=tasks, immediate=True)
     async def wrapped(x):
@@ -168,9 +163,7 @@ async def test_shared_debounce_immediate_runs_first_call_synchronously():
 async def test_shared_debounce_cancels_pending_when_called_again():
     """A second call within the window cancels the prior pending task."""
     counter = CallCounter()
-    # NOTE: shared_debounce treats falsy `tasks` as "use global TASKS",
-    # so we pre-seed the dict with a sentinel to ensure isolation.
-    tasks = {"__sentinel__": None}
+    tasks: dict = {}
 
     @shared_debounce(0.1, task_key="t2", tasks=tasks, immediate=False)
     async def wrapped(x):
@@ -194,9 +187,7 @@ async def test_shared_debounce_cancels_pending_when_called_again():
 async def test_shared_debounce_immediate_false_runs_after_delay():
     """When immediate=False, the body runs only after the delay elapses."""
     counter = CallCounter()
-    # NOTE: shared_debounce treats falsy `tasks` as "use global TASKS",
-    # so we pre-seed the dict with a sentinel to ensure isolation.
-    tasks = {"__sentinel__": None}
+    tasks: dict = {}
 
     @shared_debounce(0.05, task_key="t3", tasks=tasks, immediate=False)
     async def wrapped(x):
@@ -212,9 +203,7 @@ async def test_shared_debounce_immediate_false_runs_after_delay():
 async def test_shared_debounce_separate_keys_dont_interfere():
     """Different task_keys should be tracked independently."""
     counter = CallCounter()
-    # NOTE: shared_debounce treats falsy `tasks` as "use global TASKS",
-    # so we pre-seed the dict with a sentinel to ensure isolation.
-    tasks = {"__sentinel__": None}
+    tasks: dict = {}
 
     @shared_debounce(0.05, task_key="key_a", tasks=tasks, immediate=True)
     async def wrapped_a(x):

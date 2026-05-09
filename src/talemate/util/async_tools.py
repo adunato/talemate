@@ -60,7 +60,7 @@ def debounce(delay: float):
                 await asyncio.sleep(delay)
                 return await fn(*args, **kwargs)
 
-            asyncio.create_task(delayed())
+            task = asyncio.create_task(delayed())
 
         return wrapper
 
@@ -76,7 +76,7 @@ def shared_debounce(
     This allows you to debounce a function across multiple calls, so that only one task is running at a time.
     """
 
-    if not tasks:
+    if tasks is None:
         tasks = TASKS
 
     def decorator(fn):

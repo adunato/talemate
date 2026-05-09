@@ -809,7 +809,9 @@ class ClientBase:
             self.log.warn(
                 "remote service unreachable, disabling client", client=self.name
             )
-            self.enabled = False
+            # `enabled` is a read-only @property that proxies to
+            # `client_config.enabled`; write through to the underlying field.
+            self.client_config.enabled = False
             return True
 
         return False
@@ -1690,6 +1692,10 @@ class ClientBase:
 
     def jiggle_enabled_for(self, kind: str, auto: bool = False) -> bool:
         agent_context = active_agent.get()
+
+        if agent_context is None:
+            return False
+
         agent = agent_context.agent
 
         if not agent:

@@ -400,27 +400,30 @@ class TestRegenerateMessageNonCharacter:
 
 class TestRegenerateCharacterMessage:
     @pytest.mark.asyncio
-    async def test_raises_when_character_not_in_scene(
+    async def test_returns_none_when_character_not_in_scene(
         self, scene, register_agent
     ):
-        """When the named character is missing, regenerate_character_message
-        returns the original message unchanged. The outer regenerate_message
-        then iterates the message text by character and fails attempting to
-        send signals — caller must guard via ensure_regenerate_allowed first.
+        """When the named character is missing, regenerate_message returns
+        None and the conversation agent is never called. The outer
+        `regenerate()` handles None by restoring the original message; direct
+        callers get the same contract.
         """
-        register_agent("conversation", _conversation_agent_with_canned([]))
+        conv = _conversation_agent_with_canned([])
+        register_agent("conversation", conv)
         msg = _make_character_message("Ghost")
 
-        with pytest.raises(AttributeError):
-            await regenerate_message(msg, scene)
+        result = await regenerate_message(msg, scene)
+
+        assert result is None
+        assert conv.calls == []
 
     @pytest.mark.asyncio
-    async def test_static_player_message_raises_due_to_none_messages(
+    async def test_static_player_message_returns_none(
         self, scene, register_agent, monkeypatch
     ):
-        """Static player messages cannot be regenerated. regenerate_message
-        receives None back from regenerate_character_message and then attempts
-        to iterate it. Callers must guard via ensure_regenerate_allowed first.
+        """Static player messages (source='player' without from_choice)
+        cannot be regenerated. regenerate_message returns None instead of
+        crashing.
         """
         from talemate.character import Character
 
@@ -433,10 +436,14 @@ class TestRegenerateCharacterMessage:
         msg.source = "player"
         msg.from_choice = None
 
-        register_agent("conversation", _conversation_agent_with_canned([]))
+        conv = _conversation_agent_with_canned([])
+        register_agent("conversation", conv)
 
-        with pytest.raises(TypeError):
-            await regenerate_message(msg, scene)
+        result = await regenerate_message(msg, scene)
+
+        assert result is None
+        # The conversation agent's `converse` was not invoked.
+        assert conv.calls == []
 
     @pytest.mark.asyncio
     async def test_regenerates_via_conversation_agent_when_from_choice_set(

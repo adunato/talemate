@@ -481,19 +481,15 @@ class TestHostIsRemote:
 
 class TestToggleDisabledIfRemote:
     def test_disables_when_remote_and_enabled(self, cfg_isolation):
-        # NOTE: `toggle_disabled_if_remote` tries to assign `self.enabled = False`
-        # but `enabled` is a read-only property in the base class — so this
-        # code path raises AttributeError unless the subclass overrides
-        # `enabled` as a writeable attribute. This test pins down the current
-        # behavior so any future refactor (e.g., turning enabled into a
-        # writeable property) trips the test and forces a conscious decision.
+        # The toggle now writes through to `client_config.enabled` (the
+        # underlying field that the read-only `enabled` property proxies to).
         _register_client_config(
             "remote_test", api_url="http://api.example.com", enabled=True
         )
         client = _StubClient(name="remote_test")
         assert client.enabled is True
-        with pytest.raises(AttributeError):
-            client.toggle_disabled_if_remote()
+        assert client.toggle_disabled_if_remote() is True
+        assert client.enabled is False
 
     def test_no_op_when_local(self, cfg_isolation):
         _register_client_config(
@@ -888,6 +884,16 @@ class TestJiggleEnabledFor:
 
         # Patch active_agent to a stand-in object whose .agent is None.
         token = active_agent.set(_NoAgent())
+        try:
+            assert stub_client.jiggle_enabled_for("conversation") is False
+        finally:
+            active_agent.reset(token)
+
+    def test_returns_false_when_no_active_agent(self, stub_client):
+        # When no active_agent context is set, `active_agent.get()` returns
+        # None (the ContextVar default). The function should treat that as
+        # "jiggle disabled" rather than crashing on `None.agent`.
+        token = active_agent.set(None)
         try:
             assert stub_client.jiggle_enabled_for("conversation") is False
         finally:
