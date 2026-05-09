@@ -60,6 +60,7 @@ def stub_prompt(monkeypatch):
     ``raising=True`` so a rename of ``Prompt.request`` immediately fails.
     """
     from talemate.agents.director import guide as guide_mod
+
     return patch_prompt_request_in(monkeypatch, guide_mod)
 
 
@@ -154,9 +155,7 @@ class TestCachedGuidance:
         assert result == "cached guidance"
 
     @pytest.mark.asyncio
-    async def test_set_cached_guidance_stores_character_name(
-        self, scene, director
-    ):
+    async def test_set_cached_guidance_stores_character_name(self, scene, director):
         char = await _add_character(scene, "Alice")
         with ActiveAgent(director, _guide_fn):
             await director.set_cached_guidance(
@@ -217,9 +216,7 @@ class TestGetCachedCharacterGuidance:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_returns_none_when_analysis_type_is_not_conversation(
-        self, director
-    ):
+    async def test_returns_none_when_analysis_type_is_not_conversation(self, director):
         director.set_scene_states(
             cached_guidance={
                 "fp": "x",
@@ -273,8 +270,7 @@ class TestOnSummarizationSceneAnalysisAfter:
             with ActiveAgent(director, _guide_fn):
                 await director.on_summarization_scene_analysis_after(emission)
                 assert (
-                    director.get_context_state("narrator_guidance")
-                    == "guidance text"
+                    director.get_context_state("narrator_guidance") == "guidance text"
                 )
         finally:
             director.actions["guide_scene"].enabled = False
@@ -301,9 +297,7 @@ class TestOnSummarizationSceneAnalysisAfter:
             )
             with ActiveAgent(director, _guide_fn):
                 await director.on_summarization_scene_analysis_after(emission)
-                assert (
-                    director.get_context_state("actor_guidance") == "actor hint"
-                )
+                assert director.get_context_state("actor_guidance") == "actor hint"
         finally:
             director.actions["guide_scene"].enabled = False
 
@@ -332,9 +326,7 @@ class TestOnSummarizationSceneAnalysisAfter:
         director.actions["guide_scene"].enabled = True
         try:
             # Empty response from the LLM stub
-            stub_prompt(
-                {"director.guide-narration": [("", {"guidance": ""})]}
-            )
+            stub_prompt({"director.guide-narration": [("", {"guidance": ""})]})
             emission = SceneAnalysisEmission(
                 agent=director, analysis_type="narration", response="x"
             )
@@ -430,31 +422,17 @@ class TestGuideActorOffOfSceneAnalysis:
 
 class TestGuideNarratorOffOfSceneAnalysis:
     @pytest.mark.asyncio
-    async def test_uses_extracted_guidance(
-        self, scene, director, stub_prompt
-    ):
+    async def test_uses_extracted_guidance(self, scene, director, stub_prompt):
         stub_prompt(
-            {
-                "director.guide-narration": [
-                    ("raw", {"guidance": "narrator guidance"})
-                ]
-            }
+            {"director.guide-narration": [("raw", {"guidance": "narrator guidance"})]}
         )
         with ActiveAgent(director, _guide_fn):
-            result = await director.guide_narrator_off_of_scene_analysis(
-                "analysis"
-            )
+            result = await director.guide_narrator_off_of_scene_analysis("analysis")
         assert result == "narrator guidance"
 
     @pytest.mark.asyncio
     async def test_calls_correct_template(self, scene, director, stub_prompt):
-        stub = stub_prompt(
-            {
-                "director.guide-narration": [
-                    ("raw", {"guidance": "x"})
-                ]
-            }
-        )
+        stub = stub_prompt({"director.guide-narration": [("raw", {"guidance": "x"})]})
         with ActiveAgent(director, _guide_fn):
             await director.guide_narrator_off_of_scene_analysis(
                 "analysis", response_length=512

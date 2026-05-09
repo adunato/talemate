@@ -174,9 +174,7 @@ class TestLatestRevisionAt:
 
 class TestDeleteChangelogFiles:
     @pytest.mark.asyncio
-    async def test_deletes_base_latest_and_segments_and_removes_dir(
-        self, mock_scene
-    ):
+    async def test_deletes_base_latest_and_segments_and_removes_dir(self, mock_scene):
         # Set up real files
         await save_changelog(mock_scene)
         # Modify and append to create a delta file

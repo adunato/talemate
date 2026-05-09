@@ -86,9 +86,7 @@ class TestAttributeFields:
 class TestGeneratedModels:
     def test_generated_attribute_holds_template_ref(self):
         a = Attribute(name="N", attribute="x")
-        ga = GeneratedAttribute(
-            attribute="x", value="v", character="Alice", template=a
-        )
+        ga = GeneratedAttribute(attribute="x", value="v", character="Alice", template=a)
         assert ga.template is a
         assert ga.attribute == "x"
         assert ga.character == "Alice"
@@ -96,9 +94,7 @@ class TestGeneratedModels:
 
     def test_generated_detail_holds_template_ref(self):
         d = Detail(name="N", detail="x")
-        gd = GeneratedDetail(
-            detail="x", value="v", character="Alice", template=d
-        )
+        gd = GeneratedDetail(detail="x", value="v", character="Alice", template=d)
         assert gd.template is d
         assert gd.detail == "x"
         assert gd.character == "Alice"
@@ -282,10 +278,7 @@ class TestTemplateFormattedOnCharacterTemplates:
             instructions="What is {character_name}'s role?",
         )
         assert tmpl.formatted("attribute", scene, "Alice") == "Alice_role"
-        assert (
-            tmpl.formatted("instructions", scene, "Alice")
-            == "What is Alice's role?"
-        )
+        assert tmpl.formatted("instructions", scene, "Alice") == "What is Alice's role?"
 
     def test_detail_format_interpolates_character_name(self, scene):
         make_actor(scene, "Alice")
@@ -295,10 +288,7 @@ class TestTemplateFormattedOnCharacterTemplates:
             instructions="Where is {character_name} from?",
         )
         assert tmpl.formatted("detail", scene, "Alice") == "Alice_home"
-        assert (
-            tmpl.formatted("instructions", scene, "Alice")
-            == "Where is Alice from?"
-        )
+        assert tmpl.formatted("instructions", scene, "Alice") == "Where is Alice from?"
 
     def test_attribute_format_returns_none_for_missing_instructions(self, scene):
         tmpl = Attribute(name="X", attribute="role", instructions=None)

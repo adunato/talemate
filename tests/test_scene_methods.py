@@ -39,7 +39,9 @@ from talemate.tale_mate import Actor, Player, Scene
 # ---------------------------------------------------------------------------
 
 
-def _char_msg(text: str, character: str = "Alice", source: str = "ai") -> CharacterMessage:
+def _char_msg(
+    text: str, character: str = "Alice", source: str = "ai"
+) -> CharacterMessage:
     return CharacterMessage(message=f"{character}: {text}", source=source)
 
 
@@ -270,9 +272,7 @@ class TestCharacterAccessors:
         assert real_scene.get_character("Alice", partial=True).name == "Alice the Brave"
         # Character name contained in search-term.
         assert (
-            real_scene.get_character(
-                "Alice the Brave Warrior", partial=True
-            ).name
+            real_scene.get_character("Alice the Brave Warrior", partial=True).name
             == "Alice the Brave"
         )
 
@@ -603,7 +603,11 @@ class TestHistoryAccessors:
     def test_last_player_message_returns_player_source(self, real_scene):
         ai_msg = _char_msg("hi", character="Alice", source="ai")
         player_msg = _char_msg("hello", character="Hero", source="player")
-        real_scene.history = [ai_msg, player_msg, NarratorMessage(message="N", source="ai")]
+        real_scene.history = [
+            ai_msg,
+            player_msg,
+            NarratorMessage(message="N", source="ai"),
+        ]
         assert real_scene.last_player_message() is player_msg
 
     def test_last_player_message_returns_none_when_absent(self, real_scene):
@@ -701,10 +705,7 @@ class TestLastMessageOfType:
         n_ai = NarratorMessage(message="ai-narr", source="ai")
         n_manual = NarratorMessage(message="manual-narr", source="manual")
         real_scene.history = [n_ai, n_manual]
-        assert (
-            real_scene.last_message_of_type("narrator", source="ai")
-            is n_ai
-        )
+        assert real_scene.last_message_of_type("narrator", source="ai") is n_ai
 
     def test_max_iterations_limit(self, real_scene):
         # Tail has 3 character messages and one narrator at index 0.
@@ -1477,10 +1478,7 @@ class TestLastMessageCountOnlyTypes:
         ]
         # Without count_only_types and max_iterations=2: walk c2(+1), c1(+2),
         # boundary -> None.
-        assert (
-            real_scene.last_message_of_type("narrator", max_iterations=2)
-            is None
-        )
+        assert real_scene.last_message_of_type("narrator", max_iterations=2) is None
         # With count_only_types=["character"]: characters tick, narrator does not.
         # walk c2(+1), c1(+2) -> still doesn't reach the narrator (max_iterations=2),
         # so we further increase max to 3 to exercise the branch.

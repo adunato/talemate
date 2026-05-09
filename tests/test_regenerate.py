@@ -89,7 +89,9 @@ def _make_actor(character) -> Actor:
     return Actor(character=character, agent=None)
 
 
-def _make_character_message(name: str = "Alice", body: str = "Hello") -> CharacterMessage:
+def _make_character_message(
+    name: str = "Alice", body: str = "Hello"
+) -> CharacterMessage:
     """Build a real CharacterMessage with proper "Name: body" format."""
     return CharacterMessage(message=f"{name}: {body}")
 
@@ -506,9 +508,7 @@ class TestRegenerate:
         assert msg in scene.history
 
     @pytest.mark.asyncio
-    async def test_returns_empty_list_for_unsupported_message_type(
-        self, scene
-    ):
+    async def test_returns_empty_list_for_unsupported_message_type(self, scene):
         # Reinforcement-only history: walk-back consumes them all → message ends
         # up at index -1 of an empty/popped state → control flow path varies.
         # Use a simpler unsupported type instead: a plain SceneMessage subclass

@@ -256,12 +256,8 @@ class TestOverrideNewness:
         agent = two_layer_dirs["agent"]
         # Same mtime to within a few seconds.
         t = 1_000_000.0
-        _write_template(
-            two_layer_dirs["override_dir"] / agent / "z.jinja2", mtime=t
-        )
-        _write_template(
-            two_layer_dirs["default_dir"] / agent / "z.jinja2", mtime=t + 5
-        )
+        _write_template(two_layer_dirs["override_dir"] / agent / "z.jinja2", mtime=t)
+        _write_template(two_layer_dirs["default_dir"] / agent / "z.jinja2", mtime=t + 5)
 
         isolated_prepend(two_layer_dirs["dirs"])
 
@@ -299,12 +295,8 @@ class TestMultipleTemplates:
         """Templates nested under subdirs are still discovered."""
         agent = two_layer_dirs["agent"]
         # Nested at agent/sub/deep.jinja2
-        _write_template(
-            two_layer_dirs["override_dir"] / agent / "sub" / "deep.jinja2"
-        )
-        _write_template(
-            two_layer_dirs["default_dir"] / agent / "sub" / "deep.jinja2"
-        )
+        _write_template(two_layer_dirs["override_dir"] / agent / "sub" / "deep.jinja2")
+        _write_template(two_layer_dirs["default_dir"] / agent / "sub" / "deep.jinja2")
 
         isolated_prepend(two_layer_dirs["dirs"])
 

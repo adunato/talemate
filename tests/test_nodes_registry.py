@@ -94,9 +94,7 @@ class TestRegisterDecorator:
         original_base = dict(BASE_TYPES)
         try:
 
-            @register(
-                "test/BaseTypeRegister", as_base_type=True, container=container
-            )
+            @register("test/BaseTypeRegister", as_base_type=True, container=container)
             class FakeNode(Node):
                 pass
 

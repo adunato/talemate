@@ -224,10 +224,7 @@ class GetWebsocketRouter(Node):
             default="",
             choices=[],
             generate_choices=lambda: (
-                [
-                    router.router
-                    for router in active_websocket_handler().routes.values()
-                ]
+                [router.router for router in active_websocket_handler().routes.values()]
                 if active_websocket_handler() is not None
                 else []
             ),

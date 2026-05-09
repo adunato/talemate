@@ -148,7 +148,9 @@ def scene_factory(tmp_path, monkeypatch):
     def _make(project: str = "save_node_test", nodes_filename: str = "scene-loop.json"):
         scene = Scene()
         scene.project_name = project
-        scene.nodes_filename = nodes_filename if nodes_filename != "scene-loop.json" else ""
+        scene.nodes_filename = (
+            nodes_filename if nodes_filename != "scene-loop.json" else ""
+        )
         # Don't pre-create scene.nodes_dir — `save_node_module` is responsible
         # for creating it, and one of the tests verifies that contract.
         return scene

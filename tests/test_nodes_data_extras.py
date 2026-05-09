@@ -72,9 +72,7 @@ class TestSort:
         from types import SimpleNamespace
 
         items = [SimpleNamespace(weight=2), SimpleNamespace(weight=1)]
-        out = await run_node(
-            Sort(), inputs={"items": items, "sort_keys": '["weight"]'}
-        )
+        out = await run_node(Sort(), inputs={"items": items, "sort_keys": '["weight"]'})
         assert [i.weight for i in out["sorted_items"]] == [1, 2]
 
     @pytest.mark.asyncio
@@ -154,17 +152,13 @@ class TestContains:
 class TestDictGet:
     @pytest.mark.asyncio
     async def test_returns_value_for_existing_key(self):
-        out = await run_node(
-            DictGet(), inputs={"dict": {"a": 1, "b": 2}, "key": "a"}
-        )
+        out = await run_node(DictGet(), inputs={"dict": {"a": 1, "b": 2}, "key": "a"})
         assert out["value"] == 1
         assert out["key"] == "a"
 
     @pytest.mark.asyncio
     async def test_missing_key_returns_none(self):
-        out = await run_node(
-            DictGet(), inputs={"dict": {"a": 1}, "key": "missing"}
-        )
+        out = await run_node(DictGet(), inputs={"dict": {"a": 1}, "key": "missing"})
         assert out["value"] is None
 
 
@@ -172,9 +166,7 @@ class TestDictSet:
     @pytest.mark.asyncio
     async def test_sets_in_existing_dict(self):
         d = {"a": 1}
-        out = await run_node(
-            DictSet(), inputs={"dict": d, "key": "b", "value": 99}
-        )
+        out = await run_node(DictSet(), inputs={"dict": d, "key": "b", "value": 99})
         assert out["dict"] == {"a": 1, "b": 99}
         # Operates in-place
         assert d == {"a": 1, "b": 99}
@@ -275,9 +267,7 @@ class TestMakeDict:
 class TestGetNode:
     @pytest.mark.asyncio
     async def test_dict_get(self):
-        out = await run_node(
-            Get(), inputs={"object": {"a": 1}, "attribute": "a"}
-        )
+        out = await run_node(Get(), inputs={"object": {"a": 1}, "attribute": "a"})
         assert out["value"] == 1
 
     @pytest.mark.asyncio
@@ -297,26 +287,20 @@ class TestGetNode:
 
     @pytest.mark.asyncio
     async def test_list_index_out_of_range_returns_unresolved(self):
-        out = await run_node(
-            Get(), inputs={"object": ["a"], "attribute": "5"}
-        )
+        out = await run_node(Get(), inputs={"object": ["a"], "attribute": "5"})
         assert out["value"] is UNRESOLVED
 
     @pytest.mark.asyncio
     async def test_list_non_integer_attribute_raises(self):
         with pytest.raises(InputValueError):
-            await run_node(
-                Get(), inputs={"object": ["a"], "attribute": "foo"}
-            )
+            await run_node(Get(), inputs={"object": ["a"], "attribute": "foo"})
 
 
 class TestSetNode:
     @pytest.mark.asyncio
     async def test_dict_set(self):
         d = {}
-        out = await run_node(
-            Set(), inputs={"object": d, "attribute": "k", "value": 1}
-        )
+        out = await run_node(Set(), inputs={"object": d, "attribute": "k", "value": 1})
         assert d == {"k": 1}
         assert out["object"] is d
 
@@ -325,17 +309,13 @@ class TestSetNode:
         from types import SimpleNamespace
 
         ns = SimpleNamespace()
-        await run_node(
-            Set(), inputs={"object": ns, "attribute": "x", "value": 42}
-        )
+        await run_node(Set(), inputs={"object": ns, "attribute": "x", "value": 42})
         assert ns.x == 42
 
     @pytest.mark.asyncio
     async def test_list_index_set(self):
         lst = [0, 0, 0]
-        await run_node(
-            Set(), inputs={"object": lst, "attribute": "1", "value": 99}
-        )
+        await run_node(Set(), inputs={"object": lst, "attribute": "1", "value": 99})
         assert lst == [0, 99, 0]
 
     @pytest.mark.asyncio
@@ -395,9 +375,7 @@ class TestListAppend:
     @pytest.mark.asyncio
     async def test_appends_to_existing_list(self):
         lst = [1, 2]
-        out = await run_node(
-            ListAppend(), inputs={"list": lst, "item": 3}
-        )
+        out = await run_node(ListAppend(), inputs={"list": lst, "item": 3})
         assert out["list"] == [1, 2, 3]
         assert out["item"] == 3
 
@@ -593,7 +571,9 @@ def _wire_dynamic_input(graph, collector, value, label_name=None):
     collector.dynamic_inputs.append(
         {"name": label, "type": collector.dynamic_input_type}
     )
-    sock = collector.add_input(label, socket_type=collector.dynamic_input_type, optional=True)
+    sock = collector.add_input(
+        label, socket_type=collector.dynamic_input_type, optional=True
+    )
 
     producer = _ValueProducer(value)
     graph.add_node(producer)
@@ -698,18 +678,14 @@ class TestCombineList:
 class TestDictKeyValuePairs:
     @pytest.mark.asyncio
     async def test_emits_pairs_list(self):
-        out = await run_node(
-            DictKeyValuePairs(), inputs={"dict": {"a": 1, "b": 2}}
-        )
+        out = await run_node(DictKeyValuePairs(), inputs={"dict": {"a": 1, "b": 2}})
         assert sorted(out["kvs"]) == [("a", 1), ("b", 2)]
 
 
 class TestMakeKeyValuePair:
     @pytest.mark.asyncio
     async def test_returns_tuple_and_separate_outputs(self):
-        out = await run_node(
-            MakeKeyValuePair(), inputs={"key": "k", "value": 9}
-        )
+        out = await run_node(MakeKeyValuePair(), inputs={"key": "k", "value": 9})
         assert out["kv"] == ("k", 9)
         assert out["key"] == "k"
         assert out["value"] == 9
@@ -797,9 +773,7 @@ class TestDictGetPathRun:
     async def test_resolved_path_emits_value_and_found(self):
         node = DictGetPath()
         node.set_property("path", "a.b")
-        out = await run_node(
-            node, inputs={"dict": {"a": {"b": 99}}, "path": "a.b"}
-        )
+        out = await run_node(node, inputs={"dict": {"a": {"b": 99}}, "path": "a.b"})
         assert out["value"] == 99
         assert out["found"] is True
         assert out["path"] == "a.b"

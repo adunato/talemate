@@ -53,6 +53,7 @@ def stub_prompt(monkeypatch):
     ``raising=True`` so a rename or removal of ``Prompt.request`` fails.
     """
     from talemate.agents.director import generate_choices as gc_mod
+
     return patch_prompt_request_in(monkeypatch, gc_mod)
 
 
@@ -94,7 +95,9 @@ class TestOnPlayerTurnStart:
             async def fake_generate_choices(**kwargs):
                 calls.append(kwargs)
 
-            with patch.object(director, "generate_choices", side_effect=fake_generate_choices):
+            with patch.object(
+                director, "generate_choices", side_effect=fake_generate_choices
+            ):
                 await director.on_player_turn_start(event)
             assert calls == []
         finally:
@@ -110,7 +113,9 @@ class TestOnPlayerTurnStart:
             async def fake_generate_choices(**kwargs):
                 calls.append(kwargs)
 
-            with patch.object(director, "generate_choices", side_effect=fake_generate_choices):
+            with patch.object(
+                director, "generate_choices", side_effect=fake_generate_choices
+            ):
                 await director.on_player_turn_start(event)
             assert calls == []
         finally:
@@ -129,7 +134,9 @@ class TestOnPlayerTurnStart:
             async def fake_generate_choices(**kwargs):
                 calls.append(kwargs)
 
-            with patch.object(director, "generate_choices", side_effect=fake_generate_choices):
+            with patch.object(
+                director, "generate_choices", side_effect=fake_generate_choices
+            ):
                 await director.on_player_turn_start(event)
         assert calls == []
 
@@ -200,11 +207,7 @@ class TestGenerateChoices:
         # Response simulates a numbered list extracted by util.extract_list
         actions_text = "1. Open the door\n2. Look around\n3. Run away"
         stub_prompt(
-            {
-                "director.generate-choices": [
-                    ("raw response", {"actions": actions_text})
-                ]
-            }
+            {"director.generate-choices": [("raw response", {"actions": actions_text})]}
         )
         result = await director.generate_choices()
         assert result == "raw response"
@@ -227,27 +230,17 @@ class TestGenerateChoices:
         await _add_character(scene, "Alice")
         await _add_character(scene, "Hero", is_player=True)
         stub = stub_prompt(
-            {
-                "director.generate-choices": [
-                    ("ok", {"actions": "1. Wait\n2. Speak"})
-                ]
-            }
+            {"director.generate-choices": [("ok", {"actions": "1. Wait\n2. Speak"})]}
         )
         await director.generate_choices(character="Alice")
         # Alice should be the character passed to the prompt
         assert stub.calls[0]["vars"]["character"].name == "Alice"
 
     @pytest.mark.asyncio
-    async def test_falls_back_to_player_character(
-        self, scene, director, stub_prompt
-    ):
+    async def test_falls_back_to_player_character(self, scene, director, stub_prompt):
         await _add_character(scene, "Hero", is_player=True)
         stub = stub_prompt(
-            {
-                "director.generate-choices": [
-                    ("ok", {"actions": "1. A\n2. B"})
-                ]
-            }
+            {"director.generate-choices": [("ok", {"actions": "1. A\n2. B"})]}
         )
         await director.generate_choices()
         assert stub.calls[0]["vars"]["character"].name == "Hero"
@@ -260,13 +253,7 @@ class TestGenerateChoices:
         director.actions["_generate_choices"].config[
             "instructions"
         ].value = "config instructions"
-        stub = stub_prompt(
-            {
-                "director.generate-choices": [
-                    ("ok", {"actions": "1. A"})
-                ]
-            }
-        )
+        stub = stub_prompt({"director.generate-choices": [("ok", {"actions": "1. A"})]})
         await director.generate_choices(instructions="explicit override")
         assert stub.calls[0]["vars"]["instructions"] == "explicit override"
 
@@ -278,13 +265,7 @@ class TestGenerateChoices:
         director.actions["_generate_choices"].config[
             "instructions"
         ].value = "config-default"
-        stub = stub_prompt(
-            {
-                "director.generate-choices": [
-                    ("ok", {"actions": "1. A"})
-                ]
-            }
-        )
+        stub = stub_prompt({"director.generate-choices": [("ok", {"actions": "1. A"})]})
         try:
             await director.generate_choices()
             assert stub.calls[0]["vars"]["instructions"] == "config-default"
@@ -292,18 +273,12 @@ class TestGenerateChoices:
             director.actions["_generate_choices"].config["instructions"].value = ""
 
     @pytest.mark.asyncio
-    async def test_passes_num_choices_to_prompt(
-        self, scene, director, stub_prompt
-    ):
+    async def test_passes_num_choices_to_prompt(self, scene, director, stub_prompt):
         await _add_character(scene, "Hero", is_player=True)
         director.actions["_generate_choices"].config["num_choices"].value = 5
         try:
             stub = stub_prompt(
-                {
-                    "director.generate-choices": [
-                        ("ok", {"actions": "1. A"})
-                    ]
-                }
+                {"director.generate-choices": [("ok", {"actions": "1. A"})]}
             )
             await director.generate_choices()
             assert stub.calls[0]["vars"]["num_choices"] == 5

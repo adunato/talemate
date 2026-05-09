@@ -304,9 +304,7 @@ async def test_function_wrapper_get_argument_nodes_filters_by_type():
     arg.set_property("name", "arg1")
     graph.add_node(arg)
     # Wire arg into FunctionReturn so it shows up as a connected ancestor
-    fn_return = next(
-        n for n in graph.nodes.values() if isinstance(n, FunctionReturn)
-    )
+    fn_return = next(n for n in graph.nodes.values() if isinstance(n, FunctionReturn))
     # There is already a connection from constant; replace by routing through arg
     # We won't actually call the function; we just want get_argument_nodes to find arg
     graph.connect(arg.get_output_socket("value"), fn_return.get_input_socket("value"))
@@ -624,9 +622,7 @@ async def test_breakpoint_skipped_when_inactive_in_creative():
     node = Breakpoint()
     node.set_property("active", False)
 
-    out = await run_node(
-        node, scene=scene, inputs={"state": "STATE"}
-    )
+    out = await run_node(node, scene=scene, inputs={"state": "STATE"})
     assert out["state"] == "STATE"
 
 

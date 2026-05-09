@@ -105,11 +105,15 @@ def _desc(
 
 class TestCallbackDescriptorDescription:
     def test_chat_returns_chat_when_set(self):
-        d = _desc("a", description_chat="chat-text", description_scene_direction="sd-text")
+        d = _desc(
+            "a", description_chat="chat-text", description_scene_direction="sd-text"
+        )
         assert d.get_description("chat") == "chat-text"
 
     def test_scene_direction_returns_sd_when_set(self):
-        d = _desc("a", description_chat="chat-text", description_scene_direction="sd-text")
+        d = _desc(
+            "a", description_chat="chat-text", description_scene_direction="sd-text"
+        )
         assert d.get_description("scene_direction") == "sd-text"
 
     def test_chat_falls_back_to_scene_direction_when_chat_missing(self):
@@ -173,7 +177,10 @@ class TestIsActionIdEnabled:
 
     def test_availability_chat_only_disabled_in_scene_direction(self, director):
         d = _desc("a", availability="chat")
-        assert is_action_id_enabled("scene_direction", "a", director, descriptor=d) is False
+        assert (
+            is_action_id_enabled("scene_direction", "a", director, descriptor=d)
+            is False
+        )
 
     def test_availability_scene_direction_only_disabled_in_chat(self, director):
         d = _desc("a", availability="scene_direction")
@@ -193,7 +200,10 @@ class TestIsActionIdEnabled:
     def test_availability_check_runs_before_force_enabled(self, director):
         """availability=chat blocks scene_direction even with force_enabled=True."""
         d = _desc("a", availability="chat", force_enabled=True)
-        assert is_action_id_enabled("scene_direction", "a", director, descriptor=d) is False
+        assert (
+            is_action_id_enabled("scene_direction", "a", director, descriptor=d)
+            is False
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -365,7 +375,9 @@ class TestExtractAllCallbackDescriptors:
     @pytest.mark.asyncio
     async def test_returns_dict_keyed_by_action_name(self, fake_action_registry):
         a = _make_director_chat_action("alpha", [{"action_id": "a1"}])
-        b = _make_director_chat_action("beta", [{"action_id": "b1"}, {"action_id": "b2"}])
+        b = _make_director_chat_action(
+            "beta", [{"action_id": "b1"}, {"action_id": "b2"}]
+        )
         fake_action_registry(a, b)
 
         result = await extract_all_callback_descriptors()

@@ -140,9 +140,7 @@ class TestGetAssetNode:
     @pytest.mark.asyncio
     async def test_returns_meta_and_id(self, scene):
         a = await scene.assets.add_asset(b"x", "png", "image/png")
-        out = await run_node(
-            GetAsset(), scene=scene, inputs={"asset_id": a.id}
-        )
+        out = await run_node(GetAsset(), scene=scene, inputs={"asset_id": a.id})
         assert out["asset_id"] == a.id
         assert out["asset"].id == a.id
         assert out["file_type"] == "png"
@@ -151,9 +149,7 @@ class TestGetAssetNode:
     @pytest.mark.asyncio
     async def test_unknown_id_raises_input_value_error(self, scene):
         with pytest.raises(InputValueError):
-            await run_node(
-                GetAsset(), scene=scene, inputs={"asset_id": "absent"}
-            )
+            await run_node(GetAsset(), scene=scene, inputs={"asset_id": "absent"})
 
     @pytest.mark.asyncio
     async def test_empty_asset_id_returns_silently(self, scene):
@@ -213,9 +209,7 @@ class TestAssetExistsNode:
     @pytest.mark.asyncio
     async def test_present_yes_branch(self, scene):
         a = await scene.assets.add_asset(b"x", "png", "image/png")
-        out = await run_node(
-            AssetExists(), scene=scene, inputs={"asset_id": a.id}
-        )
+        out = await run_node(AssetExists(), scene=scene, inputs={"asset_id": a.id})
         assert out["yes"] == a.id
         assert out["no"] is UNRESOLVED
         assert out["yes__deactivated"] is False
@@ -223,9 +217,7 @@ class TestAssetExistsNode:
 
     @pytest.mark.asyncio
     async def test_absent_no_branch(self, scene):
-        out = await run_node(
-            AssetExists(), scene=scene, inputs={"asset_id": "ghost"}
-        )
+        out = await run_node(AssetExists(), scene=scene, inputs={"asset_id": "ghost"})
         assert out["yes"] is UNRESOLVED
         assert out["no"] == "ghost"
         assert out["yes__deactivated"] is True
@@ -471,23 +463,17 @@ class TestMakeAssetMetaNode:
     @pytest.mark.asyncio
     async def test_invalid_vis_type_raises(self):
         with pytest.raises(InputValueError):
-            await run_node(
-                MakeAssetMeta(), inputs={"vis_type": "NOT_REAL"}
-            )
+            await run_node(MakeAssetMeta(), inputs={"vis_type": "NOT_REAL"})
 
     @pytest.mark.asyncio
     async def test_invalid_gen_type_raises(self):
         with pytest.raises(InputValueError):
-            await run_node(
-                MakeAssetMeta(), inputs={"gen_type": "NOT_REAL"}
-            )
+            await run_node(MakeAssetMeta(), inputs={"gen_type": "NOT_REAL"})
 
     @pytest.mark.asyncio
     async def test_invalid_reference_vis_type_raises(self):
         with pytest.raises(InputValueError):
-            await run_node(
-                MakeAssetMeta(), inputs={"reference": ["NOT_REAL"]}
-            )
+            await run_node(MakeAssetMeta(), inputs={"reference": ["NOT_REAL"]})
 
 
 # ---------------------------------------------------------------------------

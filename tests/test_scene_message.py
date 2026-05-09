@@ -149,8 +149,8 @@ class TestSceneMessageBase:
         m = SceneMessage(message="cat")
         # __contains__ is overridden to test self.message in other (reversed
         # semantics from the typical container usage).
-        assert "the cat sat" .__contains__  # sanity
-        assert ("the cat sat".__contains__ is not None)
+        assert "the cat sat".__contains__  # sanity
+        assert "the cat sat".__contains__ is not None
         # The dataclass override returns True when the message is contained
         # within `other`.
         assert m.__contains__("the cat sat") is True
@@ -606,7 +606,9 @@ class TestReinforcementMessage:
         assert m.as_format("chat") == "\nhello\n"
 
     def test_source_to_meta_populates_meta(self):
-        m = ReinforcementMessage(message="They are loyal", source="are they loyal?:Alice")
+        m = ReinforcementMessage(
+            message="They are loyal", source="are they loyal?:Alice"
+        )
         m.source_to_meta()
         assert m.meta == {
             "agent": "world_state",

@@ -423,15 +423,11 @@ def package_test_classes():
             self.set_property("restart_scene_loop", False)
 
             install_node = InstallNodeModule()
-            install_node.set_property(
-                "node_registry", "test/pkg/InstallableModule"
-            )
+            install_node.set_property("node_registry", "test/pkg/InstallableModule")
             self.add_node(install_node)
 
             promote = PromoteConfig()
-            promote.set_property(
-                "node_registry", "test/pkg/InstallableModule"
-            )
+            promote.set_property("node_registry", "test/pkg/InstallableModule")
             promote.set_property("property_name", "an_int")
             promote.set_property("exposed_property_name", "an_int_exposed")
             promote.set_property("label", "An Int")
@@ -534,9 +530,7 @@ async def test_list_packages_records_error_for_missing_module_property():
 
     try:
         pkgs = await list_packages()
-        broken = next(
-            (p for p in pkgs if p.registry == "test/pkg/BrokenPackage"), None
-        )
+        broken = next((p for p in pkgs if p.registry == "test/pkg/BrokenPackage"), None)
         assert broken is not None
         assert any("no_such_prop" in e for e in broken.errors)
         # The exposed property should NOT have been added because it could

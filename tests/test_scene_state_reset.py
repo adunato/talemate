@@ -503,9 +503,7 @@ class TestGetStateInfo:
         assert data["reinforcements"][1]["character"] == "Alice"
 
     @pytest.mark.asyncio
-    async def test_empty_agent_states_not_included(
-        self, scene_factory, mixin_instance
-    ):
+    async def test_empty_agent_states_not_included(self, scene_factory, mixin_instance):
         """Empty agent states should not be included in the response."""
         scene = scene_factory(
             agent_state={

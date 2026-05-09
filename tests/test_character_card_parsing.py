@@ -274,18 +274,14 @@ class TestCharacterCardImportOptions:
         with pytest.raises(pydantic.ValidationError):
             CharacterCardImportOptions(
                 player_character_template=PlayerCharacterTemplate(name="A"),
-                player_character_import=PlayerCharacterImport(
-                    scene_path="x", name="A"
-                ),
+                player_character_import=PlayerCharacterImport(scene_path="x", name="A"),
             )
 
     def test_validator_rejects_existing_and_import_combo(self):
         with pytest.raises(pydantic.ValidationError):
             CharacterCardImportOptions(
                 player_character_existing="A",
-                player_character_import=PlayerCharacterImport(
-                    scene_path="x", name="B"
-                ),
+                player_character_import=PlayerCharacterImport(scene_path="x", name="B"),
             )
 
     def test_single_player_option_allowed(self):
@@ -337,13 +333,19 @@ class TestImportSpecEnum:
 
 class TestIdentifyImportSpec:
     def test_v3_by_explicit_spec(self):
-        assert identify_import_spec({"spec": "chara_card_v3"}) == ImportSpec.chara_card_v3
+        assert (
+            identify_import_spec({"spec": "chara_card_v3"}) == ImportSpec.chara_card_v3
+        )
 
     def test_v2_by_explicit_spec(self):
-        assert identify_import_spec({"spec": "chara_card_v2"}) == ImportSpec.chara_card_v2
+        assert (
+            identify_import_spec({"spec": "chara_card_v2"}) == ImportSpec.chara_card_v2
+        )
 
     def test_v1_by_explicit_spec(self):
-        assert identify_import_spec({"spec": "chara_card_v1"}) == ImportSpec.chara_card_v1
+        assert (
+            identify_import_spec({"spec": "chara_card_v1"}) == ImportSpec.chara_card_v1
+        )
 
     def test_v0_inferred_from_top_level_first_mes(self):
         assert identify_import_spec({"first_mes": "hi"}) == ImportSpec.chara_card_v0
@@ -853,9 +855,7 @@ class TestLoadFromImageMetadata:
 
 
 class TestExtractCharacterDataFromFile:
-    def test_json_v2_extracts_character_book_and_alternate_greetings(
-        self, tmp_path
-    ):
+    def test_json_v2_extracts_character_book_and_alternate_greetings(self, tmp_path):
         card = _v2_card(
             {
                 "name": "JSON V2",
@@ -882,9 +882,7 @@ class TestExtractCharacterDataFromFile:
         assert alts == ["alt1", "alt2"]
         assert raw == card
 
-    def test_json_v1_returns_no_character_book_or_alternate_greetings(
-        self, tmp_path
-    ):
+    def test_json_v1_returns_no_character_book_or_alternate_greetings(self, tmp_path):
         # V1 cards don't have data.character_book or alternate_greetings;
         # those fields stay None / [].
         card = _v1_card({"description": "v1 desc"})
@@ -900,9 +898,7 @@ class TestExtractCharacterDataFromFile:
         assert is_image is False
         assert raw == card
 
-    def test_image_v2_extracts_character_book_and_alternate_greetings(
-        self, tmp_path
-    ):
+    def test_image_v2_extracts_character_book_and_alternate_greetings(self, tmp_path):
         card = _v2_card(
             {
                 "name": "Img V2",
@@ -1001,9 +997,7 @@ class TestParseCharactersFromGreetingText:
         scene = _SceneStub(
             [Character(name="Alice"), Character(name="Bob"), Character(name="Carol")]
         )
-        result = _parse_characters_from_greeting_text(
-            "alice: Hello!\nbob: Hi.", scene
-        )
+        result = _parse_characters_from_greeting_text("alice: Hello!\nbob: Hi.", scene)
         # original casing from character_data is preserved
         assert result == ["Alice", "Bob"]
 

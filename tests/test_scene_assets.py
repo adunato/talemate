@@ -177,14 +177,10 @@ class TestGetMediaTypeFromExtension:
 
 class TestGetMediaTypeFromFilePath:
     def test_extracts_extension_from_full_path(self):
-        assert (
-            get_media_type_from_file_path("/var/foo/bar/image.PNG") == "image/png"
-        )
+        assert get_media_type_from_file_path("/var/foo/bar/image.PNG") == "image/png"
 
     def test_handles_relative_path(self):
-        assert (
-            get_media_type_from_file_path("a/b/c.jpeg") == "image/jpeg"
-        )
+        assert get_media_type_from_file_path("a/b/c.jpeg") == "image/jpeg"
 
     def test_rejects_unsupported_extension(self):
         with pytest.raises(ValueError):
@@ -257,7 +253,9 @@ class TestAssetSelectionContext:
         assert ctx.should_skip() is False
 
     def test_should_skip_when_noop_with_selection(self):
-        ctx = AssetSelectionContext(mode="noop", selected=True, selected_asset_ids=["a"])
+        ctx = AssetSelectionContext(
+            mode="noop", selected=True, selected_asset_ids=["a"]
+        )
         assert ctx.should_skip() is True
 
     def test_should_skip_false_in_prioritize_mode(self):
@@ -439,9 +437,7 @@ class TestValidateAssetIdAndPath:
 class TestSceneAssetsDictAndSceneInfo:
     def test_dict_includes_cover_image_and_assets(self, scene):
         scene.assets.cover_image = "cover-id"
-        scene.assets.save_asset(
-            Asset(id="a1", file_type="png", media_type="image/png")
-        )
+        scene.assets.save_asset(Asset(id="a1", file_type="png", media_type="image/png"))
         result = scene.assets.dict()
         assert result["cover_image"] == "cover-id"
         assert "a1" in result["assets"]
@@ -473,9 +469,7 @@ class TestAddAsset:
         assert asset.media_type == "image/png"
 
         # File was written
-        on_disk = os.path.join(
-            scene.assets.asset_directory, f"{expected_id}.png"
-        )
+        on_disk = os.path.join(scene.assets.asset_directory, f"{expected_id}.png")
         assert os.path.isfile(on_disk)
         with open(on_disk, "rb") as f:
             assert f.read() == payload
@@ -493,9 +487,7 @@ class TestAddAsset:
 
     async def test_uses_provided_meta(self, scene):
         meta = AssetMeta(name="custom", tags=["t1"])
-        asset = await scene.assets.add_asset(
-            b"bytes-x", "png", "image/png", meta=meta
-        )
+        asset = await scene.assets.add_asset(b"bytes-x", "png", "image/png", meta=meta)
         assert asset.meta.name == "custom"
         assert asset.meta.tags == ["t1"]
 
@@ -576,7 +568,9 @@ class TestAddAssetFromGenerationResponse:
 
     async def test_rejects_response_without_request(self, scene):
         resp = GenerationResponse(generated=_png_bytes(), request=None)
-        with pytest.raises(ValueError, match="does not have a reference to the request"):
+        with pytest.raises(
+            ValueError, match="does not have a reference to the request"
+        ):
             await scene.assets.add_asset_from_generation_response(resp)
 
 
@@ -587,15 +581,11 @@ class TestAddAssetFromGenerationResponse:
 
 class TestGetAndUpdateAsset:
     def test_get_asset_returns_pydantic_object(self, scene):
-        scene.assets.save_asset(
-            Asset(id="x", file_type="png", media_type="image/png")
-        )
+        scene.assets.save_asset(Asset(id="x", file_type="png", media_type="image/png"))
         assert scene.assets.get_asset("x").id == "x"
 
     def test_update_asset_meta_persists(self, scene):
-        scene.assets.save_asset(
-            Asset(id="x", file_type="png", media_type="image/png")
-        )
+        scene.assets.save_asset(Asset(id="x", file_type="png", media_type="image/png"))
         scene.assets.update_asset_meta("x", AssetMeta(name="new"))
         # in-memory cache reflects it
         assert scene.assets.get_asset("x").meta.name == "new"
@@ -694,9 +684,7 @@ class TestSearchAssets:
         assert sorted(ids) == ["alice_portrait", "bob_card", "scene_bg"]
 
     def test_filter_by_single_vis_type(self, populated_scene):
-        ids = populated_scene.assets.search_assets(
-            vis_type=VIS_TYPE.CHARACTER_PORTRAIT
-        )
+        ids = populated_scene.assets.search_assets(vis_type=VIS_TYPE.CHARACTER_PORTRAIT)
         assert ids == ["alice_portrait"]
 
     def test_filter_by_vis_type_list(self, populated_scene):
@@ -742,9 +730,7 @@ class TestSearchAssets:
 
     def test_invalid_tag_match_mode_raises(self, populated_scene):
         with pytest.raises(ValueError, match="Invalid tag_match_mode"):
-            populated_scene.assets.search_assets(
-                tags=["red"], tag_match_mode="bogus"
-            )
+            populated_scene.assets.search_assets(tags=["red"], tag_match_mode="bogus")
 
     def test_reference_vis_types_filter(self, populated_scene):
         ids = populated_scene.assets.search_assets(
@@ -782,9 +768,7 @@ class TestSelectAssets:
         assert ids == ["alice_portrait"]
 
     def test_no_filters_returns_all_supplied(self, populated_scene):
-        ids = populated_scene.assets.select_assets(
-            ["alice_portrait", "bob_card"]
-        )
+        ids = populated_scene.assets.select_assets(["alice_portrait", "bob_card"])
         assert sorted(ids) == ["alice_portrait", "bob_card"]
 
 
@@ -830,9 +814,7 @@ class TestSceneCoverImageFromSources:
         assert rid in scene.assets.assets
 
     async def test_from_image_data(self, scene):
-        rid = await scene.assets.set_scene_cover_image_from_image_data(
-            _png_data_url()
-        )
+        rid = await scene.assets.set_scene_cover_image_from_image_data(_png_data_url())
         assert scene.assets.cover_image == rid
 
     async def test_from_file_path(self, scene, tmp_path):
@@ -870,9 +852,7 @@ class TestCharacterCoverImage:
         a = await scene.assets.add_asset(b"a", "png", "image/png")
         b = await scene.assets.add_asset(b"b", "png", "image/png")
         await scene.assets.set_character_cover_image(char, a.id)
-        result = await scene.assets.set_character_cover_image(
-            char, b.id, override=True
-        )
+        result = await scene.assets.set_character_cover_image(char, b.id, override=True)
         assert result == b.id
         assert char.cover_image == b.id
 
@@ -1049,9 +1029,7 @@ class TestCleanupMessageAvatars:
 
     async def test_preserves_valid_message_avatar(self, scene):
         a = await scene.assets.add_asset(b"x", "png", "image/png")
-        msg = CharacterMessage(
-            message="Alice: hi", asset_id=a.id, asset_type="avatar"
-        )
+        msg = CharacterMessage(message="Alice: hi", asset_id=a.id, asset_type="avatar")
         scene.history = [msg]
         cleaned = scene.assets.cleanup_message_avatars()
         assert cleaned is False
@@ -1199,9 +1177,7 @@ class TestSmartAttachAsset:
             "image/png",
             meta=AssetMeta(vis_type=VIS_TYPE.SCENE_ILLUSTRATION),
         )
-        result = await scene.assets.smart_attach_asset(
-            a.id, message_ids=[m1.id, m2.id]
-        )
+        result = await scene.assets.smart_attach_asset(a.id, message_ids=[m1.id, m2.id])
         assert {m.id for m in result} == {m1.id, m2.id}
         assert m1.asset_id == a.id and m2.asset_id == a.id
 
@@ -1230,9 +1206,7 @@ class TestTransferAsset:
         dst = scene_factory("dst_proj")
 
         result = await dst.assets.transfer_asset(
-            AssetTransfer(
-                source_scene_path=src_scene_path, asset_id=src_asset.id
-            )
+            AssetTransfer(source_scene_path=src_scene_path, asset_id=src_asset.id)
         )
         assert result is True
 
@@ -1243,9 +1217,7 @@ class TestTransferAsset:
         # Meta carried over (name)
         assert dst.assets.get_asset(src_asset.id).meta.name == "art"
 
-    async def test_transfer_missing_asset_returns_false(
-        self, scene_factory, tmp_path
-    ):
+    async def test_transfer_missing_asset_returns_false(self, scene_factory, tmp_path):
         src = scene_factory("src2")
         src.filename = "src.json"
         src_scene_path = os.path.join(src.save_dir, "src.json")
@@ -1254,18 +1226,14 @@ class TestTransferAsset:
 
         dst = scene_factory("dst2")
         result = await dst.assets.transfer_asset(
-            AssetTransfer(
-                source_scene_path=src_scene_path, asset_id="not-there"
-            )
+            AssetTransfer(source_scene_path=src_scene_path, asset_id="not-there")
         )
         assert result is False
 
     async def test_transfer_when_source_scene_path_missing(self, scene_factory):
         dst = scene_factory("dst3")
         result = await dst.assets.transfer_asset(
-            AssetTransfer(
-                source_scene_path="/no/such/file.json", asset_id="x"
-            )
+            AssetTransfer(source_scene_path="/no/such/file.json", asset_id="x")
         )
         assert result is False
 
@@ -1392,8 +1360,6 @@ class TestMigrateSceneAssetsToLibrary:
         monkeypatch.setattr(scene_assets, "SCENES_DIR", tmp_path)
         proj = tmp_path / "proj_g"
         proj.mkdir()
-        self._write_scene(
-            proj, "scene", {"id": self._asset_dict("id", "x")}
-        )
+        self._write_scene(proj, "scene", {"id": self._asset_dict("id", "x")})
         migrate_scene_assets_to_library(root=None)
         assert (proj / "assets" / "library.json").exists()

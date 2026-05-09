@@ -79,6 +79,7 @@ def stub_prompt(monkeypatch):
     the test instead of being papered over by a fake.
     """
     from talemate.agents.director.plan import mixin as mixin_mod
+
     return patch_prompt_request_in(monkeypatch, mixin_mod)
 
 
@@ -137,9 +138,7 @@ class TestPlanReviseNarratorContent:
     async def test_no_listeners_keeps_response_unchanged(self, director, narrator):
         # Even with no custom listener, the function should return the input
         # unchanged because emission.response is set to it before sending.
-        result = await director._plan_revise_narrator_content(
-            narrator, "untouched"
-        )
+        result = await director._plan_revise_narrator_content(narrator, "untouched")
         assert result == "untouched"
 
 
@@ -192,9 +191,7 @@ class TestPlanPushAndEmitBlock:
 
 class TestPlanCritiqueExpandedBlocks:
     @pytest.mark.asyncio
-    async def test_replaces_with_revised_blocks(
-        self, director, narrator, stub_prompt
-    ):
+    async def test_replaces_with_revised_blocks(self, director, narrator, stub_prompt):
         revised_blocks = [
             {"type": "narrator", "content": "revised content"},
         ]
@@ -225,9 +222,7 @@ class TestPlanCritiqueExpandedBlocks:
         assert result == original
 
     @pytest.mark.asyncio
-    async def test_passes_close_arc_through_vars(
-        self, director, narrator, stub_prompt
-    ):
+    async def test_passes_close_arc_through_vars(self, director, narrator, stub_prompt):
         stub = stub_prompt(
             {
                 "narrator.arc-expand-critique": [
@@ -313,9 +308,7 @@ class TestPlanExpandBeats:
         self, scene, director, narrator, stub_prompt
     ):
         beats = _make_beats([0.3, 0.5, 0.7])
-        plan = Plan(
-            instructions="x", tasks=list(beats), status=PlanStatus.ready
-        )
+        plan = Plan(instructions="x", tasks=list(beats), status=PlanStatus.ready)
         save_plan(scene, plan)
 
         stub = stub_prompt(
@@ -344,9 +337,7 @@ class TestPlanExpandBeats:
         self, scene, director, narrator, stub_prompt
     ):
         beats = _make_beats([0.3, 0.5, 0.7])
-        plan = Plan(
-            instructions="x", tasks=list(beats), status=PlanStatus.ready
-        )
+        plan = Plan(instructions="x", tasks=list(beats), status=PlanStatus.ready)
         save_plan(scene, plan)
 
         stub_prompt(
@@ -375,9 +366,7 @@ class TestPlanExpandBeats:
     ):
         # 6 beats, chunk_size=3 -> 2 chunks -> critique runs.
         beats = _make_beats([0.2, 0.4, 0.6, 0.5, 0.7, 0.9])
-        plan = Plan(
-            instructions="x", tasks=list(beats), status=PlanStatus.ready
-        )
+        plan = Plan(instructions="x", tasks=list(beats), status=PlanStatus.ready)
         save_plan(scene, plan)
 
         stub = stub_prompt(
@@ -416,9 +405,7 @@ class TestPlanExpandBeats:
         self, scene, director, narrator, stub_prompt
     ):
         beats = _make_beats([0.2, 0.4, 0.6, 0.5, 0.7, 0.9])
-        plan = Plan(
-            instructions="x", tasks=list(beats), status=PlanStatus.ready
-        )
+        plan = Plan(instructions="x", tasks=list(beats), status=PlanStatus.ready)
         save_plan(scene, plan)
         stub = stub_prompt(
             {
@@ -438,9 +425,7 @@ class TestPlanExpandBeats:
             critique=False,
         )
         # No critique call
-        assert all(
-            c["template"] != "narrator.arc-expand-critique" for c in stub.calls
-        )
+        assert all(c["template"] != "narrator.arc-expand-critique" for c in stub.calls)
 
     @pytest.mark.asyncio
     async def test_critique_uses_agent_default_when_critique_none(
@@ -448,9 +433,7 @@ class TestPlanExpandBeats:
     ):
         # Default config has expand_critique=True; should run critique.
         beats = _make_beats([0.2, 0.4, 0.6, 0.5, 0.7, 0.9])
-        plan = Plan(
-            instructions="x", tasks=list(beats), status=PlanStatus.ready
-        )
+        plan = Plan(instructions="x", tasks=list(beats), status=PlanStatus.ready)
         save_plan(scene, plan)
         stub = stub_prompt(
             {
@@ -481,9 +464,7 @@ class TestPlanExpandBeats:
     ):
         # Director default expand_chunk_size = 5. Beat list of 4 stays single chunk.
         beats = _make_beats([0.2, 0.4, 0.6, 0.8])
-        plan = Plan(
-            instructions="x", tasks=list(beats), status=PlanStatus.ready
-        )
+        plan = Plan(instructions="x", tasks=list(beats), status=PlanStatus.ready)
         save_plan(scene, plan)
         stub = stub_prompt(
             {"narrator.arc-expand": [("ok", {"response": [_block("hi")]})]},
@@ -497,7 +478,9 @@ class TestPlanExpandBeats:
             critique=False,
         )
         # Only 1 expand call since 4 <= default chunk_size of 5
-        assert len([c for c in stub.calls if c["template"] == "narrator.arc-expand"]) == 1
+        assert (
+            len([c for c in stub.calls if c["template"] == "narrator.arc-expand"]) == 1
+        )
 
     @pytest.mark.asyncio
     async def test_passes_following_beats_for_non_final_chunk(
@@ -506,9 +489,7 @@ class TestPlanExpandBeats:
         # Chunked: 6 beats, chunk_size=3 -> 2 chunks. First chunk should get
         # following_beats from second chunk.
         beats = _make_beats([0.2, 0.4, 0.6, 0.5, 0.7, 0.9])
-        plan = Plan(
-            instructions="x", tasks=list(beats), status=PlanStatus.ready
-        )
+        plan = Plan(instructions="x", tasks=list(beats), status=PlanStatus.ready)
         save_plan(scene, plan)
         stub = stub_prompt(
             {
@@ -537,9 +518,7 @@ class TestPlanExpandBeats:
         self, scene, director, narrator, stub_prompt
     ):
         beats = _make_beats([0.2, 0.4, 0.6])
-        plan = Plan(
-            instructions="x", tasks=list(beats), status=PlanStatus.ready
-        )
+        plan = Plan(instructions="x", tasks=list(beats), status=PlanStatus.ready)
         save_plan(scene, plan)
         stub = stub_prompt(
             {
@@ -566,9 +545,7 @@ class TestPlanExpandBeats:
     ):
         # All-blank content: blocks present but content empty -> no history pushes.
         beats = _make_beats([0.2, 0.4, 0.6])
-        plan = Plan(
-            instructions="x", tasks=list(beats), status=PlanStatus.ready
-        )
+        plan = Plan(instructions="x", tasks=list(beats), status=PlanStatus.ready)
         save_plan(scene, plan)
         stub_prompt(
             {

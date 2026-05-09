@@ -125,10 +125,14 @@ class TestErrorMessages:
         )
 
     def test_unmapped_4xx_returns_unexpected_error(self):
-        assert get_error_message(418) == "The API returned an unexpected error (HTTP 418)."
+        assert (
+            get_error_message(418) == "The API returned an unexpected error (HTTP 418)."
+        )
 
     def test_unmapped_2xx_returns_unexpected_error(self):
-        assert get_error_message(299) == "The API returned an unexpected error (HTTP 299)."
+        assert (
+            get_error_message(299) == "The API returned an unexpected error (HTTP 299)."
+        )
 
 
 class TestNameHelpers:
@@ -140,9 +144,7 @@ class TestNameHelpers:
 
     def test_locked_model_template_uses_cleaned_name(self):
         # Model name is intentionally ignored — lock_template uses client name only.
-        assert (
-            locked_model_template("My Client", "any-model") == "My_Client__LOCK"
-        )
+        assert locked_model_template("My Client", "any-model") == "My_Client__LOCK"
 
 
 class TestResolveGenerationError:
@@ -194,9 +196,7 @@ class TestRequestInformation:
 
     def test_cancelled_status(self):
         now = time.time()
-        info = RequestInformation(
-            start_time=now - 1, end_time=now, cancelled=True
-        )
+        info = RequestInformation(start_time=now - 1, end_time=now, cancelled=True)
         assert info.status == "stopped"
 
     def test_age_minus_one_when_unended(self):
@@ -676,9 +676,7 @@ class TestProcessResponseForIndirectCoercion:
         )
         assert out == "the actual answer."
 
-    def test_strips_json_code_fence_when_coercion_starts_with_brace(
-        self, stub_client
-    ):
+    def test_strips_json_code_fence_when_coercion_starts_with_brace(self, stub_client):
         out = stub_client.process_response_for_indirect_coercion(
             prompt="ignored",
             response='```json\n{"a": 1}\n```',
@@ -1260,9 +1258,7 @@ class TestGenerateWithErrorHandling:
 
         with ClientContext(requires_active_scene=False):
             set_client_context_attribute("requires_active_scene", False)
-            out = await client._generate_with_error_handling(
-                "p", {}, "conversation"
-            )
+            out = await client._generate_with_error_handling("p", {}, "conversation")
         assert out == "great"
 
     @pytest.mark.asyncio
@@ -1286,15 +1282,11 @@ class TestGenerateWithErrorHandling:
         async def fake_prompt(self, error_message, status_code=None):
             return next(responses)
 
-        monkeypatch.setattr(
-            ClientBase, "_prompt_generation_error", fake_prompt
-        )
+        monkeypatch.setattr(ClientBase, "_prompt_generation_error", fake_prompt)
 
         with ClientContext(requires_active_scene=False):
             set_client_context_attribute("requires_active_scene", False)
-            out = await client._generate_with_error_handling(
-                "p", {}, "conversation"
-            )
+            out = await client._generate_with_error_handling("p", {}, "conversation")
         assert out == "second-time"
         assert attempts["n"] == 2
 
@@ -1317,9 +1309,7 @@ class TestGenerateWithErrorHandling:
 
         with ClientContext(requires_active_scene=False):
             set_client_context_attribute("requires_active_scene", False)
-            out = await client._generate_with_error_handling(
-                "p", {}, "conversation"
-            )
+            out = await client._generate_with_error_handling("p", {}, "conversation")
         assert out == ""
 
     @pytest.mark.asyncio
@@ -1344,9 +1334,7 @@ class TestGenerateWithErrorHandling:
 
         with ClientContext(requires_active_scene=False):
             set_client_context_attribute("requires_active_scene", False)
-            out = await client._generate_with_error_handling(
-                "p", {}, "conversation"
-            )
+            out = await client._generate_with_error_handling("p", {}, "conversation")
         assert out == "good"
         assert attempts["n"] == 2
 
@@ -1370,9 +1358,7 @@ class TestGenerateWithErrorHandling:
         with ClientContext(requires_active_scene=False):
             set_client_context_attribute("requires_active_scene", False)
             with pytest.raises(GenerationCancelled):
-                await client._generate_with_error_handling(
-                    "p", {}, "conversation"
-                )
+                await client._generate_with_error_handling("p", {}, "conversation")
 
 
 # ---------------------------------------------------------------------------
@@ -1425,17 +1411,13 @@ class TestSendPromptSceneInactive:
 
 class TestSendPromptRateLimitAbort:
     @pytest.mark.asyncio
-    async def test_aborts_when_scene_inactive_during_rate_limit(
-        self, cfg_isolation
-    ):
+    async def test_aborts_when_scene_inactive_during_rate_limit(self, cfg_isolation):
         """If rate limit is hit and the scene goes inactive, the generator
         should raise GenerationCancelled instead of looping forever."""
         from talemate.exceptions import GenerationCancelled
 
         # rate_limit=1: first hit succeeds, second blocks immediately.
-        _register_client_config(
-            "rl_abort", model="m", enabled=True, rate_limit=1
-        )
+        _register_client_config("rl_abort", model="m", enabled=True, rate_limit=1)
         client = _OfflineClient(name="rl_abort")
         client.connected = True
         client.remote_model_name = "m"
@@ -1570,9 +1552,7 @@ class TestSendPromptEndToEnd:
         with _make_active_agent_context():
             with ClientContext(requires_active_scene=False):
                 set_client_context_attribute("requires_active_scene", False)
-                out = await client.send_prompt(
-                    "hi", kind="conversation"
-                )
+                out = await client.send_prompt("hi", kind="conversation")
         assert "<think>" not in out
         assert "visible text" in out
         # Reasoning recorded onto the client
@@ -1648,7 +1628,7 @@ class TestPromptLogging:
             assert log_file.exists()
             content = log_file.read_text()
             assert content.startswith("{")
-            assert "\"client_name\": \"stub\"" in content
+            assert '"client_name": "stub"' in content
             assert content.endswith("\n")
         finally:
             # Clean up the class-level handle so other tests don't write to tmp_path.

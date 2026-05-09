@@ -156,7 +156,10 @@ class TestCreateDefaultsIfEmpty:
         )
 
         existing_group = Group(
-            author="me", name="other", description="x", uid="other-uid",
+            author="me",
+            name="other",
+            description="x",
+            uid="other-uid",
         )
         col = Collection(groups=[existing_group])
 

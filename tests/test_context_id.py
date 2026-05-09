@@ -958,9 +958,7 @@ async def test_integration_full_context_value_operations(mock_scene):
 
     # Get context value for character description
     desc_context_id_str = "character.description:TestCharacter.description"
-    context_value = await context_id_item_from_string(
-        desc_context_id_str, mock_scene
-    )
+    context_value = await context_id_item_from_string(desc_context_id_str, mock_scene)
     assert context_value is not None
 
     # Test get operation
@@ -994,9 +992,7 @@ async def test_integration_full_context_value_operations(mock_scene):
 
     # Test detail operations
     appearance_compressed = compress_name("appearance")
-    detail_context_id_str = (
-        f"character.detail:TestCharacter.{appearance_compressed}"
-    )
+    detail_context_id_str = f"character.detail:TestCharacter.{appearance_compressed}"
     detail_context_value = await context_id_item_from_string(
         detail_context_id_str, mock_scene
     )
@@ -1511,9 +1507,7 @@ async def test_dotted_name_full_set_operation(mock_scene_dotted_names):
         "character.description:M.A.R.V.I.N.", mock_scene_dotted_names
     )
     assert await context_item.get(mock_scene_dotted_names) == "A paranoid android"
-    await context_item.set(
-        mock_scene_dotted_names, "An even more depressed android"
-    )
+    await context_item.set(mock_scene_dotted_names, "An even more depressed android")
     assert (
         mock_scene_dotted_names.get_character("M.A.R.V.I.N.").description
         == "An even more depressed android"

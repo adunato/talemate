@@ -424,7 +424,9 @@ class TestWorldEntryCRUD:
         assert scene.world_state.pins["lore.dragons"].active is True
 
     @pytest.mark.asyncio
-    async def test_set_world_entry_shared_toggles_flag(self, scene, manager_with_memory):
+    async def test_set_world_entry_shared_toggles_flag(
+        self, scene, manager_with_memory
+    ):
         manager, _ = manager_with_memory
         await manager.save_world_entry("lore.x", "text", meta={})
         assert scene.world_state.manual_context["lore.x"].shared is False
@@ -494,7 +496,9 @@ class TestPinManagement:
     @pytest.mark.asyncio
     async def test_set_pin_updates_existing(self, scene, manager):
         await manager.set_pin("entry1", active=False)
-        await manager.set_pin("entry1", active=True, condition="x", condition_state=True)
+        await manager.set_pin(
+            "entry1", active=True, condition="x", condition_state=True
+        )
         pin = scene.world_state.pins["entry1"]
         assert pin.active is True
         assert pin.condition == "x"
@@ -628,7 +632,9 @@ class TestGetPins:
         assert "b" in scene.world_state.pins
 
     @pytest.mark.asyncio
-    async def test_get_pins_evaluates_gamestate_condition(self, scene, manager_with_memory):
+    async def test_get_pins_evaluates_gamestate_condition(
+        self, scene, manager_with_memory
+    ):
         manager, tracking = manager_with_memory
         scene.game_state.set_var("weather", "sunny")
 
@@ -674,7 +680,9 @@ class TestSceneSettings:
         assert scene.perspective == "third"
 
     @pytest.mark.asyncio
-    async def test_update_scene_outline_perspective_defaults_to_empty(self, scene, manager):
+    async def test_update_scene_outline_perspective_defaults_to_empty(
+        self, scene, manager
+    ):
         await manager.update_scene_outline(title="x")
         assert scene.perspective == ""
 
@@ -851,9 +859,7 @@ class TestManagerTemplateGroupCRUD:
 
         # Inject empty collection so we don't depend on real disk
         scene._world_state_templates = type(manager.template_collection)(groups=[])
-        group = Group(
-            author="me", name="g1", description="x", uid="g1-uid"
-        )
+        group = Group(author="me", name="g1", description="x", uid="g1-uid")
         # Pre-set path so save() writes to tmp_path instead of the project dir
         group.path = str(tmp_path / "g1.yaml")
 
@@ -869,7 +875,10 @@ class TestManagerTemplateGroupCRUD:
         from talemate.world_state.templates.base import Group
 
         existing = Group(
-            author="orig", name="g1", description="orig", uid="g1-uid",
+            author="orig",
+            name="g1",
+            description="orig",
+            uid="g1-uid",
             path=str(tmp_path / "g1.yaml"),
         )
         # Make sure the file exists (update calls save())
@@ -878,7 +887,10 @@ class TestManagerTemplateGroupCRUD:
             groups=[existing]
         )
         replacement = Group(
-            author="new", name="g1-new", description="updated", uid="g1-uid",
+            author="new",
+            name="g1-new",
+            description="updated",
+            uid="g1-uid",
         )
 
         await manager.save_template_group(replacement)
@@ -891,18 +903,21 @@ class TestManagerTemplateGroupCRUD:
     @pytest.mark.asyncio
     async def test_get_templates_returns_typed_collection(self, scene, manager):
         from talemate.world_state.templates.base import Group
-        from talemate.world_state.templates.state_reinforcement import StateReinforcement
+        from talemate.world_state.templates.state_reinforcement import (
+            StateReinforcement,
+        )
 
         sr = StateReinforcement(
             name="t1", template_type="state_reinforcement", query="q"
         )
         group = Group(
-            author="x", name="g1", description="d",
-            templates={sr.uid: sr}, uid="g1-uid",
+            author="x",
+            name="g1",
+            description="d",
+            templates={sr.uid: sr},
+            uid="g1-uid",
         )
-        scene._world_state_templates = type(manager.template_collection)(
-            groups=[group]
-        )
+        scene._world_state_templates = type(manager.template_collection)(groups=[group])
 
         typed = await manager.get_templates(types=["state_reinforcement"])
         assert "state_reinforcement" in typed.templates
@@ -925,7 +940,9 @@ class TestManagerTemplateGroupCRUD:
     @pytest.mark.asyncio
     async def test_save_template_inserts_new_template(self, scene, manager, tmp_path):
         from talemate.world_state.templates.base import Collection, Group
-        from talemate.world_state.templates.state_reinforcement import StateReinforcement
+        from talemate.world_state.templates.state_reinforcement import (
+            StateReinforcement,
+        )
 
         g = Group(author="x", name="g1", description="d", uid="g1-uid")
         g.path = str(tmp_path / "g1.yaml")
@@ -934,7 +951,9 @@ class TestManagerTemplateGroupCRUD:
         scene._world_state_templates = Collection(groups=[g])
 
         sr = StateReinforcement(
-            name="t", template_type="state_reinforcement", query="q",
+            name="t",
+            template_type="state_reinforcement",
+            query="q",
             group="g1-uid",
         )
         await manager.save_template(sr)
@@ -944,15 +963,22 @@ class TestManagerTemplateGroupCRUD:
     @pytest.mark.asyncio
     async def test_remove_template(self, scene, manager, tmp_path):
         from talemate.world_state.templates.base import Collection, Group
-        from talemate.world_state.templates.state_reinforcement import StateReinforcement
+        from talemate.world_state.templates.state_reinforcement import (
+            StateReinforcement,
+        )
 
         sr = StateReinforcement(
-            name="t", template_type="state_reinforcement", query="q",
+            name="t",
+            template_type="state_reinforcement",
+            query="q",
             group="g1-uid",
         )
         g = Group(
-            author="x", name="g1", description="d",
-            uid="g1-uid", templates={sr.uid: sr},
+            author="x",
+            name="g1",
+            description="d",
+            uid="g1-uid",
+            templates={sr.uid: sr},
         )
         g.path = str(tmp_path / "g1.yaml")
         g.save(str(tmp_path))

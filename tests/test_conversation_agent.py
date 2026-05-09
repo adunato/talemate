@@ -147,9 +147,7 @@ class TestActionRegistration:
         # The choices contain a label "Chat (legacy)" for value "chat".
         assert conversation.conversation_format_label == "Chat (legacy)"
 
-    def test_format_label_falls_back_to_value_when_unknown(
-        self, conversation_scene
-    ):
+    def test_format_label_falls_back_to_value_when_unknown(self, conversation_scene):
         _, conversation, _ = conversation_scene
         # Inject an unknown value and confirm the label is the raw value.
         conversation.actions["generation_override"].config["format"].value = "weird"
@@ -239,8 +237,7 @@ class TestSetGenerationOverrides:
             # Default nuke_repetition is 0.0 -> override applied.
             conversation.set_generation_overrides()
             assert (
-                client_context_module.client_context_attribute("nuke_repetition")
-                == 0.5
+                client_context_module.client_context_attribute("nuke_repetition") == 0.5
             )
 
     def test_jiggle_skipped_when_existing_nuke_repetition(self, conversation_scene):
@@ -252,8 +249,7 @@ class TestSetGenerationOverrides:
             conversation.set_generation_overrides()
             # Existing nuke_repetition is preserved.
             assert (
-                client_context_module.client_context_attribute("nuke_repetition")
-                == 0.7
+                client_context_module.client_context_attribute("nuke_repetition") == 0.7
             )
 
 
@@ -299,8 +295,7 @@ class TestAllowRepetitionBreakAndInject:
         _, conversation, _ = conversation_scene
         assert conversation.allow_repetition_break("conversation", "converse") is True
         assert (
-            conversation.allow_repetition_break("conversation", "build_prompt")
-            is False
+            conversation.allow_repetition_break("conversation", "build_prompt") is False
         )
 
     def test_inject_prompt_parameters_appends_hash(self, conversation_scene):
@@ -344,23 +339,19 @@ class TestAllowRepetitionBreakAndInject:
 
 
 class TestConverse:
-    async def test_converse_movie_script_format(
-        self, conversation_scene, alice
-    ):
+    async def test_converse_movie_script_format(self, conversation_scene, alice):
         scene, conversation, alice_actor = conversation_scene
         conversation.actions["generation_override"].enabled = True
-        conversation.actions["generation_override"].config["format"].value = (
-            "movie_script"
-        )
+        conversation.actions["generation_override"].config[
+            "format"
+        ].value = "movie_script"
 
         # Stub the agent's own build_prompt to skip the templating pipeline.
         # Returns a real Prompt instance whose `send` is overridden to deliver
         # canned LLM output — the contract still flows through the real Prompt
         # class.
         async def fake_build_prompt(character, char_message="", instruction=None):
-            return _canned_prompt(
-                "raw response", {"response": "Alice:Hello there!"}
-            )
+            return _canned_prompt("raw response", {"response": "Alice:Hello there!"})
 
         conversation.build_prompt = fake_build_prompt
 
@@ -377,9 +368,7 @@ class TestConverse:
     async def test_converse_narrative_format(self, conversation_scene, alice):
         scene, conversation, alice_actor = conversation_scene
         conversation.actions["generation_override"].enabled = True
-        conversation.actions["generation_override"].config["format"].value = (
-            "narrative"
-        )
+        conversation.actions["generation_override"].config["format"].value = "narrative"
 
         async def fake_build_prompt(character, char_message="", instruction=None):
             return _canned_prompt(
@@ -400,9 +389,9 @@ class TestConverse:
     ):
         scene, conversation, alice_actor = conversation_scene
         conversation.actions["generation_override"].enabled = True
-        conversation.actions["generation_override"].config["format"].value = (
-            "movie_script"
-        )
+        conversation.actions["generation_override"].config[
+            "format"
+        ].value = "movie_script"
 
         async def fake_build_prompt(character, char_message="", instruction=None):
             return _canned_prompt(
@@ -417,9 +406,7 @@ class TestConverse:
         assert "ALICE\n" not in msg.message
         assert "Back soon" in msg.message
 
-    async def test_converse_empty_response_raises(
-        self, conversation_scene, alice
-    ):
+    async def test_converse_empty_response_raises(self, conversation_scene, alice):
         scene, conversation, alice_actor = conversation_scene
         conversation.actions["generation_override"].enabled = True
 

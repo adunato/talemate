@@ -418,9 +418,13 @@ class TestCleanupInstructorEmbeddings:
             },
         )
 
-    def test_drops_instructor_preset_and_resets_memory_embeddings(self, isolated_config):
+    def test_drops_instructor_preset_and_resets_memory_embeddings(
+        self, isolated_config
+    ):
         isolated_config.presets.embeddings["custom-instructor"] = (
-            EmbeddingFunctionPreset(embeddings="instructor", model="hkunlp/instructor-xl")
+            EmbeddingFunctionPreset(
+                embeddings="instructor", model="hkunlp/instructor-xl"
+            )
         )
         isolated_config.presets.embeddings["fine"] = EmbeddingFunctionPreset()
         self._set_memory_embeddings(isolated_config, "custom-instructor")
@@ -430,9 +434,9 @@ class TestCleanupInstructorEmbeddings:
 
         assert "custom-instructor" not in isolated_config.presets.embeddings
         assert "fine" in isolated_config.presets.embeddings
-        memory_embed = isolated_config.agents["memory"].actions["_config"].config[
-            "embeddings"
-        ]
+        memory_embed = (
+            isolated_config.agents["memory"].actions["_config"].config["embeddings"]
+        )
         assert memory_embed.value == "default"
         assert isolated_config.dirty is True
 

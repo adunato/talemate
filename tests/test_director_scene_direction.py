@@ -77,9 +77,7 @@ async def _add_character(scene, name, *, is_player=False):
         details={},
         color="#fff",
     )
-    actor = (
-        scene.Player(character, None) if is_player else scene.Actor(character, None)
-    )
+    actor = scene.Player(character, None) if is_player else scene.Actor(character, None)
     await scene.add_actor(actor, commit_to_memory=False)
     if name not in scene.active_characters:
         scene.active_characters.append(name)
@@ -306,10 +304,9 @@ class TestUserAgencyMetrics:
         assert metrics["user_turn_count"] < USER_AGENCY_MIN_USER_TURNS
 
     def test_user_turns_suppress_reminder(self, director):
-        msgs = (
-            [SceneDirectionMessage(message=f"d{i}", source="director") for i in range(5)]
-            + [UserInteractionMessage(user_input="hello")]
-        )
+        msgs = [
+            SceneDirectionMessage(message=f"d{i}", source="director") for i in range(5)
+        ] + [UserInteractionMessage(user_input="hello")]
         d = SceneDirection(messages=msgs)
         director.direction_set_state(d.model_dump())
         metrics = director._direction_compute_user_agency_metrics()
@@ -361,9 +358,7 @@ class TestTurnBalance:
         assert balance.narrator_overused is False
 
     @pytest.mark.asyncio
-    async def test_player_messages_skipped_from_character_counts(
-        self, scene, director
-    ):
+    async def test_player_messages_skipped_from_character_counts(self, scene, director):
         await _add_character(scene, "Alice")
         await _add_character(scene, "Hero", is_player=True)
         # Player message should be skipped

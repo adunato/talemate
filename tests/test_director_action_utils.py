@@ -104,9 +104,7 @@ def _text(message: str) -> ActionCoreMessage:
 def _action_result(
     *, name: str = "", instructions: str = "", result: Any = None
 ) -> ActionCoreResultMessage:
-    return ActionCoreResultMessage(
-        name=name, instructions=instructions, result=result
-    )
+    return ActionCoreResultMessage(name=name, instructions=instructions, result=result)
 
 
 def _user_interaction(user_input: str) -> UserInteractionMessage:
@@ -199,8 +197,7 @@ class TestExtractActions:
     @pytest.mark.asyncio
     async def test_parses_list_of_action_dicts(self, client):
         payload = (
-            '[{"name": "a", "instructions": "i1"}, '
-            '{"name": "b", "instructions": "i2"}]'
+            '[{"name": "a", "instructions": "i1"}, {"name": "b", "instructions": "i2"}]'
         )
         response = f"<ACTIONS>\n```json\n{payload}\n```\n</ACTIONS>"
         result = await extract_actions(client, response)
@@ -350,8 +347,17 @@ class TestSerializeHistory:
 # ---------------------------------------------------------------------------
 
 
-def _cd(action_id, *, group="", title="", chat="", sd="", availability="both",
-        force_enabled=False, examples=None) -> CallbackDescriptor:
+def _cd(
+    action_id,
+    *,
+    group="",
+    title="",
+    chat="",
+    sd="",
+    availability="both",
+    force_enabled=False,
+    examples=None,
+) -> CallbackDescriptor:
     return CallbackDescriptor(
         action_id=action_id,
         action_title=title,
@@ -454,9 +460,7 @@ def _scene_with_action_registry(scene, director_chat_actions: dict) -> MockScene
     no shim subclass.
     """
     scene.nodegraph_state = GraphState()
-    scene.nodegraph_state.shared = {
-        "_director_chat_actions": director_chat_actions
-    }
+    scene.nodegraph_state.shared = {"_director_chat_actions": director_chat_actions}
     return scene
 
 
@@ -488,8 +492,7 @@ def fake_action_registry(monkeypatch):
         # get_available_actions then calls get_node(node_registry)() to fetch
         # the action's "node" — emulate by mapping registry → graph instance.
         registry_to_graph = {
-            f"agents/director/{name}": graph
-            for name, graph in graphs_by_name.items()
+            f"agents/director/{name}": graph for name, graph in graphs_by_name.items()
         }
 
         def _fake_get_node(name):
@@ -541,7 +544,8 @@ class TestGetAvailableActions:
         self, fake_action_registry, scene, director
     ):
         graph_a = _build_subaction_graph(
-            "with_subs", [{"action_id": "x", "action_title": "X", "description_chat": "d"}]
+            "with_subs",
+            [{"action_id": "x", "action_title": "X", "description_chat": "d"}],
         )
         graph_b = _build_subaction_graph("empty", [])  # no sub-actions
         fake_action_registry({"with_subs": graph_a, "empty": graph_b})
@@ -566,8 +570,7 @@ class TestGetAvailableActions:
         _set_disabled(director, {"chat": ["only-one"]})
         graph = _build_subaction_graph(
             "blocked",
-            [{"action_id": "only-one", "action_title": "One",
-              "description_chat": "d"}],
+            [{"action_id": "only-one", "action_title": "One", "description_chat": "d"}],
         )
         fake_action_registry({"blocked": graph})
 
@@ -585,7 +588,8 @@ class TestGetAvailableActions:
             "zeta", [{"action_id": "z1", "action_title": "Z1", "description_chat": "d"}]
         )
         g_a = _build_subaction_graph(
-            "alpha", [{"action_id": "a1", "action_title": "A1", "description_chat": "d"}]
+            "alpha",
+            [{"action_id": "a1", "action_title": "A1", "description_chat": "d"}],
         )
         fake_action_registry({"zeta": g_z, "alpha": g_a})
 
@@ -655,9 +659,7 @@ class TestCompactIfNeeded:
             summarize_calls.append(list(history))
             return "ALL OF IT"
 
-        monkeypatch.setattr(
-            summarizer, "summarize_director_chat", fake_summarize
-        )
+        monkeypatch.setattr(summarizer, "summarize_director_chat", fake_summarize)
 
         messages = [
             _text("a"),
@@ -713,9 +715,7 @@ class TestCompactIfNeeded:
         async def failing_summarize(history):
             raise RuntimeError("upstream failure")
 
-        monkeypatch.setattr(
-            summarizer, "summarize_director_chat", failing_summarize
-        )
+        monkeypatch.setattr(summarizer, "summarize_director_chat", failing_summarize)
 
         messages = [_text(c) for c in "abcd"]
         stored: list = []
@@ -742,9 +742,7 @@ class TestCompactIfNeeded:
         async def fake_summarize(history):
             return "ok"
 
-        monkeypatch.setattr(
-            summarizer, "summarize_director_chat", fake_summarize
-        )
+        monkeypatch.setattr(summarizer, "summarize_director_chat", fake_summarize)
 
         async def on_compacted(msgs):
             raise RuntimeError("post hook explosion")
@@ -772,9 +770,7 @@ class TestCompactIfNeeded:
         async def fake_summarize(history):
             return "ok"
 
-        monkeypatch.setattr(
-            summarizer, "summarize_director_chat", fake_summarize
-        )
+        monkeypatch.setattr(summarizer, "summarize_director_chat", fake_summarize)
 
         async def on_compacting():
             raise RuntimeError("hook explosion")
@@ -803,9 +799,7 @@ def _scene_with_gamestate(
     ``build_prompt_vars`` reads. Same Scene type as production — no shim.
     """
     scene.nodegraph_state = GraphState()
-    scene.nodegraph_state.shared = {
-        "_director_chat_actions": director_chat_actions
-    }
+    scene.nodegraph_state.shared = {"_director_chat_actions": director_chat_actions}
     scene.game_state.variables = gamestate_vars or {"hp": 100}
     return scene
 
@@ -820,9 +814,7 @@ class TestBuildPromptVars:
         )
         fake_action_registry({"act": graph})
 
-        scene_with_state = _scene_with_gamestate(
-            scene, {"act": "agents/director/act"}
-        )
+        scene_with_state = _scene_with_gamestate(scene, {"act": "agents/director/act"})
         budgets = ActionCoreBudgets(max_tokens=1000, scene_context_ratio=0.5)
         history = [_text("h1")]
 
@@ -866,9 +858,7 @@ class TestBuildPromptVars:
         )
         fake_action_registry({"act": graph})
 
-        scene_with_state = _scene_with_gamestate(
-            scene, {"act": "agents/director/act"}
-        )
+        scene_with_state = _scene_with_gamestate(scene, {"act": "agents/director/act"})
         budgets = ActionCoreBudgets(max_tokens=1000, scene_context_ratio=0.3)
 
         result = await build_prompt_vars(
@@ -910,7 +900,11 @@ class TestRequestAndParse:
     @pytest.mark.asyncio
     async def test_returns_parsed_message_section(self, stub_prompt_request, client):
         stub = stub_prompt_request(
-            {"director.test": [("<MESSAGE>hello world</MESSAGE>", {"message": "hello world"})]}
+            {
+                "director.test": [
+                    ("<MESSAGE>hello world</MESSAGE>", {"message": "hello world"})
+                ]
+            }
         )
         parsed, actions, raw = await request_and_parse(
             client=client,
@@ -944,9 +938,7 @@ class TestRequestAndParse:
         self, stub_prompt_request, client
     ):
         # Prompt.request returns extracted={}, but raw response has a MESSAGE tag.
-        stub_prompt_request(
-            {"t": [("<MESSAGE>fallback parse</MESSAGE>", {})]}
-        )
+        stub_prompt_request({"t": [("<MESSAGE>fallback parse</MESSAGE>", {})]})
         parsed, _actions, _raw = await request_and_parse(
             client=client,
             prompt_template="t",

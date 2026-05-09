@@ -36,9 +36,7 @@ class QueuedPromptRequest:
     """
 
     def __init__(self, responses: dict[str, list]):
-        self.responses: dict[str, deque] = {
-            k: deque(v) for k, v in responses.items()
-        }
+        self.responses: dict[str, deque] = {k: deque(v) for k, v in responses.items()}
         self.calls: list[dict[str, Any]] = []
 
     async def __call__(self, uid, client, kind, vars=None, **kwargs):
@@ -74,9 +72,7 @@ def patch_prompt_request_in(monkeypatch, *modules) -> "PromptPatcher":
 
         # ``raising=True`` makes the patch fail hard if ``Prompt.request``
         # is renamed or removed — the protection real-type tests are for.
-        monkeypatch.setattr(
-            Prompt, "request", classmethod(_request), raising=True
-        )
+        monkeypatch.setattr(Prompt, "request", classmethod(_request), raising=True)
         return stub
 
     return install

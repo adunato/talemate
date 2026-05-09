@@ -64,9 +64,7 @@ def alice():
     return Character(name="Alice", description="A test character.")
 
 
-def _make_contextual_emission(
-    editor, context_str: str
-) -> ContextualGenerateEmission:
+def _make_contextual_emission(editor, context_str: str) -> ContextualGenerateEmission:
     """Build a ContextualGenerateEmission with a real ContentGenerationContext.
 
     The ``context_type``/``context_name`` are computed properties that read
@@ -170,33 +168,25 @@ class TestRevisionExceedsMaxLength:
     def test_within_ratio_returns_false(self):
         # 100 -> 120 is within 1.25 ratio.
         assert (
-            _revision_exceeds_max_length(
-                "test", "x" * 100, "y" * 120, ratio=1.25
-            )
+            _revision_exceeds_max_length("test", "x" * 100, "y" * 120, ratio=1.25)
             is False
         )
 
     def test_at_ratio_returns_false(self):
         # Exactly at the ratio boundary -> not "exceeds".
         assert (
-            _revision_exceeds_max_length(
-                "test", "x" * 100, "y" * 125, ratio=1.25
-            )
+            _revision_exceeds_max_length("test", "x" * 100, "y" * 125, ratio=1.25)
             is False
         )
 
     def test_above_ratio_returns_true(self):
         assert (
-            _revision_exceeds_max_length(
-                "test", "x" * 100, "y" * 200, ratio=1.25
-            )
+            _revision_exceeds_max_length("test", "x" * 100, "y" * 200, ratio=1.25)
             is True
         )
 
     def test_empty_original_returns_true_when_revised_has_text(self):
-        assert (
-            _revision_exceeds_max_length("test", "", "anything", ratio=1.25) is True
-        )
+        assert _revision_exceeds_max_length("test", "", "anything", ratio=1.25) is True
 
 
 # ---------------------------------------------------------------------------
@@ -297,7 +287,9 @@ class TestRevisionActionRegistration:
         editor.actions["revision"].config["detect_bad_prose"].value = False
         editor.actions["revision"].config["detect_bad_prose_threshold"].value = 0.8
         editor.actions["revision"].config["automatic_revision"].value = False
-        editor.actions["revision"].config["automatic_revision_targets"].value = ["narrator"]
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "narrator"
+        ]
         editor.actions["revision"].config["repetition_detection_method"].value = "fuzzy"
 
         assert editor.revision_repetition_threshold == 90

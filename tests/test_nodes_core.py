@@ -258,7 +258,12 @@ class TestDynamicNodeImport:
     def test_creates_dynamic_class_in_provided_container(self):
         container = {}
         cls = dynamic_node_import(
-            {"base_type": "core/Graph", "title": "DynamicGraph", "nodes": {}, "edges": {}},
+            {
+                "base_type": "core/Graph",
+                "title": "DynamicGraph",
+                "nodes": {},
+                "edges": {},
+            },
             "test/DynamicGraphNode",
             registry_container=container,
         )
@@ -378,9 +383,7 @@ class TestPropertyField:
             PropertyField(name="id", description="x", type="str")
 
     def test_model_dump_without_generate_choices(self):
-        field = PropertyField(
-            name="x", description="x", type="str", choices=["a", "b"]
-        )
+        field = PropertyField(name="x", description="x", type="str", choices=["a", "b"])
         data = field.model_dump()
         assert data["choices"] == ["a", "b"]
 
@@ -1552,6 +1555,7 @@ async def test_loop_continue_skips_rest_of_iteration_chain():
             if iteration_count["n"] >= 2:
                 raise LoopExit()
             from talemate.game.engine.nodes.core import LoopContinue
+
             raise LoopContinue()
 
     entry = Entry(title="entry")

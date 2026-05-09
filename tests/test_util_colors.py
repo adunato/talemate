@@ -49,9 +49,24 @@ def test_color_map_contains_expected_base_colors():
 def test_color_map_has_lighten_and_darken_variants():
     """Every base color should have lighten-3 and darken-3 variants."""
     base_colors = [
-        "red", "pink", "purple", "deep-purple", "indigo", "blue",
-        "light-blue", "cyan", "teal", "green", "light-green", "lime",
-        "yellow", "amber", "orange", "deep-orange", "brown", "blue-grey",
+        "red",
+        "pink",
+        "purple",
+        "deep-purple",
+        "indigo",
+        "blue",
+        "light-blue",
+        "cyan",
+        "teal",
+        "green",
+        "light-green",
+        "lime",
+        "yellow",
+        "amber",
+        "orange",
+        "deep-orange",
+        "brown",
+        "blue-grey",
         "grey",
     ]
     for base in base_colors:

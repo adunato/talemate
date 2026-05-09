@@ -63,9 +63,7 @@ async def _add_character(scene, name, *, is_player=False):
         details={},
         color="#fff",
     )
-    actor = (
-        scene.Player(character, None) if is_player else scene.Actor(character, None)
-    )
+    actor = scene.Player(character, None) if is_player else scene.Actor(character, None)
     await scene.add_actor(actor, commit_to_memory=False)
     if name not in scene.active_characters:
         scene.active_characters.append(name)
@@ -133,9 +131,7 @@ class TestIsDueForInstruction:
 
 class TestAutoDirectCandidates:
     @pytest.mark.asyncio
-    async def test_empty_history_returns_all_active_characters(
-        self, scene, director
-    ):
+    async def test_empty_history_returns_all_active_characters(self, scene, director):
         await _add_character(scene, "Alice")
         await _add_character(scene, "Bob")
         candidates = director.auto_direct_candidates()
@@ -154,9 +150,7 @@ class TestAutoDirectCandidates:
         assert "Bob" in names
 
     @pytest.mark.asyncio
-    async def test_prefers_player_after_consecutive_auto_turns(
-        self, scene, director
-    ):
+    async def test_prefers_player_after_consecutive_auto_turns(self, scene, director):
         await _add_character(scene, "Alice")
         await _add_character(scene, "Hero", is_player=True)
         # 3 consecutive non-player turns (max_auto_turns is 3)
@@ -169,9 +163,7 @@ class TestAutoDirectCandidates:
         assert candidates[0].is_player is True
 
     @pytest.mark.asyncio
-    async def test_favored_candidates_when_idle_too_long(
-        self, scene, director
-    ):
+    async def test_favored_candidates_when_idle_too_long(self, scene, director):
         await _add_character(scene, "Alice")
         await _add_character(scene, "Bob")
         # Bob hasn't spoken in 6+ turns (> max_idle_turns of 5)

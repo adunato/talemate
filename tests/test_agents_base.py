@@ -62,7 +62,9 @@ class _ToggleableAgent(Agent):
                 enabled=True,
                 label="Main",
                 config={
-                    "field": AgentActionConfig(type="text", label="field", value="orig"),
+                    "field": AgentActionConfig(
+                        type="text", label="field", value="orig"
+                    ),
                     "scene_field": AgentActionConfig(
                         type="number",
                         label="scene field",
@@ -178,7 +180,9 @@ class TestOptimizePromptCachingAction:
 
     def test_choices_include_auto_on_off(self):
         a = optimize_prompt_caching_action()
-        choice_values = [c["value"] for c in a.config["optimize_prompt_caching"].choices]
+        choice_values = [
+            c["value"] for c in a.config["optimize_prompt_caching"].choices
+        ]
         assert set(choice_values) == {"auto", "on", "off"}
 
 
@@ -213,7 +217,9 @@ class TestAgentDetail:
         assert d.value is None
 
     def test_full_construction(self):
-        d = AgentDetail(value="x", description="desc", icon="ic", color="primary", hidden=True)
+        d = AgentDetail(
+            value="x", description="desc", icon="ic", color="primary", hidden=True
+        )
         assert d.value == "x"
         assert d.color == "primary"
 

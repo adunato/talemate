@@ -190,64 +190,76 @@ class TestSanitizeData:
 
     def test_loads_with_missing_uid_assigns_one(self):
         path = os.path.join(TEMPLATE_TEST_PATH, "g.yaml")
-        self._write(path, {
-            "author": "a", "name": "n", "description": "d", "templates": {}
-        })
+        self._write(
+            path, {"author": "a", "name": "n", "description": "d", "templates": {}}
+        )
         g = Group.load(path)
         assert g.uid  # assigned a new uuid
 
     def test_loads_with_missing_name_assigns_uid_prefix(self):
         path = os.path.join(TEMPLATE_TEST_PATH, "g.yaml")
-        self._write(path, {
-            "author": "a",
-            "name": None,
-            "description": "d",
-            "templates": {},
-            "uid": "abcdefghijkl",
-        })
+        self._write(
+            path,
+            {
+                "author": "a",
+                "name": None,
+                "description": "d",
+                "templates": {},
+                "uid": "abcdefghijkl",
+            },
+        )
         g = Group.load(path)
         assert g.name == "abcdefgh"
 
     def test_loads_with_null_description_and_author(self):
         path = os.path.join(TEMPLATE_TEST_PATH, "g.yaml")
-        self._write(path, {
-            "author": None,
-            "name": "n",
-            "description": None,
-            "templates": {},
-        })
+        self._write(
+            path,
+            {
+                "author": None,
+                "name": "n",
+                "description": None,
+                "templates": {},
+            },
+        )
         g = Group.load(path)
         assert g.description == ""
         assert g.author == ""
 
     def test_loads_drops_null_template(self):
         path = os.path.join(TEMPLATE_TEST_PATH, "g.yaml")
-        self._write(path, {
-            "author": "a",
-            "name": "n",
-            "description": "d",
-            "templates": {"tid": None},
-            "uid": "g-uid",
-        })
+        self._write(
+            path,
+            {
+                "author": "a",
+                "name": "n",
+                "description": "d",
+                "templates": {"tid": None},
+                "uid": "g-uid",
+            },
+        )
         g = Group.load(path)
         assert g.templates == {}
 
     def test_loads_assigns_template_uid_from_key(self):
         path = os.path.join(TEMPLATE_TEST_PATH, "g.yaml")
-        self._write(path, {
-            "author": "a",
-            "name": "n",
-            "description": "d",
-            "templates": {
-                "key1": {
-                    "name": "named",
-                    "template_type": "state_reinforcement",
-                    "query": "q",
-                    "state_type": "npc",
-                }
+        self._write(
+            path,
+            {
+                "author": "a",
+                "name": "n",
+                "description": "d",
+                "templates": {
+                    "key1": {
+                        "name": "named",
+                        "template_type": "state_reinforcement",
+                        "query": "q",
+                        "state_type": "npc",
+                    }
+                },
+                "uid": "g-uid",
             },
-            "uid": "g-uid",
-        })
+        )
         g = Group.load(path)
         assert "key1" in g.templates
         assert g.templates["key1"].uid == "key1"
@@ -256,19 +268,22 @@ class TestSanitizeData:
 
     def test_loads_assigns_template_name_from_key(self):
         path = os.path.join(TEMPLATE_TEST_PATH, "g.yaml")
-        self._write(path, {
-            "author": "a",
-            "name": "n",
-            "description": "d",
-            "templates": {
-                "abcdefghijkl": {
-                    "template_type": "state_reinforcement",
-                    "query": "q",
-                    "state_type": "npc",
-                }
+        self._write(
+            path,
+            {
+                "author": "a",
+                "name": "n",
+                "description": "d",
+                "templates": {
+                    "abcdefghijkl": {
+                        "template_type": "state_reinforcement",
+                        "query": "q",
+                        "state_type": "npc",
+                    }
+                },
+                "uid": "g-uid",
             },
-            "uid": "g-uid",
-        })
+        )
         g = Group.load(path)
         # name was missing -> set to first 8 chars of template_id
         assert g.templates["abcdefghijkl"].name == "abcdefgh"
@@ -278,58 +293,67 @@ class TestSanitizeData:
         # missing-type branch deletes and `continue`s, so it doesn't fall
         # into the invalid-type branch and double-delete).
         path = os.path.join(TEMPLATE_TEST_PATH, "g.yaml")
-        self._write(path, {
-            "author": "a",
-            "name": "n",
-            "description": "d",
-            "templates": {
-                "tid1": {
-                    "name": "no-type",
-                    "uid": "tid1",
-                    # template_type intentionally absent
-                }
+        self._write(
+            path,
+            {
+                "author": "a",
+                "name": "n",
+                "description": "d",
+                "templates": {
+                    "tid1": {
+                        "name": "no-type",
+                        "uid": "tid1",
+                        # template_type intentionally absent
+                    }
+                },
+                "uid": "g-uid",
             },
-            "uid": "g-uid",
-        })
+        )
         g = Group.load(path)
         assert "tid1" not in g.templates
 
     def test_loads_drops_template_with_invalid_template_type(self):
         path = os.path.join(TEMPLATE_TEST_PATH, "g.yaml")
-        self._write(path, {
-            "author": "a",
-            "name": "n",
-            "description": "d",
-            "templates": {
-                "tid1": {
-                    "name": "bad",
-                    "template_type": "no_such_type",
-                    "uid": "tid1",
-                }
+        self._write(
+            path,
+            {
+                "author": "a",
+                "name": "n",
+                "description": "d",
+                "templates": {
+                    "tid1": {
+                        "name": "bad",
+                        "template_type": "no_such_type",
+                        "uid": "tid1",
+                    }
+                },
+                "uid": "g-uid",
             },
-            "uid": "g-uid",
-        })
+        )
         g = Group.load(path)
         assert "tid1" not in g.templates
 
     def test_loads_with_non_int_priority_falls_back_to_one(self):
         path = os.path.join(TEMPLATE_TEST_PATH, "g.yaml")
-        self._write(path, {
-            "author": "a",
-            "name": "n",
-            "description": "d",
-            "templates": {
-                "tid": {
-                    "name": "x",
-                    "template_type": "state_reinforcement",
-                    "query": "q",
-                    "state_type": "npc",
-                    "priority": "not-a-number",
-                    "uid": "tid",
-                }
+        self._write(
+            path,
+            {
+                "author": "a",
+                "name": "n",
+                "description": "d",
+                "templates": {
+                    "tid": {
+                        "name": "x",
+                        "template_type": "state_reinforcement",
+                        "query": "q",
+                        "state_type": "npc",
+                        "priority": "not-a-number",
+                        "uid": "tid",
+                    }
+                },
+                "uid": "g-uid",
             },
-            "uid": "g-uid",
-        })
+        )
         g = Group.load(path)
         assert g.templates["tid"].priority == 1
 
@@ -449,9 +473,9 @@ class TestCreateFromLegacyConfig:
             Config(), save=False, check_if_exists=False
         )
         # Our group should be present
-        assert any(
-            g.name == "legacy-state-reinforcements" for g in col.groups
-        ), [g.name for g in col.groups]
+        assert any(g.name == "legacy-state-reinforcements" for g in col.groups), [
+            g.name for g in col.groups
+        ]
 
     def test_legacy_config_skips_existing(self, monkeypatch, tmp_path):
         # Pre-create a yaml file with the expected legacy name.
@@ -503,9 +527,7 @@ class TestCreateFromLegacyConfig:
             Config(), save=False, check_if_exists=True
         )
         # No new groups added (skipped)
-        assert all(
-            g.name != "legacy-state-reinforcements" for g in col.groups
-        )
+        assert all(g.name != "legacy-state-reinforcements" for g in col.groups)
 
 
 # ---------------------------------------------------------------------------

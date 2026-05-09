@@ -65,10 +65,7 @@ class TestApplyToScene:
 
         assert result["id"] == "battle_scene"
         assert "battle_scene" in scene.scene_intent.scene_types
-        assert (
-            scene.scene_intent.scene_types["battle_scene"]["name"]
-            == "Battle Scene"
-        )
+        assert scene.scene_intent.scene_types["battle_scene"]["name"] == "Battle Scene"
 
     def test_apply_returns_dict_when_scene_lacks_scene_intent(self, scene):
         # By default, `scene` exposes `intent_state`, NOT `scene_intent`.

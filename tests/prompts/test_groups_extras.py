@@ -51,9 +51,11 @@ def isolated_groups_dirs(tmp_path):
     custom_dir.mkdir()
     scene_dir.mkdir()
 
-    with patch.object(groups, "_PROMPTS_DIR", default_dir), patch.object(
-        groups, "_USER_TEMPLATES_DIR", user_dir
-    ), patch.object(groups, "_CUSTOM_GROUPS_DIR", custom_dir):
+    with (
+        patch.object(groups, "_PROMPTS_DIR", default_dir),
+        patch.object(groups, "_USER_TEMPLATES_DIR", user_dir),
+        patch.object(groups, "_CUSTOM_GROUPS_DIR", custom_dir),
+    ):
         yield {
             "default": default_dir,
             "user": user_dir,
@@ -298,9 +300,7 @@ class TestListTemplatesNestedNames:
 class TestListTemplatesScene:
     """Scene templates are scanned (agent subdirs and flat structure)."""
 
-    def test_scene_agent_subdir_template(
-        self, isolated_groups_dirs, patched_config
-    ):
+    def test_scene_agent_subdir_template(self, isolated_groups_dirs, patched_config):
         scene_dir = isolated_groups_dirs["scene"]
         _write_template(scene_dir / "narrator" / "scene-only.jinja2")
 
@@ -392,9 +392,11 @@ class TestListTemplatesScanDirNonExistent:
         default_dir.mkdir()
         _write_template(default_dir / "narrator" / "ok.jinja2")
 
-        with patch.object(groups, "_PROMPTS_DIR", default_dir), patch.object(
-            groups, "_USER_TEMPLATES_DIR", tmp_path / "missing-user"
-        ), patch.object(groups, "_CUSTOM_GROUPS_DIR", tmp_path / "missing-custom"):
+        with (
+            patch.object(groups, "_PROMPTS_DIR", default_dir),
+            patch.object(groups, "_USER_TEMPLATES_DIR", tmp_path / "missing-user"),
+            patch.object(groups, "_CUSTOM_GROUPS_DIR", tmp_path / "missing-custom"),
+        ):
             result = groups.list_templates()
 
         # Default template still discovered.
@@ -436,9 +438,7 @@ class TestListTemplatesScenePriorityForOverrideMtime:
         scene_dir = isolated_groups_dirs["scene"]
 
         _write_template(d / "narrator" / "ovr.jinja2", mtime=1_000_000.0)
-        _write_template(
-            scene_dir / "narrator" / "ovr.jinja2", mtime=3_000_000.0
-        )
+        _write_template(scene_dir / "narrator" / "ovr.jinja2", mtime=3_000_000.0)
 
         scene = Mock()
         scene.template_dir = str(scene_dir)

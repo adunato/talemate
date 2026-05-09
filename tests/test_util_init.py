@@ -155,9 +155,7 @@ def test_chunk_items_by_tokens_filters_empty_when_filter_empty_true():
 
 def test_chunk_items_by_tokens_keeps_empty_when_filter_empty_false():
     items = ["one", "", "two"]
-    chunks = list(
-        chunk_items_by_tokens(items, max_tokens=100, filter_empty=False)
-    )
+    chunks = list(chunk_items_by_tokens(items, max_tokens=100, filter_empty=False))
     flattened = [i for c in chunks for i in c]
     assert flattened == items
 
@@ -171,9 +169,7 @@ def test_chunk_items_by_tokens_empty_input_yields_nothing():
 def test_chunk_items_by_tokens_custom_count_fn():
     """count_fn can be overridden; verify each item counted as 1."""
     items = ["a", "bb", "ccc", "dddd"]
-    chunks = list(
-        chunk_items_by_tokens(items, max_tokens=2, count_fn=lambda _: 1)
-    )
+    chunks = list(chunk_items_by_tokens(items, max_tokens=2, count_fn=lambda _: 1))
     # Each chunk should hold up to 2 items
     assert chunks == [["a", "bb"], ["ccc", "dddd"]]
 

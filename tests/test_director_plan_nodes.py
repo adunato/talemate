@@ -159,9 +159,7 @@ class TestValidateTask:
         assert out.pacing == "fast"
 
     def test_characters_field_promotes_to_beat(self):
-        out = _validate_task(
-            {"description": "x", "characters": ["A"]}, order=1
-        )
+        out = _validate_task({"description": "x", "characters": ["A"]}, order=1)
         assert isinstance(out, Beat)
         assert out.characters == ["A"]
 
@@ -256,9 +254,7 @@ class TestCreatePlan:
     async def test_stamps_close_arc_from_chat_context(self, scene):
         chat_ctx = DirectorChatContext(
             chat_id="chat-1",
-            modes=ChatModeSettings(
-                generate_arc=GenerateArcSettings(close_arc=True)
-            ),
+            modes=ChatModeSettings(generate_arc=GenerateArcSettings(close_arc=True)),
         )
         node = CreatePlan()
         out = await _run_node(
@@ -274,9 +270,7 @@ class TestCreatePlan:
     async def test_meta_close_arc_is_preserved_when_set_explicitly(self, scene):
         chat_ctx = DirectorChatContext(
             chat_id="chat-1",
-            modes=ChatModeSettings(
-                generate_arc=GenerateArcSettings(close_arc=True)
-            ),
+            modes=ChatModeSettings(generate_arc=GenerateArcSettings(close_arc=True)),
         )
         node = CreatePlan()
         out = await _run_node(
@@ -370,13 +364,9 @@ class TestEstimateWords:
     @pytest.mark.asyncio
     async def test_estimates_increase_with_beat_count(self, scene):
         node1 = EstimateWords()
-        out1 = await _run_node(
-            node1, scene, inputs={"state": {}, "beat_count": 4}
-        )
+        out1 = await _run_node(node1, scene, inputs={"state": {}, "beat_count": 4})
         node2 = EstimateWords()
-        out2 = await _run_node(
-            node2, scene, inputs={"state": {}, "beat_count": 12}
-        )
+        out2 = await _run_node(node2, scene, inputs={"state": {}, "beat_count": 12})
         assert out1["estimated_words"] > 0
         assert out2["estimated_words"] > out1["estimated_words"]
         assert out1["beat_count"] == 4
@@ -412,9 +402,7 @@ class TestGetActiveChatPlanId:
     async def test_returns_plan_id_when_chat_has_plan(self, scene):
         ctx = DirectorChatContext(chat_id="c1", plan_id="plan-abc")
         node = GetActiveChatPlanId()
-        out = await _run_node(
-            node, scene, inputs={"state": {}}, chat_ctx=ctx
-        )
+        out = await _run_node(node, scene, inputs={"state": {}}, chat_ctx=ctx)
         assert out["plan_id"] == "plan-abc"
         assert out["has_plan"] is True
 
@@ -429,9 +417,7 @@ class TestGetActiveChatPlanId:
     async def test_returns_empty_when_chat_has_no_plan(self, scene):
         ctx = DirectorChatContext(chat_id="c1")
         node = GetActiveChatPlanId()
-        out = await _run_node(
-            node, scene, inputs={"state": {}}, chat_ctx=ctx
-        )
+        out = await _run_node(node, scene, inputs={"state": {}}, chat_ctx=ctx)
         assert out["plan_id"] == ""
         assert out["has_plan"] is False
 
@@ -458,9 +444,7 @@ class TestGetActivePlan:
         ctx = DirectorChatContext(chat_id="c1", plan_id=plan.id)
 
         node = GetActivePlan()
-        out = await _run_node(
-            node, scene, inputs={"state": {}}, chat_ctx=ctx
-        )
+        out = await _run_node(node, scene, inputs={"state": {}}, chat_ctx=ctx)
         assert out["has_plan"] is True
         assert out["plan_id"] == plan.id
         assert out["plan"].id == plan.id
@@ -594,9 +578,7 @@ class TestRemoveTaskNode:
     async def test_raises_when_no_active_plan(self, scene):
         node = RemoveTask()
         with pytest.raises(ActionFailed, match="No active plan"):
-            await _run_node(
-                node, scene, inputs={"state": {}, "task_id": "x"}
-            )
+            await _run_node(node, scene, inputs={"state": {}, "task_id": "x"})
 
     @pytest.mark.asyncio
     async def test_raises_when_plan_completed(self, scene):
@@ -927,9 +909,7 @@ class TestDeletePlanNode:
         ctx = DirectorChatContext(chat_id="c1", plan_id=plan.id)
 
         node = DeletePlan()
-        out = await _run_node(
-            node, scene, inputs={"state": {}}, chat_ctx=ctx
-        )
+        out = await _run_node(node, scene, inputs={"state": {}}, chat_ctx=ctx)
         assert "Deleted" in out["result"]
         assert get_plan(scene, plan.id) is None
         # chat_ctx plan_id is cleared

@@ -479,9 +479,7 @@ async def test_set_character_attribute_writes_to_character(scene):
 
     node = SetCharacterAttribute()
     node.set_property("name", "color_eye")
-    out = await _run_node(
-        node, scene, inputs={"character": char, "value": "blue"}
-    )
+    out = await _run_node(node, scene, inputs={"character": char, "value": "blue"})
 
     assert char.base_attributes["color_eye"] == "blue"
     assert out["name"] == "color_eye"
@@ -519,9 +517,7 @@ async def test_set_character_detail_writes_to_character(scene):
 
     node = SetCharacterDetail()
     node.set_property("name", "hometown")
-    out = await _run_node(
-        node, scene, inputs={"character": char, "value": "Riverdale"}
-    )
+    out = await _run_node(node, scene, inputs={"character": char, "value": "Riverdale"})
 
     assert char.details["hometown"] == "Riverdale"
     assert out["value"] == "Riverdale"
@@ -972,9 +968,7 @@ async def test_set_content_classification_rejects_too_long_value(scene):
     node = SetContentClassification()
     node.set_property("max_length", 5)
     with pytest.raises(InputValueError):
-        await _run_node(
-            node, scene, inputs={"content_classification": "way too long"}
-        )
+        await _run_node(node, scene, inputs={"content_classification": "way too long"})
 
 
 # ---------------------------------------------------------------------------

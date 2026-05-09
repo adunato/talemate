@@ -469,7 +469,9 @@ class TestOnPushHistory:
 
         summarizer.build_archive = stub_build_archive
 
-        emission = HistoryEvent(scene=scene, event_type="push_history.after", messages=[])
+        emission = HistoryEvent(
+            scene=scene, event_type="push_history.after", messages=[]
+        )
         await summarizer.on_push_history(emission)
         assert called["scene"] is scene
         # generation_options is constructed with the scene's writing_style.
@@ -482,9 +484,7 @@ class TestOnPushHistory:
 
 
 class TestFindNaturalSceneTermination:
-    async def test_splits_on_returned_progress_numbers(
-        self, summarizer_scene
-    ):
+    async def test_splits_on_returned_progress_numbers(self, summarizer_scene):
         from conftest import client_responses
         from collections import deque
 
@@ -527,9 +527,7 @@ class TestFindNaturalSceneTermination:
             ["Para 2", "Para 3"],
         ]
 
-    async def test_no_progress_numbers_returns_single_group(
-        self, summarizer_scene
-    ):
+    async def test_no_progress_numbers_returns_single_group(self, summarizer_scene):
         scene, summarizer = summarizer_scene
 
         chunks = ["a", "b", "c"]
@@ -630,7 +628,9 @@ class TestSummarizeViaPromptRequest:
                 "raw response",
                 {"summary": "  director said x.  "},
             )
-            result = await summarizer.summarize_director_chat([{"role": "user", "content": "x"}])
+            result = await summarizer.summarize_director_chat(
+                [{"role": "user", "content": "x"}]
+            )
 
         assert result == "director said x."
 
@@ -684,8 +684,7 @@ class TestSummarizeViaPromptRequest:
         # The MIN_CHUNK_LINE_LENGTH filter strips any non-empty line shorter
         # than 20 chars (placeholder text from the model).
         cleaned_text = (
-            "[no content.]\n"
-            "This second line is more than twenty characters.\n"
+            "[no content.]\nThis second line is more than twenty characters.\n"
         )
         with patch.object(Prompt, "request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = (

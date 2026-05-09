@@ -97,10 +97,21 @@ class TestFilterReinforcements:
     def _ws(self) -> WorldState:
         ws = WorldState()
         ws.reinforce = [
-            Reinforcement(question="q1", answer="a1", character="Alice", insert="sequential"),
-            Reinforcement(question="q2", answer="a2", character="Alice", insert="conversation-context"),
-            Reinforcement(question="q3", answer="a3", character=None, insert="sequential"),
-            Reinforcement(question="q4", answer=None, character="Bob", insert="sequential"),
+            Reinforcement(
+                question="q1", answer="a1", character="Alice", insert="sequential"
+            ),
+            Reinforcement(
+                question="q2",
+                answer="a2",
+                character="Alice",
+                insert="conversation-context",
+            ),
+            Reinforcement(
+                question="q3", answer="a3", character=None, insert="sequential"
+            ),
+            Reinforcement(
+                question="q4", answer=None, character="Bob", insert="sequential"
+            ),
         ]
         return ws
 
@@ -252,17 +263,21 @@ class TestSuggestion:
 
     def test_remove_proposal_unknown_is_noop(self):
         s = Suggestion(
-            type="character", name="Alice", id="sug1",
+            type="character",
+            name="Alice",
+            id="sug1",
             proposals=[self._proposal("a")],
         )
         s.remove_proposal("does-not-exist")
         assert [p.uid for p in s.proposals] == ["a"]
 
     def test_merge_appends_new_proposal(self):
-        s1 = Suggestion(type="character", name="Alice", id="sug1",
-                        proposals=[self._proposal("a")])
-        s2 = Suggestion(type="character", name="Alice", id="sug1",
-                        proposals=[self._proposal("b")])
+        s1 = Suggestion(
+            type="character", name="Alice", id="sug1", proposals=[self._proposal("a")]
+        )
+        s2 = Suggestion(
+            type="character", name="Alice", id="sug1", proposals=[self._proposal("b")]
+        )
         s1.merge(s2)
         assert [p.uid for p in s1.proposals] == ["a", "b"]
 
@@ -270,7 +285,9 @@ class TestSuggestion:
         first = self._proposal("a", name="old")
         replacement = self._proposal("a", name="new")
         s1 = Suggestion(type="character", name="Alice", id="sug1", proposals=[first])
-        s2 = Suggestion(type="character", name="Alice", id="sug1", proposals=[replacement])
+        s2 = Suggestion(
+            type="character", name="Alice", id="sug1", proposals=[replacement]
+        )
         s1.merge(s2)
         assert len(s1.proposals) == 1
         assert s1.proposals[0].name == "new"
@@ -315,7 +332,9 @@ class TestAddReinforcementUpdates:
         )
         r.due = 7  # simulate countdown
         # Switch to sequential -> due should be reset to 0 to run next loop
-        await world_state.add_reinforcement(question="q", answer="a", insert="sequential")
+        await world_state.add_reinforcement(
+            question="q", answer="a", insert="sequential"
+        )
         assert r.due == 0
         assert r.insert == "sequential"
 
@@ -428,7 +447,9 @@ class TestCommitToMemory:
 
 class TestPersist:
     @pytest.mark.asyncio
-    async def test_persist_no_chars_no_items_does_not_call_memory(self, scene_with_memory):
+    async def test_persist_no_chars_no_items_does_not_call_memory(
+        self, scene_with_memory
+    ):
         scene, tracking = scene_with_memory
         await scene.world_state.persist()
         assert tracking.add_many_calls == []

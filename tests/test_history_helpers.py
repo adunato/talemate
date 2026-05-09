@@ -448,9 +448,7 @@ class TestComputeLayerStats:
             {"id": "L1-0", "text": "x", "start": 0, "end": 0, "ts": "PT1H"},
             {"id": "L1-1", "text": "y", "start": 1, "end": 1, "ts": "PT2H"},
         ]
-        layer2 = [
-            {"id": "L2-0", "text": "rolled", "start": 0, "end": 1, "ts": "PT3H"}
-        ]
+        layer2 = [{"id": "L2-0", "text": "rolled", "start": 0, "end": 1, "ts": "PT3H"}]
         scene = dummy_scene(layered_history=[layer1, layer2])
 
         stats = compute_layer_stats(scene, layer=2)
@@ -477,9 +475,11 @@ class TestResolveHistoryEntry:
 
         assert isinstance(resolved, ArchiveEntry)
         # Layered fields are not present on bare ArchiveEntry.
-        assert not hasattr(resolved, "ts_start") or getattr(
-            resolved, "ts_start", None
-        ) is None or not isinstance(resolved, LayeredArchiveEntry)
+        assert (
+            not hasattr(resolved, "ts_start")
+            or getattr(resolved, "ts_start", None) is None
+            or not isinstance(resolved, LayeredArchiveEntry)
+        )
         assert resolved.id == "aa"
         assert resolved.text == "hello"
 
@@ -542,9 +542,7 @@ class TestEntryContained:
         # to history[0..0]; we should be able to find the underlying message id.
         msg = make_character_message("deep")
         archived = [
-            make_archived_entry(
-                "summary", entry_id="arch-0", start=0, end=0, ts="PT1H"
-            )
+            make_archived_entry("summary", entry_id="arch-0", start=0, end=0, ts="PT1H")
         ]
         layer1 = [
             {
@@ -607,9 +605,7 @@ class TestUpdateHistoryEntry:
     @pytest.mark.asyncio
     async def test_updates_layer_zero_and_emits_signal(self, dummy_scene):
         scene = dummy_scene(
-            archived_history=[
-                make_archived_entry("old", entry_id="x", start=0, end=1)
-            ]
+            archived_history=[make_archived_entry("old", entry_id="x", start=0, end=1)]
         )
 
         captured: list = []
@@ -644,9 +640,7 @@ class TestUpdateHistoryEntry:
 
     @pytest.mark.asyncio
     async def test_updates_layered_history_in_place(self, dummy_scene):
-        layer1 = [
-            {"id": "L1", "text": "old", "start": 0, "end": 1, "ts": "PT2H"}
-        ]
+        layer1 = [{"id": "L1", "text": "old", "start": 0, "end": 1, "ts": "PT2H"}]
         scene = dummy_scene(layered_history=[layer1])
 
         entry = HistoryEntry(
@@ -840,9 +834,7 @@ class TestDeleteHistoryEntry:
     @pytest.mark.asyncio
     async def test_only_manual_base_layer_entries_can_be_deleted(self, real_scene):
         # Layered entry must be rejected.
-        layered_entry = HistoryEntry(
-            text="x", ts="PT0S", index=0, layer=1, id="any"
-        )
+        layered_entry = HistoryEntry(text="x", ts="PT0S", index=0, layer=1, id="any")
         with pytest.raises(ValueError):
             await delete_history_entry(real_scene, layered_entry)
 

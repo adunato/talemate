@@ -68,9 +68,7 @@ class TestCaptureContextExtension:
         prompt = _PromptStub(initial="seeded:")
         env = _make_env(prompt)
 
-        env.from_string(
-            "{% capture_context %}added{% end_capture_context %}"
-        ).render()
+        env.from_string("{% capture_context %}added{% end_capture_context %}").render()
 
         assert prompt.captured_context == "seeded:added"
 

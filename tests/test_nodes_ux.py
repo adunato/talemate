@@ -152,9 +152,7 @@ async def test_build_choice_element_uses_property_title_when_input_blank():
 async def test_build_choice_element_negative_timeout_clamped_to_zero():
     """Negative timeouts must be clamped to 0 (no timeout)."""
     node = BuildChoiceElement()
-    out = await run_node(
-        node, inputs={"choices": ["A"], "timeout_seconds": -5}
-    )
+    out = await run_node(node, inputs={"choices": ["A"], "timeout_seconds": -5})
     assert out["timeout_seconds"] == 0
 
 
@@ -162,9 +160,7 @@ async def test_build_choice_element_negative_timeout_clamped_to_zero():
 async def test_build_choice_element_string_numeric_timeout_coerced_to_int():
     """A numeric-string timeout is coerced via int()."""
     node = BuildChoiceElement()
-    out = await run_node(
-        node, inputs={"choices": ["A"], "timeout_seconds": "42"}
-    )
+    out = await run_node(node, inputs={"choices": ["A"], "timeout_seconds": "42"})
     assert out["timeout_seconds"] == 42
 
 
@@ -176,9 +172,7 @@ async def test_build_choice_element_string_numeric_timeout_coerced_to_int():
 @pytest.mark.asyncio
 async def test_build_text_input_element_default_path():
     node = BuildTextInputElement()
-    out = await run_node(
-        node, inputs={"title": "Name?", "body": "Enter your name"}
-    )
+    out = await run_node(node, inputs={"title": "Name?", "body": "Enter your name"})
     payload = out["ux_element"]
     assert payload["kind"] == "text_input"
     assert payload["title"] == "Name?"
@@ -219,9 +213,7 @@ async def test_build_text_input_element_multiline_with_rows_and_placeholder():
 async def test_build_text_input_element_string_numeric_rows_coerced():
     """A numeric-string rows value is coerced via int()."""
     node = BuildTextInputElement()
-    out = await run_node(
-        node, inputs={"multiline": True, "rows": "7"}
-    )
+    out = await run_node(node, inputs={"multiline": True, "rows": "7"})
     assert out["rows"] == 7
 
 
@@ -553,9 +545,7 @@ async def test_emit_element_notice_is_fire_and_forget(collected_ux_emissions):
         body="all good",
         timeout_seconds=0,
     )
-    out = await run_node(
-        EmitElement(), inputs={"ux_element": notice}
-    )
+    out = await run_node(EmitElement(), inputs={"ux_element": notice})
     # No interaction performed
     assert out["cancelled"] is False
     assert out["timed_out"] is False
@@ -563,11 +553,7 @@ async def test_emit_element_notice_is_fire_and_forget(collected_ux_emissions):
     # ux_id propagated
     assert out["ux_id"] == "notice-1"
     # exactly one `present` emission was sent (no close)
-    actions = [
-        e.data["action"]
-        for e in collected_ux_emissions
-        if e.id == "notice-1"
-    ]
+    actions = [e.data["action"] for e in collected_ux_emissions if e.id == "notice-1"]
     assert actions == ["present"]
 
 
@@ -612,9 +598,7 @@ async def test_emit_element_choice_uses_seeded_selection(collected_ux_emissions)
         label="Yes",
     )
 
-    out = await run_node(
-        node, scene=scene, inputs={"ux_element": choice}
-    )
+    out = await run_node(node, scene=scene, inputs={"ux_element": choice})
 
     assert out["cancelled"] is False
     assert out["timed_out"] is False
@@ -622,9 +606,5 @@ async def test_emit_element_choice_uses_seeded_selection(collected_ux_emissions)
     assert out["values"]["choice_id"] == "c-yes"
     assert out["values"]["label"] == "Yes"
     # both present & close emitted for ch-1
-    actions = [
-        e.data["action"]
-        for e in collected_ux_emissions
-        if e.id == "ch-1"
-    ]
+    actions = [e.data["action"] for e in collected_ux_emissions if e.id == "ch-1"]
     assert actions == ["present", "close"]

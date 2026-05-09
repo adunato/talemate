@@ -755,9 +755,7 @@ async def test_extract_data_with_ai_fallback_json_without_codeblock(monkeypatch)
     # Malformed JSON that cannot be auto-fixed (invalid structure)
     malformed_json = '{"name": "Broken" this is broken, "id": 123}'
 
-    result = await extract_data_with_ai_fallback(
-        client, malformed_json, Prompt, "json"
-    )
+    result = await extract_data_with_ai_fallback(client, malformed_json, Prompt, "json")
 
     assert len(result) == 1
     assert result[0]["name"] == "Fixed JSON"
@@ -777,9 +775,7 @@ async def test_extract_data_with_ai_fallback_json_with_codeblock(monkeypatch):
 
     malformed_json = '{"name": "Broken", "id": 456,'
 
-    result = await extract_data_with_ai_fallback(
-        client, malformed_json, Prompt, "json"
-    )
+    result = await extract_data_with_ai_fallback(client, malformed_json, Prompt, "json")
 
     assert len(result) == 1
     assert result[0]["name"] == "Fixed JSON"
@@ -807,9 +803,7 @@ tags:
 id: 789
   active: true"""
 
-    result = await extract_data_with_ai_fallback(
-        client, malformed_yaml, Prompt, "yaml"
-    )
+    result = await extract_data_with_ai_fallback(client, malformed_yaml, Prompt, "yaml")
 
     assert len(result) == 1
     assert result[0]["name"] == "Fixed YAML"
@@ -837,9 +831,7 @@ active: false
     id: 999
   active: false"""
 
-    result = await extract_data_with_ai_fallback(
-        client, malformed_yaml, Prompt, "yaml"
-    )
+    result = await extract_data_with_ai_fallback(client, malformed_yaml, Prompt, "yaml")
 
     assert len(result) == 1
     assert result[0]["name"] == "Fixed YAML"

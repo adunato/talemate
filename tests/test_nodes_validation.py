@@ -27,6 +27,7 @@ from talemate.game.engine.nodes.validation import (
     ValidateValueIsNotSet,
     ValidateValueIsSet,
 )
+
 # Importing the context_id package wires up CONTEXT_ID_PATH_HANDLERS for the
 # Validate* nodes that walk that registry.
 import talemate.game.engine.context_id  # noqa: F401
@@ -80,9 +81,7 @@ class TestValidateValueIsSet:
     @pytest.mark.asyncio
     async def test_unresolved_raises(self):
         with pytest.raises(InputValueError):
-            await run_node(
-                ValidateValueIsSet(), inputs={"value": UNRESOLVED}
-            )
+            await run_node(ValidateValueIsSet(), inputs={"value": UNRESOLVED})
 
     @pytest.mark.asyncio
     async def test_blank_string_raises_when_flag_true(self):
@@ -122,9 +121,7 @@ class TestValidateValueIsNotSet:
 
     @pytest.mark.asyncio
     async def test_unresolved_passes(self):
-        out = await run_node(
-            ValidateValueIsNotSet(), inputs={"value": UNRESOLVED}
-        )
+        out = await run_node(ValidateValueIsNotSet(), inputs={"value": UNRESOLVED})
         assert out["value"] is UNRESOLVED
 
     @pytest.mark.asyncio
@@ -204,9 +201,7 @@ class TestValidateContextIDItem:
     @pytest.mark.asyncio
     async def test_invalid_input_type_raises(self, fs_scene):
         with pytest.raises(InputValueError, match="Invalid type"):
-            await run_node(
-                ValidateContextIDItem(), scene=fs_scene, inputs={"value": 1}
-            )
+            await run_node(ValidateContextIDItem(), scene=fs_scene, inputs={"value": 1})
 
     @pytest.mark.asyncio
     async def test_unhandled_string_raises(self, fs_scene):
@@ -302,9 +297,7 @@ class TestValidateAssetID:
     @pytest.mark.asyncio
     async def test_existing_id_passes_and_emits_asset(self, fs_scene):
         a = await fs_scene.assets.add_asset(b"x", "png", "image/png")
-        out = await run_node(
-            ValidateAssetID(), scene=fs_scene, inputs={"value": a.id}
-        )
+        out = await run_node(ValidateAssetID(), scene=fs_scene, inputs={"value": a.id})
         assert out["value"] == a.id
         assert out["asset"].id == a.id
 

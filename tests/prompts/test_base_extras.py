@@ -511,9 +511,7 @@ class TestRender:
 
     def test_render_uses_decensor_default(self):
         # When `decensor` is not in vars, render injects False.
-        p = Prompt.from_text(
-            "{% if decensor %}YES{% else %}NO{% endif %}"
-        )
+        p = Prompt.from_text("{% if decensor %}YES{% else %}NO{% endif %}")
         assert p.render() == "NO"
 
     def test_render_global_helpers_available(self):
@@ -575,9 +573,7 @@ class TestTemplateExtractors:
         p = Prompt.from_text("X")
         from talemate.prompts.response import ComplexAnchorExtractor
 
-        p.set_anchor_extractor(
-            "msg", "<M>", "</M>", tracked_tags=["A", "M"]
-        )
+        p.set_anchor_extractor("msg", "<M>", "</M>", tracked_tags=["A", "M"])
         assert isinstance(p._template_extractors["msg"], ComplexAnchorExtractor)
 
     def test_set_as_is_extractor(self):
@@ -605,20 +601,14 @@ class TestTemplateExtractors:
         from talemate.prompts.response import ComplexCodeBlockExtractor
 
         p = Prompt.from_text("X")
-        p.set_code_block_extractor(
-            "data", "<D>", "</D>", tracked_tags=["A", "D"]
-        )
-        assert isinstance(
-            p._template_extractors["data"], ComplexCodeBlockExtractor
-        )
+        p.set_code_block_extractor("data", "<D>", "</D>", tracked_tags=["A", "D"])
+        assert isinstance(p._template_extractors["data"], ComplexCodeBlockExtractor)
 
     def test_set_block_list_extractor(self):
         from talemate.prompts.response import BlockListExtractor
 
         p = Prompt.from_text("X")
-        p.set_block_list_extractor(
-            "blocks", blocks=[("narrator", "<N>", "</N>")]
-        )
+        p.set_block_list_extractor("blocks", blocks=[("narrator", "<N>", "</N>")])
         assert isinstance(p._template_extractors["blocks"], BlockListExtractor)
 
 
@@ -634,7 +624,9 @@ class _FakeClient:
     and `dedupe_enabled` are properties — and overriding them is awkward.
     """
 
-    def __init__(self, name="fake", section_format=None, dedupe_enabled=False, data_format=None):
+    def __init__(
+        self, name="fake", section_format=None, dedupe_enabled=False, data_format=None
+    ):
         self.name = name
         self.section_format = section_format
         self.dedupe_enabled = dedupe_enabled
@@ -661,7 +653,9 @@ def _fresh_responses():
 
 class TestSendPreparedResponsePrepending:
     @pytest.mark.asyncio
-    async def test_response_starting_with_prepared_passes_through(self, _fresh_responses):
+    async def test_response_starting_with_prepared_passes_through(
+        self, _fresh_responses
+    ):
         # When the response already starts with the prepared response, no prepend
         client = _FakeClient()
         prompt = Prompt.from_text("X")

@@ -97,7 +97,11 @@ class TestCmShouldAssignVoice:
     def test_returns_false_when_tts_agent_disabled(self, director, tts_agent):
         # By default the TTS agent in tests is not enabled (no API keys etc.)
         # but to be defensive, force-disable it.
-        original = tts_agent.actions["_config"].enabled if "_config" in tts_agent.actions else None
+        original = (
+            tts_agent.actions["_config"].enabled
+            if "_config" in tts_agent.actions
+            else None
+        )
         # Simpler: monkey-patch enabled property via attribute override
         with patch.object(type(tts_agent), "enabled", property(lambda self: False)):
             assert director.cm_should_assign_voice is False
@@ -135,9 +139,7 @@ class TestAssignVoiceToCharacterEarlyReturn:
         assert result is None  # early return (no calls list)
 
     @pytest.mark.asyncio
-    async def test_skipped_when_no_voices_available(
-        self, scene, director, tts_agent
-    ):
+    async def test_skipped_when_no_voices_available(self, scene, director, tts_agent):
         # Force should_assign_voice to True and have ready APIs, but no voices
         # in the global library or the scene library.
         with patch.object(type(tts_agent), "enabled", property(lambda self: True)):
@@ -185,9 +187,7 @@ class TestAssignVoiceToCharacterWithVoices:
 
         monkeypatch.setattr(focal_mod.Focal, "request", _stub_request)
 
-        with patch.object(
-            type(tts_agent), "enabled", property(lambda self: True)
-        ):
+        with patch.object(type(tts_agent), "enabled", property(lambda self: True)):
             with patch.object(
                 type(tts_agent),
                 "ready_apis",
@@ -236,7 +236,9 @@ def stub_focal_request(monkeypatch):
     def install(names: list[str]):
         recorder = _CallRecorder(names)
 
-        async def _patched_request(self, template_name=None, prompt=None, retry_state=None):
+        async def _patched_request(
+            self, template_name=None, prompt=None, retry_state=None
+        ):
             # `self` is a real Focal instance — read its real callbacks dict
             # and invoke add_detected_character with each canned name.
             cb = self.callbacks.get("add_detected_character")
@@ -255,19 +257,13 @@ def stub_focal_request(monkeypatch):
 class TestDetectCharactersFromTextsChunk:
     @pytest.mark.asyncio
     async def test_empty_texts_returns_empty(self, scene, director):
-        result = await director._detect_characters_from_texts_chunk(
-            ["", "  ", None]
-        )
+        result = await director._detect_characters_from_texts_chunk(["", "  ", None])
         assert result == []
 
     @pytest.mark.asyncio
-    async def test_dedupes_within_chunk(
-        self, scene, director, stub_focal_request
-    ):
+    async def test_dedupes_within_chunk(self, scene, director, stub_focal_request):
         stub_focal_request(["Alice", "Bob", "Alice"])
-        result = await director._detect_characters_from_texts_chunk(
-            ["text"]
-        )
+        result = await director._detect_characters_from_texts_chunk(["text"])
         assert sorted(result) == ["Alice", "Bob"]
 
     @pytest.mark.asyncio
@@ -305,9 +301,7 @@ class TestDetectCharactersFromTexts:
             director.client = original_client
 
     @pytest.mark.asyncio
-    async def test_filters_excluded_names(
-        self, scene, director, stub_focal_request
-    ):
+    async def test_filters_excluded_names(self, scene, director, stub_focal_request):
         stub_focal_request(["Alice", "user", "{{char}}", "Bob"])
         result = await director.detect_characters_from_texts(["text"])
         assert "user" not in [n.lower() for n in result]
@@ -316,9 +310,7 @@ class TestDetectCharactersFromTexts:
         assert "Bob" in result
 
     @pytest.mark.asyncio
-    async def test_substring_names_removed(
-        self, scene, director, stub_focal_request
-    ):
+    async def test_substring_names_removed(self, scene, director, stub_focal_request):
         # "Julia" appears as a whole word inside "Julia Smith" → gets removed
         stub_focal_request(["Julia Smith", "Julia"])
         result = await director.detect_characters_from_texts(["text"])
@@ -326,16 +318,12 @@ class TestDetectCharactersFromTexts:
         assert "Julia" not in result
 
     @pytest.mark.asyncio
-    async def test_dedupes_across_chunks(
-        self, scene, director, stub_focal_request
-    ):
+    async def test_dedupes_across_chunks(self, scene, director, stub_focal_request):
         # Each chunk emission returns the same name
         stub_focal_request(["Alice"])
         # Call with two chunks (chunk_items_by_tokens may produce 1 or more
         # depending on size, but result must be deduped)
-        result = await director.detect_characters_from_texts(
-            ["text 1", "text 2"]
-        )
+        result = await director.detect_characters_from_texts(["text 1", "text 2"])
         assert result.count("Alice") == 1
 
 
@@ -418,9 +406,7 @@ class TestPersistCharactersFromWorldstate:
 
 class TestPersistCharacterEarlyErrorPath:
     @pytest.mark.asyncio
-    async def test_raises_value_error_when_name_already_in_scene(
-        self, scene, director
-    ):
+    async def test_raises_value_error_when_name_already_in_scene(self, scene, director):
         # Add a character so its name exists in scene.all_character_names.
         existing = Character(name="Existing")
         actor = scene.Actor(existing, None)
@@ -436,7 +422,5 @@ class TestPersistCharacterEarlyErrorPath:
         with patch.object(
             creator, "determine_character_name", side_effect=fake_determine
         ):
-            with pytest.raises(ValueError, match='already exists'):
-                await director.persist_character(
-                    name="Existing", determine_name=True
-                )
+            with pytest.raises(ValueError, match="already exists"):
+                await director.persist_character(name="Existing", determine_name=True)

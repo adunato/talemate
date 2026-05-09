@@ -423,7 +423,9 @@ class TestUpdate:
 
     def test_update_sets_voice_from_dict(self):
         c = Character(name="Bob")
-        c.update(voice={"label": "Bob Voice", "provider": "kokoro", "provider_id": "v1"})
+        c.update(
+            voice={"label": "Bob Voice", "provider": "kokoro", "provider_id": "v1"}
+        )
         assert isinstance(c.voice, Voice)
         assert c.voice.label == "Bob Voice"
 
@@ -610,9 +612,7 @@ class TestActivateDeactivate:
                 assert actor.agent is instance.AGENTS["conversation"]
 
     @pytest.mark.asyncio
-    async def test_activate_player_uses_player_class(
-        self, bootstrap_engine_isolated
-    ):
+    async def test_activate_player_uses_player_class(self, bootstrap_engine_isolated):
         scene = Scene()
         player = Character(name="Player", is_player=True)
         scene.character_data["Player"] = player

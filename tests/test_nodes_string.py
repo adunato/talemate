@@ -86,9 +86,7 @@ async def test_make_text_inherits_make_string_behavior():
 
 @pytest.mark.asyncio
 async def test_split_basic_with_default_delimiter():
-    out = await run_node(
-        Split(), inputs={"string": "a b c", "delimiter": " "}
-    )
+    out = await run_node(Split(), inputs={"string": "a b c", "delimiter": " "})
     assert out["parts"] == ["a", "b", "c"]
 
 
@@ -97,9 +95,7 @@ async def test_split_max_splits_limits_count():
     """max_splits=1 produces at most 2 parts."""
     node = Split()
     node.set_property("max_splits", 1)
-    out = await run_node(
-        node, inputs={"string": "a b c d", "delimiter": " "}
-    )
+    out = await run_node(node, inputs={"string": "a b c d", "delimiter": " "})
     assert out["parts"] == ["a", "b c d"]
 
 
@@ -108,9 +104,7 @@ async def test_split_treats_backslash_n_as_real_newline():
     """The literal '\\n' delimiter is translated to a real newline."""
     node = Split()
     node.set_property("max_splits", -1)
-    out = await run_node(
-        node, inputs={"string": "a\nb\nc", "delimiter": "\\n"}
-    )
+    out = await run_node(node, inputs={"string": "a\nb\nc", "delimiter": "\\n"})
     assert out["parts"] == ["a", "b", "c"]
 
 
@@ -121,26 +115,20 @@ async def test_split_treats_backslash_n_as_real_newline():
 
 @pytest.mark.asyncio
 async def test_join_concatenates_with_delimiter():
-    out = await run_node(
-        Join(), inputs={"strings": ["a", "b", "c"], "delimiter": "-"}
-    )
+    out = await run_node(Join(), inputs={"strings": ["a", "b", "c"], "delimiter": "-"})
     assert out["result"] == "a-b-c"
 
 
 @pytest.mark.asyncio
 async def test_join_translates_escaped_newline_delimiter():
-    out = await run_node(
-        Join(), inputs={"strings": ["x", "y"], "delimiter": "\\n"}
-    )
+    out = await run_node(Join(), inputs={"strings": ["x", "y"], "delimiter": "\\n"})
     assert out["result"] == "x\ny"
 
 
 @pytest.mark.asyncio
 async def test_join_rejects_non_string_items():
     with pytest.raises(InputValueError):
-        await run_node(
-            Join(), inputs={"strings": ["a", 1, "c"], "delimiter": ","}
-        )
+        await run_node(Join(), inputs={"strings": ["a", 1, "c"], "delimiter": ","})
 
 
 # ---------------------------------------------------------------------------
@@ -161,9 +149,7 @@ async def test_replace_default_count_replaces_all():
 async def test_replace_count_limits_replacements():
     node = Replace()
     node.set_property("count", 2)
-    out = await run_node(
-        node, inputs={"string": "aaaa", "old": "a", "new": "b"}
-    )
+    out = await run_node(node, inputs={"string": "aaaa", "old": "a", "new": "b"})
     assert out["result"] == "bbaa"
 
 
@@ -310,9 +296,7 @@ async def test_jinja2_format_renders_simple_template():
 )
 @pytest.mark.asyncio
 async def test_case_operations(operation, inp, expected):
-    out = await run_node(
-        Case(), inputs={"string": inp, "operation": operation}
-    )
+    out = await run_node(Case(), inputs={"string": inp, "operation": operation})
     assert out["result"] == expected
 
 
@@ -345,9 +329,7 @@ async def test_trim_right_only():
 
 @pytest.mark.asyncio
 async def test_trim_uses_explicit_chars():
-    out = await run_node(
-        Trim(), inputs={"string": "xxxhelloxxx", "chars": "x"}
-    )
+    out = await run_node(Trim(), inputs={"string": "xxxhelloxxx", "chars": "x"})
     assert out["result"] == "hello"
 
 
@@ -368,9 +350,7 @@ async def test_trim_translates_escaped_newline_in_chars():
 
 @pytest.mark.asyncio
 async def test_substring_extracts_range():
-    out = await run_node(
-        Substring(), inputs={"string": "abcdef", "start": 1, "end": 4}
-    )
+    out = await run_node(Substring(), inputs={"string": "abcdef", "start": 1, "end": 4})
     assert out["result"] == "bcd"
 
 
@@ -555,9 +535,7 @@ async def test_excerpt_no_ellipsis_when_disabled():
 async def test_condensed_collapses_extra_whitespace():
     """Condensed must collapse repeated whitespace and line breaks. The
     condensed util preserves words but reduces inter-word whitespace."""
-    out = await run_node(
-        Condensed(), inputs={"string": "hello   world\n\n\nfoo"}
-    )
+    out = await run_node(Condensed(), inputs={"string": "hello   world\n\n\nfoo"})
     # condensed should produce a clean single-spaced single-line string
     assert "hello" in out["result"]
     assert "world" in out["result"]

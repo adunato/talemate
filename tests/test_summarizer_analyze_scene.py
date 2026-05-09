@@ -183,10 +183,7 @@ class TestAnalyzeSceneNarrationSubType:
         _, summarizer, ctx = summarizer_with_active_agent
         ctx.state["narrator__visual_narration"] = True
         ctx.state["narrator__character"] = "Alice"
-        assert (
-            await summarizer.analyze_scene_narration_sub_type()
-            == "visual-character"
-        )
+        assert await summarizer.analyze_scene_narration_sub_type() == "visual-character"
 
     async def test_progress_character_entry(self, summarizer_with_active_agent):
         _, summarizer, ctx = summarizer_with_active_agent
@@ -412,8 +409,7 @@ class TestOnInjectInstructions:
             "length": summarizer.analysis_length,
         }
         assert any(
-            di.content == "FRESH ANALYSIS"
-            for di in emission.dynamic_instructions
+            di.content == "FRESH ANALYSIS" for di in emission.dynamic_instructions
         )
 
     async def test_narrator_emission_works(self, summarizer_with_active_agent):
@@ -426,8 +422,7 @@ class TestOnInjectInstructions:
         summarizer.analyze_scene_for_next_action = stub_analyze
         await summarizer.on_inject_instructions(emission)
         assert any(
-            di.content == "narrator analysis"
-            for di in emission.dynamic_instructions
+            di.content == "narrator analysis" for di in emission.dynamic_instructions
         )
 
     async def test_empty_analysis_means_no_instructions_appended(
@@ -478,8 +473,7 @@ class TestInjectDeepAnalysisContext:
         )
         await summarizer.on_inject_deep_analysis_context(emission)
         assert any(
-            di.title == "Deep Analysis Context"
-            and di.content == "background facts"
+            di.title == "Deep Analysis Context" and di.content == "background facts"
             for di in emission.dynamic_instructions
         )
 
@@ -526,9 +520,7 @@ class TestOnEditorRevisionAnalysisBefore:
 
 
 class TestOnRagBuildSubInstruction:
-    async def test_no_active_context_leaves_emission_unchanged(
-        self, summarizer_scene
-    ):
+    async def test_no_active_context_leaves_emission_unchanged(self, summarizer_scene):
         _, summarizer = summarizer_scene
         emission = RagBuildSubInstructionEmission(agent=summarizer)
         await summarizer.on_rag_build_sub_instruction(emission)

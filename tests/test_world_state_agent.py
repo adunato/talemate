@@ -280,16 +280,12 @@ class TestParseCharacterSheet:
 
     def test_basic_parsing(self, scene):  # noqa: F811
         agent = self._agent(scene)
-        result = agent._parse_character_sheet(
-            "Name: Alice\nAge: 30\nMood: curious\n"
-        )
+        result = agent._parse_character_sheet("Name: Alice\nAge: 30\nMood: curious\n")
         assert result == {"Name": "Alice", "Age": "30", "Mood": "curious"}
 
     def test_empty_lines_skipped(self, scene):  # noqa: F811
         agent = self._agent(scene)
-        result = agent._parse_character_sheet(
-            "Name: Alice\n\nAge: 30\n"
-        )
+        result = agent._parse_character_sheet("Name: Alice\n\nAge: 30\n")
         assert result == {"Name": "Alice", "Age": "30"}
 
     def test_breaks_on_non_colon_line(self, scene):  # noqa: F811
@@ -414,7 +410,9 @@ class TestIsCharacterLeaving:
 class TestManagerDispatch:
     @pytest.mark.asyncio
     async def test_calls_existing_world_state_manager_method(
-        self, scene, monkeypatch  # noqa: F811
+        self,
+        scene,
+        monkeypatch,  # noqa: F811
     ):
         from talemate.world_state.manager import WorldStateManager
 
@@ -458,7 +456,9 @@ class TestManagerDispatch:
 class TestCheckPinConditionsDecay:
     @pytest.mark.asyncio
     async def test_no_conditions_to_check_ticks_decay(
-        self, scene, monkeypatch  # noqa: F811
+        self,
+        scene,
+        monkeypatch,  # noqa: F811
     ):
         """When no pins have conditions, the early-return tick decay path
         runs. Active pins with decay should have decay_due decremented."""
@@ -506,7 +506,9 @@ class TestCheckPinConditionsDecay:
 
     @pytest.mark.asyncio
     async def test_gamestate_controlled_pin_skipped_from_decay(
-        self, scene, monkeypatch  # noqa: F811
+        self,
+        scene,
+        monkeypatch,  # noqa: F811
     ):
         from talemate.game.schema import ConditionGroup
 
@@ -555,9 +557,11 @@ class TestCheckPinConditionsLLMBranch:
         monkeypatch.setattr(
             world_state_module.Prompt,
             "request",
-            classmethod(lambda cls, uid, client, kind, vars=None, **kwargs: _fake_request(
-                uid, client, kind, vars=vars, **kwargs
-            )),
+            classmethod(
+                lambda cls, uid, client, kind, vars=None, **kwargs: _fake_request(
+                    uid, client, kind, vars=vars, **kwargs
+                )
+            ),
         )
 
         await agent.check_pin_conditions()
@@ -583,9 +587,11 @@ class TestCheckPinConditionsLLMBranch:
         monkeypatch.setattr(
             world_state_module.Prompt,
             "request",
-            classmethod(lambda cls, uid, client, kind, vars=None, **kwargs: _fake_request(
-                uid, client, kind, vars=vars, **kwargs
-            )),
+            classmethod(
+                lambda cls, uid, client, kind, vars=None, **kwargs: _fake_request(
+                    uid, client, kind, vars=vars, **kwargs
+                )
+            ),
         )
 
         await agent.check_pin_conditions()
@@ -610,9 +616,11 @@ class TestCheckPinConditionsLLMBranch:
         monkeypatch.setattr(
             world_state_module.Prompt,
             "request",
-            classmethod(lambda cls, uid, client, kind, vars=None, **kwargs: _fake_request(
-                uid, client, kind, vars=vars, **kwargs
-            )),
+            classmethod(
+                lambda cls, uid, client, kind, vars=None, **kwargs: _fake_request(
+                    uid, client, kind, vars=vars, **kwargs
+                )
+            ),
         )
 
         await agent.check_pin_conditions()
@@ -630,7 +638,9 @@ class TestCheckPinConditionsLLMBranch:
 class TestUpdateReinforcementsRequireActive:
     @pytest.mark.asyncio
     async def test_skips_reinforcement_for_inactive_character(
-        self, scene, monkeypatch  # noqa: F811
+        self,
+        scene,
+        monkeypatch,  # noqa: F811
     ):
         from talemate.character import Character
 

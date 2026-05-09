@@ -167,18 +167,14 @@ async def test_basic_arithmetic_operations(operation, a, b, expected):
 async def test_basic_arithmetic_division_by_zero_raises():
     node = BasicArithmetic()
     with pytest.raises(InputValueError):
-        await run_node(
-            node, inputs={"a": 10, "b": 0, "operation": "divide"}
-        )
+        await run_node(node, inputs={"a": 10, "b": 0, "operation": "divide"})
 
 
 @pytest.mark.asyncio
 async def test_basic_arithmetic_modulo_by_zero_raises():
     node = BasicArithmetic()
     with pytest.raises(InputValueError):
-        await run_node(
-            node, inputs={"a": 10, "b": 0, "operation": "modulo"}
-        )
+        await run_node(node, inputs={"a": 10, "b": 0, "operation": "modulo"})
 
 
 @pytest.mark.asyncio
@@ -255,9 +251,7 @@ async def test_compare_unresolved_inputs_short_circuit():
 @pytest.mark.asyncio
 async def test_min_max_returns_min_and_index():
     node = MinMax()
-    out = await run_node(
-        node, inputs={"numbers": [3, 1, 4, 1, 5], "operation": "min"}
-    )
+    out = await run_node(node, inputs={"numbers": [3, 1, 4, 1, 5], "operation": "min"})
     assert out["result"] == 1
     assert out["index"] == 1  # first index of value 1
 
@@ -265,9 +259,7 @@ async def test_min_max_returns_min_and_index():
 @pytest.mark.asyncio
 async def test_min_max_returns_max_and_index():
     node = MinMax()
-    out = await run_node(
-        node, inputs={"numbers": [3, 1, 4, 1, 5], "operation": "max"}
-    )
+    out = await run_node(node, inputs={"numbers": [3, 1, 4, 1, 5], "operation": "max"})
     assert out["result"] == 5
     assert out["index"] == 4
 
@@ -283,9 +275,7 @@ async def test_min_max_empty_list_raises():
 async def test_min_max_non_numeric_raises():
     node = MinMax()
     with pytest.raises(InputValueError):
-        await run_node(
-            node, inputs={"numbers": [1, "two", 3], "operation": "min"}
-        )
+        await run_node(node, inputs={"numbers": [1, "two", 3], "operation": "min"})
 
 
 # ---------------------------------------------------------------------------
@@ -330,18 +320,14 @@ async def test_average_mean():
 @pytest.mark.asyncio
 async def test_average_median():
     node = Average()
-    out = await run_node(
-        node, inputs={"numbers": [1, 2, 3, 100], "method": "median"}
-    )
+    out = await run_node(node, inputs={"numbers": [1, 2, 3, 100], "method": "median"})
     assert out["result"] == 2.5
 
 
 @pytest.mark.asyncio
 async def test_average_mode():
     node = Average()
-    out = await run_node(
-        node, inputs={"numbers": [1, 2, 2, 3], "method": "mode"}
-    )
+    out = await run_node(node, inputs={"numbers": [1, 2, 2, 3], "method": "mode"})
     assert out["result"] == 2
 
 
@@ -356,9 +342,7 @@ async def test_average_empty_list_raises():
 async def test_average_non_numeric_raises():
     node = Average()
     with pytest.raises(InputValueError):
-        await run_node(
-            node, inputs={"numbers": [1, "two"], "method": "mean"}
-        )
+        await run_node(node, inputs={"numbers": [1, "two"], "method": "mean"})
 
 
 # ---------------------------------------------------------------------------
@@ -371,9 +355,7 @@ async def test_random_uniform_within_range():
     """Uniform draws should fall within [min, max]."""
     random.seed(42)
     node = Random()
-    out = await run_node(
-        node, inputs={"min": 0.0, "max": 10.0, "method": "uniform"}
-    )
+    out = await run_node(node, inputs={"min": 0.0, "max": 10.0, "method": "uniform"})
     assert 0.0 <= out["result"] <= 10.0
     assert isinstance(out["result"], float)
 
@@ -382,9 +364,7 @@ async def test_random_uniform_within_range():
 async def test_random_integer_within_range():
     random.seed(42)
     node = Random()
-    out = await run_node(
-        node, inputs={"min": 1, "max": 10, "method": "integer"}
-    )
+    out = await run_node(node, inputs={"min": 1, "max": 10, "method": "integer"})
     assert 1 <= out["result"] <= 10
     assert isinstance(out["result"], int)
 
@@ -394,9 +374,7 @@ async def test_random_normal_distribution_returns_finite_value():
     """Normal draws are unbounded but must be a finite float."""
     random.seed(42)
     node = Random()
-    out = await run_node(
-        node, inputs={"mean": 0.0, "std_dev": 1.0, "method": "normal"}
-    )
+    out = await run_node(node, inputs={"mean": 0.0, "std_dev": 1.0, "method": "normal"})
     assert isinstance(out["result"], float)
     assert math.isfinite(out["result"])
 
@@ -416,9 +394,7 @@ async def test_random_choice_picks_from_list():
     random.seed(42)
     node = Random()
     choices = ["a", "b", "c"]
-    out = await run_node(
-        node, inputs={"choices": choices, "method": "choice"}
-    )
+    out = await run_node(node, inputs={"choices": choices, "method": "choice"})
     assert out["result"] in choices
 
 
