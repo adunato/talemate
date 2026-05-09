@@ -16,7 +16,6 @@ Covers:
 
 from __future__ import annotations
 
-from collections import deque
 from typing import Any
 
 import pytest
@@ -33,6 +32,8 @@ from talemate.agents.director.plan.schema import (
     Task,
 )
 from talemate.agents.director.plan.util import get_plan, save_plan
+
+from _director_test_helpers import patch_prompt_request_in
 
 
 # ---------------------------------------------------------------------------
@@ -69,39 +70,16 @@ def _make_beats(tensions: list[float]) -> list[Beat]:
     ]
 
 
-class _StubPromptRequest:
-    """Stub Prompt.request that pops from a queue keyed by template name."""
-
-    def __init__(self, responses: dict[str, deque]):
-        self.responses = responses
-        self.calls: list[dict] = []
-
-    async def __call__(self, template, client, kind, vars=None, **kwargs):
-        self.calls.append({"template": template, "kind": kind, "vars": vars or {}})
-        queue = self.responses.get(template)
-        if queue is None or not queue:
-            return "", {}
-        return queue.popleft()
-
-
 @pytest.fixture
 def stub_prompt(monkeypatch):
-    """Patch Prompt.request inside the plan.mixin module."""
+    """Replace the real ``Prompt.request`` classmethod with a queued response source.
 
+    Patches the canonical ``talemate.prompts.base.Prompt`` class with
+    ``raising=True`` so a rename or removal of ``Prompt.request`` fails
+    the test instead of being papered over by a fake.
+    """
     from talemate.agents.director.plan import mixin as mixin_mod
-
-    def install(responses: dict[str, list]):
-        # Convert lists of (raw, extracted) to deque
-        as_deque = {k: deque(v) for k, v in responses.items()}
-        stub = _StubPromptRequest(as_deque)
-
-        class _StubPromptClass:
-            request = staticmethod(stub)
-
-        monkeypatch.setattr(mixin_mod, "Prompt", _StubPromptClass)
-        return stub
-
-    return install
+    return patch_prompt_request_in(monkeypatch, mixin_mod)
 
 
 # ---------------------------------------------------------------------------

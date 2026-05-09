@@ -278,27 +278,33 @@ class TestSaveConfig:
         _strip_unified_api_key_configs removes saved config entries whose
         runtime AgentActionConfig.type == "unified_api_key" before persist.
         """
+        from talemate.agents.base import Agent as RuntimeAgent
         from talemate.agents.base import AgentAction as RuntimeAction
         from talemate.agents.base import AgentActionConfig as RuntimeConfig
         import talemate.instance as instance_module
 
-        # Build a fake agent in the instance registry whose runtime action
-        # has both a normal config and a unified_api_key config.
-        class _FakeAgent:
-            actions = {
-                "main": RuntimeAction(
-                    label="Main",
-                    config={
-                        "secret_ref": RuntimeConfig(
-                            type="unified_api_key", label="secret"
-                        ),
-                        "setting": RuntimeConfig(type="text", label="other"),
-                    },
-                )
-            }
+        # Build a real `Agent` subclass with the runtime action structure the
+        # function-under-test reads. Using the production `Agent` class
+        # (instead of a `_FakeAgent` stub) keeps the test honest if the
+        # `actions`/`AgentAction`/`AgentActionConfig` API changes.
+        class _TestAgent(RuntimeAgent):
+            agent_type = "fakeagent"
+
+            def __init__(self):
+                self.actions = {
+                    "main": RuntimeAction(
+                        label="Main",
+                        config={
+                            "secret_ref": RuntimeConfig(
+                                type="unified_api_key", label="secret"
+                            ),
+                            "setting": RuntimeConfig(type="text", label="other"),
+                        },
+                    )
+                }
 
         original_agents = instance_module.AGENTS
-        monkeypatch.setattr(instance_module, "AGENTS", {"fakeagent": _FakeAgent()})
+        monkeypatch.setattr(instance_module, "AGENTS", {"fakeagent": _TestAgent()})
 
         # Saved config (what would otherwise hit disk) for the same shape:
         isolated_config.agents = {

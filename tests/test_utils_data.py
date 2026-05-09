@@ -2,8 +2,11 @@ import os
 import pytest
 import json
 import yaml
-from unittest.mock import MagicMock
+
+from conftest import MockClient
+
 import talemate.util.data
+from talemate.prompts.base import Prompt
 from talemate.util.data import (
     fix_faulty_json,
     extract_json,
@@ -25,25 +28,41 @@ def get_test_data_path(filename):
     return os.path.join(base_dir, "data", "util", "data", filename)
 
 
+def _make_json_client(name="utils_data_json") -> MockClient:
+    """Build a real `MockClient` configured for `data_format='json'`.
+
+    Used in tests that pass the client through to `extract_data_with_ai_fallback`
+    or `extract_data_auto`. The real `ClientBase` contract is preserved (any
+    rename/removal on the client API surfaces here) — only `data_format` is
+    overridden via the writable `client_config`.
+    """
+    client = MockClient(name)
+    client.client_config.data_format = "json"
+    return client
+
+
 @pytest.fixture
 def mock_client_and_prompt():
-    """Create mock client and prompt for extract_data_auto tests."""
-    client = MagicMock()
-    prompt_cls = MagicMock()
+    """Real client + real Prompt class for extract_data_auto tests.
 
-    # Mock the extract_data_with_ai_fallback to just use extract_data
+    `extract_data_with_ai_fallback` is replaced with a no-op stub (the tests
+    here exercise `extract_data_auto`'s dispatch logic, not the AI fallback
+    itself). The client and prompt class are real types so contract
+    breakage on either surfaces in these tests.
+    """
+    client = _make_json_client()
+    prompt_cls = Prompt
+
+    # Replace the AI-fallback boundary with a deterministic stub.
     async def mock_extract_with_ai(client, text, prompt_cls, schema_format):
-        # Wrap in codeblock format and use existing extract_data
         wrapped = f"```{schema_format}\n{text}\n```"
         return extract_data(wrapped, schema_format)
 
-    # Patch the function during tests
     original_func = talemate.util.data.extract_data_with_ai_fallback
     talemate.util.data.extract_data_with_ai_fallback = mock_extract_with_ai
 
     yield client, prompt_cls
 
-    # Restore original function
     talemate.util.data.extract_data_with_ai_fallback = original_func
 
 
@@ -721,73 +740,58 @@ async def test_extract_data_auto_multiple_objects_in_single_block(
 
 
 @pytest.mark.asyncio
-async def test_extract_data_with_ai_fallback_json_without_codeblock():
+async def test_extract_data_with_ai_fallback_json_without_codeblock(monkeypatch):
     """Test extract_data_with_ai_fallback when AI returns JSON without code block."""
-    # Mock client and prompt
-    client = MagicMock()
-    client.data_format = "json"
-    prompt_cls = MagicMock()
+    client = _make_json_client()
 
-    # Simulate AI returning corrected JSON without code block
-    # Prompt.request now returns a tuple (response, extracted)
     async def mock_request(*args, **kwargs):
         response = '{"name": "Fixed JSON", "id": 123, "active": true}'
         return (response, {"response": response})
 
-    prompt_cls.request = mock_request
+    # `monkeypatch.setattr` defaults to raising=True, so a rename of
+    # `Prompt.request` would surface here.
+    monkeypatch.setattr(Prompt, "request", mock_request)
 
     # Malformed JSON that cannot be auto-fixed (invalid structure)
     malformed_json = '{"name": "Broken" this is broken, "id": 123}'
 
     result = await extract_data_with_ai_fallback(
-        client, malformed_json, prompt_cls, "json"
+        client, malformed_json, Prompt, "json"
     )
 
-    # Should successfully extract the JSON even without code block
     assert len(result) == 1
     assert result[0]["name"] == "Fixed JSON"
     assert result[0]["id"] == 123
 
 
 @pytest.mark.asyncio
-async def test_extract_data_with_ai_fallback_json_with_codeblock():
+async def test_extract_data_with_ai_fallback_json_with_codeblock(monkeypatch):
     """Test extract_data_with_ai_fallback when AI returns JSON with code block."""
-    # Mock client and prompt
-    client = MagicMock()
-    client.data_format = "json"
-    prompt_cls = MagicMock()
+    client = _make_json_client()
 
-    # Simulate AI returning corrected JSON with code block
-    # Prompt.request now returns a tuple (response, extracted)
     async def mock_request(*args, **kwargs):
         response = '```json\n{"name": "Fixed JSON", "id": 456, "active": false}\n```'
         return (response, {"response": response})
 
-    prompt_cls.request = mock_request
+    monkeypatch.setattr(Prompt, "request", mock_request)
 
-    # Malformed JSON that will trigger AI fallback
     malformed_json = '{"name": "Broken", "id": 456,'
 
     result = await extract_data_with_ai_fallback(
-        client, malformed_json, prompt_cls, "json"
+        client, malformed_json, Prompt, "json"
     )
 
-    # Should successfully extract the JSON
     assert len(result) == 1
     assert result[0]["name"] == "Fixed JSON"
     assert result[0]["id"] == 456
 
 
 @pytest.mark.asyncio
-async def test_extract_data_with_ai_fallback_yaml_without_codeblock():
+async def test_extract_data_with_ai_fallback_yaml_without_codeblock(monkeypatch):
     """Test extract_data_with_ai_fallback when AI returns YAML without code block."""
-    # Mock client and prompt
-    client = MagicMock()
-    client.data_format = "yaml"
-    prompt_cls = MagicMock()
+    client = MockClient("utils_data_yaml")
+    client.client_config.data_format = "yaml"
 
-    # Simulate AI returning corrected YAML without code block
-    # Prompt.request now returns a tuple (response, extracted)
     async def mock_request(*args, **kwargs):
         response = """name: Fixed YAML
 id: 789
@@ -797,18 +801,16 @@ tags:
   - fixed"""
         return (response, {"response": response})
 
-    prompt_cls.request = mock_request
+    monkeypatch.setattr(Prompt, "request", mock_request)
 
-    # Malformed YAML that will trigger AI fallback
     malformed_yaml = """name: Broken
 id: 789
   active: true"""
 
     result = await extract_data_with_ai_fallback(
-        client, malformed_yaml, prompt_cls, "yaml"
+        client, malformed_yaml, Prompt, "yaml"
     )
 
-    # Should successfully extract the YAML even without code block
     assert len(result) == 1
     assert result[0]["name"] == "Fixed YAML"
     assert result[0]["id"] == 789
@@ -816,15 +818,11 @@ id: 789
 
 
 @pytest.mark.asyncio
-async def test_extract_data_with_ai_fallback_yaml_with_codeblock():
+async def test_extract_data_with_ai_fallback_yaml_with_codeblock(monkeypatch):
     """Test extract_data_with_ai_fallback when AI returns YAML with code block."""
-    # Mock client and prompt
-    client = MagicMock()
-    client.data_format = "yaml"
-    prompt_cls = MagicMock()
+    client = MockClient("utils_data_yaml_2")
+    client.client_config.data_format = "yaml"
 
-    # Simulate AI returning corrected YAML with code block
-    # Prompt.request now returns a tuple (response, extracted)
     async def mock_request(*args, **kwargs):
         response = """```yaml
 name: Fixed YAML
@@ -833,18 +831,16 @@ active: false
 ```"""
         return (response, {"response": response})
 
-    prompt_cls.request = mock_request
+    monkeypatch.setattr(Prompt, "request", mock_request)
 
-    # Malformed YAML that will trigger AI fallback
     malformed_yaml = """name: Broken
     id: 999
   active: false"""
 
     result = await extract_data_with_ai_fallback(
-        client, malformed_yaml, prompt_cls, "yaml"
+        client, malformed_yaml, Prompt, "yaml"
     )
 
-    # Should successfully extract the YAML
     assert len(result) == 1
     assert result[0]["name"] == "Fixed YAML"
     assert result[0]["id"] == 999

@@ -5,8 +5,6 @@ fix_time recalculates timestamps across archived_history (and layered_history)
 based on TimePassageMessage entries in scene.history.
 """
 
-import types
-
 from talemate.scene_message import CharacterMessage, TimePassageMessage
 from talemate.tale_mate import Scene
 
@@ -30,18 +28,21 @@ def make_scene(
     layered_history: list | None = None,
     ts: str = "PT0S",
 ):
-    """Build a minimal Scene-like namespace with the fix_time methods bound."""
-    scene = types.SimpleNamespace(
-        ts=ts,
-        history=history,
-        archived_history=archived_history,
-        layered_history=layered_history or [],
-    )
+    """Build a real `Scene` populated with the requested timeline state.
+
+    Uses the production `Scene` class so changes to its `_fix_time`
+    semantics surface here.
+    """
+    scene = Scene()
+    scene.ts = ts
+    scene.history = history
+    scene.archived_history = archived_history
+    scene.layered_history = layered_history or []
     return scene
 
 
-def fix_time(scene):
-    """Call Scene._fix_time on our namespace (skip the try/except wrapper)."""
+def fix_time(scene: Scene):
+    """Call Scene._fix_time directly to skip the try/except wrapper in fix_time."""
     Scene._fix_time(scene)
 
 

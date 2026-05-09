@@ -223,9 +223,14 @@ class GetWebsocketRouter(Node):
             type="str",
             default="",
             choices=[],
-            generate_choices=lambda: [
-                router.router for router in active_websocket_handler().routes.values()
-            ],
+            generate_choices=lambda: (
+                [
+                    router.router
+                    for router in active_websocket_handler().routes.values()
+                ]
+                if active_websocket_handler() is not None
+                else []
+            ),
         )
 
     def __init__(self, title="Get Websocket Router", **kwargs):

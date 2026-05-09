@@ -16,6 +16,7 @@ from talemate.scene_message import (
 )
 from talemate.game.engine.nodes.core import UNRESOLVED, Graph
 from talemate.game.engine.nodes.scene import SceneLoop
+from talemate.tale_mate import Scene
 
 
 # ---------------------------------------------------------------------------
@@ -132,31 +133,33 @@ class TestSceneEncoder:
 # ---------------------------------------------------------------------------
 
 
-class _FakeScene:
-    """Minimal Scene-like object exposing only what save_node_module reads.
+@pytest.fixture
+def scene_factory(tmp_path, monkeypatch):
+    """Factory that builds a real `Scene` whose nodes directory points into tmp_path.
 
-    ``nodes_filepath`` is a dynamic property in the real Scene class - it
-    derives from ``nodes_filename`` at access time. We mirror that here so
-    save_node_module sees the up-to-date value after it mutates the field.
+    Uses production `Scene` so changes to its `nodes_dir`/`nodes_filename`/
+    `nodes_filepath` API surface in these tests. `Scene.scenes_dir` is
+    monkeypatched to redirect filesystem writes into the tmp_path.
     """
+    monkeypatch.setattr(
+        Scene, "scenes_dir", classmethod(lambda cls: str(tmp_path)), raising=True
+    )
 
-    def __init__(self, nodes_dir: str, nodes_filename: str = "scene-loop.json"):
-        self.nodes_dir = nodes_dir
-        self.nodes_filename = nodes_filename
+    def _make(project: str = "save_node_test", nodes_filename: str = "scene-loop.json"):
+        scene = Scene()
+        scene.project_name = project
+        scene.nodes_filename = nodes_filename if nodes_filename != "scene-loop.json" else ""
+        # Don't pre-create scene.nodes_dir — `save_node_module` is responsible
+        # for creating it, and one of the tests verifies that contract.
+        return scene
 
-    @property
-    def nodes_filepath(self) -> str:
-        return os.path.join(self.nodes_dir, self.nodes_filename)
-
-
-def _make_fake_scene(nodes_dir: str, nodes_filename: str = "scene-loop.json"):
-    return _FakeScene(nodes_dir, nodes_filename)
+    return _make
 
 
 class TestSaveNodeModule:
     @pytest.mark.asyncio
-    async def test_creates_nodes_directory_if_missing(self, tmp_path):
-        scene = _make_fake_scene(str(tmp_path / "nodes"))
+    async def test_creates_nodes_directory_if_missing(self, scene_factory):
+        scene = scene_factory()
         # Build a minimal SceneLoop graph (real type, no LLM client needed)
         graph = SceneLoop()
         assert not os.path.exists(scene.nodes_dir)
@@ -167,9 +170,9 @@ class TestSaveNodeModule:
 
     @pytest.mark.asyncio
     async def test_scene_loop_with_set_as_main_writes_to_default_filename(
-        self, tmp_path
+        self, scene_factory
     ):
-        scene = _make_fake_scene(str(tmp_path / "nodes"))
+        scene = scene_factory()
         graph = SceneLoop()
 
         result = await save_node_module(scene, graph, set_as_main=True)
@@ -187,9 +190,9 @@ class TestSaveNodeModule:
 
     @pytest.mark.asyncio
     async def test_scene_loop_with_set_as_main_uses_explicit_filename(
-        self, tmp_path
+        self, scene_factory
     ):
-        scene = _make_fake_scene(str(tmp_path / "nodes"))
+        scene = scene_factory()
         graph = SceneLoop()
 
         result = await save_node_module(
@@ -202,16 +205,16 @@ class TestSaveNodeModule:
         assert os.path.isfile(result)
 
     @pytest.mark.asyncio
-    async def test_non_scene_loop_requires_filename(self, tmp_path):
-        scene = _make_fake_scene(str(tmp_path / "nodes"))
+    async def test_non_scene_loop_requires_filename(self, scene_factory):
+        scene = scene_factory()
         graph = Graph()  # Graph (not SceneLoop)
 
         with pytest.raises(ValueError, match="filename is required"):
             await save_node_module(scene, graph, filename=None)
 
     @pytest.mark.asyncio
-    async def test_non_scene_loop_strips_relative_path_components(self, tmp_path):
-        scene = _make_fake_scene(str(tmp_path / "nodes"))
+    async def test_non_scene_loop_strips_relative_path_components(self, scene_factory):
+        scene = scene_factory()
         graph = Graph()
 
         # The filename includes a relative directory; combine_paths strips it
@@ -225,11 +228,11 @@ class TestSaveNodeModule:
 
     @pytest.mark.asyncio
     async def test_scene_loop_without_set_as_main_falls_through_to_filename_branch(
-        self, tmp_path
+        self, scene_factory
     ):
         # When set_as_main is False, even a SceneLoop must go through the
         # explicit-filename branch and a missing filename must raise.
-        scene = _make_fake_scene(str(tmp_path / "nodes"))
+        scene = scene_factory()
         graph = SceneLoop()
 
         with pytest.raises(ValueError, match="filename is required"):
@@ -237,9 +240,9 @@ class TestSaveNodeModule:
 
     @pytest.mark.asyncio
     async def test_scene_loop_without_set_as_main_writes_to_named_file(
-        self, tmp_path
+        self, scene_factory
     ):
-        scene = _make_fake_scene(str(tmp_path / "nodes"))
+        scene = scene_factory()
         graph = SceneLoop()
 
         result = await save_node_module(

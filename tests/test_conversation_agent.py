@@ -32,10 +32,36 @@ from talemate.agents.conversation import (
 from talemate.character import Character
 from talemate.context import ActiveScene
 from talemate.exceptions import GenerationCancelled
+from talemate.prompts.base import Prompt
 from talemate.scene_message import CharacterMessage
 from talemate.tale_mate import Actor, Player
 
 from conftest import MockScene, bootstrap_scene
+
+
+def _canned_prompt(raw: str, extracted: dict) -> Prompt:
+    """Build a real ``Prompt`` whose ``send`` returns canned LLM output.
+
+    The function-under-test (``ConversationAgent.converse``) calls
+    ``await prompt.send(client, kind="conversation")``. We construct a real
+    ``Prompt`` (a dataclass) and shadow ``send`` on the instance — the
+    surrounding contract (the ``Prompt`` class itself, its constructor
+    fields, and the ``send`` method's signature) stays anchored to the
+    real production type. Renaming ``Prompt`` or removing ``.send`` on the
+    real class fails the test instead of being papered over.
+    """
+    prompt = Prompt(
+        uid="conversation.test",
+        agent_type="conversation",
+        name="test",
+        vars={},
+    )
+
+    async def _send(client, kind, **kwargs):
+        return raw, extracted
+
+    prompt.send = _send  # type: ignore[method-assign]
+    return prompt
 
 
 # ---------------------------------------------------------------------------
@@ -327,13 +353,14 @@ class TestConverse:
             "movie_script"
         )
 
-        # Stub build_prompt so we don't go through the templating pipeline.
+        # Stub the agent's own build_prompt to skip the templating pipeline.
+        # Returns a real Prompt instance whose `send` is overridden to deliver
+        # canned LLM output — the contract still flows through the real Prompt
+        # class.
         async def fake_build_prompt(character, char_message="", instruction=None):
-            class _Stub:
-                async def send(self, client, kind):
-                    return "raw response", {"response": "Alice:Hello there!"}
-
-            return _Stub()
+            return _canned_prompt(
+                "raw response", {"response": "Alice:Hello there!"}
+            )
 
         conversation.build_prompt = fake_build_prompt
 
@@ -355,14 +382,10 @@ class TestConverse:
         )
 
         async def fake_build_prompt(character, char_message="", instruction=None):
-            class _Stub:
-                async def send(self, client, kind):
-                    return (
-                        "She walked over and smiled.",
-                        {"response": "She walked over and smiled."},
-                    )
-
-            return _Stub()
+            return _canned_prompt(
+                "She walked over and smiled.",
+                {"response": "She walked over and smiled."},
+            )
 
         conversation.build_prompt = fake_build_prompt
         result = await conversation.converse(alice_actor)
@@ -382,11 +405,9 @@ class TestConverse:
         )
 
         async def fake_build_prompt(character, char_message="", instruction=None):
-            class _Stub:
-                async def send(self, client, kind):
-                    return ("ALICE\nBack soon.", {"response": "ALICE\nBack soon."})
-
-            return _Stub()
+            return _canned_prompt(
+                "ALICE\nBack soon.", {"response": "ALICE\nBack soon."}
+            )
 
         conversation.build_prompt = fake_build_prompt
         result = await conversation.converse(alice_actor)
@@ -403,11 +424,7 @@ class TestConverse:
         conversation.actions["generation_override"].enabled = True
 
         async def fake_build_prompt(character, char_message="", instruction=None):
-            class _Stub:
-                async def send(self, client, kind):
-                    return "", {"response": ""}
-
-            return _Stub()
+            return _canned_prompt("", {"response": ""})
 
         conversation.build_prompt = fake_build_prompt
         # The empty-response handler raises GenerationCancelled.
@@ -421,11 +438,7 @@ class TestConverse:
         alice.current_avatar = "default-avatar.png"
 
         async def fake_build_prompt(character, char_message="", instruction=None):
-            class _Stub:
-                async def send(self, client, kind):
-                    return "Hi!", {"response": "Hi!"}
-
-            return _Stub()
+            return _canned_prompt("Hi!", {"response": "Hi!"})
 
         conversation.build_prompt = fake_build_prompt
         messages = await conversation.converse(alice_actor)

@@ -142,9 +142,6 @@ def validate_registry_path(path: str, node_definitions: dict | None = None):
     - ValueError: if the path is invalid
     """
 
-    if not node_definitions:
-        node_definitions = export_node_definitions()
-
     if not path:
         raise ValueError("Empty registry path")
 
@@ -154,6 +151,9 @@ def validate_registry_path(path: str, node_definitions: dict | None = None):
         raise ValueError(
             "Registry path must contain at least two parts (e.g., 'my/node')"
         )
+
+    if not node_definitions:
+        node_definitions = export_node_definitions()
 
     # the path can not be the prefix of an existing path
     # e.g., can't put a node where a path is already registered

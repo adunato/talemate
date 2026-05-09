@@ -2,31 +2,34 @@
 
 Covers the pure-Python helpers in this module:
 - parse_response, clean_response
-- extract_actions (needs a tiny stand-in client supplying data_format)
+- extract_actions (uses real MockClient supplying data_format)
 - reverse_trim_history (history token trimming)
-- compact_if_needed (history compaction with summarizer stub)
+- compact_if_needed (history compaction with real SummarizerAgent stubbed at
+  the instance method)
 - serialize_history
 - _build_callback_groups (private but a pure transform — tested via
   get_available_actions, exercised through a curated registry stub)
 
-LLM-driven branches that talk to Prompt.request / Focal.request are not
-exercised — those are integration paths and should be tested separately
-against a real prompt template + mock client. Skipped paths:
-  - request_and_parse (full prompt round-trip)
-  - execute_actions   (full focal + prompt round-trip)
-  - init_action_nodes (registry-only side effects on shared state)
+LLM-driven branches that talk to Prompt.request / Focal.request are
+exercised against the real ``Prompt`` class with ``raising=True`` patches
+so any rename of the real class surface fails the tests immediately.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any
 
 import pytest
 
 import talemate.instance as instance
+from conftest import MockClient, MockScene, bootstrap_scene
+from talemate.agents.director import DirectorAgent
 from talemate.agents.director.action_core.gating import CallbackDescriptor
-from talemate.agents.director.action_core.schema import ActionCoreBudgets
+from talemate.agents.director.action_core.schema import (
+    ActionCoreBudgets,
+    ActionCoreMessage,
+    ActionCoreResultMessage,
+)
 from talemate.agents.director.action_core.utils import (
     _build_callback_groups,
     build_prompt_vars,
@@ -40,11 +43,15 @@ from talemate.agents.director.action_core.utils import (
     reverse_trim_history,
     serialize_history,
 )
+from talemate.agents.director.scene_direction.schema import UserInteractionMessage
+from talemate.agents.summarize import SummarizeAgent
 from talemate.game.engine.nodes.core import Graph, GraphState
 from talemate.game.engine.nodes.registry import (
     NODES,
     import_talemate_node_definitions,
 )
+
+from _director_test_helpers import patch_prompt_request_in
 
 
 # ---------------------------------------------------------------------------
@@ -58,77 +65,52 @@ def _import_node_definitions():
 
 
 # ---------------------------------------------------------------------------
-# Lightweight stand-ins for Director / Client / Summarizer
+# Real fixtures — director, scene, client, summarizer
 # ---------------------------------------------------------------------------
 
 
-class StubDirector:
-    """Implements only the API surface gating + utils touch."""
-
-    def __init__(self, disabled=None):
-        self._disabled = disabled
-
-    def get_scene_state(self, key, default=None):
-        if key == "disabled_sub_actions":
-            return self._disabled if self._disabled is not None else default
-        return default
-
-    # Touched by init_action_nodes (not exercised here, but defined for safety)
-    def update_callback_choices(self):
-        pass
+@pytest.fixture
+def scene() -> MockScene:
+    s = MockScene()
+    bootstrap_scene(s)
+    return s
 
 
-class StubClient:
-    """Minimal client — only `data_format` + a no-op send_prompt are used."""
-
-    def __init__(self, data_format: str = "json"):
-        self.data_format = data_format
-        self.max_token_length = 4096
-
-    async def send_prompt(self, *args, **kwargs):
-        return ""
+@pytest.fixture
+def director(scene) -> DirectorAgent:
+    return instance.get_agent("director")
 
 
-class StubSummarizer:
-    """Records calls; returns a deterministic summary string."""
-
-    def __init__(self, summary: str = "summary-text"):
-        self.summary = summary
-        self.calls: list[list] = []
-
-    async def summarize_director_chat(self, history):
-        self.calls.append(list(history))
-        return self.summary
+@pytest.fixture
+def summarizer(scene) -> SummarizeAgent:
+    return instance.get_agent("summarizer")
 
 
-# ---------------------------------------------------------------------------
-# History message dataclasses (mirroring the duck-typed surface trim/compact use)
-# ---------------------------------------------------------------------------
+@pytest.fixture
+def client(scene) -> MockClient:
+    """Return the bootstrapped MockClient (a real ClientBase subclass)."""
+    return scene.mock_client
 
 
-@dataclass
-class _TextMsg:
-    message: str
-    type: str = "text"
-
-    def __str__(self):
-        return self.message
+# Real-message factory helpers. They build pydantic models from production
+# schema modules, so a rename of any of these fields causes the tests to
+# fail at construction time rather than silently keeping a stub copy alive.
 
 
-@dataclass
-class _ActionResult:
-    name: str = ""
-    instructions: str = ""
-    result: Any = None
-    type: str = "action_result"
-    message: str | None = None  # for compact_if_needed: str(m) is what counts
+def _text(message: str) -> ActionCoreMessage:
+    return ActionCoreMessage(message=message)
 
 
-@dataclass
-class _UserInteraction:
-    user_input: str
-    type: str = "user_interaction"
-    message: str | None = None
+def _action_result(
+    *, name: str = "", instructions: str = "", result: Any = None
+) -> ActionCoreResultMessage:
+    return ActionCoreResultMessage(
+        name=name, instructions=instructions, result=result
+    )
+
+
+def _user_interaction(user_input: str) -> UserInteractionMessage:
+    return UserInteractionMessage(user_input=user_input)
 
 
 # ---------------------------------------------------------------------------
@@ -195,20 +177,18 @@ class TestCleanResponse:
 
 
 # ---------------------------------------------------------------------------
-# extract_actions
+# extract_actions — uses the real MockClient (a ClientBase subclass)
 # ---------------------------------------------------------------------------
 
 
 class TestExtractActions:
     @pytest.mark.asyncio
-    async def test_returns_none_when_no_actions_block(self):
-        client = StubClient()
+    async def test_returns_none_when_no_actions_block(self, client):
         result = await extract_actions(client, "no actions tag here")
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_parses_single_dict_action_payload(self):
-        client = StubClient()
+    async def test_parses_single_dict_action_payload(self, client):
         response = (
             '<ACTIONS>\n```json\n{"name": "tell", "instructions": "say hi"}\n```\n'
             "</ACTIONS>"
@@ -217,8 +197,7 @@ class TestExtractActions:
         assert result == [{"name": "tell", "instructions": "say hi"}]
 
     @pytest.mark.asyncio
-    async def test_parses_list_of_action_dicts(self):
-        client = StubClient()
+    async def test_parses_list_of_action_dicts(self, client):
         payload = (
             '[{"name": "a", "instructions": "i1"}, '
             '{"name": "b", "instructions": "i2"}]'
@@ -231,8 +210,7 @@ class TestExtractActions:
         ]
 
     @pytest.mark.asyncio
-    async def test_falls_back_to_function_field_when_name_missing(self):
-        client = StubClient()
+    async def test_falls_back_to_function_field_when_name_missing(self, client):
         response = (
             '<ACTIONS>\n```json\n{"function": "alt", "instructions": ""}\n```\n'
             "</ACTIONS>"
@@ -241,8 +219,7 @@ class TestExtractActions:
         assert result == [{"name": "alt", "instructions": ""}]
 
     @pytest.mark.asyncio
-    async def test_skips_items_without_name_or_function(self):
-        client = StubClient()
+    async def test_skips_items_without_name_or_function(self, client):
         payload = '[{"instructions": "no name"}, {"name": "ok"}]'
         response = f"<ACTIONS>\n```json\n{payload}\n```\n</ACTIONS>"
         result = await extract_actions(client, response)
@@ -250,16 +227,14 @@ class TestExtractActions:
         assert result == [{"name": "ok", "instructions": ""}]
 
     @pytest.mark.asyncio
-    async def test_returns_none_on_invalid_payload(self):
-        client = StubClient()
+    async def test_returns_none_on_invalid_payload(self, client):
         # Block exists but payload is an int → not dict/list of dicts → None.
         response = "<ACTIONS>\n```json\n42\n```\n</ACTIONS>"
         result = await extract_actions(client, response)
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_returns_none_for_dicts_lacking_name_or_function(self):
-        client = StubClient()
+    async def test_returns_none_for_dicts_lacking_name_or_function(self, client):
         # All entries lack both `name` and `function` → normalized list is empty
         # → function returns None.
         payload = '[{"foo": "bar"}, {"baz": "qux"}]'
@@ -268,8 +243,7 @@ class TestExtractActions:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_coerces_non_string_name_and_instructions_to_strings(self):
-        client = StubClient()
+    async def test_coerces_non_string_name_and_instructions_to_strings(self, client):
         # Name and instructions provided as non-strings — function must
         # str()-coerce them in the normalized output.
         payload = '{"name": 42, "instructions": 99}'
@@ -279,7 +253,7 @@ class TestExtractActions:
 
 
 # ---------------------------------------------------------------------------
-# reverse_trim_history
+# reverse_trim_history — uses real director-action message types
 # ---------------------------------------------------------------------------
 
 
@@ -288,13 +262,13 @@ class TestReverseTrimHistory:
         assert reverse_trim_history([], 1000) == []
 
     def test_zero_or_negative_budget_returns_empty(self):
-        history = [_TextMsg("a"), _TextMsg("b")]
+        history = [_text("a"), _text("b")]
         assert reverse_trim_history(history, 0) == []
         assert reverse_trim_history(history, -10) == []
 
     def test_keeps_last_messages_within_budget(self):
         # token counts vary by tokenizer; use a generous budget so all 3 fit
-        history = [_TextMsg("first"), _TextMsg("second"), _TextMsg("third")]
+        history = [_text("first"), _text("second"), _text("third")]
         result = reverse_trim_history(history, 1000)
         assert result == history
 
@@ -303,7 +277,7 @@ class TestReverseTrimHistory:
         from talemate.agents.director.action_core import utils as utils_mod
 
         monkeypatch.setattr(utils_mod.util, "count_tokens", lambda x: 5)
-        history = [_TextMsg("first"), _TextMsg("second"), _TextMsg("third")]
+        history = [_text("first"), _text("second"), _text("third")]
         # Budget of 12 fits only the last 2 messages (5+5 = 10 ≤ 12).
         result = reverse_trim_history(history, 12)
         assert result == [history[1], history[2]]
@@ -312,7 +286,7 @@ class TestReverseTrimHistory:
         from talemate.agents.director.action_core import utils as utils_mod
 
         monkeypatch.setattr(utils_mod.util, "count_tokens", lambda x: 5)
-        history = [_TextMsg("a"), _TextMsg("b"), _TextMsg("c")]
+        history = [_text("a"), _text("b"), _text("c")]
         # Generous budget — all 3 fit.
         result = reverse_trim_history(history, 100)
         # Order must match chronological original order, not reversed.
@@ -321,25 +295,27 @@ class TestReverseTrimHistory:
     def test_action_result_message_token_cost_includes_name_and_instructions(self):
         # A single action_result message that fits the budget.
         history = [
-            _ActionResult(name="do_it", instructions="now", result={"ok": True}),
+            _action_result(name="do_it", instructions="now", result={"ok": True}),
         ]
         # generous budget: should keep the single message.
         assert reverse_trim_history(history, 10000) == history
 
     def test_user_interaction_message_token_cost(self):
-        history = [_UserInteraction(user_input="please proceed")]
+        history = [_user_interaction("please proceed")]
         assert reverse_trim_history(history, 10000) == history
 
     def test_returns_last_message_on_exception(self):
         # Pass an item that triggers an attribute access error inside the
         # token-counter — the function defends with a single-message fallback.
-        class _Broken:
+        # This is a deliberate fault-injection object, NOT a stand-in for any
+        # production type — it exists only to drive the except branch.
+        class _RaisesOnTypeAccess:
             @property
             def type(self):
                 raise RuntimeError("boom")
 
-        broken = _Broken()
-        history = [_TextMsg("ok"), broken]
+        broken = _RaisesOnTypeAccess()
+        history = [_text("ok"), broken]
         # Should not raise — falls back to [last item]
         result = reverse_trim_history(history, 1000)
         assert result == [broken]
@@ -352,7 +328,7 @@ class TestReverseTrimHistory:
 
 class TestSerializeHistory:
     def test_skips_messages_for_which_serializer_returns_none(self):
-        messages = [_TextMsg("keep1"), _TextMsg("drop"), _TextMsg("keep2")]
+        messages = [_text("keep1"), _text("drop"), _text("keep2")]
 
         def serialize_fn(m):
             return None if m.message == "drop" else m
@@ -364,13 +340,13 @@ class TestSerializeHistory:
         assert serialize_history([], lambda m: m) == []
 
     def test_serializer_can_transform_messages(self):
-        messages = [_TextMsg("a"), _TextMsg("b")]
+        messages = [_text("a"), _text("b")]
         result = serialize_history(messages, lambda m: m.message.upper())
         assert result == ["A", "B"]
 
 
 # ---------------------------------------------------------------------------
-# _build_callback_groups (via direct call)
+# _build_callback_groups (via direct call) — uses the real DirectorAgent.
 # ---------------------------------------------------------------------------
 
 
@@ -388,15 +364,26 @@ def _cd(action_id, *, group="", title="", chat="", sd="", availability="both",
     )
 
 
+def _set_disabled(director: DirectorAgent, value) -> None:
+    """Write ``disabled_sub_actions`` into the real director's scene state.
+
+    Production reads via ``get_scene_state("disabled_sub_actions")``, backed
+    by ``self.scene.agent_state[self.agent_type]``.
+    """
+    if value is None:
+        director.scene.agent_state.pop("director", None)
+        return
+    director.scene.agent_state["director"] = {"disabled_sub_actions": value}
+
+
 class TestBuildCallbackGroups:
-    def test_returns_empty_when_all_descriptors_disabled(self):
-        director = StubDirector(disabled={"chat": ["a", "b"]})
+    def test_returns_empty_when_all_descriptors_disabled(self, director):
+        _set_disabled(director, {"chat": ["a", "b"]})
         descriptors = [_cd("a"), _cd("b")]
         result = _build_callback_groups(descriptors, "chat", director)
         assert result == []
 
-    def test_groups_by_group_name_and_sorts_groups(self):
-        director = StubDirector()
+    def test_groups_by_group_name_and_sorts_groups(self, director):
         descriptors = [
             _cd("x", group="zeta", title="X", chat="x desc"),
             _cd("y", group="alpha", title="Y", chat="y desc"),
@@ -405,20 +392,17 @@ class TestBuildCallbackGroups:
         # Sorted alphabetically by group name.
         assert [g.group_name for g in result] == ["alpha", "zeta"]
 
-    def test_falls_back_to_general_when_group_is_empty(self):
-        director = StubDirector()
+    def test_falls_back_to_general_when_group_is_empty(self, director):
         descriptors = [_cd("ungrouped", group="", title="U", chat="d")]
         result = _build_callback_groups(descriptors, "chat", director)
         assert [g.group_name for g in result] == ["General"]
 
-    def test_callback_uses_action_id_as_title_when_title_missing(self):
-        director = StubDirector()
+    def test_callback_uses_action_id_as_title_when_title_missing(self, director):
         descriptors = [_cd("raw-id", title="", chat="d")]
         result = _build_callback_groups(descriptors, "chat", director)
         assert result[0].callbacks[0]["title"] == "raw-id"
 
-    def test_includes_examples_when_present(self):
-        director = StubDirector()
+    def test_includes_examples_when_present(self, director):
         descriptors = [
             _cd("a", title="A", chat="d", examples=["e1", "e2"]),
             _cd("b", title="B", chat="d", examples=[]),
@@ -430,8 +414,8 @@ class TestBuildCallbackGroups:
         assert by_title["A"]["examples"] == ["e1", "e2"]
         assert "examples" not in by_title["B"]
 
-    def test_skips_disabled_descriptors_within_group(self):
-        director = StubDirector(disabled={"chat": ["b"]})
+    def test_skips_disabled_descriptors_within_group(self, director):
+        _set_disabled(director, {"chat": ["b"]})
         descriptors = [
             _cd("a", group="g1", title="A", chat="d"),
             _cd("b", group="g1", title="B", chat="d"),
@@ -444,16 +428,6 @@ class TestBuildCallbackGroups:
 # ---------------------------------------------------------------------------
 # get_available_actions — registry-driven
 # ---------------------------------------------------------------------------
-
-
-class _SceneStub:
-    """Stub scene exposing only what get_available_actions inspects."""
-
-    def __init__(self, director_chat_actions: dict):
-        self.nodegraph_state = GraphState()
-        self.nodegraph_state.shared = {
-            "_director_chat_actions": director_chat_actions
-        }
 
 
 def _build_subaction_graph(action_name: str, sub_action_props: list[dict]) -> Graph:
@@ -470,9 +444,31 @@ def _build_subaction_graph(action_name: str, sub_action_props: list[dict]) -> Gr
     return graph
 
 
+def _scene_with_action_registry(scene, director_chat_actions: dict) -> MockScene:
+    """Configure a real ``Scene`` with a ``GraphState`` that the function
+    under test can read.
+
+    ``get_available_actions`` reads from ``scene.nodegraph_state.shared``.
+    Production scenes lazily build that on first node-graph run; for these
+    isolated tests we set it up directly. This is all real Scene state —
+    no shim subclass.
+    """
+    scene.nodegraph_state = GraphState()
+    scene.nodegraph_state.shared = {
+        "_director_chat_actions": director_chat_actions
+    }
+    return scene
+
+
 @pytest.fixture
 def fake_action_registry(monkeypatch):
-    """Patch gating.get_nodes_by_base_type and utils.get_node to use in-test graphs."""
+    """Patch gating.get_nodes_by_base_type and utils.get_node to use in-test graphs.
+
+    These two are peripheral module-level lookup helpers, NOT domain types —
+    they accept a string and return classes from the global node registry.
+    Substituting a callable that returns our prebuilt real ``Graph`` instances
+    keeps every consumer hitting the real graph type.
+    """
     from talemate.agents.director.action_core import gating as gating_mod
     from talemate.agents.director.action_core import utils as utils_mod
 
@@ -515,21 +511,10 @@ def fake_action_registry(monkeypatch):
     return install
 
 
-@pytest.fixture
-def director_in_registry(monkeypatch):
-    """Put a StubDirector into instance.AGENTS so get_agent('director') works."""
-    director = StubDirector()
-    original = instance.AGENTS.copy()
-    instance.AGENTS["director"] = director
-    yield director
-    instance.AGENTS.clear()
-    instance.AGENTS.update(original)
-
-
 class TestGetAvailableActions:
     @pytest.mark.asyncio
     async def test_returns_actions_with_callback_groups(
-        self, fake_action_registry, director_in_registry
+        self, fake_action_registry, scene, director
     ):
         graph = _build_subaction_graph(
             "narrate",
@@ -539,8 +524,10 @@ class TestGetAvailableActions:
         )
         fake_action_registry({"narrate": graph})
 
-        scene = _SceneStub({"narrate": "agents/director/narrate"})
-        actions = await get_available_actions(scene, mode="chat")
+        scene_with_registry = _scene_with_action_registry(
+            scene, {"narrate": "agents/director/narrate"}
+        )
+        actions = await get_available_actions(scene_with_registry, mode="chat")
 
         assert len(actions) == 1
         action = actions[0]
@@ -551,7 +538,7 @@ class TestGetAvailableActions:
 
     @pytest.mark.asyncio
     async def test_skips_actions_with_no_sub_actions(
-        self, fake_action_registry, director_in_registry
+        self, fake_action_registry, scene, director
     ):
         graph_a = _build_subaction_graph(
             "with_subs", [{"action_id": "x", "action_title": "X", "description_chat": "d"}]
@@ -559,43 +546,40 @@ class TestGetAvailableActions:
         graph_b = _build_subaction_graph("empty", [])  # no sub-actions
         fake_action_registry({"with_subs": graph_a, "empty": graph_b})
 
-        scene = _SceneStub(
+        scene_with_registry = _scene_with_action_registry(
+            scene,
             {
                 "with_subs": "agents/director/with_subs",
                 "empty": "agents/director/empty",
-            }
+            },
         )
-        actions = await get_available_actions(scene, mode="chat")
+        actions = await get_available_actions(scene_with_registry, mode="chat")
 
         names = [a.name for a in actions]
         assert names == ["with_subs"]
 
     @pytest.mark.asyncio
     async def test_skips_actions_with_all_callbacks_disabled(
-        self, fake_action_registry, monkeypatch
+        self, fake_action_registry, scene, director
     ):
         # Director has the action's only sub-action on the denylist.
-        director = StubDirector(disabled={"chat": ["only-one"]})
-        original = instance.AGENTS.copy()
-        instance.AGENTS["director"] = director
-        try:
-            graph = _build_subaction_graph(
-                "blocked",
-                [{"action_id": "only-one", "action_title": "One",
-                  "description_chat": "d"}],
-            )
-            fake_action_registry({"blocked": graph})
+        _set_disabled(director, {"chat": ["only-one"]})
+        graph = _build_subaction_graph(
+            "blocked",
+            [{"action_id": "only-one", "action_title": "One",
+              "description_chat": "d"}],
+        )
+        fake_action_registry({"blocked": graph})
 
-            scene = _SceneStub({"blocked": "agents/director/blocked"})
-            actions = await get_available_actions(scene, mode="chat")
-            assert actions == []
-        finally:
-            instance.AGENTS.clear()
-            instance.AGENTS.update(original)
+        scene_with_registry = _scene_with_action_registry(
+            scene, {"blocked": "agents/director/blocked"}
+        )
+        actions = await get_available_actions(scene_with_registry, mode="chat")
+        assert actions == []
 
     @pytest.mark.asyncio
     async def test_actions_sorted_alphabetically_by_name(
-        self, fake_action_registry, director_in_registry
+        self, fake_action_registry, scene, director
     ):
         g_z = _build_subaction_graph(
             "zeta", [{"action_id": "z1", "action_title": "Z1", "description_chat": "d"}]
@@ -605,50 +589,54 @@ class TestGetAvailableActions:
         )
         fake_action_registry({"zeta": g_z, "alpha": g_a})
 
-        scene = _SceneStub(
+        scene_with_registry = _scene_with_action_registry(
+            scene,
             {
                 "zeta": "agents/director/zeta",
                 "alpha": "agents/director/alpha",
-            }
+            },
         )
-        actions = await get_available_actions(scene, mode="chat")
+        actions = await get_available_actions(scene_with_registry, mode="chat")
         assert [a.name for a in actions] == ["alpha", "zeta"]
 
 
 # ---------------------------------------------------------------------------
-# compact_if_needed
+# compact_if_needed — uses real SummarizerAgent with summarize_director_chat
+# stubbed at the instance level (a peripheral RPC method, not a class).
 # ---------------------------------------------------------------------------
 
 
 class TestCompactIfNeeded:
     @pytest.mark.asyncio
-    async def test_returns_false_when_messages_empty(self):
+    async def test_returns_false_when_messages_empty(self, scene):
         budgets = ActionCoreBudgets(max_tokens=1000, scene_context_ratio=0.5)
         result = await compact_if_needed(
             messages=[],
             budgets=budgets,
             staleness_threshold=0.5,
-            create_message=lambda m, s: _TextMsg(m),
+            create_message=lambda m, s: _text(m),
             set_messages=lambda msgs: None,
         )
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_returns_false_when_under_thresholds(self, monkeypatch):
+    async def test_returns_false_when_under_thresholds(self, scene):
         # Tight thresholds, tiny content → no compaction.
         budgets = ActionCoreBudgets(max_tokens=10000, scene_context_ratio=0.5)
-        messages = [_TextMsg("short msg 1"), _TextMsg("short msg 2")]
+        messages = [_text("short msg 1"), _text("short msg 2")]
         result = await compact_if_needed(
             messages=messages,
             budgets=budgets,
             staleness_threshold=0.5,
-            create_message=lambda m, s: _TextMsg(m),
+            create_message=lambda m, s: _text(m),
             set_messages=lambda msgs: None,
         )
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_compacts_and_calls_summarizer_when_over_threshold(self, monkeypatch):
+    async def test_compacts_and_calls_summarizer_when_over_threshold(
+        self, scene, summarizer, monkeypatch
+    ):
         # Make tokens look big by stubbing util.count_tokens.
         from talemate.agents.director.action_core import utils as utils_mod
 
@@ -659,186 +647,190 @@ class TestCompactIfNeeded:
         # Total = 4 * 100 = 400 → far exceeds threshold → compact.
         budgets = ActionCoreBudgets(max_tokens=200, scene_context_ratio=0.5)
 
-        # Register a stub summarizer in the agent registry.
-        summarizer = StubSummarizer(summary="ALL OF IT")
-        original = instance.AGENTS.copy()
-        instance.AGENTS["summarizer"] = summarizer
-        try:
-            messages = [
-                _TextMsg("a"),
-                _TextMsg("b"),
-                _TextMsg("c"),
-                _TextMsg("d"),
-            ]
-            stored: list = []
+        # Stub the summarize_director_chat method on the real summarizer
+        # instance — a peripheral RPC method, not the class itself.
+        summarize_calls: list[list] = []
 
-            on_compacting_called = []
-            on_compacted_called = []
+        async def fake_summarize(history):
+            summarize_calls.append(list(history))
+            return "ALL OF IT"
 
-            async def on_compacting():
-                on_compacting_called.append(True)
+        monkeypatch.setattr(
+            summarizer, "summarize_director_chat", fake_summarize
+        )
 
-            async def on_compacted(msgs):
-                on_compacted_called.append(list(msgs))
+        messages = [
+            _text("a"),
+            _text("b"),
+            _text("c"),
+            _text("d"),
+        ]
+        stored: list = []
 
-            result = await compact_if_needed(
-                messages=messages,
-                budgets=budgets,
-                staleness_threshold=0.5,
-                create_message=lambda m, s: _TextMsg(m),
-                set_messages=lambda msgs: stored.extend(msgs),
-                on_compacted=on_compacted,
-                on_compacting=on_compacting,
-            )
+        on_compacting_called = []
+        on_compacted_called = []
 
-            assert result is True
-            # Summarizer was called once with the stale prefix.
-            assert len(summarizer.calls) == 1
-            stale_passed = summarizer.calls[0]
-            assert all(m in messages for m in stale_passed)
+        async def on_compacting():
+            on_compacting_called.append(True)
 
-            # set_messages received: [summary] + tail
-            assert stored, "set_messages should have been called"
-            assert isinstance(stored[0], _TextMsg)
-            assert "ALL OF IT" in stored[0].message
+        async def on_compacted(msgs):
+            on_compacted_called.append(list(msgs))
 
-            # Both lifecycle hooks fired.
-            assert on_compacting_called == [True]
-            assert on_compacted_called and on_compacted_called[0] == stored
-        finally:
-            instance.AGENTS.clear()
-            instance.AGENTS.update(original)
+        result = await compact_if_needed(
+            messages=messages,
+            budgets=budgets,
+            staleness_threshold=0.5,
+            create_message=lambda m, s: _text(m),
+            set_messages=lambda msgs: stored.extend(msgs),
+            on_compacted=on_compacted,
+            on_compacting=on_compacting,
+        )
 
-    @pytest.mark.asyncio
-    async def test_returns_false_when_summarizer_raises(self, monkeypatch):
-        from talemate.agents.director.action_core import utils as utils_mod
+        assert result is True
+        # Summarizer was called once with the stale prefix.
+        assert len(summarize_calls) == 1
+        stale_passed = summarize_calls[0]
+        assert all(m in messages for m in stale_passed)
 
-        monkeypatch.setattr(utils_mod.util, "count_tokens", lambda x: 100)
-        budgets = ActionCoreBudgets(max_tokens=200, scene_context_ratio=0.5)
+        # set_messages received: [summary] + tail
+        assert stored, "set_messages should have been called"
+        assert isinstance(stored[0], ActionCoreMessage)
+        assert "ALL OF IT" in stored[0].message
 
-        class FailingSummarizer:
-            async def summarize_director_chat(self, history):
-                raise RuntimeError("upstream failure")
-
-        original = instance.AGENTS.copy()
-        instance.AGENTS["summarizer"] = FailingSummarizer()
-        try:
-            messages = [_TextMsg(c) for c in "abcd"]
-            stored: list = []
-            result = await compact_if_needed(
-                messages=messages,
-                budgets=budgets,
-                staleness_threshold=0.5,
-                create_message=lambda m, s: _TextMsg(m),
-                set_messages=lambda msgs: stored.extend(msgs),
-            )
-            assert result is False
-            # No new messages were ever stored when the summarizer fails.
-            assert stored == []
-        finally:
-            instance.AGENTS.clear()
-            instance.AGENTS.update(original)
+        # Both lifecycle hooks fired.
+        assert on_compacting_called == [True]
+        assert on_compacted_called and on_compacted_called[0] == stored
 
     @pytest.mark.asyncio
-    async def test_compact_if_needed_swallows_on_compacted_exception(
-        self, monkeypatch
+    async def test_returns_false_when_summarizer_raises(
+        self, scene, summarizer, monkeypatch
     ):
         from talemate.agents.director.action_core import utils as utils_mod
 
         monkeypatch.setattr(utils_mod.util, "count_tokens", lambda x: 100)
         budgets = ActionCoreBudgets(max_tokens=200, scene_context_ratio=0.5)
 
-        summarizer = StubSummarizer(summary="ok")
-        original = instance.AGENTS.copy()
-        instance.AGENTS["summarizer"] = summarizer
-        try:
-            async def on_compacted(msgs):
-                raise RuntimeError("post hook explosion")
+        async def failing_summarize(history):
+            raise RuntimeError("upstream failure")
 
-            result = await compact_if_needed(
-                messages=[_TextMsg(c) for c in "abcd"],
-                budgets=budgets,
-                staleness_threshold=0.5,
-                create_message=lambda m, s: _TextMsg(m),
-                set_messages=lambda msgs: None,
-                on_compacted=on_compacted,
-            )
-            # Compaction completes successfully even though on_compacted raised.
-            assert result is True
-        finally:
-            instance.AGENTS.clear()
-            instance.AGENTS.update(original)
+        monkeypatch.setattr(
+            summarizer, "summarize_director_chat", failing_summarize
+        )
+
+        messages = [_text(c) for c in "abcd"]
+        stored: list = []
+        result = await compact_if_needed(
+            messages=messages,
+            budgets=budgets,
+            staleness_threshold=0.5,
+            create_message=lambda m, s: _text(m),
+            set_messages=lambda msgs: stored.extend(msgs),
+        )
+        assert result is False
+        # No new messages were ever stored when the summarizer fails.
+        assert stored == []
 
     @pytest.mark.asyncio
-    async def test_on_compacting_exception_is_swallowed(self, monkeypatch):
+    async def test_compact_if_needed_swallows_on_compacted_exception(
+        self, scene, summarizer, monkeypatch
+    ):
         from talemate.agents.director.action_core import utils as utils_mod
 
         monkeypatch.setattr(utils_mod.util, "count_tokens", lambda x: 100)
         budgets = ActionCoreBudgets(max_tokens=200, scene_context_ratio=0.5)
 
-        summarizer = StubSummarizer(summary="ok")
-        original = instance.AGENTS.copy()
-        instance.AGENTS["summarizer"] = summarizer
-        try:
-            async def on_compacting():
-                raise RuntimeError("hook explosion")
+        async def fake_summarize(history):
+            return "ok"
 
-            result = await compact_if_needed(
-                messages=[_TextMsg(c) for c in "abcd"],
-                budgets=budgets,
-                staleness_threshold=0.5,
-                create_message=lambda m, s: _TextMsg(m),
-                set_messages=lambda msgs: None,
-                on_compacting=on_compacting,
-            )
-            # Compaction still proceeds even though on_compacting raised.
-            assert result is True
-        finally:
-            instance.AGENTS.clear()
-            instance.AGENTS.update(original)
+        monkeypatch.setattr(
+            summarizer, "summarize_director_chat", fake_summarize
+        )
+
+        async def on_compacted(msgs):
+            raise RuntimeError("post hook explosion")
+
+        result = await compact_if_needed(
+            messages=[_text(c) for c in "abcd"],
+            budgets=budgets,
+            staleness_threshold=0.5,
+            create_message=lambda m, s: _text(m),
+            set_messages=lambda msgs: None,
+            on_compacted=on_compacted,
+        )
+        # Compaction completes successfully even though on_compacted raised.
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_on_compacting_exception_is_swallowed(
+        self, scene, summarizer, monkeypatch
+    ):
+        from talemate.agents.director.action_core import utils as utils_mod
+
+        monkeypatch.setattr(utils_mod.util, "count_tokens", lambda x: 100)
+        budgets = ActionCoreBudgets(max_tokens=200, scene_context_ratio=0.5)
+
+        async def fake_summarize(history):
+            return "ok"
+
+        monkeypatch.setattr(
+            summarizer, "summarize_director_chat", fake_summarize
+        )
+
+        async def on_compacting():
+            raise RuntimeError("hook explosion")
+
+        result = await compact_if_needed(
+            messages=[_text(c) for c in "abcd"],
+            budgets=budgets,
+            staleness_threshold=0.5,
+            create_message=lambda m, s: _text(m),
+            set_messages=lambda msgs: None,
+            on_compacting=on_compacting,
+        )
+        # Compaction still proceeds even though on_compacting raised.
+        assert result is True
 
 
 # ---------------------------------------------------------------------------
-# build_prompt_vars
+# build_prompt_vars — uses the real Scene with seeded GraphState
 # ---------------------------------------------------------------------------
 
 
-class _GameState:
-    def __init__(self, variables=None):
-        self.variables = variables or {}
-
-
-class _SceneStubForVars:
-    """Scene stub that exposes the bits build_prompt_vars touches."""
-
-    def __init__(self, director_chat_actions: dict, gamestate_vars=None):
-        self.nodegraph_state = GraphState()
-        self.nodegraph_state.shared = {
-            "_director_chat_actions": director_chat_actions
-        }
-        self.game_state = _GameState(variables=gamestate_vars or {"hp": 100})
+def _scene_with_gamestate(
+    scene, director_chat_actions: dict, gamestate_vars: dict | None = None
+) -> MockScene:
+    """Configure a real Scene with the GraphState + game-state values
+    ``build_prompt_vars`` reads. Same Scene type as production — no shim.
+    """
+    scene.nodegraph_state = GraphState()
+    scene.nodegraph_state.shared = {
+        "_director_chat_actions": director_chat_actions
+    }
+    scene.game_state.variables = gamestate_vars or {"hp": 100}
+    return scene
 
 
 class TestBuildPromptVars:
     @pytest.mark.asyncio
     async def test_includes_all_required_keys(
-        self, fake_action_registry, director_in_registry
+        self, fake_action_registry, scene, director, client
     ):
         graph = _build_subaction_graph(
             "act", [{"action_id": "x", "action_title": "X", "description_chat": "d"}]
         )
         fake_action_registry({"act": graph})
 
-        scene = _SceneStubForVars({"act": "agents/director/act"})
-        client = StubClient()
+        scene_with_state = _scene_with_gamestate(
+            scene, {"act": "agents/director/act"}
+        )
         budgets = ActionCoreBudgets(max_tokens=1000, scene_context_ratio=0.5)
-        history = [_TextMsg("h1")]
+        history = [_text("h1")]
 
         def trim(history, budget):
             return history
 
         result = await build_prompt_vars(
-            scene=scene,
+            scene=scene_with_state,
             client=client,
             history_for_prompt=history,
             scene_snapshot="snap",
@@ -851,7 +843,7 @@ class TestBuildPromptVars:
         )
 
         # Verify all expected keys are present and reflect the caller's values.
-        assert result["scene"] is scene
+        assert result["scene"] is scene_with_state
         assert result["max_tokens"] == client.max_token_length
         assert result["history"] is history
         assert result["scene_snapshot"] == "snap"
@@ -867,19 +859,21 @@ class TestBuildPromptVars:
 
     @pytest.mark.asyncio
     async def test_extra_vars_merge_into_result(
-        self, fake_action_registry, director_in_registry
+        self, fake_action_registry, scene, director, client
     ):
         graph = _build_subaction_graph(
             "act", [{"action_id": "x", "action_title": "X", "description_chat": "d"}]
         )
         fake_action_registry({"act": graph})
 
-        scene = _SceneStubForVars({"act": "agents/director/act"})
+        scene_with_state = _scene_with_gamestate(
+            scene, {"act": "agents/director/act"}
+        )
         budgets = ActionCoreBudgets(max_tokens=1000, scene_context_ratio=0.3)
 
         result = await build_prompt_vars(
-            scene=scene,
-            client=StubClient(),
+            scene=scene_with_state,
+            client=client,
             history_for_prompt=[],
             scene_snapshot="",
             budgets=budgets,
@@ -898,50 +892,26 @@ class TestBuildPromptVars:
 
 
 # ---------------------------------------------------------------------------
-# request_and_parse
+# request_and_parse — uses the real Prompt class (raising=True patches)
 # ---------------------------------------------------------------------------
-
-
-class _StubPromptRequest:
-    """Replaces Prompt.request with a deterministic response sequence."""
-
-    def __init__(self, responses: list[tuple[str, dict]]):
-        # Each entry is (raw_response, extracted_dict_returned_by_response_spec)
-        self.responses = list(responses)
-        self.calls = []
-
-    async def __call__(self, uid, client, kind, vars=None, **kwargs):
-        self.calls.append({"uid": uid, "kind": kind, "vars": vars, "kwargs": kwargs})
-        if not self.responses:
-            return "", {}
-        return self.responses.pop(0)
 
 
 @pytest.fixture
 def stub_prompt_request(monkeypatch):
-    from talemate.agents.director.action_core import utils as utils_mod
+    """Install a queued response callable on the real ``Prompt.request``.
 
-    def install(responses):
-        stub = _StubPromptRequest(responses)
-        # Replace the Prompt class on the module with one whose .request points to our stub
-        original_prompt = utils_mod.Prompt
-
-        class _StubPromptClass:
-            request = staticmethod(stub)
-
-        monkeypatch.setattr(utils_mod, "Prompt", _StubPromptClass)
-        return stub
-
-    return install
+    ``raising=True`` (default in patch_prompt_request_in) makes the test
+    fail loudly if ``Prompt.request`` is renamed or removed.
+    """
+    return patch_prompt_request_in(monkeypatch)
 
 
 class TestRequestAndParse:
     @pytest.mark.asyncio
-    async def test_returns_parsed_message_section(self, stub_prompt_request):
+    async def test_returns_parsed_message_section(self, stub_prompt_request, client):
         stub = stub_prompt_request(
-            [("<MESSAGE>hello world</MESSAGE>", {"message": "hello world"})]
+            {"director.test": [("<MESSAGE>hello world</MESSAGE>", {"message": "hello world"})]}
         )
-        client = StubClient()
         parsed, actions, raw = await request_and_parse(
             client=client,
             prompt_template="director.test",
@@ -955,11 +925,10 @@ class TestRequestAndParse:
         assert len(stub.calls) == 1
 
     @pytest.mark.asyncio
-    async def test_returns_parsed_decision_section(self, stub_prompt_request):
+    async def test_returns_parsed_decision_section(self, stub_prompt_request, client):
         stub_prompt_request(
-            [("<DECISION>do it</DECISION>", {"decision": "do it"})]
+            {"director.test": [("<DECISION>do it</DECISION>", {"decision": "do it"})]}
         )
-        client = StubClient()
         parsed, actions, _raw = await request_and_parse(
             client=client,
             prompt_template="director.test",
@@ -972,13 +941,12 @@ class TestRequestAndParse:
 
     @pytest.mark.asyncio
     async def test_falls_back_to_parse_response_when_extracted_empty(
-        self, stub_prompt_request
+        self, stub_prompt_request, client
     ):
         # Prompt.request returns extracted={}, but raw response has a MESSAGE tag.
         stub_prompt_request(
-            [("<MESSAGE>fallback parse</MESSAGE>", {})]
+            {"t": [("<MESSAGE>fallback parse</MESSAGE>", {})]}
         )
-        client = StubClient()
         parsed, _actions, _raw = await request_and_parse(
             client=client,
             prompt_template="t",
@@ -989,43 +957,38 @@ class TestRequestAndParse:
         assert parsed == "fallback parse"
 
     @pytest.mark.asyncio
-    async def test_handles_prompt_request_exception(self, stub_prompt_request):
-        from talemate.agents.director.action_core import utils as utils_mod
+    async def test_handles_prompt_request_exception(self, monkeypatch, client):
+        # Patch the real Prompt.request to raise — exercise the except branch.
+        from talemate.prompts.base import Prompt
 
-        async def failing_request(*args, **kwargs):
+        async def failing_request(cls, *args, **kwargs):
             raise RuntimeError("bad llm")
 
-        class _StubPromptClass:
-            request = staticmethod(failing_request)
+        monkeypatch.setattr(
+            Prompt, "request", classmethod(failing_request), raising=True
+        )
 
-        # Override the stub with a failing variant.
-        stub_prompt_request([])  # ensure a fixture install happens
-        # Replace once more — simpler: just patch Prompt directly here.
-        import pytest as _pytest
-
-        from unittest.mock import patch
-
-        with patch.object(utils_mod, "Prompt", _StubPromptClass):
-            parsed, actions, raw = await request_and_parse(
-                client=StubClient(),
-                prompt_template="t",
-                kind="k",
-                prompt_vars={},
-            )
-            assert parsed is None
-            assert actions is None
-            assert raw == ""
+        parsed, actions, raw = await request_and_parse(
+            client=client,
+            prompt_template="t",
+            kind="k",
+            prompt_vars={},
+        )
+        assert parsed is None
+        assert actions is None
+        assert raw == ""
 
     @pytest.mark.asyncio
-    async def test_retries_when_response_invalid(self, stub_prompt_request):
+    async def test_retries_when_response_invalid(self, stub_prompt_request, client):
         # First call returns nothing useful; second call returns valid message.
         stub = stub_prompt_request(
-            [
-                ("", {}),  # empty response
-                ("<MESSAGE>second try</MESSAGE>", {"message": "second try"}),
-            ]
+            {
+                "t": [
+                    ("", {}),  # empty response
+                    ("<MESSAGE>second try</MESSAGE>", {"message": "second try"}),
+                ]
+            }
         )
-        client = StubClient()
         parsed, _actions, _raw = await request_and_parse(
             client=client,
             prompt_template="t",
@@ -1038,10 +1001,9 @@ class TestRequestAndParse:
         assert len(stub.calls) == 2
 
     @pytest.mark.asyncio
-    async def test_breaks_when_max_retries_exceeded(self, stub_prompt_request):
+    async def test_breaks_when_max_retries_exceeded(self, stub_prompt_request, client):
         # All responses are empty — function bails after max_retries+1 attempts.
-        stub = stub_prompt_request([("", {}), ("", {}), ("", {})])
-        client = StubClient()
+        stub = stub_prompt_request({"t": [("", {}), ("", {}), ("", {})]})
         parsed, actions, raw = await request_and_parse(
             client=client,
             prompt_template="t",
@@ -1056,7 +1018,7 @@ class TestRequestAndParse:
 
     @pytest.mark.asyncio
     async def test_returns_actions_when_actions_block_present(
-        self, stub_prompt_request
+        self, stub_prompt_request, client
     ):
         # Response includes a MESSAGE and an ACTIONS block.
         actions_payload = '{"name": "do_thing", "instructions": "now"}'
@@ -1064,8 +1026,7 @@ class TestRequestAndParse:
             "<MESSAGE>hi</MESSAGE>\n"
             f"<ACTIONS>\n```json\n{actions_payload}\n```\n</ACTIONS>"
         )
-        stub_prompt_request([(raw, {"message": "hi"})])
-        client = StubClient()
+        stub_prompt_request({"t": [(raw, {"message": "hi"})]})
         parsed, actions, _raw = await request_and_parse(
             client=client,
             prompt_template="t",
@@ -1076,12 +1037,13 @@ class TestRequestAndParse:
         assert actions == [{"name": "do_thing", "instructions": "now"}]
 
     @pytest.mark.asyncio
-    async def test_actions_alone_is_valid_without_message(self, stub_prompt_request):
+    async def test_actions_alone_is_valid_without_message(
+        self, stub_prompt_request, client
+    ):
         # Only an ACTIONS block — no MESSAGE — is still considered valid.
         actions_payload = '{"name": "x", "instructions": ""}'
         raw = f"<ACTIONS>\n```json\n{actions_payload}\n```\n</ACTIONS>"
-        stub_prompt_request([(raw, {})])
-        client = StubClient()
+        stub_prompt_request({"t": [(raw, {})]})
         parsed, actions, _raw = await request_and_parse(
             client=client,
             prompt_template="t",
@@ -1095,13 +1057,15 @@ class TestRequestAndParse:
 
 
 # ---------------------------------------------------------------------------
-# init_action_nodes
+# init_action_nodes — uses the real DirectorAgent
 # ---------------------------------------------------------------------------
 
 
 class TestInitActionNodes:
     @pytest.mark.asyncio
-    async def test_populates_shared_state_with_action_registries(self, monkeypatch):
+    async def test_populates_shared_state_with_action_registries(
+        self, scene, director, monkeypatch
+    ):
         from talemate.agents.director.action_core import utils as utils_mod
 
         # init_action_nodes reads the `registry` attr on each action class and
@@ -1134,30 +1098,37 @@ class TestInitActionNodes:
             utils_mod, "get_nodes_by_base_type", _fake_get_nodes_by_base_type
         )
 
-        # Director with update_callback_choices is required (utils calls it
-        # when present).
-        original = instance.AGENTS.copy()
-        director = StubDirector()
-        instance.AGENTS["director"] = director
-        try:
-            state = GraphState()
-            scene = _SceneStubForVars({})
-            scene.nodegraph_state = state
-            await init_action_nodes(scene, state)
+        state = GraphState()
+        scene.nodegraph_state = state
+        scene.nodegraph_state.shared = {}
+        await init_action_nodes(scene, state)
 
-            registry_map = state.shared["_director_chat_actions"]
-            assert registry_map == {
-                "alpha": "agents/director/alpha",
-                "beta": "agents/director/beta",
-            }
-        finally:
-            instance.AGENTS.clear()
-            instance.AGENTS.update(original)
+        registry_map = state.shared["_director_chat_actions"]
+        assert registry_map == {
+            "alpha": "agents/director/alpha",
+            "beta": "agents/director/beta",
+        }
 
     @pytest.mark.asyncio
-    async def test_handles_director_without_update_callback_choices(self, monkeypatch):
-        """If director is missing the optional method, init still succeeds."""
+    async def test_handles_director_without_update_callback_choices(
+        self, scene, director, monkeypatch
+    ):
+        """The real DirectorAgent does NOT define ``update_callback_choices`` —
+        this test pins that fact. ``init_action_nodes`` guards the call with
+        ``hasattr``; the real director must transparently flow through.
+        """
         from talemate.agents.director.action_core import utils as utils_mod
+
+        # Real director, real hasattr check: the absence of the method on the
+        # real type is the very fact the test is asserting. If someone adds
+        # ``update_callback_choices`` to ``DirectorAgent`` (a perfectly
+        # reasonable change), this assertion will surface so they can update
+        # the test.
+        assert not hasattr(director, "update_callback_choices"), (
+            "If DirectorAgent grows update_callback_choices, this guard test "
+            "needs to be revisited — the original test was about the absent-"
+            "method branch in init_action_nodes."
+        )
 
         class _OnlyGraph(Graph):
             _registry = "agents/director/only"
@@ -1176,19 +1147,10 @@ class TestInitActionNodes:
             utils_mod, "get_nodes_by_base_type", _fake_get_nodes_by_base_type
         )
 
-        original = instance.AGENTS.copy()
-
-        class _DirectorNoMethod:
-            def get_scene_state(self, key, default=None):
-                return default
-
-        instance.AGENTS["director"] = _DirectorNoMethod()
-        try:
-            state = GraphState()
-            await init_action_nodes(_SceneStubForVars({}), state)
-            assert state.shared["_director_chat_actions"] == {
-                "only": "agents/director/only"
-            }
-        finally:
-            instance.AGENTS.clear()
-            instance.AGENTS.update(original)
+        state = GraphState()
+        scene.nodegraph_state = state
+        scene.nodegraph_state.shared = {}
+        await init_action_nodes(scene, state)
+        assert state.shared["_director_chat_actions"] == {
+            "only": "agents/director/only"
+        }

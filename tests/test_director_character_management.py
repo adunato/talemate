@@ -206,44 +206,48 @@ class TestAssignVoiceToCharacterWithVoices:
 
 
 # ---------------------------------------------------------------------------
-# _detect_characters_from_texts_chunk — Focal-stubbed
+# _detect_characters_from_texts_chunk — Focal.request stubbed
+#
+# ``Focal`` is a real production class (talemate.game.focal.Focal). Tests
+# replace its ``request`` instance method using ``monkeypatch.setattr`` with
+# ``raising=True`` so a rename of ``Focal.request`` immediately fails the
+# patch instead of silently keeping a stand-in alive.
 # ---------------------------------------------------------------------------
-
-
-class _StubFocalRequest:
-    """Replaces focal.Focal.request with a deterministic call sequence."""
-
-    def __init__(self, names_to_emit: list[str]):
-        self.names_to_emit = names_to_emit
-        self.calls: list[dict] = []
-
-    async def __call__(self, template, *args, **kwargs):
-        # Find the Focal instance via the bound `self` argument (provided by
-        # __get__ binding when patched as an instance method).
-        # We're patched as an unbound async function — args[0] is the Focal.
-        if args:
-            focal_inst = args[0]
-            cb = focal_inst.callbacks.get("add_detected_character")
-            if cb is not None:
-                for name in self.names_to_emit:
-                    await cb.fn(name)
-        self.calls.append({"template": template})
-        return None
 
 
 @pytest.fixture
 def stub_focal_request(monkeypatch):
-    """Patch focal.Focal.request to invoke add_detected_character callbacks."""
-    import talemate.game.focal as focal_mod
+    """Patch ``Focal.request`` to drive the registered callbacks deterministically.
+
+    The function-under-test invokes ``Focal(...).request(template)`` to ask
+    the LLM to emit ``add_detected_character`` calls. Substituting the
+    method with a function that walks ``focal_inst.callbacks`` directly
+    bypasses the LLM round-trip while preserving the real callback object
+    types and dispatch path. The ``raising=True`` default on monkeypatch
+    ensures the patch fails if ``Focal.request`` is renamed.
+    """
+    from talemate.game.focal import Focal
+
+    class _CallRecorder:
+        def __init__(self, names_to_emit: list[str]):
+            self.names_to_emit = names_to_emit
+            self.calls: list[dict] = []
 
     def install(names: list[str]):
-        stub = _StubFocalRequest(names)
+        recorder = _CallRecorder(names)
 
-        async def _patched_request(self, template, *args, **kwargs):
-            return await stub(template, self, *args, **kwargs)
+        async def _patched_request(self, template_name=None, prompt=None, retry_state=None):
+            # `self` is a real Focal instance — read its real callbacks dict
+            # and invoke add_detected_character with each canned name.
+            cb = self.callbacks.get("add_detected_character")
+            if cb is not None:
+                for name in recorder.names_to_emit:
+                    await cb.fn(name)
+            recorder.calls.append({"template": template_name})
+            return None
 
-        monkeypatch.setattr(focal_mod.Focal, "request", _patched_request)
-        return stub
+        monkeypatch.setattr(Focal, "request", _patched_request, raising=True)
+        return recorder
 
     return install
 

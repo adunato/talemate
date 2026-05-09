@@ -10,18 +10,17 @@ Skipped path:
 - regenerate_character_message: depends on talemate.tale_mate.Actor and
   conversation agent's `converse(actor, instruction=...)` returning a list
   of messages. We test the wrapper (regenerate_message) instead, which
-  routes character messages through the conversation agent — covered by
-  registering a stub conversation agent.
+  routes character messages through the real ConversationAgent (with its
+  `converse` method stubbed at the instance level — peripheral RPC).
 """
 
 from __future__ import annotations
-
-from dataclasses import dataclass
 
 import pytest
 
 import talemate.instance as instance
 import talemate.regenerate as regenerate_mod
+from talemate.agents.conversation import ConversationAgent
 from talemate.regenerate import (
     ensure_regenerate_allowed,
     regenerate,
@@ -34,7 +33,7 @@ from talemate.scene_message import (
     NarratorMessage,
     ReinforcementMessage,
 )
-from talemate.tale_mate import Scene
+from talemate.tale_mate import Actor, Scene
 
 
 # ---------------------------------------------------------------------------
@@ -85,11 +84,9 @@ def scene():
 # ---------------------------------------------------------------------------
 
 
-@dataclass
-class _FakeActor:
-    """Minimal actor stand-in for Character.actor."""
-
-    name: str = "Alice"
+def _make_actor(character) -> Actor:
+    """Build a real `Actor` linked to `character` (no agent needed for these tests)."""
+    return Actor(character=character, agent=None)
 
 
 def _make_character_message(name: str = "Alice", body: str = "Hello") -> CharacterMessage:
@@ -194,7 +191,7 @@ class TestEnsureRegenerateAllowed:
         from talemate.character import Character
 
         char = Character(name="Bob")
-        char.actor = _FakeActor(name="Bob")
+        _make_actor(char)
         monkeypatch.setattr(scene, "get_character", lambda name: char)
         scene.active_characters = ["Bob"]
         scene.history = [_make_character_message("Bob")]
@@ -209,16 +206,25 @@ class TestEnsureRegenerateAllowed:
 # ---------------------------------------------------------------------------
 
 
-class _StubConversationAgent:
-    """Replays a pre-set list of CharacterMessages from .converse()."""
+def _conversation_agent_with_canned(messages):
+    """Build a real `ConversationAgent` with `converse` stubbed at the instance level.
 
-    def __init__(self, messages):
-        self._messages = messages
-        self.calls = []
+    Returns the agent. `agent.calls` is the list of `{"actor", "instruction"}`
+    records captured per `converse` invocation. `converse` is a peripheral RPC
+    method here — the unit under test is `regenerate_message`, which routes
+    character messages through this agent. Stubbing the method on a real
+    agent (instead of redefining the whole class) preserves contract checks
+    on every other ConversationAgent attribute.
+    """
+    agent = ConversationAgent()
+    agent.calls = []
 
-    async def converse(self, actor, instruction=None):
-        self.calls.append({"actor": actor, "instruction": instruction})
-        return list(self._messages)
+    async def _converse(actor, instruction=None):
+        agent.calls.append({"actor": actor, "instruction": instruction})
+        return list(messages)
+
+    agent.converse = _converse
+    return agent
 
 
 @pytest.fixture
@@ -402,7 +408,7 @@ class TestRegenerateCharacterMessage:
         then iterates the message text by character and fails attempting to
         send signals — caller must guard via ensure_regenerate_allowed first.
         """
-        register_agent("conversation", _StubConversationAgent(messages=[]))
+        register_agent("conversation", _conversation_agent_with_canned([]))
         msg = _make_character_message("Ghost")
 
         with pytest.raises(AttributeError):
@@ -419,7 +425,7 @@ class TestRegenerateCharacterMessage:
         from talemate.character import Character
 
         char = Character(name="Alice")
-        char.actor = _FakeActor()
+        _make_actor(char)
         monkeypatch.setattr(scene, "get_character", lambda name: char)
 
         # source=player and no from_choice → "static user message" path.
@@ -427,7 +433,7 @@ class TestRegenerateCharacterMessage:
         msg.source = "player"
         msg.from_choice = None
 
-        register_agent("conversation", _StubConversationAgent(messages=[]))
+        register_agent("conversation", _conversation_agent_with_canned([]))
 
         with pytest.raises(TypeError):
             await regenerate_message(msg, scene)
@@ -439,11 +445,11 @@ class TestRegenerateCharacterMessage:
         from talemate.character import Character
 
         char = Character(name="Alice")
-        char.actor = _FakeActor()
+        _make_actor(char)
         monkeypatch.setattr(scene, "get_character", lambda name: char)
 
         new_msg = _make_character_message("Alice", "regenerated dialogue")
-        conv = _StubConversationAgent(messages=[new_msg])
+        conv = _conversation_agent_with_canned([new_msg])
         register_agent("conversation", conv)
 
         original = _make_character_message("Alice", "original dialogue")

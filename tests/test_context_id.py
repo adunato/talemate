@@ -1,7 +1,7 @@
 import pytest
-from unittest.mock import patch, AsyncMock
 
-from conftest import MockScene
+import talemate.instance as instance
+from conftest import MockMemoryAgent, MockScene
 
 from talemate.game.engine.context_id import (
     ContextID,
@@ -468,6 +468,23 @@ def test_context_id_from_object_invalid_context_type():
 # Tests for Character Context Handler and Context ID Value Flow
 
 
+@pytest.fixture(autouse=True)
+def _real_memory_agent():
+    """Register a real `MockMemoryAgent` (a `MemoryAgent` subclass) for tests.
+
+    Replaces the previous `AsyncMock()` + `patch('talemate.instance.get_agent')`
+    pattern, which was a stand-in for the `MemoryAgent` domain type — that
+    silently absorbed any change to MemoryAgent's contract (renamed methods,
+    new validators, removed methods). `MockMemoryAgent` is a real subclass
+    that only stubs the persistence side-effects.
+    """
+    original = instance.AGENTS.copy()
+    instance.AGENTS["memory"] = MockMemoryAgent()
+    yield
+    instance.AGENTS.clear()
+    instance.AGENTS.update(original)
+
+
 @pytest.fixture
 def mock_scene():
     """Create a mock scene with test characters."""
@@ -598,32 +615,32 @@ async def test_character_context_item_operations(mock_scene):
     handler = CharacterContext.instance_from_path(["TestCharacter"], mock_scene)
     character = handler.character
 
-    # Mock the memory agent since we don't have a real one in tests
-    mock_memory_agent = AsyncMock()
-    with patch("talemate.instance.get_agent", return_value=mock_memory_agent):
-        # Test description operations
-        desc_item = handler.description
-        value = await desc_item.get(mock_scene)
-        assert value == "A brave warrior"
+    # Memory agent is registered as a real `MockMemoryAgent` via the
+    # module-scoped autouse fixture; production calls to `add_many`/`delete`
+    # are no-ops on it.
+    # Test description operations
+    desc_item = handler.description
+    value = await desc_item.get(mock_scene)
+    assert value == "A brave warrior"
 
-        await desc_item.set(mock_scene, "Updated description")
-        assert character.description == "Updated description"
+    await desc_item.set(mock_scene, "Updated description")
+    assert character.description == "Updated description"
 
-        # Test attribute operations
-        strength_item = handler.get_attribute("strength")
-        value = await strength_item.get(mock_scene)
-        assert value == 15
+    # Test attribute operations
+    strength_item = handler.get_attribute("strength")
+    value = await strength_item.get(mock_scene)
+    assert value == 15
 
-        await strength_item.set(mock_scene, 18)
-        assert character.base_attributes["strength"] == 18
+    await strength_item.set(mock_scene, 18)
+    assert character.base_attributes["strength"] == 18
 
-        # Test detail operations
-        appearance_item = handler.get_detail("appearance")
-        value = await appearance_item.get(mock_scene)
-        assert value == "Tall and muscular"
+    # Test detail operations
+    appearance_item = handler.get_detail("appearance")
+    value = await appearance_item.get(mock_scene)
+    assert value == "Tall and muscular"
 
-        await appearance_item.set(mock_scene, "Short and thin")
-        assert character.details["appearance"] == "Short and thin"
+    await appearance_item.set(mock_scene, "Short and thin")
+    assert character.details["appearance"] == "Short and thin"
 
 
 def test_character_context_item_context_id_property(mock_scene):
@@ -936,62 +953,62 @@ async def test_integration_context_id_item_flow_nonexistent_character(mock_scene
 async def test_integration_full_context_value_operations(mock_scene):
     """Test full integration of context value operations through the context ID system."""
 
-    # Mock memory agent
-    mock_memory_agent = AsyncMock()
-    with patch("talemate.instance.get_agent", return_value=mock_memory_agent):
-        # Get context value for character description
-        desc_context_id_str = "character.description:TestCharacter.description"
-        context_value = await context_id_item_from_string(
-            desc_context_id_str, mock_scene
-        )
-        assert context_value is not None
+    # Memory agent registered as a real `MockMemoryAgent` via the
+    # module-scoped autouse fixture.
 
-        # Test get operation
-        original_value = await context_value.get(mock_scene)
-        assert original_value == "A brave warrior"
+    # Get context value for character description
+    desc_context_id_str = "character.description:TestCharacter.description"
+    context_value = await context_id_item_from_string(
+        desc_context_id_str, mock_scene
+    )
+    assert context_value is not None
 
-        # Test set operation
-        await context_value.set(mock_scene, "A legendary warrior")
-        updated_value = await context_value.get(mock_scene)
-        assert updated_value == "A legendary warrior"
+    # Test get operation
+    original_value = await context_value.get(mock_scene)
+    assert original_value == "A brave warrior"
 
-        # Verify character was actually updated
-        character = mock_scene.get_character("TestCharacter")
-        assert character.description == "A legendary warrior"
+    # Test set operation
+    await context_value.set(mock_scene, "A legendary warrior")
+    updated_value = await context_value.get(mock_scene)
+    assert updated_value == "A legendary warrior"
 
-        # Test attribute operations
-        strength_compressed = compress_name("strength")
-        attr_context_id_str = f"character.attribute:TestCharacter.{strength_compressed}"
-        attr_context_value = await context_id_item_from_string(
-            attr_context_id_str, mock_scene
-        )
-        assert attr_context_value is not None
+    # Verify character was actually updated
+    character = mock_scene.get_character("TestCharacter")
+    assert character.description == "A legendary warrior"
 
-        original_strength = await attr_context_value.get(mock_scene)
-        assert original_strength == 15
+    # Test attribute operations
+    strength_compressed = compress_name("strength")
+    attr_context_id_str = f"character.attribute:TestCharacter.{strength_compressed}"
+    attr_context_value = await context_id_item_from_string(
+        attr_context_id_str, mock_scene
+    )
+    assert attr_context_value is not None
 
-        await attr_context_value.set(mock_scene, 20)
-        updated_strength = await attr_context_value.get(mock_scene)
-        assert updated_strength == 20
-        assert character.base_attributes["strength"] == 20
+    original_strength = await attr_context_value.get(mock_scene)
+    assert original_strength == 15
 
-        # Test detail operations
-        appearance_compressed = compress_name("appearance")
-        detail_context_id_str = (
-            f"character.detail:TestCharacter.{appearance_compressed}"
-        )
-        detail_context_value = await context_id_item_from_string(
-            detail_context_id_str, mock_scene
-        )
-        assert detail_context_value is not None
+    await attr_context_value.set(mock_scene, 20)
+    updated_strength = await attr_context_value.get(mock_scene)
+    assert updated_strength == 20
+    assert character.base_attributes["strength"] == 20
 
-        original_appearance = await detail_context_value.get(mock_scene)
-        assert original_appearance == "Tall and muscular"
+    # Test detail operations
+    appearance_compressed = compress_name("appearance")
+    detail_context_id_str = (
+        f"character.detail:TestCharacter.{appearance_compressed}"
+    )
+    detail_context_value = await context_id_item_from_string(
+        detail_context_id_str, mock_scene
+    )
+    assert detail_context_value is not None
 
-        await detail_context_value.set(mock_scene, "Imposing and battle-scarred")
-        updated_appearance = await detail_context_value.get(mock_scene)
-        assert updated_appearance == "Imposing and battle-scarred"
-        assert character.details["appearance"] == "Imposing and battle-scarred"
+    original_appearance = await detail_context_value.get(mock_scene)
+    assert original_appearance == "Tall and muscular"
+
+    await detail_context_value.set(mock_scene, "Imposing and battle-scarred")
+    updated_appearance = await detail_context_value.get(mock_scene)
+    assert updated_appearance == "Imposing and battle-scarred"
+    assert character.details["appearance"] == "Imposing and battle-scarred"
 
 
 def test_character_context_edge_cases(mock_scene):
@@ -1488,19 +1505,19 @@ async def test_dotted_name_nonexistent_still_errors(mock_scene_dotted_names):
 @pytest.mark.asyncio
 async def test_dotted_name_full_set_operation(mock_scene_dotted_names):
     """Test full get/set cycle for a dotted character name."""
-    mock_memory_agent = AsyncMock()
-    with patch("talemate.instance.get_agent", return_value=mock_memory_agent):
-        context_item = await context_id_item_from_string(
-            "character.description:M.A.R.V.I.N.", mock_scene_dotted_names
-        )
-        assert await context_item.get(mock_scene_dotted_names) == "A paranoid android"
-        await context_item.set(
-            mock_scene_dotted_names, "An even more depressed android"
-        )
-        assert (
-            mock_scene_dotted_names.get_character("M.A.R.V.I.N.").description
-            == "An even more depressed android"
-        )
+    # Memory agent registered as a real `MockMemoryAgent` via the
+    # module-scoped autouse fixture.
+    context_item = await context_id_item_from_string(
+        "character.description:M.A.R.V.I.N.", mock_scene_dotted_names
+    )
+    assert await context_item.get(mock_scene_dotted_names) == "A paranoid android"
+    await context_item.set(
+        mock_scene_dotted_names, "An even more depressed android"
+    )
+    assert (
+        mock_scene_dotted_names.get_character("M.A.R.V.I.N.").description
+        == "An even more depressed android"
+    )
 
 
 # Tests for overlapping character names with dots

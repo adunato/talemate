@@ -24,7 +24,6 @@ and add/delete/reimport tests that touch the memory agent and signal system.
 """
 
 import asyncio
-import types
 import uuid
 
 import pytest
@@ -66,7 +65,7 @@ from talemate.scene_message import (
     ReinforcementMessage,
     TimePassageMessage,
 )
-from talemate.tale_mate import Actor, Player
+from talemate.tale_mate import Actor, Player, Scene
 
 
 # ---------------------------------------------------------------------------
@@ -108,10 +107,12 @@ def make_archived_entry(
 
 @pytest.fixture
 def dummy_scene():
-    """A SimpleNamespace stand-in suitable for pure-helper tests.
+    """Factory that builds a real `Scene` with the requested timeline state.
 
-    For tests that need real Scene methods (collect_messages, fix_time, etc.)
-    use the ``real_scene`` fixture below instead.
+    Uses the production `Scene` class so changes to its `history`/
+    `archived_history`/`layered_history`/`ts` API are caught here. For
+    tests that need full agent wiring (signals, memory agent), use the
+    ``real_scene`` fixture below instead.
     """
 
     def _factory(
@@ -120,7 +121,7 @@ def dummy_scene():
         layered_history=None,
         ts: str = "PT0S",
     ):
-        scene = types.SimpleNamespace()
+        scene = Scene()
         scene.history = list(history or [])
         scene.archived_history = list(archived_history or [])
         scene.layered_history = list(layered_history or [])

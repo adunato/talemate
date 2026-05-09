@@ -2,7 +2,8 @@
 Tests for the focal system's execution logic.
 
 Tests _execute() directly using real Focal/Callback/Call/State objects
-with mocked director agent. LLM client is not needed for _execute() tests
+plus a real `DirectorAgent` (with a stubbed `log_function_call`) and a
+real `ClientBase` subclass. LLM client is not driven during these tests
 since we feed well-formed responses that _extract() can parse natively.
 """
 
@@ -10,9 +11,12 @@ import asyncio
 import json
 
 import pytest
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock
+
+from conftest import MockClient
 
 import talemate.instance as instance
+from talemate.agents.director import DirectorAgent
 from talemate.game.focal import (
     Focal,
     FocalContext,
@@ -65,29 +69,50 @@ def make_call_dict(name: str, **arguments) -> dict:
 
 
 @pytest.fixture
-def mock_director():
-    director = Mock()
+def setup_director():
+    """Register a real `DirectorAgent` in the agent registry.
+
+    `log_function_call` is stubbed because it's a peripheral RPC the unit
+    under test (`Focal._execute`) happens to call — Focal's behaviour does
+    not depend on the log side-effect, only on whether it was invoked.
+    """
+    director = DirectorAgent()
     director.log_function_call = AsyncMock()
-    return director
-
-
-@pytest.fixture
-def setup_director(mock_director):
-    """Register mock director in the agent registry."""
     original = instance.AGENTS.copy()
-    instance.AGENTS["director"] = mock_director
-    yield mock_director
+    instance.AGENTS["director"] = director
+    yield director
     instance.AGENTS.clear()
     instance.AGENTS.update(original)
 
 
+class _SequentialClient(MockClient):
+    """Real ClientBase subclass used in non-concurrent Focal tests.
+
+    Overrides only the two properties Focal reads — `data_format` and
+    `supports_concurrent_inference`. Everything else is the real ClientBase
+    contract.
+    """
+
+    @property
+    def data_format(self):
+        return "json"
+
+    @property
+    def supports_concurrent_inference(self):
+        return False
+
+
+class _ConcurrentClient(_SequentialClient):
+    """Variant that opts in to concurrent inference."""
+
+    @property
+    def supports_concurrent_inference(self):
+        return True
+
+
 @pytest.fixture
 def mock_client():
-    """Minimal mock client — _execute() only needs it stored on Focal."""
-    client = Mock()
-    client.data_format = "json"
-    client.supports_concurrent_inference = False
-    return client
+    return _SequentialClient("focal_sequential")
 
 
 # ---------------------------------------------------------------------------
@@ -400,11 +425,8 @@ class TestCollectCalls:
 
 @pytest.fixture
 def concurrent_client():
-    """Mock client that supports concurrent inference."""
-    client = Mock()
-    client.data_format = "json"
-    client.supports_concurrent_inference = True
-    return client
+    """Real ClientBase subclass that opts into concurrent inference."""
+    return _ConcurrentClient("focal_concurrent")
 
 
 class TestExecuteConcurrent:

@@ -14,6 +14,9 @@ from __future__ import annotations
 
 import pytest
 
+import talemate.instance as instance
+from conftest import MockScene, bootstrap_scene
+from talemate.agents.director import DirectorAgent
 from talemate.agents.director.action_core.gating import (
     CallbackDescriptor,
     extract_callback_descriptors,
@@ -41,22 +44,34 @@ def _import_node_definitions():
 
 
 # ---------------------------------------------------------------------------
-# Stub director that provides only what gating reads — `get_scene_state`
+# Real DirectorAgent fixture — gating reads `get_scene_state("disabled_sub_actions")`
+# off the agent's bound scene. We bootstrap a real scene + real director and
+# write the disabled-actions config directly into `scene.agent_state["director"]`,
+# the same place production stores it.
 # ---------------------------------------------------------------------------
 
 
-class StubDirector:
-    """Tiny director-like object that only implements `get_scene_state`."""
+@pytest.fixture
+def director() -> DirectorAgent:
+    """Bootstrap a real Scene + DirectorAgent and return the director."""
+    bootstrap_scene(MockScene())
+    return instance.get_agent("director")
 
-    def __init__(self, disabled_sub_actions=None):
-        self._disabled = disabled_sub_actions
 
-    def get_scene_state(self, key, default=None):
-        if key != "disabled_sub_actions":
-            return default
-        if self._disabled is None:
-            return default
-        return self._disabled
+def _set_disabled(director: DirectorAgent, value) -> None:
+    """Write `disabled_sub_actions` into the real director's scene state.
+
+    Production reads via ``get_scene_state("disabled_sub_actions")`` which
+    is backed by ``self.scene.agent_state[self.agent_type]``. We poke the
+    same dict (rather than calling ``set_scene_states``) because the
+    gating tests verify defensive branches where this value is the wrong
+    type entirely — ``set_scene_states`` would still accept it but using
+    the underlying dict makes the test's intent obvious.
+    """
+    if value is None:
+        director.scene.agent_state.pop("director", None)
+        return
+    director.scene.agent_state["director"] = {"disabled_sub_actions": value}
 
 
 def _desc(
@@ -117,32 +132,32 @@ class TestCallbackDescriptorDescription:
 
 
 class TestGetDisabledActionIds:
-    def test_empty_when_no_state_set(self):
-        director = StubDirector()
+    def test_empty_when_no_state_set(self, director):
         assert get_disabled_action_ids("chat", director) == []
 
-    def test_returns_mode_specific_list(self):
-        director = StubDirector(
-            disabled_sub_actions={
+    def test_returns_mode_specific_list(self, director):
+        _set_disabled(
+            director,
+            {
                 "chat": ["a", "b"],
                 "scene_direction": ["c"],
-            }
+            },
         )
         assert get_disabled_action_ids("chat", director) == ["a", "b"]
         assert get_disabled_action_ids("scene_direction", director) == ["c"]
 
-    def test_returns_empty_for_unknown_mode_key(self):
-        director = StubDirector(disabled_sub_actions={"chat": ["a"]})
+    def test_returns_empty_for_unknown_mode_key(self, director):
+        _set_disabled(director, {"chat": ["a"]})
         # mode without entry → empty
         assert get_disabled_action_ids("scene_direction", director) == []
 
-    def test_returns_empty_when_state_is_not_a_dict(self):
+    def test_returns_empty_when_state_is_not_a_dict(self, director):
         # ill-typed state value → empty list (defensive branch)
-        director = StubDirector(disabled_sub_actions=["not", "a", "dict"])
+        _set_disabled(director, ["not", "a", "dict"])
         assert get_disabled_action_ids("chat", director) == []
 
-    def test_returns_empty_when_mode_value_is_not_a_list(self):
-        director = StubDirector(disabled_sub_actions={"chat": "string-not-list"})
+    def test_returns_empty_when_mode_value_is_not_a_list(self, director):
+        _set_disabled(director, {"chat": "string-not-list"})
         assert get_disabled_action_ids("chat", director) == []
 
 
@@ -152,35 +167,31 @@ class TestGetDisabledActionIds:
 
 
 class TestIsActionIdEnabled:
-    def test_availability_both_chat_mode_enabled_when_not_in_denylist(self):
-        director = StubDirector()
+    def test_availability_both_chat_mode_enabled_when_not_in_denylist(self, director):
         d = _desc("a", availability="both")
         assert is_action_id_enabled("chat", "a", director, descriptor=d) is True
 
-    def test_availability_chat_only_disabled_in_scene_direction(self):
-        director = StubDirector()
+    def test_availability_chat_only_disabled_in_scene_direction(self, director):
         d = _desc("a", availability="chat")
         assert is_action_id_enabled("scene_direction", "a", director, descriptor=d) is False
 
-    def test_availability_scene_direction_only_disabled_in_chat(self):
-        director = StubDirector()
+    def test_availability_scene_direction_only_disabled_in_chat(self, director):
         d = _desc("a", availability="scene_direction")
         assert is_action_id_enabled("chat", "a", director, descriptor=d) is False
 
-    def test_force_enabled_overrides_denylist(self):
-        director = StubDirector(disabled_sub_actions={"chat": ["a"]})
+    def test_force_enabled_overrides_denylist(self, director):
+        _set_disabled(director, {"chat": ["a"]})
         d = _desc("a", availability="both", force_enabled=True)
         # Even though "a" is on the denylist, force_enabled wins.
         assert is_action_id_enabled("chat", "a", director, descriptor=d) is True
 
-    def test_disabled_via_denylist(self):
-        director = StubDirector(disabled_sub_actions={"chat": ["a"]})
+    def test_disabled_via_denylist(self, director):
+        _set_disabled(director, {"chat": ["a"]})
         d = _desc("a", availability="both", force_enabled=False)
         assert is_action_id_enabled("chat", "a", director, descriptor=d) is False
 
-    def test_availability_check_runs_before_force_enabled(self):
+    def test_availability_check_runs_before_force_enabled(self, director):
         """availability=chat blocks scene_direction even with force_enabled=True."""
-        director = StubDirector()
         d = _desc("a", availability="chat", force_enabled=True)
         assert is_action_id_enabled("scene_direction", "a", director, descriptor=d) is False
 
@@ -420,7 +431,7 @@ class TestGetAllCallbackChoices:
 
     @pytest.mark.asyncio
     async def test_marks_locked_when_force_enabled_and_director_provided(
-        self, fake_action_registry
+        self, fake_action_registry, director
     ):
         action = _make_director_chat_action(
             "main",
@@ -431,7 +442,6 @@ class TestGetAllCallbackChoices:
         )
         fake_action_registry(action)
 
-        director = StubDirector()
         choices = await get_all_callback_choices(director=director)
 
         by_value = {c["value"]: c for c in choices}

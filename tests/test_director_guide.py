@@ -15,9 +15,6 @@ Covers:
 
 from __future__ import annotations
 
-from collections import deque
-from typing import Any
-
 import pytest
 
 from conftest import MockScene, bootstrap_scene
@@ -26,7 +23,11 @@ import talemate.instance as instance
 from talemate.agents.base import AgentTemplateEmission, DynamicInstruction
 from talemate.agents.context import ActiveAgent
 from talemate.agents.summarize.analyze_scene import SceneAnalysisEmission
-from talemate.character import Character
+
+from _director_test_helpers import (
+    add_character_to_scene as _add_character,
+    patch_prompt_request_in,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -51,58 +52,15 @@ def _guide_fn():
     pass
 
 
-async def _add_character(scene, name, *, is_player=False):
-    character = Character(
-        name=name,
-        description="",
-        is_player=is_player,
-        base_attributes={},
-        details={},
-        color="#fff",
-    )
-    actor = (
-        scene.Player(character, None) if is_player else scene.Actor(character, None)
-    )
-    await scene.add_actor(actor, commit_to_memory=False)
-    if name not in scene.active_characters:
-        scene.active_characters.append(name)
-    return character
-
-
-class _StubPromptRequest:
-    """Stub Prompt.request that pops from a queue keyed by template name."""
-
-    def __init__(self, responses: dict[str, deque]):
-        self.responses = responses
-        self.calls: list[dict] = []
-
-    async def __call__(self, template, client, kind, vars=None, **kwargs):
-        self.calls.append(
-            {"template": template, "kind": kind, "vars": vars or {}, "kwargs": kwargs}
-        )
-        queue = self.responses.get(template)
-        if queue is None or not queue:
-            return "", {}
-        return queue.popleft()
-
-
 @pytest.fixture
 def stub_prompt(monkeypatch):
-    """Patch Prompt.request inside the guide module."""
+    """Replace the real ``Prompt.request`` classmethod with a queued response source.
 
+    Patches the canonical ``talemate.prompts.base.Prompt`` class with
+    ``raising=True`` so a rename of ``Prompt.request`` immediately fails.
+    """
     from talemate.agents.director import guide as guide_mod
-
-    def install(responses: dict[str, list]):
-        as_deque = {k: deque(v) for k, v in responses.items()}
-        stub = _StubPromptRequest(as_deque)
-
-        class _StubPromptClass:
-            request = staticmethod(stub)
-
-        monkeypatch.setattr(guide_mod, "Prompt", _StubPromptClass)
-        return stub
-
-    return install
+    return patch_prompt_request_in(monkeypatch, guide_mod)
 
 
 # ---------------------------------------------------------------------------
