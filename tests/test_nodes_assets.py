@@ -15,14 +15,12 @@ from __future__ import annotations
 import base64
 import io
 import os
-from pathlib import Path
 
 import pytest
 from PIL import Image
 
-from _node_test_helpers import apply_inputs, capture_outputs, run_node
+from _node_test_helpers import run_node
 from talemate.character import Character
-from talemate.context import ActiveScene
 from talemate.game.engine.nodes.assets import (
     AddAsset,
     AssetExists,
@@ -40,7 +38,7 @@ from talemate.game.engine.nodes.assets import (
     UnpackAssetSelectionContext,
     UpdateMessageAsset,
 )
-from talemate.game.engine.nodes.core import GraphContext, InputValueError, UNRESOLVED
+from talemate.game.engine.nodes.core import InputValueError, UNRESOLVED
 from talemate.scene_assets import (
     Asset,
     AssetMeta,
@@ -54,7 +52,7 @@ from talemate.agents.visual.schema import (
     Resolution,
     VIS_TYPE,
 )
-from talemate.scene_message import CharacterMessage, NarratorMessage
+from talemate.scene_message import CharacterMessage
 from talemate.tale_mate import Scene
 
 

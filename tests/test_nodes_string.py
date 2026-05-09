@@ -8,7 +8,6 @@ shared helper, run the node, assert outputs.
 import pytest
 
 from talemate.game.engine.nodes.core import (
-    GraphContext,
     InputValueError,
     UNRESOLVED,
 )

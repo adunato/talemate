@@ -8,8 +8,6 @@ Covers:
 - field defaults
 """
 
-import pytest
-
 from _world_state_helpers import scene  # noqa: F401 - pytest fixture
 from talemate.world_state.templates.scene import SceneType
 

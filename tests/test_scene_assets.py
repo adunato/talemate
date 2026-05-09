@@ -49,7 +49,6 @@ from talemate.agents.visual.schema import (
 from talemate.character import Character
 from talemate.scene_message import (
     CharacterMessage,
-    ContextInvestigationMessage,
     NarratorMessage,
     SceneMessage,
     reset_message_id,

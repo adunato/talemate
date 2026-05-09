@@ -18,7 +18,7 @@ import uuid as uuid_module
 
 import pytest
 
-from _node_test_helpers import apply_inputs, capture_outputs, run_node
+from _node_test_helpers import run_node
 from talemate.game.engine.nodes.core import GraphContext, InputValueError, UNRESOLVED
 from talemate.game.engine.nodes.data import (
     CapLength,

@@ -23,10 +23,7 @@ from talemate.world_state.templates.base import (
     FlatCollection,
     Group,
     Priority,
-    Template,
-    TypedCollection,
     name_to_id,
-    validate_template,
 )
 from talemate.world_state.templates.state_reinforcement import StateReinforcement
 

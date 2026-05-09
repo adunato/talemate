@@ -19,15 +19,11 @@ The full ``build_prompt_default`` pathway is left to template-baseline
 tests; here we patch ``build_prompt`` so converse can be tested end-to-end.
 """
 
-from unittest.mock import AsyncMock, patch
-
 import pytest
 
 import talemate.client.context as client_context_module
-from talemate.agents.context import ActiveAgent
 from talemate.agents.conversation import (
     ConversationAgent,
-    ConversationAgentEmission,
 )
 from talemate.character import Character
 from talemate.context import ActiveScene

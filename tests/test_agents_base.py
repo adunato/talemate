@@ -8,13 +8,11 @@ contract of the base class.
 
 from __future__ import annotations
 
-import asyncio
 import json
 from typing import Optional
 
 import pytest
 
-import talemate.instance as instance_module
 from talemate.agents.base import (
     Agent,
     AgentAction,

@@ -5,20 +5,12 @@ Centralizes fixture-builders so the multiple new world_state test files
 do not duplicate the same scaffolding.
 """
 
-from typing import Iterable
-
 import pytest
 
 import talemate.instance as instance
-from conftest import MockClient, MockMemoryAgent, MockScene, bootstrap_scene
+from conftest import MockMemoryAgent, MockScene, bootstrap_scene
 from talemate.character import Character
 from talemate.tale_mate import Actor, Player
-from talemate.world_state import (
-    ContextPin,
-    ManualContext,
-    Reinforcement,
-    WorldState,
-)
 from talemate.world_state.manager import WorldStateManager
 
 

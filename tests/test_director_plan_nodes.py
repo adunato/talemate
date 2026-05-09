@@ -55,7 +55,6 @@ from talemate.context import ActiveScene
 from talemate.game.engine.nodes.core import (
     GraphContext,
     NodeVerbosity,
-    UNRESOLVED,
 )
 from talemate.game.engine.nodes.registry import import_talemate_node_definitions
 

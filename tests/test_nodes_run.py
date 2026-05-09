@@ -26,11 +26,8 @@ Skipped paths:
   in higher-level integration tests.
 """
 
-import asyncio
-
 import pytest
 
-from talemate.context import ActiveScene
 from talemate.game.engine.nodes.core import (
     Entry,
     Graph,

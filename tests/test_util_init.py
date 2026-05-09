@@ -4,8 +4,6 @@ Covers count_tokens, limit_tokens, chunk_items_by_tokens, remove_substring_names
 select_best_texts_by_keyword, clean_id, and slugify.
 """
 
-import pytest
-
 from talemate.scene_message import SceneMessage
 from talemate.util import (
     chunk_items_by_tokens,
@@ -282,8 +280,7 @@ def test_select_best_texts_by_keyword_whole_word_match_only():
 
 
 def test_select_best_texts_by_keyword_skips_blank_texts():
-    texts = ["", "   ", "alice spoke", None]
-    # blank/whitespace/None entries are skipped before scoring
+    # blank/whitespace entries are skipped before scoring
     # Note: None would error in .strip() — verify only non-None blanks are skipped
     texts_clean = ["", "   ", "alice spoke"]
     result = select_best_texts_by_keyword(texts_clean, "alice", max_token_length=200)

@@ -17,12 +17,10 @@ from __future__ import annotations
 
 import asyncio
 import time
-from contextvars import copy_context
 
 import pytest
 
 import talemate.config.state as config_state
-import talemate.instance as instance
 from talemate.agents.context import ActiveAgent, active_agent
 from talemate.client import base as base_module
 from talemate.client.base import (

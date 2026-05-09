@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 
 import pytest
 
@@ -250,10 +249,8 @@ class TestImportNodeDefinition:
 
 class TestImportNodeDefinitions:
     def test_imports_each_node(self):
-        container = {}
         # Patch into NODES temporarily for the test (import_node_definitions
         # always writes to NODES — see registry source). Restore on exit.
-        original = dict(NODES)
         try:
             data = {
                 "nodes": [
@@ -377,7 +374,6 @@ class TestImportTalemateNodeDefinitions:
 
         monkeypatch.setattr(registry_module, "SEARCH_PATHS", [str(custom_dir)])
 
-        original = dict(NODES)
         try:
             import_talemate_node_definitions()
             assert "test/SearchPathNode" in NODES

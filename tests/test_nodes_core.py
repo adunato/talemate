@@ -21,7 +21,6 @@ subclasses and runs them through real Graph/Loop primitives.
 """
 
 import json
-import os
 from typing import Any, ClassVar
 
 import pytest
@@ -38,19 +37,16 @@ from talemate.game.engine.nodes.core import (
     InputValueError,
     Listen,
     Loop,
-    LoopBreak,
     LoopExit,
     ModuleProperty,
     ModuleStyle,
     Node,
     NodeBase,
     NodeState,
-    NodeStyle,
     NodeVerbosity,
     Output,
     Input,
     PropertyField,
-    Router,
     Route,
     SaveContext,
     Socket,
@@ -62,12 +58,10 @@ from talemate.game.engine.nodes.core import (
     dynamic_node_import,
     get_ancestors_with_forks,
     get_type_class,
-    graph_state,
     load_extended_components,
     save_state,
     validate_node,
 )
-from talemate.game.engine.nodes.run import ErrorHandler
 from talemate.util.async_tools import cleanup_pending_tasks
 
 log = structlog.get_logger(__name__)
@@ -388,7 +382,9 @@ class TestPropertyField:
         assert data["choices"] == ["a", "b"]
 
     def test_generate_choices_overrides_choices(self):
-        gen = lambda: ["dynamic1", "dynamic2"]
+        def gen():
+            return ["dynamic1", "dynamic2"]
+
         field = PropertyField(
             name="x",
             description="x",
@@ -1850,19 +1846,21 @@ def test_trigger_make_event_object_default_raises():
 # ---------------------------------------------------------------------------
 
 
+def _identity_handler(v):
+    return v
+
+
 def test_validate_node_returns_existing_nodebase():
     n = Node(title="N")
     info = type("I", (), {})()
-    handler = lambda v: v
-    out = validate_node(n, handler, info)
+    out = validate_node(n, _identity_handler, info)
     assert out is n
 
 
 def test_validate_node_raises_on_unrecognised_dict():
     info = type("I", (), {})()
-    handler = lambda v: v
     with pytest.raises(ValueError, match="Could not validate"):
-        validate_node({"foo": "bar"}, handler, info)
+        validate_node({"foo": "bar"}, _identity_handler, info)
 
 
 # ---------------------------------------------------------------------------

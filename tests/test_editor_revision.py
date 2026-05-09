@@ -17,11 +17,8 @@ Targets:
   plumbing. Those are covered indirectly via the dispatch tests.
 """
 
-from unittest.mock import patch
-
 import pytest
 
-import talemate.emit.async_signals as async_signals
 from talemate.agents.conversation import ConversationAgentEmission
 from talemate.agents.creator.assistant import (
     ContentGenerationContext,
@@ -29,9 +26,6 @@ from talemate.agents.creator.assistant import (
 )
 from talemate.agents.editor.revision import (
     CONTEXTUAL_GENERATION_TYPES,
-    REVISION_RESPONSE_HEADROOM,
-    REWRITE_MAX_LENGTH_RATIO,
-    UNSLOP_MAX_LENGTH_RATIO,
     Issues,
     RevisionContext,
     RevisionDisabled,
@@ -48,7 +42,6 @@ from talemate.agents.summarize import SummarizeEmission
 from talemate.character import Character
 from talemate.exceptions import GenerationCancelled
 from talemate.scene_message import CharacterMessage, NarratorMessage
-from talemate.util.dedupe import SimilarityMatch
 from talemate.world_state.templates.content import PhraseDetection, WritingStyle
 
 from conftest import MockScene, bootstrap_scene

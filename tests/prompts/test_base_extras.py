@@ -25,12 +25,11 @@ boundary, NOT Prompt.request).
 
 from __future__ import annotations
 
-import json
 from collections import deque
 
 import pytest
 
-from conftest import MockClient, client_responses
+from conftest import client_responses
 
 from talemate.prompts.base import (
     JoinableList,
@@ -38,14 +37,10 @@ from talemate.prompts.base import (
     StripMode,
     SECTIONING_HANDLERS,
     DEFAULT_SECTIONING_HANDLER,
-    bracket_prompt_sectioning,
     clean_response,
-    none_prompt_sectioning,
     register_sectioning_handler,
     set_default_sectioning_handler,
-    titles_prompt_sectioning,
     validate_line,
-    xml_prompt_sectioning,
 )
 
 

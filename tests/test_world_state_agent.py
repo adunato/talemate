@@ -12,22 +12,18 @@ The function under test is always invoked via its real public entry point.
 
 from __future__ import annotations
 
-from collections import deque
 from unittest.mock import AsyncMock
 
 import pytest
 
 from _world_state_helpers import (
-    install_tracking_memory,
     make_actor,
     scene,  # noqa: F401 - pytest fixture
     scene_with_memory,  # noqa: F401 - pytest fixture
 )
-from conftest import client_responses
 
 import talemate.instance as instance_module
 import talemate.agents.world_state as world_state_module
-from talemate.agents.base import AgentAction, AgentActionConfig
 from talemate.agents.world_state import (
     TimePassageEmission,
     WorldStateAgent,

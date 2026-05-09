@@ -22,7 +22,6 @@ machinery; those paths overlap with action_utils tests already written.
 
 from __future__ import annotations
 
-from typing import Any
 
 import pytest
 

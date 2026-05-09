@@ -22,7 +22,6 @@ import os
 
 import pytest
 
-from talemate.game.engine.nodes import packaging
 from talemate.game.engine.nodes.core import Graph, UNRESOLVED
 from talemate.game.engine.nodes.packaging import (
     InstallNodeModule,
@@ -262,7 +261,7 @@ async def test_install_package_idempotent_when_already_installed(scene):
 
     # Second install should not duplicate or raise
     pkg2 = _sample_package_data("alpha/beta")
-    out = await install_package(scene, pkg2)
+    await install_package(scene, pkg2)
     info = await get_scene_package_info(scene)
     assert sum(1 for p in info.packages if p.registry == "alpha/beta") == 1
 

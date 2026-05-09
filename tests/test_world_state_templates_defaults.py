@@ -10,7 +10,6 @@ TEMPLATE_PATH_TALEMATE so we don't trample real templates.
 """
 
 import os
-import shutil
 
 import pytest
 import yaml

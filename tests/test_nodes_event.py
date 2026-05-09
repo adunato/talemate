@@ -17,14 +17,12 @@ import pytest
 from blinker import signal as blinker_signal
 
 import talemate.emit.async_signals as async_signals
-from _node_test_helpers import apply_inputs, capture_outputs, run_node
-from talemate.context import ActiveScene
+from _node_test_helpers import run_node
 from talemate.game.engine.nodes.core import (
     Graph,
     GraphContext,
     GraphState,
     Listen,
-    NodeVerbosity,
 )
 from talemate.game.engine.nodes.event import (
     EmitAgentMessage,
@@ -109,9 +107,9 @@ class TestListenerCollection:
         outer = Graph()
         nested = Graph()
         outer.add_node(nested)
-        l = Listen()
-        l.set_property("event_name", "evt.nested")
-        nested.add_node(l)
+        listener = Listen()
+        listener.set_property("event_name", "evt.nested")
+        nested.add_node(listener)
         result = collect_listeners(outer)
         assert "evt.nested" in result
 
@@ -131,47 +129,47 @@ class TestConnectAndDisconnectListeners:
 
     def test_connect_subscribes_listen_node_to_signal(self, isolated_signal):
         g = Graph()
-        l = Listen()
-        l.set_property("event_name", isolated_signal)
-        g.add_node(l)
+        listener = Listen()
+        listener.set_property("event_name", isolated_signal)
+        g.add_node(listener)
 
         sig = async_signals.get(isolated_signal)
         connect_listeners(g, GraphState())
-        assert l.execute_from_event in sig.receivers
+        assert listener.execute_from_event in sig.receivers
 
     def test_connect_to_unknown_signal_logs_and_skips(self, caplog):
         g = Graph()
-        l = Listen()
-        l.set_property("event_name", "test_completely_unknown_signal_zzz")
-        g.add_node(l)
+        listener = Listen()
+        listener.set_property("event_name", "test_completely_unknown_signal_zzz")
+        g.add_node(listener)
         # Should not raise — warning is logged.
         connect_listeners(g, GraphState())
 
     def test_disconnect_removes_listener(self, isolated_signal):
         g = Graph()
-        l = Listen()
-        l.set_property("event_name", isolated_signal)
-        g.add_node(l)
+        listener = Listen()
+        listener.set_property("event_name", isolated_signal)
+        g.add_node(listener)
         sig = async_signals.get(isolated_signal)
 
         connect_listeners(g, GraphState())
-        assert l.execute_from_event in sig.receivers
+        assert listener.execute_from_event in sig.receivers
         disconnect_listeners(g, GraphState())
-        assert l.execute_from_event not in sig.receivers
+        assert listener.execute_from_event not in sig.receivers
 
     def test_connect_with_disconnect_flag_replaces(self, isolated_signal):
         # Calling connect_listeners with disconnect=True first removes the
         # existing listener, then re-adds it (idempotent).
         g = Graph()
-        l = Listen()
-        l.set_property("event_name", isolated_signal)
-        g.add_node(l)
+        listener = Listen()
+        listener.set_property("event_name", isolated_signal)
+        g.add_node(listener)
         sig = async_signals.get(isolated_signal)
 
         connect_listeners(g, GraphState())
         connect_listeners(g, GraphState(), disconnect=True)
         # Listener still present after the disconnect/connect cycle
-        assert l.execute_from_event in sig.receivers
+        assert listener.execute_from_event in sig.receivers
 
 
 # ---------------------------------------------------------------------------

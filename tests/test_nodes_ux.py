@@ -23,10 +23,8 @@ import pytest
 
 from talemate.emit.signals import handlers as emit_handlers
 from talemate.game.engine.nodes.core import (
-    GraphContext,
     GraphState,
     InputValueError,
-    UNRESOLVED,
 )
 from talemate.game.engine.nodes.ux import (
     BuildChoiceElement,

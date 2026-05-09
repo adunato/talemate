@@ -5,7 +5,6 @@ Covers throttle, debounce, shared_debounce, and cleanup_pending_tasks.
 
 import asyncio
 
-import pytest
 
 from talemate.util.async_tools import (
     cleanup_pending_tasks,

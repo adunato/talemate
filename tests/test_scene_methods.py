@@ -13,12 +13,10 @@ MagicMock for domain objects.
 from __future__ import annotations
 
 import os
-import uuid
 
 import pytest
 
 import talemate.emit.async_signals as async_signals
-import talemate.events as events
 from conftest import MockScene, bootstrap_scene
 from talemate.character import Character
 from talemate.exceptions import GenerationCancelled
@@ -27,7 +25,6 @@ from talemate.scene_message import (
     DirectorMessage,
     NarratorMessage,
     ReinforcementMessage,
-    SceneMessage,
     TimePassageMessage,
     reset_message_id,
 )

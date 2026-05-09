@@ -24,12 +24,10 @@ from conftest import MockScene, bootstrap_scene
 
 import talemate.emit.async_signals as async_signals
 import talemate.instance as instance
-from talemate.agents.director import DirectorAgent
 from talemate.agents.director.plan.schema import (
     Beat,
     Plan,
     PlanStatus,
-    Task,
 )
 from talemate.agents.director.plan.util import get_plan, save_plan
 

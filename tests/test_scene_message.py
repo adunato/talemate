@@ -2,7 +2,6 @@
 
 import pytest
 
-from talemate import scene_message
 from talemate.scene_message import (
     CharacterMessage,
     ContextInvestigationMessage,

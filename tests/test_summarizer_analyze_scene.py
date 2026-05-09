@@ -31,15 +31,13 @@ import pytest
 
 from talemate.agents.base import (
     AgentTemplateEmission,
-    DynamicInstruction,
     RagBuildSubInstructionEmission,
 )
-from talemate.agents.context import ActiveAgent, active_agent
+from talemate.agents.context import ActiveAgent
 from talemate.agents.conversation import ConversationAgentEmission
 from talemate.agents.narrator import NarratorAgentEmission
 from talemate.agents.summarize.analyze_scene import (
     SceneAnalysisDisabled,
-    SceneAnalysisEmission,
     scene_analysis_disabled_context,
 )
 from talemate.character import Character

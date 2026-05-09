@@ -36,7 +36,6 @@ from talemate.history import ArchiveEntry
 from talemate.scene_message import (
     CharacterMessage,
     DirectorMessage,
-    NarratorMessage,
     TimePassageMessage,
 )
 
@@ -485,9 +484,6 @@ class TestOnPushHistory:
 
 class TestFindNaturalSceneTermination:
     async def test_splits_on_returned_progress_numbers(self, summarizer_scene):
-        from conftest import client_responses
-        from collections import deque
-
         scene, summarizer = summarizer_scene
 
         # Each "chunk" is a single line (or multiple paragraphs combined into

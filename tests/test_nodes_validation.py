@@ -14,10 +14,9 @@ import os
 
 import pytest
 
-from _node_test_helpers import apply_inputs, capture_outputs, run_node
+from _node_test_helpers import run_node
 from talemate.character import Character
-from talemate.context import ActiveScene
-from talemate.game.engine.nodes.core import GraphContext, InputValueError, UNRESOLVED
+from talemate.game.engine.nodes.core import InputValueError, UNRESOLVED
 from talemate.game.engine.nodes.validation import (
     ValidateAssetID,
     ValidateCharacter,
@@ -31,7 +30,6 @@ from talemate.game.engine.nodes.validation import (
 # Importing the context_id package wires up CONTEXT_ID_PATH_HANDLERS for the
 # Validate* nodes that walk that registry.
 import talemate.game.engine.context_id  # noqa: F401
-from talemate.scene_assets import Asset, AssetMeta
 from talemate.tale_mate import Scene
 
 

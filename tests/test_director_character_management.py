@@ -19,7 +19,6 @@ a unit test.
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -96,13 +95,7 @@ class TestCmShouldAssignVoice:
 
     def test_returns_false_when_tts_agent_disabled(self, director, tts_agent):
         # By default the TTS agent in tests is not enabled (no API keys etc.)
-        # but to be defensive, force-disable it.
-        original = (
-            tts_agent.actions["_config"].enabled
-            if "_config" in tts_agent.actions
-            else None
-        )
-        # Simpler: monkey-patch enabled property via attribute override
+        # but to be defensive, force-disable it via monkey-patch.
         with patch.object(type(tts_agent), "enabled", property(lambda self: False)):
             assert director.cm_should_assign_voice is False
 

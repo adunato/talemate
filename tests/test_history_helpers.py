@@ -23,7 +23,6 @@ Reuses the conftest infrastructure (MockScene, bootstrap_scene) for character_ac
 and add/delete/reimport tests that touch the memory agent and signal system.
 """
 
-import asyncio
 import uuid
 
 import pytest
@@ -35,7 +34,6 @@ from talemate.history import (
     ArchiveEntry,
     HistoryEntry,
     LayeredArchiveEntry,
-    SourceEntry,
     UnregeneratableEntryError,
     add_history_entry,
     character_activity,

@@ -7,7 +7,6 @@ templates that exist in more than one location, with mtime-based age info.
 """
 
 import os
-import time
 from pathlib import Path
 
 import pytest

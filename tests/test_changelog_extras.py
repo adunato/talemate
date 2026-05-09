@@ -26,7 +26,6 @@ from talemate.changelog import (
     _apply_delta,
     _base_path,
     _changelog_log_path,
-    _get_overall_latest_revision,
     _latest_path,
     _SceneRef,
     append_scene_delta,
