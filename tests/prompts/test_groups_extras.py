@@ -17,6 +17,8 @@ import pytest
 
 from talemate.prompts import groups
 
+from ._groups_test_helpers import make_template_dir_scene
+
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -86,8 +88,7 @@ class TestGetSceneTemplatePathInvalidDir:
     """Cover the early-return for a non-string ``template_dir``."""
 
     def test_returns_none_when_template_dir_is_none(self):
-        scene = Mock()
-        scene.template_dir = None
+        scene = make_template_dir_scene(template_dir=None)
 
         result = groups.get_scene_template_path(scene, "narrator", "anything")
 
@@ -96,8 +97,7 @@ class TestGetSceneTemplatePathInvalidDir:
     def test_returns_none_when_template_dir_is_path_object(self, tmp_path):
         # The function specifically checks ``isinstance(template_dir, str)`` —
         # a Path (which is otherwise valid) hits the early return.
-        scene = Mock()
-        scene.template_dir = tmp_path  # Path, not str
+        scene = make_template_dir_scene(template_dir=tmp_path)  # Path, not str
 
         result = groups.get_scene_template_path(scene, "narrator", "anything")
 
@@ -304,8 +304,7 @@ class TestListTemplatesScene:
         scene_dir = isolated_groups_dirs["scene"]
         _write_template(scene_dir / "narrator" / "scene-only.jinja2")
 
-        scene = Mock()
-        scene.template_dir = str(scene_dir)
+        scene = make_template_dir_scene(template_dir=str(scene_dir))
 
         result = groups.list_templates(scene=scene)
 
@@ -320,8 +319,7 @@ class TestListTemplatesScene:
         scene_dir = isolated_groups_dirs["scene"]
         _write_template(scene_dir / "flat-only.jinja2")
 
-        scene = Mock()
-        scene.template_dir = str(scene_dir)
+        scene = make_template_dir_scene(template_dir=str(scene_dir))
 
         result = groups.list_templates(scene=scene)
 
@@ -340,8 +338,7 @@ class TestListTemplatesScene:
         _write_template(scene_dir / "narrator" / "shared.jinja2")
         _write_template(scene_dir / "shared.jinja2")  # flat
 
-        scene = Mock()
-        scene.template_dir = str(scene_dir)
+        scene = make_template_dir_scene(template_dir=str(scene_dir))
 
         result = groups.list_templates(scene=scene)
 
@@ -440,8 +437,7 @@ class TestListTemplatesScenePriorityForOverrideMtime:
         _write_template(d / "narrator" / "ovr.jinja2", mtime=1_000_000.0)
         _write_template(scene_dir / "narrator" / "ovr.jinja2", mtime=3_000_000.0)
 
-        scene = Mock()
-        scene.template_dir = str(scene_dir)
+        scene = make_template_dir_scene(template_dir=str(scene_dir))
 
         result = groups.list_templates(scene=scene)
         info = next(t for t in result if t.uid == "narrator.ovr")
@@ -463,8 +459,7 @@ class TestDeleteTemplateSceneFlatFallback:
 
     def test_falls_back_to_flat_scene_path_when_agent_subdir_empty(self, tmp_path):
         # Only a flat-structure scene template exists; no narrator/ subdir.
-        scene = Mock()
-        scene.template_dir = str(tmp_path)
+        scene = make_template_dir_scene(template_dir=str(tmp_path))
         flat_template = tmp_path / "flat.jinja2"
         flat_template.write_text("flat content")
 
@@ -478,8 +473,7 @@ class TestDeleteTemplateSceneFlatFallback:
 
     def test_returns_false_when_neither_path_exists(self, tmp_path):
         """No agent subdir AND no flat file → returns False, raises nothing."""
-        scene = Mock()
-        scene.template_dir = str(tmp_path)
+        scene = make_template_dir_scene(template_dir=str(tmp_path))
 
         result = groups.delete_template("scene", "narrator", "missing", scene=scene)
 

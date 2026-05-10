@@ -14,6 +14,8 @@ import pytest
 
 from talemate.prompts import groups
 
+from ._groups_test_helpers import make_template_dir_scene
+
 
 class TestGetDefaultTemplatePath:
     """Tests for get_default_template_path()."""
@@ -73,8 +75,7 @@ class TestGetSceneTemplatePath:
 
     def test_agent_subdirectory_preferred(self, tmp_path):
         """Agent-specific subdirectory is preferred when it exists."""
-        scene = Mock()
-        scene.template_dir = str(tmp_path)
+        scene = make_template_dir_scene(template_dir=str(tmp_path))
 
         # Create agent subdirectory with template
         agent_dir = tmp_path / "narrator"
@@ -87,8 +88,7 @@ class TestGetSceneTemplatePath:
 
     def test_falls_back_to_flat_structure(self, tmp_path):
         """Falls back to flat structure when agent subdir doesn't exist."""
-        scene = Mock()
-        scene.template_dir = str(tmp_path)
+        scene = make_template_dir_scene(template_dir=str(tmp_path))
 
         # Create flat template (no agent subdir)
         flat_template = tmp_path / "test.jinja2"
@@ -99,8 +99,7 @@ class TestGetSceneTemplatePath:
 
     def test_returns_expected_path_even_if_missing(self, tmp_path):
         """Returns the expected path even if template doesn't exist."""
-        scene = Mock()
-        scene.template_dir = str(tmp_path)
+        scene = make_template_dir_scene(template_dir=str(tmp_path))
 
         path = groups.get_scene_template_path(scene, "narrator", "missing")
         # Should return flat path since no agent subdir exists
@@ -121,8 +120,7 @@ class TestResolveTemplate:
 
     def test_scene_has_highest_priority(self, tmp_path, mock_config):
         """Scene templates always take priority over everything else."""
-        scene = Mock()
-        scene.template_dir = str(tmp_path)
+        scene = make_template_dir_scene(template_dir=str(tmp_path))
 
         # Create scene template
         scene_template = tmp_path / "test.jinja2"
@@ -223,8 +221,7 @@ class TestResolveTemplate:
 
     def test_scene_override_beats_explicit_source(self, tmp_path, mock_config):
         """Scene templates override even explicit template_sources."""
-        scene = Mock()
-        scene.template_dir = str(tmp_path / "scene")
+        scene = make_template_dir_scene(template_dir=str(tmp_path / "scene"))
 
         mock_config.prompts.template_sources = {"narrator.test": "my-group"}
 
@@ -307,8 +304,7 @@ class TestListGroups:
 
     def test_includes_scene_group_when_scene_provided(self, tmp_path, mock_config):
         """Scene group is included only when scene is provided."""
-        scene = Mock()
-        scene.template_dir = str(tmp_path / "scene")
+        scene = make_template_dir_scene(template_dir=str(tmp_path / "scene"))
         (tmp_path / "scene").mkdir()
 
         with patch.object(groups, "_get_config", return_value=mock_config):
@@ -398,8 +394,7 @@ class TestGetTemplateContent:
 
     def test_reads_scene_template(self, tmp_path):
         """Reads template from scene when group is 'scene'."""
-        scene = Mock()
-        scene.template_dir = str(tmp_path)
+        scene = make_template_dir_scene(template_dir=str(tmp_path))
 
         # Create template in agent subdir
         agent_dir = tmp_path / "narrator"
@@ -437,8 +432,7 @@ class TestWriteTemplate:
 
     def test_writes_to_scene(self, tmp_path):
         """Writes template to scene directory."""
-        scene = Mock()
-        scene.template_dir = str(tmp_path)
+        scene = make_template_dir_scene(template_dir=str(tmp_path))
 
         groups.write_template("scene", "narrator", "test", "scene content", scene)
 

@@ -3,8 +3,8 @@ import json
 import tempfile
 import shutil
 import pytest
-from unittest.mock import Mock
 
+from _changelog_test_helpers import make_changelog_scene
 from talemate.changelog import (
     save_changelog,
     append_scene_delta,
@@ -30,6 +30,7 @@ from talemate.changelog import (
     _get_latest_changelog_file,
     _get_overall_latest_revision,
     _get_file_size,
+    _SceneRef,
     MAX_CHANGELOG_FILE_SIZE,
     InMemoryChangelog,
 )
@@ -45,16 +46,20 @@ def temp_dir():
 
 @pytest.fixture
 def mock_scene(temp_dir):
-    """Create a mock scene object."""
-    scene = Mock()
-    scene.filename = "test_scene.json"
-    scene.save_dir = temp_dir
-    scene.changelog_dir = os.path.join(temp_dir, "changelog")
-    scene.backups_dir = os.path.join(temp_dir, "backups")
-    scene.serialize = {"characters": [], "entries": [], "metadata": {"version": "1.0"}}
-    scene.rev = 0  # Initialize revision to 0
-    scene._changelog = None  # Explicitly set to None to avoid Mock auto-creation
-    return scene
+    # Real ``Scene`` subclass (see _changelog_test_helpers.ChangelogScene) with
+    # ``serialize`` exposed as a settable attribute so tests can drive arbitrary
+    # payloads. ``filename``/``save_dir``/``changelog_dir``/``rev``/``_changelog``
+    # remain the real ``Scene`` fields/properties — renames or removals will
+    # break these tests.
+    return make_changelog_scene(
+        temp_dir,
+        filename="test_scene.json",
+        initial_serialize={
+            "characters": [],
+            "entries": [],
+            "metadata": {"version": "1.0"},
+        },
+    )
 
 
 def test_changelog_log_path(mock_scene):
@@ -1307,14 +1312,12 @@ async def test_delete_changelog_files_with_wrong_scene_reference(temp_dir):
     delete_changelog_files(self.scene) is called instead of constructing
     a proper scene reference from the deleted file path.
     """
-    # Create a scene with changelogs
-    scene1 = Mock()
-    scene1.filename = "scene_to_delete.json"
-    scene1.save_dir = os.path.join(temp_dir, "project1")
-    scene1.changelog_dir = os.path.join(scene1.save_dir, "changelog")
-    scene1.serialize = {"characters": [], "data": "scene1"}
-    scene1.rev = 0
-    scene1._changelog = None
+    # Real ``Scene`` (subclass) for the scene whose changelog we'll create.
+    scene1 = make_changelog_scene(
+        os.path.join(temp_dir, "project1"),
+        filename="scene_to_delete.json",
+        initial_serialize={"characters": [], "data": "scene1"},
+    )
 
     # Initialize changelog for scene1
     await save_changelog(scene1)
@@ -1324,11 +1327,12 @@ async def test_delete_changelog_files_with_wrong_scene_reference(temp_dir):
     assert os.path.exists(_latest_path(scene1))
 
     # Now simulate the bug: calling delete_changelog_files with a different scene
-    # (or None, which would be self.scene when no scene is loaded)
-    wrong_scene = Mock()
-    wrong_scene.filename = "different_scene.json"  # Wrong filename!
-    wrong_scene.save_dir = os.path.join(temp_dir, "project2")  # Wrong directory!
-    wrong_scene.changelog_dir = os.path.join(wrong_scene.save_dir, "changelog")
+    # (or None, which would be self.scene when no scene is loaded). Real Scene
+    # again — wrong filename and wrong save_dir.
+    wrong_scene = make_changelog_scene(
+        os.path.join(temp_dir, "project2"),
+        filename="different_scene.json",
+    )
 
     # Try to delete with wrong scene reference
     result = delete_changelog_files(wrong_scene)
@@ -1343,19 +1347,15 @@ async def test_delete_changelog_files_with_wrong_scene_reference(temp_dir):
         "Latest file should still exist due to bug"
     )
 
-    # Now show the correct way: construct scene reference from the file path
-    scene_path = os.path.join(scene1.save_dir, scene1.filename)
-    scene_dir = os.path.dirname(scene_path)
-    scene_filename = os.path.basename(scene_path)
-    correct_scene_ref = type(
-        "Scene",
-        (),
-        {
-            "save_dir": scene_dir,
-            "filename": scene_filename,
-            "changelog_dir": os.path.join(scene_dir, "changelog"),
-        },
-    )()
+    # Now show the correct way: construct a real ``_SceneRef`` (the type
+    # production code uses for this exact purpose — a lightweight scene
+    # reference for changelog operations). This is the same type
+    # ``ensure_changelogs_for_all_scenes`` builds internally.
+    correct_scene_ref = _SceneRef(
+        filename=scene1.filename,
+        save_dir=scene1.save_dir,
+        data={},
+    )
 
     # Delete with correct reference
     result = delete_changelog_files(correct_scene_ref)

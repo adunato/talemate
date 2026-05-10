@@ -9,8 +9,6 @@ Tests cover:
 - Chat creation for generate_arc modes
 """
 
-from unittest.mock import Mock
-
 from talemate.agents.director.plan.expand import (
     compute_chunks,
     compute_arc_info,
@@ -18,6 +16,7 @@ from talemate.agents.director.plan.expand import (
     MIN_CHUNK_BEATS,
 )
 from talemate.agents.director.plan.schema import Beat
+from talemate.tale_mate import Scene
 
 
 def _make_beats(tensions: list[float]) -> list[Beat]:
@@ -257,10 +256,11 @@ class TestChatCreateGenerateArc:
         director.actions = DirectorAgent.init_actions()
         director._chats = {}
         director._last_active_chat_id = None
-        # Mock scene with agent_state for chat persistence
-        director.scene = Mock()
-        director.scene.agent_state = {"director": {}}
-        director.scene.agent_persona.return_value = None
+        # Real ``Scene`` — ``chat_create_generate_arc`` reads ``scene.agent_state``
+        # (default ``{}``, persistence target for chats) and calls
+        # ``scene.agent_persona("director")`` (returns ``None`` on a fresh Scene
+        # because ``agent_persona_templates`` is an empty dict by default).
+        director.scene = Scene()
         return director
 
     def test_create_generate_arc_default_mode(self):

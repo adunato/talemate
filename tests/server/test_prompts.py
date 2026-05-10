@@ -12,6 +12,7 @@ from talemate.server.prompts import (
     parse_template_uid,
     validate_jinja2_syntax,
 )
+from talemate.tale_mate import Scene
 
 
 class TestParseTemplateUid:
@@ -138,11 +139,14 @@ class TestPromptsPluginListGroups:
     @pytest.mark.asyncio
     async def test_lists_groups_with_scene(self, tmp_path):
         """Lists groups when scene is loaded."""
-        mock_scene = Mock()
-        mock_scene.name = "test-scene"
-        mock_scene.template_dir = str(tmp_path)
+        # Real ``Scene`` — ``handle_list_groups`` reads ``scene.name`` to decide
+        # whether scene context is loaded (truthy => scene_loaded True), then
+        # delegates to the patched ``list_groups``. ``template_dir`` is never
+        # touched here because ``list_groups`` itself is patched out.
+        scene = Scene()
+        scene.name = "test-scene"
 
-        handler = MockWebsocketHandler(scene=mock_scene)
+        handler = MockWebsocketHandler(scene=scene)
         plugin = PromptsPlugin(handler)
 
         # Create mock groups - need to use MagicMock and configure_mock for 'name'

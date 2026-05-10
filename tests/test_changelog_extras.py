@@ -17,10 +17,10 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock
 
 import pytest
 
+from _changelog_test_helpers import make_changelog_scene
 from talemate.changelog import (
     InMemoryChangelog,
     _apply_delta,
@@ -51,21 +51,14 @@ def temp_dir():
     shutil.rmtree(d, ignore_errors=True)
 
 
-def _make_mock_scene(temp_dir: str, name: str = "scene.json") -> Mock:
-    scene = Mock()
-    scene.filename = name
-    scene.save_dir = temp_dir
-    scene.changelog_dir = os.path.join(temp_dir, "changelog")
-    scene.backups_dir = os.path.join(temp_dir, "backups")
-    scene.serialize = {"history": [], "characters": []}
-    scene.rev = 0
-    scene._changelog = None
-    return scene
-
-
 @pytest.fixture
 def mock_scene(temp_dir):
-    return _make_mock_scene(temp_dir)
+    # Real ``Scene`` subclass (see _changelog_test_helpers.ChangelogScene) with
+    # ``serialize`` exposed as a settable attribute so tests can drive arbitrary
+    # payloads. ``filename``/``save_dir``/``changelog_dir``/``rev``/``_changelog``
+    # remain the real ``Scene`` fields/properties — renames or removals will
+    # break these tests.
+    return make_changelog_scene(temp_dir)
 
 
 # ---------------------------------------------------------------------------
