@@ -809,8 +809,6 @@ class ClientBase:
             self.log.warn(
                 "remote service unreachable, disabling client", client=self.name
             )
-            # `enabled` is a read-only @property that proxies to
-            # `client_config.enabled`; write through to the underlying field.
             self.client_config.enabled = False
             return True
 

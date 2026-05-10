@@ -249,9 +249,6 @@ class SummarizeAgent(
                     include_base_layer=True, base_layer_end_id=entry.id
                 )[-num_previous:]
             else:
-                # `archived_history` stores dicts (via `model_dump`), not
-                # `ArchiveEntry` instances — read via subscript, matching
-                # the same data shape used elsewhere (e.g. `build_archive`).
                 previous_summaries = [
                     entry["text"]
                     for entry in self.scene.archived_history[end - num_previous : end]

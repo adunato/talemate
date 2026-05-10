@@ -119,11 +119,6 @@ async def regenerate_message(
     if isinstance(message, CharacterMessage):
         # character messages need specific handling
         messages = await regenerate_character_message(message, scene)
-        # The character path can return None when the character is missing
-        # or the message is a static player line — both are non-recoverable
-        # without caller-side intervention. The outer `regenerate()` handles
-        # a None return by restoring the original message and emitting a
-        # status; mirror that here so direct callers get the same contract.
         if messages is None:
             return None
     else:
