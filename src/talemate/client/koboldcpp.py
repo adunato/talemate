@@ -688,7 +688,7 @@ class KoboldCppClient(OpenAIVisionMixin, ClientBase):
                 apis_value.append(existing_slug)
                 tts_agent.actions["_config"].config["apis"].value = apis_value
                 return True
-            
+
             # Already tracking and enabled. If two distinct clients ever end
             # up with the same configured URL, the first to register owns
             # the backend
