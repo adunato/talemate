@@ -1304,6 +1304,61 @@ class TestTTSAgentDynamicBackendLifecycle:
         tts_agent.unregister_dynamic_child("openai_compatible", "test-be")
         assert tts_agent.actions["_config"].config["apis"].value == ["kokoro"]
 
+    def test_refresh_drops_orphan_dynamic_slug_from_apis_value(self, tts_agent):
+        # apis.value holds an entry for a dynamic backend that is no longer
+        # in the registry blob (e.g., the user deleted the backend but a
+        # stale bulk-config save resurrected the slug in apis.value). The
+        # next _refresh_apis_choices must drop the orphan so the UI stops
+        # showing an unremovable chip.
+        tts_agent.actions["_config"].config["apis"].value = ["kokoro", "deleted-be"]
+        tts_agent._refresh_apis_choices()
+        assert tts_agent.actions["_config"].config["apis"].value == ["kokoro"]
+
+    def test_refresh_preserves_static_apis_in_value(self, tts_agent):
+        # Static api slugs (kokoro, chatterbox, etc.) are always valid
+        # choices — sanitization must not drop them.
+        tts_agent.actions["_config"].config["apis"].value = [
+            "kokoro",
+            "chatterbox",
+            "openai",
+        ]
+        tts_agent._refresh_apis_choices()
+        assert tts_agent.actions["_config"].config["apis"].value == [
+            "kokoro",
+            "chatterbox",
+            "openai",
+        ]
+
+    def test_refresh_preserves_currently_registered_dynamic_slug(self, tts_agent):
+        tts_agent.register_dynamic_child("openai_compatible", "live-be", "Live Backend")
+        tts_agent.actions["_config"].config["apis"].value = ["kokoro", "live-be"]
+        tts_agent._refresh_apis_choices()
+        # Registered slug stays enabled.
+        assert "live-be" in tts_agent.actions["_config"].config["apis"].value
+        assert "kokoro" in tts_agent.actions["_config"].config["apis"].value
+
+    @pytest.mark.asyncio
+    async def test_apply_config_cleans_orphans_from_persisted_state(self, tts_agent):
+        # Simulates loading a saved agent config that lists a dynamic-backend
+        # slug in apis.value but has no matching entry in the registry blob
+        # (the backend was deleted in a previous session). After apply_config
+        # the orphan should be gone.
+        await tts_agent.apply_config(
+            actions={
+                "_config": {
+                    "config": {
+                        "apis": {"value": ["kokoro", "ghost-be"]},
+                    },
+                },
+                "openai_compatible": {
+                    "config": {
+                        "dynamic_children": {"value": "[]"},
+                    },
+                },
+            },
+        )
+        assert tts_agent.actions["_config"].config["apis"].value == ["kokoro"]
+
 
 class TestTTSAgentApiAttrFallback:
     """``api_attr`` must dispatch to the underscored mixin helper for

@@ -297,7 +297,16 @@ class TTSAgent(
         return super().reserved_slugs_for_registry(registry_key)
 
     def _refresh_apis_choices(self) -> None:
-        """Rebuild the apis-flag choices to include current dynamic backends."""
+        """Rebuild the apis-flag choices to include current dynamic backends.
+
+        Also sanitizes ``apis.value`` against the rebuilt choices list — any
+        enabled slug that no longer has a matching choice (orphaned by a
+        backend deletion, or a stale entry persisted from a previous session)
+        is dropped. Without this, deleting a dynamic backend can leave an
+        unremovable chip in the "Enabled APIs" dropdown because the frontend
+        chip is keyed off ``apis.value`` while the dropdown options come from
+        ``apis.choices``.
+        """
         # The original choices are populated by static mixins' add_actions.
         # We rebuild on every change by stripping previously-added dynamic
         # entries (identified by their value being a registered slug) and
@@ -328,6 +337,15 @@ class TTSAgent(
                 }
             )
         self.actions["_config"].config["apis"].choices = choices
+
+        valid_values = {c["value"] for c in choices if c.get("value")}
+        enabled = list(self.actions["_config"].config["apis"].value or [])
+        dropped = [v for v in enabled if v not in valid_values]
+        if dropped:
+            log.info("dropping orphaned apis.value entries", dropped=dropped)
+            self.actions["_config"].config["apis"].value = [
+                v for v in enabled if v in valid_values
+            ]
 
     def on_dynamic_child_added(self, registry_key: str, slug: str, label: str) -> None:
         if registry_key != OPENAI_COMPAT_REGISTRY_KEY:
