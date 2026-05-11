@@ -688,15 +688,10 @@ class KoboldCppClient(OpenAIVisionMixin, ClientBase):
                 apis_value.append(existing_slug)
                 tts_agent.actions["_config"].config["apis"].value = apis_value
                 return True
+            
             # Already tracking and enabled. If two distinct clients ever end
             # up with the same configured URL, the first to register owns
-            # the backend — record this at debug for traceability.
-            log.debug(
-                "KoboldCpp TTS auto-setup: backend already tracking this URL",
-                client=self.name,
-                slug=existing_slug,
-                url=target_url,
-            )
+            # the backend
             return False
 
         # voices_loaded is False (definitive: kobold up, no TTS model). Auto-
