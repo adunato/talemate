@@ -17,9 +17,7 @@ Extra instructions for the generation. This should be short and generic as it wi
 
 ##### Generation Length Per Narration Type
 
-!!! info "New in 0.36.0"
-
-Generation length is now configurable per narration type. Each type of narration can have its own maximum token length, allowing you to control how verbose different types of narration are:
+Generation length is configurable per narration type. Each type of narration can have its own maximum token length, allowing you to control how verbose different types of narration are:
 
 - **Progress story** -- general story progression narration
 - **Scene narration** -- environment and scene descriptions

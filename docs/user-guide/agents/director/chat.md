@@ -7,9 +7,6 @@ Introduced in version 0.33.0 the director chat feature allows you interact with 
 
 As part of the chat session the director can query for information as well as make changes to the scene.
 
-!!! info "Multiple Chats (New in 0.36.0)"
-    The director chat now supports [multiple concurrent conversations](#multiple-chats). You can create, switch between, and delete separate chat sessions, each with their own history and settings.
-
 !!! warning "Strong model recommended"
     In my personal testing I've found that while its possible to have a coherent chat session with weaker models, the experience is going to be
     significantly better with [reasoning enabled](/talemate/user-guide/clients/reasoning/) models past the 100B parameter mark.
@@ -191,8 +188,6 @@ To create or manage personas, select "Manage Personas" from the persona dropdown
 
 ## Multiple Chats
 
-!!! info "New in 0.36.0"
-
 The director chat supports multiple concurrent conversations. Each chat maintains its own independent message history, mode, confirm-write-actions setting, and auto-generated title.
 
 ![Multiple director chats](../../../img/0.36.0/director-chat-multiple-chats.png)
@@ -224,6 +219,4 @@ To delete a chat you no longer need, use the delete option in the chat selector.
 
 ### Concurrent Query Execution
 
-!!! info "New in 0.36.0"
-
-The director's **Query** action now supports concurrent execution. When the director needs to gather information from multiple sources (for example, querying world information and character details simultaneously), these queries can run in parallel rather than sequentially. This results in faster responses when the director needs to consult multiple information sources to answer your questions.
+The director's **Query** action supports concurrent execution. When the director needs to gather information from multiple sources (for example, querying world information and character details simultaneously), these queries can run in parallel rather than sequentially. This results in faster responses when the director needs to consult multiple information sources to answer your questions.

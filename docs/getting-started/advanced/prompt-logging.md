@@ -4,9 +4,6 @@ Talemate can write every prompt it sends to a language model — together with t
 
 Prompt logging is **off by default** and is enabled with a single environment variable.
 
-!!! warning "Prompt logs may contain sensitive scene content"
-    The log stores full prompt text and full model responses, which include character cards, world info, dialogue history, and anything else that was part of the prompt. Treat `logs/prompt_log.jsonl` as sensitive. Do not commit it, share it, or paste excerpts without review.
-
 ## Enabling
 
 Set `TALEMATE_LOG_PROMPTS=1` before starting the server. Any truthy value enables logging (Talemate checks for the variable being set to a non-empty string).

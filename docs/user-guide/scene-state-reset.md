@@ -1,8 +1,5 @@
 # Reset Scene State
 
-!!! info "New in 0.36.0"
-    The Reset Scene State dialog replaces the previous scattered reset commands with a single unified interface.
-
 The Reset Scene State dialog provides granular control over clearing and resetting various components of your scene's internal state. This is a technical tool for managing scene data -- it allows you to reset scene progress without affecting character definitions or world entries.
 
 ![Reset Scene State dialog](../img/0.36.0/scene-state-reset-dialog.png)

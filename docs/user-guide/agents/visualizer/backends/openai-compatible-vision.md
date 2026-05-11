@@ -1,8 +1,5 @@
 # OpenAI Compatible (Vision)
 
-!!! info "New in 0.36.0"
-    The OpenAI Compatible vision backend provides image analysis through any OpenAI-compatible vision endpoint.
-
 The OpenAI Compatible backend for image analysis allows you to connect to any API endpoint that implements the OpenAI chat completions format with multimodal vision support. This includes local inference servers like llama.cpp, Ollama, vLLM, and other OpenAI-compatible services running vision-capable models.
 
 ## Prerequisites

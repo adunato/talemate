@@ -1,8 +1,5 @@
 # Prompt Manager
 
-!!! info "New in 0.36.0"
-    The Prompt Manager is a new unified interface for managing prompt templates, inspecting sent prompts, and reviewing scene context.
-
 The Prompt Manager provides a centralized interface for working with the Jinja2 prompt templates that drive all AI interactions in Talemate. It replaces the need to manually locate and edit template files, offering visual tools for template management, override tracking, and prompt inspection.
 
 ![Prompt Manager overview](../../img/0.36.0/prompt-manager-overview.png)

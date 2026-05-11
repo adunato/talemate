@@ -32,7 +32,7 @@ Some client types add extra tabs (for example the **Endpoint Override** tab on r
 The Advanced tab contains settings that you usually only need to touch once per client:
 
 - **Inference Presets** — selects which [preset group](presets.md) is used for generation parameters.
-- **Structured Data Format** — whether structured responses (function calls, data management) are formatted as JSON or YAML. Leave set to *Talemate decides* to use the built-in default for the client.
+- **Structured Data Format** — whether structured responses (function calls, data management) are formatted as JSON or YAML. Leave set to *Talemate decides* to use the application default.
 - **Section Format** — whether prompt sections are rendered as Markdown headings or XML tags. See [Section Format](section-format.md).
 - **Response Length Enforcement** — how the response length is communicated to the model. See [Response Length Enforcement](response-length.md).
 - **Optimize for Prompt Caching** — moves volatile context after the scene history to improve cache hit rates. See [Volatile Context Placement](../prompts/volatile-context-placement.md).

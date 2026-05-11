@@ -82,7 +82,7 @@ Enabled by default.
 
 ### Expansion critique
 
-Only visible when **Expand** mode is selected. When enabled, the director runs a second critique pass over the expanded prose to fix cross-beat redundancy, intensity monotony, and repeated vocabulary. Adds roughly 10 seconds per generation.
+Only visible when **Expand** mode is selected. When enabled, the director runs a second critique pass over the expanded prose to fix cross-beat redundancy, intensity monotony, and repeated vocabulary.
 
 Enabled by default.
 
@@ -151,19 +151,6 @@ When enabled, the critique pass on the outline runs by default. The plan dialog 
 ##### Expansion critique
 
 When enabled, the post-expansion critique pass runs by default in Expand mode. The plan dialog mirrors this into its **Expansion critique** checkbox and you can override it per run.
-
-## Manual scene direction turn
-
-!!! info "New in 0.37.0"
-
-The director menu in the scene tool bar also includes a **Scene direction turn** button that manually triggers one [Autonomous Scene Direction](/talemate/user-guide/agents/director/scene-direction) turn. It is useful when you have Scene Direction enabled but auto-progression turned off — you can step the director through the scene one turn at a time instead of letting it drive the game loop.
-
-![Scene direction turn button in the director menu](../../../img/0.37.0/director-scene-tools-scene-direction-turn.png)
-
-- **Click** to run a single scene direction turn using your current settings and intentions.
-- **Ctrl+click** (Cmd+click on macOS) to open an instructions dialog. Whatever you type is inserted into the scene direction history as a one-off user direction before the turn executes, letting you nudge the director for just that turn without changing your scene-level instructions.
-
-The button is greyed out when Scene Direction is disabled in the [director agent settings](/talemate/user-guide/agents/director/scene-direction#enabling-scene-direction).
 
 ## Troubleshooting
 

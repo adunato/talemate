@@ -38,7 +38,7 @@ The primary node for working with templates.
 - `scope` - Template scope. One of `scene` or an agent type (`narrator`, `director`, `creator`, `editor`, `summarizer`, `world_state`, …). Controls which `templates/` subfolder is searched for `template_file`. See [Template Scope and File Storage](#template-scope-and-file-storage) below.
 - `template_file` - Fallback template name used when the `template_file` input is not connected.
 - `template_text` - Fallback inline template text used when the `template_text` input is not connected.
-- `dedupe` (default: `true`, added in 0.37.0) - Controls whether the rendered prompt passes through line-level deduplication. Leave it on unless the template contains structured repeated content (e.g. beat listings) — see [Prompt Deduplication](../../prompts/deduplication.md) for when to turn it off.
+- `dedupe` (default: `true`, added in 0.37.0) - Forces line-level deduplication on or off for the rendered prompt, overriding the client-level **Deduplicate Prompts** toggle. Most users should set this to `false`; see [Prompt Deduplication](../../prompts/deduplication.md) for the reasoning and the narrow case where dedupe is still useful.
 
 !!! warning "Pick one source"
     Providing both `template_file` and `template_text` raises an input error. Feed the node from exactly one source per run.

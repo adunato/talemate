@@ -54,7 +54,7 @@ The app-level editor has two tabs, **Normal** and **Uncensored**, so you can mai
 
 The per-client editor only shows the tab that applies to that client type.
 
-## The pencil icon (0.37.0)
+## The pencil icon
 
 ![Override list with pencil icons marking kinds that have a saved override](/talemate/img/0.37.0/system-prompts-override-list-pencil.png)
 
@@ -65,7 +65,7 @@ A small :material-pencil: icon is shown in the override list next to every promp
 
 Clearing a field (or using the textarea's clear button) removes the override and the pencil disappears the next time the list is redrawn.
 
-## Using `{{ system_prompt }}` in an override (0.37.0)
+## Using `{{ system_prompt }}` in an override
 
 If you want to add a line or two to the default prompt without rewriting the whole thing, use the `{{ system_prompt }}` template variable inside your override. When Talemate builds the final prompt for the model, every occurrence of `{{ system_prompt }}` is replaced with the default system prompt for the same kind and censorship mode.
 

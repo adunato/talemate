@@ -1,8 +1,5 @@
 # Volatile Context Placement
 
-!!! info "New in 0.36.0"
-    Volatile context can now be placed after scene history to improve prompt caching hit rates on supported API backends.
-
 Volatile context refers to frequently changing content included in AI prompts, such as:
 
 - **Long-term memory (RAG)** -- retrieved context from the semantic memory database

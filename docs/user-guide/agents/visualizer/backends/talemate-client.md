@@ -1,8 +1,5 @@
 # Talemate Client (Vision)
 
-!!! info "New in 0.36.0"
-    The Talemate Client vision backend allows you to use any vision-capable Talemate LLM client for image analysis.
-
 The Talemate Client backend for image analysis lets you reuse an existing Talemate LLM client connection for vision tasks. Instead of configuring a separate endpoint, you select one of your already-configured LLM clients that has vision capabilities enabled.
 
 ## Prerequisites

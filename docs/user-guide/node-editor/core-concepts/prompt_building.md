@@ -85,7 +85,7 @@ A fully assembled prompt with:
 - **`limit_max_tokens`** (default: `0`): Maximum token limit (0 = use client context limit)
 - **`response_length`** (default: `0`): Expected length of the response
 - **`technical`** (default: `false`): Include technical context (IDs, typing information)
-- **`dedupe_enabled`** (default: `true`): Enable deduplication in the prompt
+- **`dedupe_enabled`** (default: `true`): Forces line-level deduplication on or off for the rendered prompt, overriding the client-level **Deduplicate Prompts** toggle. See [Prompt Deduplication](../../prompts/deduplication.md) — most users should set this to `false`.
 - **`memory_prompt`** (default: `""`): Semantic query string for memory retrieval. Provide this to guide what memories are retrieved when `include_memory_context` is enabled
 - **`prefill_prompt`** (default: `""`): Text to prefill the response
 - **`return_prefill_prompt`** (default: `false`): Return the prefill with response

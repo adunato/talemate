@@ -153,9 +153,9 @@ Scaffolds a data structure (JSON or YAML) for the agent to complete. The functio
 
 ### disable_dedupe
 
-Disables deduplication for the prompt text. By default, Talemate removes duplicate lines from prompts to save tokens. This function prevents that behavior for the current prompt.
+Forces deduplication off for the prompt currently being rendered, regardless of the client-level **Deduplicate Prompts** toggle. Use this when a template contains structured repeated content (beat listings, example tables) that must reach the model intact even if a user has dedupe enabled.
 
-See [Prompt Deduplication](../../prompts/deduplication.md) for when to reach for this and the equivalent per-node flag on `Prompt from Template`.
+Dedupe is off by default at the client level, so this guard only matters when a user has explicitly enabled it. See [Prompt Deduplication](../../prompts/deduplication.md) for the full picture and the equivalent per-node flag on `Prompt from Template`.
 
 !!! payload "Arguments"
 

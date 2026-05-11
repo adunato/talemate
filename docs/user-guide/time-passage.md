@@ -1,8 +1,5 @@
 # Time Passage Management
 
-!!! info "New in 0.36.0"
-    Time passage messages can now be inserted, edited, and deleted directly in the scene view. The World State Manager history view also supports inline editing of time passage entries.
-
 Time passage messages mark the flow of time within your scene. They appear as clock-themed markers between scene messages and influence how the AI understands the temporal context of your story.
 
 ## Inserting Time Passages
@@ -16,9 +13,7 @@ The primary way to advance time is through the :material-clock: **Advance Time**
 
 ### From the Scene View
 
-!!! info "New in 0.36.0"
-
-You can now insert time passage markers at any point in the scene history, not just at the end.
+You can insert time passage markers at any point in the scene history, not just at the end.
 
 To insert a time passage after a specific message:
 

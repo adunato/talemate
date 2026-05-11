@@ -1,24 +1,27 @@
 # Prompt Deduplication
 
-Talemate runs a line-level fuzzy-dedupe pass over every rendered prompt before it is sent to the language model. The pass removes lines longer than 32 characters whose similarity to an earlier line is ≥95%, which saves tokens when the same paragraph slips into a prompt from multiple context sources (world info, memories, pins).
+Talemate can run a line-level fuzzy-dedupe pass over a rendered prompt before sending it to the language model. The pass removes lines longer than 32 characters whose similarity to an earlier line is ≥95% — useful when the same paragraph slips into a prompt from multiple context sources (world info, memories, pins).
 
-In most cases this is exactly what you want. Occasionally you need to turn it off.
+## Recommendation: leave it off
 
-## When to disable it
+Deduplication is **off by default** at the client level and that is the recommended setting for most users.
 
-Disable dedupe when your template contains **structured repeated content** that must reach the model intact. The canonical case is a beat listing where the beats happen to share long near-identical prefixes:
+The feature was useful when 4k–8k context windows made every token expensive. With modern 16k–1M context windows the token savings rarely justify the trade-offs:
 
-```
-Beat 1: Alice confronts Bob about the missing ledger.
-Beat 2: Alice confronts Bob about the missing ring.
-Beat 3: Alice confronts Bob about the missing key.
-```
+- **It breaks prompt caching.** Anthropic, OpenAI, and Google all cache prompt prefixes to cut latency and cost. Dedupe rewrites the prompt body line-by-line, so any time a duplicate appears (or disappears) the cached prefix is invalidated. With **[Optimize for Prompt Caching](volatile-context-placement.md)** enabled, dedupe will often hurt cache hit-rate enough to outweigh the tokens it saves.
+- **It can damage structured content.** Beat listings, example tables, or any template that repeats long near-identical lines can collapse under the similarity threshold and reach the model malformed.
 
-With dedupe on, the similarity threshold collapses these into one line and the model loses the plan. With dedupe off the whole list reaches the prompt verbatim.
+Only consider turning dedupe on when **all** of these hold:
 
-## How to disable it
+- You are operating with a context window of `≤ 8192` tokens.
+- RAG, world info, or pins are producing substantial duplication in your prompts.
+- You are not using an API backend whose prompt-caching savings matter to you.
 
-There are two control points. Pick whichever is closer to the content you're protecting.
+## How to enable it
+
+The primary control is the per-client **Deduplicate Prompts** toggle on the **Advanced** tab of each client's settings. Flipping this on enables dedupe for every prompt that does not explicitly override it.
+
+Templates and node graphs can still opt out individually after that:
 
 ### From inside a template
 
@@ -33,13 +36,13 @@ Beat 3: Alice confronts Bob about the missing key.
 <|CLOSE_SECTION|>
 ```
 
-This is the usual choice when the template itself owns the repeated structure. See the [`disable_dedupe()` function reference](../node-editor/reference/template_functions.md#disable_dedupe) for the full function entry.
+Without this guard, the three beats above are similar enough that dedupe would collapse them into one line. See the [`disable_dedupe()` function reference](../node-editor/reference/template_functions.md#disable_dedupe) for the full function entry.
 
 ### From a `Prompt from Template` node
 
-Set the node's `dedupe` property to `false`. This toggles deduplication for the prompt produced by that specific node only. Use this when you don't own the template file but still need to opt out for a specific invocation. See the node's [Properties reference](../node-editor/core-concepts/prompt-templates.md#prompt-from-template) for full details.
+The node has a `dedupe` property that forces the setting on or off for the prompt it produces, regardless of the client-level toggle. See the node's [Properties reference](../node-editor/core-concepts/prompt-templates.md#prompt-from-template) for full details.
 
 ## Scope and interactions
 
-- Disabling dedupe in one place does **not** cascade. A `disable_dedupe()` call only affects the prompt it is rendered into, and the node's `dedupe` property only affects that node's output.
-- Dedupe is separate from the [`condensed`](../node-editor/reference/template_functions.md) template filter. The condensed filter uses its own marker-based mechanism to collapse multi-line context for comparison and does not rely on the dedupe pass. Disabling dedupe leaves the condensed filter's behavior unchanged.
+- A `disable_dedupe()` call or node property only affects the prompt it is rendered into. It does **not** cascade to other prompts in the same flow.
+- Dedupe is separate from the [`condensed`](../node-editor/reference/template_functions.md) template filter. The condensed filter uses its own marker-based mechanism to collapse multi-line context for the dedupe comparison and does not rely on the dedupe pass itself. Toggling dedupe leaves the condensed filter's behavior unchanged.

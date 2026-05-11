@@ -21,7 +21,7 @@ Only when all four gates pass does narration actually fire. Any non-zero result 
 
 ## Configuration
 
-The settings live under the **Auto Narration** container in the narrator agent panel.
+The settings live under the **Auto Narration** section in the narrator agent panel.
 
 ![Auto Narration settings panel](../../../img/0.37.0/narrator-auto-narration-settings.png)
 
@@ -29,7 +29,7 @@ The settings live under the **Auto Narration** container in the narrator agent p
 
 Master probability that anything fires on a given actor turn. Range `0.0`–`1.0`, step `0.05`.
 
-- `0.0` — never fires (effectively the same as turning the container off).
+- `0.0` — never fires (effectively the same as turning Auto Narration off).
 - `0.5` — fires roughly every other turn.
 - `1.0` — fires every turn.
 
@@ -68,7 +68,7 @@ Turn this off only if you want both systems running independently.
 
 ### Auto narration never fires
 
-- Check that the **Auto Narration** container is enabled (quick toggle or expand the section in the agent panel).
+- Check that **Auto Narration** is enabled (quick toggle or expand the section in the agent panel).
 - Check that **Chance** is greater than `0`.
 - Check whether Scene Direction is enabled on the [Director](/talemate/user-guide/agents/director/scene-direction) — if it is, Auto Narration is suppressed by default. Either disable Scene Direction or turn off **Disable during scene direction** in the Auto Narration settings.
 - Confirm at least one **Action Weight** is greater than `0`.
