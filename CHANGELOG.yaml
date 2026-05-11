@@ -1,4 +1,4 @@
-0.37.0.dev:
+0.37.0:
   features:
   - "System Prompt Template Variable: Added {{ system_prompt }} template variable for system prompt overrides. Use it to include the default system prompt within a custom override, at both the app and client level."
   - "Gamestate Path Template Helper: Added a `{{ render_game_state(\"path/to/var\") }}` Jinja global usable in prompt template overrides. Renders a targeted slice of the gamestate using the same data-block formatting as the full GAMESTATE block, with optional `title` and `max_gamestate_tokens` arguments. Renders empty when the path does not resolve. Backed by a new shared `get_path_value` helper in `talemate.util.path`."
