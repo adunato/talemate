@@ -3,14 +3,30 @@
         <div class="text-caption text-muted" v-if="label">
             <strong>{{ label }}</strong>
         </div>
-        <div class="text-caption text-grey mb-2" v-if="description">
-            {{ description }}
+        <div class="text-caption text-grey mb-2 d-flex align-center" v-if="description || choices.length > 1">
+            <span v-if="description">{{ description }}</span>
+            <v-btn
+                v-if="choices.length > 1"
+                size="x-small"
+                variant="text"
+                color="secondary"
+                prepend-icon="mdi-scale-balance"
+                :class="description ? 'ml-2' : ''"
+                @click="equalize"
+            >Equalize</v-btn>
         </div>
         <div v-for="choice in choices" :key="choice.value" class="d-flex align-center">
-            <div class="weight-label text-caption">
+            <div class="weight-label text-caption" :class="{ 'text-disabled': isDisabled(choice.value) }">
                 {{ choice.label }}
                 <v-icon
-                    v-if="lastTouched === choice.value"
+                    v-if="isLockedAtFull(choice.value)"
+                    size="x-small"
+                    color="muted"
+                    icon="mdi-lock"
+                    class="ml-1"
+                ></v-icon>
+                <v-icon
+                    v-else-if="!isDisabled(choice.value) && lastTouched === choice.value"
                     size="x-small"
                     color="muted"
                     icon="mdi-pin"
@@ -74,56 +90,94 @@ export default {
             const v = this.modelValue?.[key];
             return typeof v === 'number' ? v : 0;
         },
+        isDisabled(key) {
+            // Tolerate sub-step float drift in externally-seeded models so the
+            // muted-label affordance doesn't silently vanish for near-zero values.
+            return this.weightFor(key) < this.step / 2;
+        },
+        isLockedAtFull(key) {
+            if (this.weightFor(key) <= 1 - this.step / 2) return false;
+            return this.choices.every(c => c.value === key || this.isDisabled(c.value));
+        },
         formatWeight(v) {
             const precision = Math.max(0, Math.round(-Math.log10(this.step)));
             return Number(v).toFixed(precision);
+        },
+        equalize() {
+            const keys = this.choices.map(c => c.value);
+            if (keys.length === 0) return;
+            const precision = Math.max(0, Math.round(-Math.log10(this.step)));
+            const share = 1 / keys.length;
+            const rounded = {};
+            keys.forEach(k => { rounded[k] = parseFloat(share.toFixed(precision + 2)); });
+            // Absorb rounding drift on the first key so the sum stays at 1.
+            const drift = 1 - Object.values(rounded).reduce((a, b) => a + b, 0);
+            rounded[keys[0]] = parseFloat((rounded[keys[0]] + drift).toFixed(precision + 2));
+            // Clear the pin so subsequent drags start from a clean state.
+            this.lastTouched = null;
+            this.$emit('update:modelValue', rounded);
         },
         onSlide(changedKey, newValue) {
             const keys = this.choices.map(c => c.value);
             const current = {};
             keys.forEach(k => { current[k] = this.weightFor(k); });
 
-            // Pin the previously-released slider so it doesn't drift while the
-            // user adjusts a different one. With fewer than 3 keys there's no
-            // free slider to absorb the remainder, so we can't honor the lock.
-            let lockedKey = (this.lastTouched && this.lastTouched !== changedKey)
+            // Frozen keys retain their value during this update.
+            //   - Disabled (=0): the user parked them out of the balance,
+            //     so they no longer absorb redistribution.
+            //   - Pinned (last-touched, still enabled): held steady while
+            //     a different slider is being adjusted, but only when at
+            //     least one other key remains free to absorb the change.
+            const disabledKeys = keys.filter(k => k !== changedKey && current[k] === 0);
+            let pinnedKey = (this.lastTouched && this.lastTouched !== changedKey && current[this.lastTouched] > 0)
                 ? this.lastTouched
                 : null;
-            if (lockedKey && keys.length < 3) {
-                lockedKey = null;
+            if (pinnedKey) {
+                const freeIfPinned = keys.filter(
+                    k => k !== changedKey && k !== pinnedKey && !disabledKeys.includes(k),
+                );
+                if (freeIfPinned.length === 0) pinnedKey = null;
             }
-            const lockedValue = lockedKey ? current[lockedKey] : 0;
+            const frozenKeys = pinnedKey ? disabledKeys.concat([pinnedKey]) : disabledKeys;
+            const frozenSum = frozenKeys.reduce((acc, k) => acc + current[k], 0);
+            const freeKeys = keys.filter(k => k !== changedKey && !frozenKeys.includes(k));
 
-            const clamped = Math.max(0, Math.min(1 - lockedValue, newValue));
-            const freeKeys = keys.filter(k => k !== changedKey && k !== lockedKey);
-            const freeBudget = Math.max(0, 1 - clamped - lockedValue);
+            // With no free key, the changed slider is forced to 1 - frozenSum.
+            // When every other key is disabled, this locks it at 1.0.
+            const clamped = freeKeys.length === 0
+                ? 1 - frozenSum
+                : Math.max(0, Math.min(1 - frozenSum, newValue));
+
+            const freeBudget = Math.max(0, 1 - clamped - frozenSum);
             const freeSum = freeKeys.reduce((acc, k) => acc + current[k], 0);
 
             const next = { [changedKey]: clamped };
-            if (lockedKey) next[lockedKey] = lockedValue;
+            frozenKeys.forEach(k => { next[k] = current[k]; });
 
-            if (freeKeys.length > 0) {
-                if (freeSum <= 0) {
-                    const share = freeBudget / freeKeys.length;
-                    freeKeys.forEach(k => { next[k] = share; });
-                } else {
-                    freeKeys.forEach(k => { next[k] = (current[k] / freeSum) * freeBudget; });
-                }
-            }
+            // Free keys all have current[k] > 0 by construction (zero-valued
+            // non-changed keys are frozen), so freeSum > 0 whenever freeKeys
+            // is non-empty.
+            freeKeys.forEach(k => { next[k] = (current[k] / freeSum) * freeBudget; });
 
-            // Round to step precision. Absorb sub-step rounding drift on the
-            // largest non-locked key so the lock stays put and the changed
-            // slider isn't pushed past its clip ceiling.
+            // Round to step precision. Absorb sub-step drift on the largest
+            // non-frozen key so frozen values stay put. The changed slider
+            // itself is always eligible, which is what soaks up drift in the
+            // locked-at-1.0 case where freeKeys is empty.
             const rounded = {};
             const precision = Math.max(0, Math.round(-Math.log10(this.step)));
             keys.forEach(k => { rounded[k] = parseFloat(next[k].toFixed(precision + 2)); });
             const drift = 1 - Object.values(rounded).reduce((a, b) => a + b, 0);
-            const absorbCandidates = keys.filter(k => k !== lockedKey);
+            const absorbCandidates = [changedKey, ...freeKeys];
             const driftKey = absorbCandidates.reduce(
                 (best, k) => (rounded[k] > rounded[best] ? k : best),
                 absorbCandidates[0],
             );
             rounded[driftKey] = parseFloat((rounded[driftKey] + drift).toFixed(precision + 2));
+
+            // Skip the emit if nothing actually changed — e.g., a drag attempt
+            // on the locked-at-1.0 slider would otherwise re-emit an identical
+            // model on every tick.
+            if (keys.every(k => rounded[k] === current[k])) return;
 
             this.$emit('update:modelValue', rounded);
         },
