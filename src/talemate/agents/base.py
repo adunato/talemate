@@ -594,6 +594,15 @@ class Agent(ABC):
             await callback(result)
 
     async def setup_check(self):
+        """Per-status-tick auto-setup hook.
+
+        Called once per status tick by ``agent_ready_checks`` for *every*
+        live agent slot — including agents whose ``enabled`` flag is False.
+        Overrides must therefore be safe to invoke when the agent is
+        disabled (e.g. they can still flip ``is_enabled`` on themselves
+        when an external precondition is met, as TTSAgent does when a
+        client reports a freshly loaded TTS model).
+        """
         return False
 
     async def ready_check(self, task: asyncio.Task = None):

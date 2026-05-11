@@ -1508,6 +1508,91 @@ class TestAutoSetupClients:
         await tts_agent.setup_check()
         assert "ok" in invoked
 
+    @pytest.mark.asyncio
+    async def test_auto_enables_agent_when_new_backend_added(
+        self, tts_agent, monkeypatch
+    ):
+        # Voice agent starts disabled; a client adds itself to apis.value
+        # during setup_check → agent should flip on.
+        tts_agent.is_enabled = False
+        tts_agent.actions["_config"].config["apis"].value = []
+        monkeypatch.setattr(tts_agent, "save_config", AsyncMock(return_value=None))
+        monkeypatch.setattr(tts_agent, "emit_status", AsyncMock(return_value=None))
+
+        class AddingClient:
+            name = "kobold"
+            enabled = True
+
+            async def tts_openai_compatible_setup(self_, agent):
+                value = list(agent.actions["_config"].config["apis"].value or [])
+                value.append("kobold")
+                agent.actions["_config"].config["apis"].value = value
+                return True
+
+        monkeypatch.setattr(instance, "CLIENTS", {"kobold": AddingClient()})
+
+        await tts_agent.setup_check()
+
+        assert tts_agent.is_enabled is True
+
+    @pytest.mark.asyncio
+    async def test_does_not_re_enable_agent_when_only_removals_happen(
+        self, tts_agent, monkeypatch
+    ):
+        # Agent disabled; client drops a slug from apis.value but adds nothing.
+        # The agent should stay disabled — auto-enable only fires on additions.
+        tts_agent.is_enabled = False
+        tts_agent.actions["_config"].config["apis"].value = ["going-away"]
+        monkeypatch.setattr(tts_agent, "save_config", AsyncMock(return_value=None))
+        monkeypatch.setattr(tts_agent, "emit_status", AsyncMock(return_value=None))
+
+        class RemovingClient:
+            name = "kobold"
+            enabled = True
+
+            async def tts_openai_compatible_setup(self_, agent):
+                value = list(agent.actions["_config"].config["apis"].value or [])
+                if "going-away" in value:
+                    value.remove("going-away")
+                agent.actions["_config"].config["apis"].value = value
+                return True
+
+        monkeypatch.setattr(instance, "CLIENTS", {"kobold": RemovingClient()})
+
+        await tts_agent.setup_check()
+
+        assert tts_agent.is_enabled is False
+        # The removal itself must have happened — otherwise this test would
+        # be silently asserting the wrong thing (agent stays disabled because
+        # nothing changed, rather than because only-removals don't auto-enable).
+        assert tts_agent.actions["_config"].config["apis"].value == []
+
+    @pytest.mark.asyncio
+    async def test_leaves_agent_alone_when_already_enabled(
+        self, tts_agent, monkeypatch
+    ):
+        # Pre-enabled agent: an added api shouldn't *toggle* anything off.
+        tts_agent.is_enabled = True
+        tts_agent.actions["_config"].config["apis"].value = []
+        monkeypatch.setattr(tts_agent, "save_config", AsyncMock(return_value=None))
+        monkeypatch.setattr(tts_agent, "emit_status", AsyncMock(return_value=None))
+
+        class AddingClient:
+            name = "kobold"
+            enabled = True
+
+            async def tts_openai_compatible_setup(self_, agent):
+                value = list(agent.actions["_config"].config["apis"].value or [])
+                value.append("kobold")
+                agent.actions["_config"].config["apis"].value = value
+                return True
+
+        monkeypatch.setattr(instance, "CLIENTS", {"kobold": AddingClient()})
+
+        await tts_agent.setup_check()
+
+        assert tts_agent.is_enabled is True
+
 
 class TestKoboldCppTTSSetup:
     """Direct exercise of ``KoboldCppClient._tts_openai_compatible_setup_impl``.

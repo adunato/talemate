@@ -139,9 +139,14 @@ handlers["request_agent_status"].connect(emit_agents_status)
 
 async def agent_ready_checks():
     for agent in AGENTS.values():
-        if agent and agent.enabled:
+        if not agent:
+            continue
+        if agent.enabled:
             await agent.ready_check()
-            await agent.setup_check()
+        # setup_check runs unconditionally so agents with auto-setup enabled
+        # can flip themselves on (or sync their state) without first needing
+        # the user to manually enable them.
+        await agent.setup_check()
 
 
 def get_active_client():

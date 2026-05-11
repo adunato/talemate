@@ -405,7 +405,11 @@ class TestPurgeClients:
 
 class TestAgentReadyChecks:
     @pytest.mark.asyncio
-    async def test_runs_ready_check_only_for_enabled_agents(self):
+    async def test_ready_check_gated_on_enabled_but_setup_check_always_runs(self):
+        # ready_check is gated on `enabled` (it asks "is this agent ready to
+        # work?"). setup_check runs for every live agent slot so auto-setup
+        # paths (like TTS auto-enabling itself when kcpp loads a TTS model)
+        # can fire before the user manually turns the agent on.
         ready_called = []
         setup_called = []
 
@@ -429,7 +433,7 @@ class TestAgentReadyChecks:
         await instance.agent_ready_checks()
 
         assert ready_called == ["enabled-one"]
-        assert setup_called == ["enabled-one"]
+        assert sorted(setup_called) == ["disabled-one", "enabled-one"]
 
 
 # ---------------------------------------------------------------------------

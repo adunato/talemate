@@ -397,9 +397,15 @@ class TTSAgent(
         ``tts_openai_compatible_setup`` capability method). Each capable
         client gets to register its own backend. The setup is idempotent —
         clients are responsible for skipping if they're already registered.
+
+        Side effect: if a new backend was *added* to apis.value during this
+        pass and the agent itself is currently disabled, the agent is auto-
+        enabled — kcpp loading a TTS model implies the user wants voice.
         """
         if not self.automatic_setup:
             return False
+
+        apis_before = set(self.actions["_config"].config["apis"].value or [])
 
         any_changed = False
         for client in instance.CLIENTS.values():
@@ -419,6 +425,14 @@ class TTSAgent(
                 )
 
         if any_changed:
+            apis_after = set(self.actions["_config"].config["apis"].value or [])
+            added_apis = apis_after - apis_before
+            if added_apis and not self.is_enabled:
+                log.info(
+                    "TTS agent auto-enabled by setup_check",
+                    added_apis=sorted(added_apis),
+                )
+                self.is_enabled = True
             await self.save_config()
             await self.emit_status()
         return any_changed
