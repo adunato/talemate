@@ -111,4 +111,5 @@ Be creative and specific — the more precisely a tag captures the intended deli
 [INDEX:{{ entry.index }}] [{{ "ELIGIBLE" if entry.eligible else "CONTEXT" }}] ({{ entry.character_name or "Narrator" }}) {{ entry.text }}
 {% endfor -%}
 </TEXT>
+<|CLOSE_SECTION|>
 {{ set_prepared_response("<CHUNK_" ~ eligible[0].index ~ ">") }}

@@ -1,6 +1,6 @@
 # Rate Limiting
 
-You can rate limit a client to N requests per minute.
+You can rate limit a client to N requests per minute. The slider is on the **Advanced** tab of the [client configuration](client-configuration.md) dialog.
 
 ![Rate limit](/talemate/img/0.30.0/client-ratelimit.png)
 

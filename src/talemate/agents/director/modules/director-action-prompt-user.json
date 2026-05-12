@@ -2,8 +2,8 @@
   "title": "Director Action Prompt User",
   "id": "a267dbcc-f7fe-4345-8de9-6aebea907975",
   "properties": {
-    "name": "prompt_user",
-    "description": "Use this action to request information from the user within the story's context.\n\nYou may only do ONE, SINGLE prompt, don't attempt to initiate multiple prompts with this at once.\n\nThis action will cause an interactive user interface to be presented to the user.\n\nUse this action with great care and thought and consider the context of the overall experience before prompting the user for anything. Consider this a disruptive action.\n\nIMPORTANT: This action only serves to retrieve information from the user, it NEVER makes any changes by itself. \n\nIMPORTANT: If you use this this should be the last action in your turn, wait for the players response, THEN act on it in the next turn."
+    "name": "ooc",
+    "description": "Interface for out of character communication with the user while remaining within the context of the scene."
   },
   "x": 0,
   "y": 0,
@@ -107,27 +107,6 @@
       "registry": "state/GetState",
       "base_type": "core/Node"
     },
-    "955f2ce0-83eb-4b84-8666-a1cfb6b6da50": {
-      "title": "Jinja2 Format",
-      "id": "955f2ce0-83eb-4b84-8666-a1cfb6b6da50",
-      "properties": {
-        "template": "Your task is to prompt the user for some information. Carefully assess if this prompt should be formulated within the context of the current scene or as an out-of-character prompt.\n\nInstructions for the prompt: {{ instructions }}"
-      },
-      "x": 288,
-      "y": 469,
-      "width": 210,
-      "height": 133,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "prompt/Jinja2Format",
-      "dynamic_inputs": [
-        {
-          "name": "item0",
-          "type": "*"
-        }
-      ],
-      "base_type": "core/DynamicSocketNodeBase"
-    },
     "d163e0ae-cafd-4ce3-a2d6-ee8c8e339af1": {
       "title": "Build Prompt",
       "id": "d163e0ae-cafd-4ce3-a2d6-ee8c8e339af1",
@@ -165,29 +144,13 @@
       "properties": {
         "value": true
       },
-      "x": -1924,
-      "y": 304,
+      "x": -2808,
+      "y": 257,
       "width": 210,
       "height": 58,
       "collapsed": true,
       "inherited": false,
       "registry": "core/MakeBool",
-      "base_type": "core/Node"
-    },
-    "23cb4113-2dd2-4532-8b1a-7651a217259b": {
-      "title": "Style UX Element",
-      "id": "23cb4113-2dd2-4532-8b1a-7651a217259b",
-      "properties": {
-        "tint": "muted",
-        "icon": "mdi-text-box-edit-outline"
-      },
-      "x": -1384,
-      "y": 474,
-      "width": 210,
-      "height": 142,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "ux/StyleElement",
       "base_type": "core/Node"
     },
     "9bdb2584-c070-4558-a732-16e3cd09b85e": {
@@ -198,36 +161,13 @@
         "typ": "str",
         "instructions": "The text shown to the user, verbatim."
       },
-      "x": -2040,
-      "y": 549,
+      "x": -2924,
+      "y": 502,
       "width": 210,
       "height": 106,
       "collapsed": false,
       "inherited": false,
       "registry": "focal/Argument",
-      "base_type": "core/Node"
-    },
-    "75df7b4c-da0f-439f-b445-13e35b606e56": {
-      "title": "Build Text Input Element",
-      "id": "75df7b4c-da0f-439f-b445-13e35b606e56",
-      "properties": {
-        "closable": true,
-        "timeout_seconds": 0,
-        "element_title": "",
-        "element_body": "",
-        "multiline": false,
-        "rows": 5,
-        "placeholder": "",
-        "default": "",
-        "trim": true
-      },
-      "x": -1694,
-      "y": 424,
-      "width": 262,
-      "height": 490,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "ux/BuildTextInputElement",
       "base_type": "core/Node"
     },
     "242f3380-d1b6-4170-9c5b-21634f1b8f9d": {
@@ -238,54 +178,13 @@
         "typ": "str",
         "instructions": "The title of the interaction."
       },
-      "x": -2044,
-      "y": 389,
+      "x": -2928,
+      "y": 342,
       "width": 210,
       "height": 106,
       "collapsed": false,
       "inherited": false,
       "registry": "focal/Argument",
-      "base_type": "core/Node"
-    },
-    "bc2212f9-cd6d-4569-b909-75bacbf9a144": {
-      "title": "Emit UX Element",
-      "id": "bc2212f9-cd6d-4569-b909-75bacbf9a144",
-      "properties": {},
-      "x": -1144,
-      "y": 469,
-      "width": 178,
-      "height": 146,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "ux/EmitElement",
-      "base_type": "core/Node"
-    },
-    "423070a1-2204-4427-bc47-c052d56baeca": {
-      "title": "Return",
-      "id": "423070a1-2204-4427-bc47-c052d56baeca",
-      "properties": {},
-      "x": -695,
-      "y": 467,
-      "width": 140,
-      "height": 26,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/Return",
-      "base_type": "core/Node"
-    },
-    "0e950f22-b247-47eb-9ce9-3e3134c153e1": {
-      "title": "DEF prompt_text_input",
-      "id": "0e950f22-b247-47eb-9ce9-3e3134c153e1",
-      "properties": {
-        "name": "prompt_text_input"
-      },
-      "x": -245,
-      "y": 467,
-      "width": 210,
-      "height": 78,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "core/functions/DefineFunction",
       "base_type": "core/Node"
     },
     "eab694a2-a84f-475e-aa3b-8fd454813cd3": {
@@ -296,8 +195,8 @@
         "typ": "bool",
         "instructions": "Should the input field presented to the user be a multiline text input, or a single line one."
       },
-      "x": -2040,
-      "y": 709,
+      "x": -2924,
+      "y": 662,
       "width": 210,
       "height": 106,
       "collapsed": false,
@@ -313,8 +212,8 @@
         "typ": "bool",
         "instructions": "Is the input required? If the input is not required it means the user is allowed to cancel / omit giving a response."
       },
-      "x": -2040,
-      "y": 880,
+      "x": -2924,
+      "y": 833,
       "width": 210,
       "height": 106,
       "collapsed": false,
@@ -326,8 +225,8 @@
       "title": "Invert",
       "id": "04acc72f-40ff-4913-8f2f-a9ebfaf0019a",
       "properties": {},
-      "x": -1820,
-      "y": 890,
+      "x": -2704,
+      "y": 843,
       "width": 140,
       "height": 26,
       "collapsed": true,
@@ -355,85 +254,17 @@
       "id": "997bd245-3b62-4370-b5d5-2ec4846454f5",
       "properties": {
         "name": "my_function",
-        "allow_multiple_calls": false
+        "allow_multiple_calls": false,
+        "allow_concurrent": false
       },
       "x": 430,
       "y": 1200,
       "width": 210,
-      "height": 102,
+      "height": 126,
       "collapsed": false,
       "inherited": false,
       "registry": "focal/Callback",
       "base_type": "core/Node"
-    },
-    "0b78d909-8dd3-4249-85a8-abb0a0d61bc2": {
-      "title": "List Collector",
-      "id": "0b78d909-8dd3-4249-85a8-abb0a0d61bc2",
-      "properties": {},
-      "x": 1010,
-      "y": 1200,
-      "width": 140,
-      "height": 81,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "data/ListCollector",
-      "dynamic_inputs": [
-        {
-          "name": "item0",
-          "type": "*"
-        }
-      ],
-      "base_type": "core/DynamicSocketNodeBase"
-    },
-    "067e02fc-742c-41da-9373-8e04cf7140e1": {
-      "title": "AI Function Callback Metadata",
-      "id": "067e02fc-742c-41da-9373-8e04cf7140e1",
-      "properties": {
-        "instructions": "Prompt the user for plain-text input.",
-        "examples": [
-          {
-            "prompt_title": "What do you do next?",
-            "prompt_body": "As the troll falls ot the ground, everything is silent around you. The door ahead remains closed. What do you do next?",
-            "multiline": false,
-            "required": false
-          },
-          {
-            "prompt_title": "Create your character",
-            "prompt_body": "The docking clamps release with a hiss, and you step onto Relay Station Kappa-7\u2014a spinning can of recycled air and borrowed time at the edge of mapped space. The promenade hums with traders haggling over salvage, synths running cargo, and the occasional enforcer pretending not to watch.\n\nBefore the station decides what you're worth, I need to know who just came through that airlock.\n\nSmuggler with a ship held together by duct tape and optimism? Corporate defector with data worth killing for? Maybe just a mechanic looking for honest work in a place that doesn't offer much of it?\n\nGive me a name, a role, or just a vibe. The rest we'll figure out together.\n\nWho just arrived?",
-            "multiline": true,
-            "required": true
-          }
-        ]
-      },
-      "x": -515,
-      "y": 467,
-      "width": 244,
-      "height": 82,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "focal/Metadata",
-      "base_type": "core/Node"
-    },
-    "5ea20fc9-ba46-4d08-aae3-26dac00c174d": {
-      "title": "Jinja2 Format",
-      "id": "5ea20fc9-ba46-4d08-aae3-26dac00c174d",
-      "properties": {
-        "template": "The user has reponded to the \"{{ prompt_title }}\" prompt:\n\n```\n{{ value }}\n```"
-      },
-      "x": -935,
-      "y": 467,
-      "width": 210,
-      "height": 133,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "prompt/Jinja2Format",
-      "dynamic_inputs": [
-        {
-          "name": "item0",
-          "type": "*"
-        }
-      ],
-      "base_type": "core/DynamicSocketNodeBase"
     },
     "d9f85143-26c2-46af-a9d8-d681a1a135f0": {
       "title": "AI Function Calling",
@@ -442,12 +273,13 @@
         "template": null,
         "max_calls": 1,
         "retries": 0,
-        "response_length": 1024
+        "response_length": 1024,
+        "max_concurrent": 3
       },
       "x": 1200,
       "y": 1011,
       "width": 228,
-      "height": 250,
+      "height": 274,
       "collapsed": false,
       "inherited": false,
       "registry": "focal/Focal",
@@ -491,8 +323,8 @@
         "name": "calls",
         "scope": "local"
       },
-      "x": 29,
-      "y": 1829,
+      "x": 35,
+      "y": 2047,
       "width": 210,
       "height": 122,
       "collapsed": false,
@@ -504,8 +336,8 @@
       "title": "Director Action Summary",
       "id": "9703e945-dc0e-4dee-8e21-f460520f86cd",
       "properties": {},
-      "x": 279,
-      "y": 1849,
+      "x": 285,
+      "y": 2067,
       "width": 193,
       "height": 26,
       "collapsed": false,
@@ -517,8 +349,8 @@
       "title": "Return",
       "id": "7c308f87-38fb-4e70-88d9-b9947940dd73",
       "properties": {},
-      "x": 529,
-      "y": 1849,
+      "x": 535,
+      "y": 2067,
       "width": 140,
       "height": 26,
       "collapsed": false,
@@ -526,15 +358,257 @@
       "registry": "core/functions/Return",
       "base_type": "core/Node"
     },
+    "4887c772-efe0-493e-ab16-031aa549c50d": {
+      "title": "true",
+      "id": "4887c772-efe0-493e-ab16-031aa549c50d",
+      "properties": {
+        "value": true
+      },
+      "x": -2033,
+      "y": 1164,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "9fa0388b-43dd-41ba-9696-d713abccf9f1": {
+      "title": "prompt_title",
+      "id": "9fa0388b-43dd-41ba-9696-d713abccf9f1",
+      "properties": {
+        "name": "prompt_title",
+        "typ": "str",
+        "instructions": "The title of the notice."
+      },
+      "x": -2140,
+      "y": 1249,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "c0e8dd40-cae2-4d43-85dc-cb2680d4f821": {
+      "title": "prompt_body",
+      "id": "c0e8dd40-cae2-4d43-85dc-cb2680d4f821",
+      "properties": {
+        "name": "prompt_body",
+        "typ": "str",
+        "instructions": "The text shown to the user, verbatim."
+      },
+      "x": -2143,
+      "y": 1404,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "d6854686-5fe2-40f7-8c09-74c51ba4c6d5": {
+      "title": "Return",
+      "id": "d6854686-5fe2-40f7-8c09-74c51ba4c6d5",
+      "properties": {},
+      "x": -691,
+      "y": 1212,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "ee9ad9b6-0e29-40a0-bd4a-42e9b4fec67a": {
+      "title": "Emit UX Element",
+      "id": "ee9ad9b6-0e29-40a0-bd4a-42e9b4fec67a",
+      "properties": {},
+      "x": -1191,
+      "y": 1218,
+      "width": 178,
+      "height": 146,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "ux/EmitElement",
+      "base_type": "core/Node"
+    },
+    "4b77dadf-30ff-4dc8-8e5a-08de60ac52cd": {
+      "title": "Build Notice Element",
+      "id": "4b77dadf-30ff-4dc8-8e5a-08de60ac52cd",
+      "properties": {
+        "closable": true,
+        "timeout_seconds": 0,
+        "element_title": "",
+        "element_body": ""
+      },
+      "x": -1831,
+      "y": 1308,
+      "width": 262,
+      "height": 270,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "ux/BuildNoticeElement",
+      "base_type": "core/Node"
+    },
+    "98dad7f7-b3cf-44ad-8425-960a23eb20eb": {
+      "title": "DEF display_notice",
+      "id": "98dad7f7-b3cf-44ad-8425-960a23eb20eb",
+      "properties": {
+        "name": "display_notice"
+      },
+      "x": -241,
+      "y": 1208,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "4736762f-dce3-43b3-9931-9fba70131200": {
+      "title": "Jinja2 Format",
+      "id": "4736762f-dce3-43b3-9931-9fba70131200",
+      "properties": {
+        "template": "Emitted note `{{ title }}` to user: \n\n```\n{{ body }}\n```"
+      },
+      "x": -951,
+      "y": 1368,
+      "width": 210,
+      "height": 193,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/Jinja2Format",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        },
+        {
+          "name": "item2",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "7557561f-71ad-4fe7-a542-8a5ef3d220f1": {
+      "title": "FN display_notice",
+      "id": "7557561f-71ad-4fe7-a542-8a5ef3d220f1",
+      "properties": {
+        "name": "display_notice"
+      },
+      "x": 170,
+      "y": 1500,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "0b78d909-8dd3-4249-85a8-abb0a0d61bc2": {
+      "title": "List Collector",
+      "id": "0b78d909-8dd3-4249-85a8-abb0a0d61bc2",
+      "properties": {},
+      "x": 1020,
+      "y": 1400,
+      "width": 140,
+      "height": 101,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/ListCollector",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "9ce32c23-d6e2-4685-8452-0d41cc1dbe50": {
+      "title": "AI Function Callback",
+      "id": "9ce32c23-d6e2-4685-8452-0d41cc1dbe50",
+      "properties": {
+        "name": "my_function",
+        "allow_multiple_calls": false,
+        "allow_concurrent": false
+      },
+      "x": 430,
+      "y": 1500,
+      "width": 210,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Callback",
+      "base_type": "core/Node"
+    },
+    "3c3f31b0-d602-4edd-a8b7-7bcec18098f6": {
+      "title": "AI Function Callback Metadata",
+      "id": "3c3f31b0-d602-4edd-a8b7-7bcec18098f6",
+      "properties": {
+        "instructions": "Show an out-of-character note to the user \u2014 for example a loot summary after combat, a rules clarification, an acknowledgement, or a direct message from the gamemaster. This is one-way: the user does NOT reply and nothing is returned. Prefer this over `prompt_text_input` whenever you are not explicitly asking a question. Do NOT use this for in-character narration or dialogue.",
+        "examples": [
+          {
+            "prompt_title": "Loot Recovered",
+            "prompt_body": "You search the fallen bandits and recover:\n\n- 24 silver coins\n- A flask of lamp oil\n- A rolled parchment bearing the crest of House Vell (warm to the touch)\n- A slightly bent iron dagger\n\nThe parchment and dagger have been added to your inventory."
+          },
+          {
+            "prompt_title": "A note from the gamemaster",
+            "prompt_body": "Quick out-of-character aside: from here on I'll be leaning into slower, character-driven scenes for a while before we push the main plot forward. If there's a thread you'd like to pull on \u2014 an old rivalry, an unfinished errand, a quiet moment with a companion \u2014 feel free to steer toward it. Otherwise I'll keep improvising."
+          }
+        ]
+      },
+      "x": -511,
+      "y": 1212,
+      "width": 244,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Metadata",
+      "base_type": "core/Node"
+    },
+    "1ca4b507-bf52-4c59-ad3d-1f6c22f75d7f": {
+      "title": "[User Interaction] Show Information",
+      "id": "1ca4b507-bf52-4c59-ad3d-1f6c22f75d7f",
+      "properties": {
+        "group": "User Interaction",
+        "action_id": "user_interaction.display_notice",
+        "action_title": "Show Information",
+        "description_chat": "Show an out-of-character note to the user \u2014 for example a loot summary after combat, a gamemaster aside, or a rules clarification. Do not use for in-character narration or when you need a response from the user.",
+        "description_scene_direction": "Show an out-of-character note to the user \u2014 for example a loot summary after combat, a gamemaster aside, or a rules clarification. Do not use for in-character narration or when you need a response from the user.",
+        "instruction_examples": [
+          "The fight with the cultists just ended. Show the user an out-of-character note listing the loot recovered from the bodies: 12 gold, two healing potions, and a strange obsidian amulet inscribed with an unknown rune. Make it clear these items are now in the party's inventory.",
+          "Break from narration briefly and address the user as the gamemaster. Let them know the next scene will skip forward by one week, and invite them to share anything their character would have done during that downtime before we pick up again."
+        ],
+        "availability": "both",
+        "force_enabled": false
+      },
+      "x": 680,
+      "y": 1500,
+      "width": 294,
+      "height": 246,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/DirectorChatSubAction",
+      "base_type": "core/Node"
+    },
     "c412bc72-7d90-439b-b480-b7a8bb94c5b9": {
-      "title": "Director Chat Sub Action",
+      "title": "[User Interaction] Prompt for text input",
       "id": "c412bc72-7d90-439b-b480-b7a8bb94c5b9",
       "properties": {
         "group": "User Interaction",
         "action_id": "user_interaction.prompt_text",
         "action_title": "Prompt for text input",
         "description_chat": "",
-        "description_scene_direction": "",
+        "description_scene_direction": "Use this action to request information from the user within the story's context.\n\nYou may only do ONE, SINGLE prompt, don't attempt to initiate multiple prompts with this at once.\n\nThis action will cause an interactive user interface to be presented to the user.\n\nUse this action with great care and thought and consider the context of the overall experience before prompting the user for anything. Consider this a disruptive action.\n\nIMPORTANT: This action only serves to retrieve information from the user, it NEVER makes any changes by itself. \n\nIMPORTANT: If you use this this should be the last action in your turn, wait for the players response, THEN act on it in the next turn.\n\nIMPORTANT: You must never yield_to_user right after prompting them for information like this, that just disconnects you from doing anything with their answer.",
         "instruction_examples": [
           "The combat scene has ended, ask the user what they want to do next. The user is allowed to opt out of giving a response to this.",
           "The user still needs a character, prompt them provide any information they want to give to help set up a character for them."
@@ -544,11 +618,254 @@
       },
       "x": 680,
       "y": 1190,
-      "width": 281,
+      "width": 336,
       "height": 246,
       "collapsed": false,
       "inherited": false,
       "registry": "agents/director/chat/DirectorChatSubAction",
+      "base_type": "core/Node"
+    },
+    "955f2ce0-83eb-4b84-8666-a1cfb6b6da50": {
+      "title": "Jinja2 Format",
+      "id": "955f2ce0-83eb-4b84-8666-a1cfb6b6da50",
+      "properties": {
+        "template": "Your task is to address the user out-of-character by calling ONE of two functions.\n\nThe test: are you asking the user a question and waiting for their typed answer, or are you just telling them something?\n\n- Call `prompt_text_input` ONLY if you need the user to type a response back to you.\n- Call `display_notice` in all other cases \u2014 showing information, delivering a note, acknowledging an action, summarizing loot, etc.\n\nWhen in doubt, choose `display_notice`. Most out-of-character communication is one-way.\n\nInstructions: {{ instructions }}"
+      },
+      "x": 288,
+      "y": 469,
+      "width": 210,
+      "height": 153,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/Jinja2Format",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "5ea20fc9-ba46-4d08-aae3-26dac00c174d": {
+      "title": "Jinja2 Format",
+      "id": "5ea20fc9-ba46-4d08-aae3-26dac00c174d",
+      "properties": {
+        "template": "The user has reponded to the \"{{ prompt_title }}\" prompt:\n\n```\n{{ value }}\n```"
+      },
+      "x": -1016,
+      "y": 419,
+      "width": 210,
+      "height": 173,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/Jinja2Format",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "423070a1-2204-4427-bc47-c052d56baeca": {
+      "title": "Return",
+      "id": "423070a1-2204-4427-bc47-c052d56baeca",
+      "properties": {},
+      "x": -766,
+      "y": 419,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "067e02fc-742c-41da-9373-8e04cf7140e1": {
+      "title": "AI Function Callback Metadata",
+      "id": "067e02fc-742c-41da-9373-8e04cf7140e1",
+      "properties": {
+        "instructions": "Ask the user a question and wait for their typed response. The user's reply will be returned to you and you can act on it next turn. Use this ONLY when you actually need information back from the user. If you are communicating something that does not require a reply, call `display_notice` instead.",
+        "examples": [
+          {
+            "prompt_title": "What do you do next?",
+            "prompt_body": "As the troll falls ot the ground, everything is silent around you. The door ahead remains closed. What do you do next?",
+            "multiline": false,
+            "required": false
+          },
+          {
+            "prompt_title": "Create your character",
+            "prompt_body": "The docking clamps release with a hiss, and you step onto Relay Station Kappa-7\u2014a spinning can of recycled air and borrowed time at the edge of mapped space. The promenade hums with traders haggling over salvage, synths running cargo, and the occasional enforcer pretending not to watch.\n\nBefore the station decides what you're worth, I need to know who just came through that airlock.\n\nSmuggler with a ship held together by duct tape and optimism? Corporate defector with data worth killing for? Maybe just a mechanic looking for honest work in a place that doesn't offer much of it?\n\nGive me a name, a role, or just a vibe. The rest we'll figure out together.\n\nWho just arrived?",
+            "multiline": true,
+            "required": true
+          }
+        ]
+      },
+      "x": -576,
+      "y": 419,
+      "width": 244,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Metadata",
+      "base_type": "core/Node"
+    },
+    "0e950f22-b247-47eb-9ce9-3e3134c153e1": {
+      "title": "DEF prompt_text_input",
+      "id": "0e950f22-b247-47eb-9ce9-3e3134c153e1",
+      "properties": {
+        "name": "prompt_text_input"
+      },
+      "x": -290,
+      "y": 422,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "75df7b4c-da0f-439f-b445-13e35b606e56": {
+      "title": "Build Text Input Element",
+      "id": "75df7b4c-da0f-439f-b445-13e35b606e56",
+      "properties": {
+        "closable": true,
+        "timeout_seconds": 0,
+        "element_title": "",
+        "element_body": "",
+        "multiline": false,
+        "rows": 5,
+        "placeholder": "",
+        "default": "",
+        "trim": true
+      },
+      "x": -2578,
+      "y": 377,
+      "width": 262,
+      "height": 490,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "ux/BuildTextInputElement",
+      "base_type": "core/Node"
+    },
+    "3caa430c-2199-453c-b7f3-091d41f0d46d": {
+      "title": "Push History",
+      "id": "3caa430c-2199-453c-b7f3-091d41f0d46d",
+      "properties": {
+        "emit_message": true
+      },
+      "x": -1338,
+      "y": 834,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "scene/history/Push",
+      "base_type": "core/Node"
+    },
+    "bc2212f9-cd6d-4569-b909-75bacbf9a144": {
+      "title": "Emit UX Element",
+      "id": "bc2212f9-cd6d-4569-b909-75bacbf9a144",
+      "properties": {},
+      "x": -2014,
+      "y": 423,
+      "width": 178,
+      "height": 146,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "ux/EmitElement",
+      "base_type": "core/Node"
+    },
+    "57b2ef9a-3aaf-45aa-bf5a-1d25d9693bd2": {
+      "title": "RSwitch Advanced",
+      "id": "57b2ef9a-3aaf-45aa-bf5a-1d25d9693bd2",
+      "properties": {},
+      "x": -1570,
+      "y": 581,
+      "width": 156,
+      "height": 66,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/RSwitchAdvanced",
+      "base_type": "core/Node"
+    },
+    "956eac5c-aeca-4a91-8d08-b59a65febee5": {
+      "title": "Director Message",
+      "id": "956eac5c-aeca-4a91-8d08-b59a65febee5",
+      "properties": {
+        "source": "player",
+        "action": "user_direction",
+        "subtype": "user_direction"
+      },
+      "x": -1340,
+      "y": 581,
+      "width": 210,
+      "height": 206,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "scene/message/DirectorMessage",
+      "base_type": "core/Node"
+    },
+    "15e083a3-d9fd-4e23-a14b-437d60586aa4": {
+      "title": "Jinja2 Format",
+      "id": "15e083a3-d9fd-4e23-a14b-437d60586aa4",
+      "properties": {
+        "template": "### {{ title }}\n\n{{ value }}"
+      },
+      "x": -1810,
+      "y": 731,
+      "width": 210,
+      "height": 173,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/Jinja2Format",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "23cb4113-2dd2-4532-8b1a-7651a217259b": {
+      "title": "Style UX Element",
+      "id": "23cb4113-2dd2-4532-8b1a-7651a217259b",
+      "properties": {
+        "tint": "information",
+        "icon": "mdi-text-box-edit-outline",
+        "apply_scene_colors": true
+      },
+      "x": -2284,
+      "y": 423,
+      "width": 245,
+      "height": 186,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "ux/StyleElement",
+      "base_type": "core/Node"
+    },
+    "76bbae6a-9643-48e7-97fe-557fb153b320": {
+      "title": "Style UX Element",
+      "id": "76bbae6a-9643-48e7-97fe-557fb153b320",
+      "properties": {
+        "tint": "information",
+        "icon": "mdi-note-text",
+        "apply_scene_colors": true
+      },
+      "x": -1453,
+      "y": 1214,
+      "width": 245,
+      "height": 186,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "ux/StyleElement",
       "base_type": "core/Node"
     }
   },
@@ -568,9 +885,6 @@
     "59e399db-991c-4452-a774-e8cfca94628a.value": [
       "955f2ce0-83eb-4b84-8666-a1cfb6b6da50.item0"
     ],
-    "955f2ce0-83eb-4b84-8666-a1cfb6b6da50.result": [
-      "d163e0ae-cafd-4ce3-a2d6-ee8c8e339af1.instructions"
-    ],
     "d163e0ae-cafd-4ce3-a2d6-ee8c8e339af1.state": [
       "d9f85143-26c2-46af-a9d8-d681a1a135f0.state"
     ],
@@ -583,29 +897,11 @@
     "c1b9701c-f398-4d5e-870d-80d875339677.value": [
       "75df7b4c-da0f-439f-b445-13e35b606e56.state"
     ],
-    "23cb4113-2dd2-4532-8b1a-7651a217259b.state": [
-      "bc2212f9-cd6d-4569-b909-75bacbf9a144.state"
-    ],
-    "23cb4113-2dd2-4532-8b1a-7651a217259b.ux_element": [
-      "bc2212f9-cd6d-4569-b909-75bacbf9a144.ux_element"
-    ],
     "9bdb2584-c070-4558-a732-16e3cd09b85e.value": [
       "75df7b4c-da0f-439f-b445-13e35b606e56.body"
     ],
-    "75df7b4c-da0f-439f-b445-13e35b606e56.state": [
-      "23cb4113-2dd2-4532-8b1a-7651a217259b.state"
-    ],
-    "75df7b4c-da0f-439f-b445-13e35b606e56.ux_element": [
-      "23cb4113-2dd2-4532-8b1a-7651a217259b.ux_element"
-    ],
     "242f3380-d1b6-4170-9c5b-21634f1b8f9d.value": [
       "75df7b4c-da0f-439f-b445-13e35b606e56.title"
-    ],
-    "bc2212f9-cd6d-4569-b909-75bacbf9a144.value": [
-      "5ea20fc9-ba46-4d08-aae3-26dac00c174d.item0"
-    ],
-    "423070a1-2204-4427-bc47-c052d56baeca.value": [
-      "067e02fc-742c-41da-9373-8e04cf7140e1.state"
     ],
     "eab694a2-a84f-475e-aa3b-8fd454813cd3.value": [
       "75df7b4c-da0f-439f-b445-13e35b606e56.multiline"
@@ -625,15 +921,6 @@
     "997bd245-3b62-4370-b5d5-2ec4846454f5.callback": [
       "c412bc72-7d90-439b-b480-b7a8bb94c5b9.state"
     ],
-    "0b78d909-8dd3-4249-85a8-abb0a0d61bc2.list": [
-      "d9f85143-26c2-46af-a9d8-d681a1a135f0.callbacks"
-    ],
-    "067e02fc-742c-41da-9373-8e04cf7140e1.state": [
-      "0e950f22-b247-47eb-9ce9-3e3134c153e1.nodes"
-    ],
-    "5ea20fc9-ba46-4d08-aae3-26dac00c174d.result": [
-      "423070a1-2204-4427-bc47-c052d56baeca.value"
-    ],
     "d9f85143-26c2-46af-a9d8-d681a1a135f0.calls": [
       "19e1aa7c-8bae-4a6d-a5db-bbcd3519eac9.value"
     ],
@@ -646,8 +933,106 @@
     "9703e945-dc0e-4dee-8e21-f460520f86cd.summary": [
       "7c308f87-38fb-4e70-88d9-b9947940dd73.value"
     ],
+    "4887c772-efe0-493e-ab16-031aa549c50d.value": [
+      "4b77dadf-30ff-4dc8-8e5a-08de60ac52cd.state"
+    ],
+    "9fa0388b-43dd-41ba-9696-d713abccf9f1.value": [
+      "4b77dadf-30ff-4dc8-8e5a-08de60ac52cd.title"
+    ],
+    "c0e8dd40-cae2-4d43-85dc-cb2680d4f821.value": [
+      "4b77dadf-30ff-4dc8-8e5a-08de60ac52cd.body"
+    ],
+    "d6854686-5fe2-40f7-8c09-74c51ba4c6d5.value": [
+      "3c3f31b0-d602-4edd-a8b7-7bcec18098f6.state"
+    ],
+    "ee9ad9b6-0e29-40a0-bd4a-42e9b4fec67a.ux_id": [
+      "4736762f-dce3-43b3-9931-9fba70131200.item0"
+    ],
+    "4b77dadf-30ff-4dc8-8e5a-08de60ac52cd.state": [
+      "76bbae6a-9643-48e7-97fe-557fb153b320.state"
+    ],
+    "4b77dadf-30ff-4dc8-8e5a-08de60ac52cd.title": [
+      "4736762f-dce3-43b3-9931-9fba70131200.item1"
+    ],
+    "4b77dadf-30ff-4dc8-8e5a-08de60ac52cd.body": [
+      "4736762f-dce3-43b3-9931-9fba70131200.item2"
+    ],
+    "4b77dadf-30ff-4dc8-8e5a-08de60ac52cd.ux_element": [
+      "76bbae6a-9643-48e7-97fe-557fb153b320.ux_element"
+    ],
+    "4736762f-dce3-43b3-9931-9fba70131200.result": [
+      "d6854686-5fe2-40f7-8c09-74c51ba4c6d5.value"
+    ],
+    "7557561f-71ad-4fe7-a542-8a5ef3d220f1.fn": [
+      "9ce32c23-d6e2-4685-8452-0d41cc1dbe50.fn"
+    ],
+    "7557561f-71ad-4fe7-a542-8a5ef3d220f1.name": [
+      "9ce32c23-d6e2-4685-8452-0d41cc1dbe50.name"
+    ],
+    "0b78d909-8dd3-4249-85a8-abb0a0d61bc2.list": [
+      "d9f85143-26c2-46af-a9d8-d681a1a135f0.callbacks"
+    ],
+    "9ce32c23-d6e2-4685-8452-0d41cc1dbe50.callback": [
+      "1ca4b507-bf52-4c59-ad3d-1f6c22f75d7f.state"
+    ],
+    "3c3f31b0-d602-4edd-a8b7-7bcec18098f6.state": [
+      "98dad7f7-b3cf-44ad-8425-960a23eb20eb.nodes"
+    ],
+    "1ca4b507-bf52-4c59-ad3d-1f6c22f75d7f.state": [
+      "0b78d909-8dd3-4249-85a8-abb0a0d61bc2.item1"
+    ],
     "c412bc72-7d90-439b-b480-b7a8bb94c5b9.state": [
       "0b78d909-8dd3-4249-85a8-abb0a0d61bc2.item0"
+    ],
+    "955f2ce0-83eb-4b84-8666-a1cfb6b6da50.result": [
+      "d163e0ae-cafd-4ce3-a2d6-ee8c8e339af1.instructions"
+    ],
+    "5ea20fc9-ba46-4d08-aae3-26dac00c174d.result": [
+      "423070a1-2204-4427-bc47-c052d56baeca.value"
+    ],
+    "423070a1-2204-4427-bc47-c052d56baeca.value": [
+      "067e02fc-742c-41da-9373-8e04cf7140e1.state"
+    ],
+    "067e02fc-742c-41da-9373-8e04cf7140e1.state": [
+      "0e950f22-b247-47eb-9ce9-3e3134c153e1.nodes"
+    ],
+    "75df7b4c-da0f-439f-b445-13e35b606e56.state": [
+      "23cb4113-2dd2-4532-8b1a-7651a217259b.state"
+    ],
+    "75df7b4c-da0f-439f-b445-13e35b606e56.title": [
+      "15e083a3-d9fd-4e23-a14b-437d60586aa4.item1"
+    ],
+    "75df7b4c-da0f-439f-b445-13e35b606e56.ux_element": [
+      "23cb4113-2dd2-4532-8b1a-7651a217259b.ux_element"
+    ],
+    "3caa430c-2199-453c-b7f3-091d41f0d46d.message": [
+      "5ea20fc9-ba46-4d08-aae3-26dac00c174d.item1"
+    ],
+    "bc2212f9-cd6d-4569-b909-75bacbf9a144.value": [
+      "5ea20fc9-ba46-4d08-aae3-26dac00c174d.item0",
+      "57b2ef9a-3aaf-45aa-bf5a-1d25d9693bd2.check",
+      "15e083a3-d9fd-4e23-a14b-437d60586aa4.item0"
+    ],
+    "57b2ef9a-3aaf-45aa-bf5a-1d25d9693bd2.yes": [
+      "956eac5c-aeca-4a91-8d08-b59a65febee5.message"
+    ],
+    "956eac5c-aeca-4a91-8d08-b59a65febee5.message": [
+      "3caa430c-2199-453c-b7f3-091d41f0d46d.message"
+    ],
+    "15e083a3-d9fd-4e23-a14b-437d60586aa4.result": [
+      "57b2ef9a-3aaf-45aa-bf5a-1d25d9693bd2.yes"
+    ],
+    "23cb4113-2dd2-4532-8b1a-7651a217259b.state": [
+      "bc2212f9-cd6d-4569-b909-75bacbf9a144.state"
+    ],
+    "23cb4113-2dd2-4532-8b1a-7651a217259b.ux_element": [
+      "bc2212f9-cd6d-4569-b909-75bacbf9a144.ux_element"
+    ],
+    "76bbae6a-9643-48e7-97fe-557fb153b320.state": [
+      "ee9ad9b6-0e29-40a0-bd4a-42e9b4fec67a.state"
+    ],
+    "76bbae6a-9643-48e7-97fe-557fb153b320.ux_element": [
+      "ee9ad9b6-0e29-40a0-bd4a-42e9b4fec67a.ux_element"
     ]
   },
   "groups": [
@@ -665,29 +1050,39 @@
       "title": "Process",
       "x": 3,
       "y": 224,
-      "width": 2073,
-      "height": 1526,
+      "width": 2103,
+      "height": 1748,
       "color": "#3f789e",
       "font_size": 24,
       "inherited": false
     },
     {
       "title": "Function",
-      "x": -2069,
-      "y": 229,
-      "width": 2062,
-      "height": 851,
+      "x": -2954,
+      "y": 182,
+      "width": 2947,
+      "height": 899,
       "color": "#b06634",
       "font_size": 24,
       "inherited": false
     },
     {
       "title": "Output",
-      "x": 4,
-      "y": 1754,
+      "x": 10,
+      "y": 1972,
       "width": 690,
       "height": 222,
       "color": "#8A8",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Function",
+      "x": -2168,
+      "y": 1089,
+      "width": 2162,
+      "height": 513,
+      "color": "#b06634",
       "font_size": 24,
       "inherited": false
     }
@@ -698,28 +1093,28 @@
   "inputs": [],
   "outputs": [
     {
-      "id": "b34b61b8-b4c1-47ae-be67-a52966f675c6",
+      "id": "8bcddc19-0b2d-4511-aa71-ec6f090527b9",
       "name": "fn",
       "optional": false,
       "group": null,
       "socket_type": "function"
     },
     {
-      "id": "80dd8c44-f1d0-4e97-a70f-9fdf274b67c7",
+      "id": "9a16c159-2ef6-4dc2-8862-4512538c1ca3",
       "name": "name",
       "optional": false,
       "group": null,
       "socket_type": "str"
     },
     {
-      "id": "fe269c6a-2428-4e2b-b2d3-a2837aa14722",
+      "id": "75d34cb6-77ad-49e5-ad50-6aab7692c7ca",
       "name": "allow_multiple_calls",
       "optional": false,
       "group": null,
       "socket_type": "bool"
     },
     {
-      "id": "02831248-7c36-42a5-85a9-9dcf5dd3b048",
+      "id": "3ce8ab8e-2630-4926-bc9d-690e0935ca7f",
       "name": "ai_callback",
       "optional": false,
       "group": null,
@@ -768,6 +1163,18 @@
       "description": "An example JSON payload for the action",
       "type": "text",
       "default": null,
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "allow_concurrent": {
+      "name": "allow_concurrent",
+      "description": "Whether the action can be called concurrently",
+      "type": "bool",
+      "default": false,
       "choices": null,
       "readonly": false,
       "step": null,

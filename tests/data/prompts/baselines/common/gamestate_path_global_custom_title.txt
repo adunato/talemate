@@ -1,0 +1,9 @@
+## Player
+Path: player/status
+Data format: json
+
+```json
+{
+  "hp": 12
+}
+```

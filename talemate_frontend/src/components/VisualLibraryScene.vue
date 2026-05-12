@@ -46,7 +46,7 @@
             :loading="analyzing"
           >
             <v-tooltip activator="parent" location="top">
-              Analyze the image using AI. (Ctrl: set instructions)
+              Analyze the image using AI. ({{ primaryModifierLabel }}: set instructions)
             </v-tooltip>
             Analyze
           </v-btn>
@@ -158,6 +158,7 @@ import ConfirmActionPrompt from './ConfirmActionPrompt.vue';
 import VisualLibraryUpload from './VisualLibraryUpload.vue';
 import VisualAssetsTree from './VisualAssetsTree.vue';
 import { debounce } from 'lodash';
+import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 
 export default {
   name: 'VisualLibraryScene',
@@ -175,6 +176,7 @@ export default {
   },
   data() {
     return {
+      primaryModifierLabel,
       base64ById: {},
       assetSearchInput: '',
       assetSearch: '',
@@ -399,7 +401,7 @@ export default {
         return;
       }
       // If Ctrl/Cmd is pressed, open dialog; otherwise quick analyze
-      if (event.ctrlKey || event.metaKey) {
+      if (isPrimaryModifier(event)) {
         event.preventDefault();
         event.stopPropagation();
         this.showAnalyzeDialog = true;

@@ -54,14 +54,17 @@ class UserInteractionMessage(pydantic.BaseModel):
 
     type: Literal["user_interaction"] = "user_interaction"
     user_input: str
+    is_direction: bool = False
 
     @pydantic.computed_field
     @property
     def preview(self) -> str:
-        """First 50 characters of user input for display."""
+        """First 50 characters of user input for display, or full text for direction instructions."""
         if not self.user_input:
             return ""
         stripped = self.user_input.strip()
+        if self.is_direction:
+            return stripped
         if len(stripped) > 50:
             return stripped[:50] + "..."
         return stripped

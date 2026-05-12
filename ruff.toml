@@ -10,3 +10,12 @@ extend-ignore = ["E402"]
 # of unused name) is a false positive in this pattern.
 "tests/prompts/baselines/*.py" = ["F811"]
 "tests/prompts/baselines_cached/*.py" = ["F811"]
+# World-state test modules import the `scene` (and friends) fixtures from
+# `tests/_world_state_helpers.py` and consume them as method parameters --
+# the same pytest fixture-injection pattern as above.
+"tests/test_world_state_agent.py" = ["F811"]
+"tests/test_world_state_init.py" = ["F811"]
+"tests/test_world_state_manager.py" = ["F811"]
+"tests/test_world_state_templates_base.py" = ["F811"]
+"tests/test_world_state_templates_character.py" = ["F811"]
+"tests/test_world_state_templates_scene.py" = ["F811"]

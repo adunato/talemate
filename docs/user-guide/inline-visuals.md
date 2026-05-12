@@ -22,15 +22,19 @@ There are several ways to generate images that appear in your scene feed:
 
 The quickest way to generate inline visuals is through the scene tools visualizer menu.
 
-![Scene tools visualizer menu](/talemate/img/0.35.0/scene-tools-visual-menu.png)
+![Scene tools visualizer menu](../img/0.37.0/scene-tools-visual-menu.png)
 
 From this menu you can:
 
 - **Visualize Scene (Card)**: Generate a cover image of the current scene
 - **Visualize Scene (Background)**: Generate a purely environmental image
-- **Visualize [Character] (Card)**: Generate a cover image portrait of a character
-- **Visualize [Character] (Portrait)**: Generate a face-focused portrait
+- **[Character]** submenu (one per character in the scene):
+    - **Card**: Generate a cover image portrait of that character
+    - **Portrait**: Generate a face-focused portrait of that character
 - **Visualize Moment (Illustration)**: Generate an image of the current moment in the story
+
+!!! note "Per-character submenus (0.37.0)"
+    As of version 0.37.0, each character in the scene is grouped into its own submenu instead of appearing as separate top-level entries. Hover a character's name to open their submenu and pick **Card** or **Portrait**. See [Scene Tools — Visualizer](scenario-tools.md#material-image-frame-visualizer) for the full menu reference.
 
 !!! tip "Keyboard Modifiers"
     - Hold **ALT** to generate only the prompt without creating an image

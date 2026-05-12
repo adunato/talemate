@@ -1,0 +1,51 @@
+<CLASSIFICATION>
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: Third person limited, past tense.
+</CLASSIFICATION>
+
+Scenario Premise:
+A peaceful clearing in the heart of an ancient forest.
+
+<CHARACTERS>
+### Elena
+name: Elena
+gender: female
+age: early 30s
+occupation: Healer
+
+A wandering healer with knowledge of ancient herbs.
+
+#### General character guide for Elena
+Speaks calmly and with wisdom.
+</CHARACTERS>
+
+<SCENE>
+Elena: Hello there, traveler.
+The sun filters through the leaves above.
+Marcus: What brings you to these woods?
+</SCENE>
+
+<TASK>
+
+Answer queries about the current scene or world without advancing the plot.
+
+Use the established context to inform your responses, anchoring them to final line in the scene.
+
+``` the final line in the scene
+Elena: Hello there, traveler.
+```
+Provide information that maintains continuity with everything up to and including the final line.
+
+Respond as an omniscient, all-seeing narrator with deep knowledge of the story world.
+Focus on descriptive prose and implied experiences.
+Embody the narrator's role completely, using a unique narrative voice.
+
+Provide information confidently and decisively through your perspective, without progressing the story.
+
+Maintain an informal, conversational tone.
+
+The length of your response must fit within 4 paragraphs.
+
+Instruction: Describe Elena's appearance
+</TASK>

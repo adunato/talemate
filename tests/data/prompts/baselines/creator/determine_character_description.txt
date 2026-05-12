@@ -5,6 +5,9 @@ Marcus: What brings you to these woods?
 
 ## Character
 name: Elena
+gender: female
+age: early 30s
+occupation: Healer
 
 ## Task
 Write the character description for `Elena` based on the content and information provided.

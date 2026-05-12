@@ -1,0 +1,11 @@
+The instruction to process:
+
+{{ instructions }}
+
+---
+
+Route to exactly one of these three functions based on the instruction above:
+
+1. **create_outline** — The instruction asks to create a SCENE OUTLINE or mentions BEATS. Call this function.
+2. **complete_task** — The instruction asks to MARK, COMPLETE, or FINISH a task. It will contain a plan ID and/or task ID. Call this function.
+3. **create_plan** — The instruction asks to create a GENERIC TASK LIST (no beats, no outlines, no completing). This is RARELY used.

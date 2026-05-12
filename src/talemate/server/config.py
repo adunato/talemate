@@ -6,9 +6,13 @@ from pathlib import Path
 
 from talemate import VERSION
 from talemate.changelog import list_revision_entries, delete_changelog_files
-from talemate.client.model_prompts import model_prompt
+from talemate.client.model_prompts import model_prompt, PromptSpec
 from talemate.client.registry import CLIENT_CLASSES
-from talemate.client.base import ClientBase, locked_model_template
+from talemate.client.base import (
+    ClientBase,
+    DEFAULT_REASONING_PATTERN,
+    locked_model_template,
+)
 from talemate.config import Config as AppConfigData
 from talemate.config.schema import GamePlayerCharacter
 from talemate.config import get_config, Config, update_config
@@ -40,6 +44,15 @@ class SetLLMTemplatePayload(pydantic.BaseModel):
 class DetermineLLMTemplatePayload(pydantic.BaseModel):
     model: str
     client_name: str | None = None
+
+
+class SaveLLMTemplatePayload(pydantic.BaseModel):
+    name: str
+    content: str
+
+
+class DeleteLLMTemplatePayload(pydantic.BaseModel):
+    name: str
 
 
 class ToggleClientPayload(pydantic.BaseModel):
@@ -142,6 +155,57 @@ class ConfigPlugin(Plugin):
             }
         )
 
+    async def handle_list_llm_templates(self, data):
+        """List all std/ built-in and std/user/ templates with content."""
+        self.websocket_handler.queue_put(
+            {
+                "type": "config",
+                "action": "llm_templates_list",
+                "data": {
+                    "builtin": model_prompt.list_std_builtin_templates(),
+                    "user": model_prompt.list_std_user_templates(),
+                },
+            }
+        )
+
+    async def handle_save_llm_template(self, data):
+        """Save/create a user-supplied LLM prompt template in std/user/."""
+        payload = SaveLLMTemplatePayload(**data["data"])
+
+        try:
+            model_prompt.save_std_user_template(payload.name, payload.content)
+            log.info("Saved LLM template", name=payload.name)
+            self.websocket_handler.queue_put(
+                {
+                    "type": "config",
+                    "action": "save_llm_template_complete",
+                    "data": {"success": True, "name": payload.name},
+                }
+            )
+        except Exception as e:
+            log.error("Failed to save LLM template", name=payload.name, error=str(e))
+            self.websocket_handler.queue_put(
+                {
+                    "type": "config",
+                    "action": "save_llm_template_complete",
+                    "data": {"success": False, "error": str(e)},
+                }
+            )
+
+    async def handle_delete_llm_template(self, data):
+        """Delete a user-supplied LLM prompt template from std/user/."""
+        payload = DeleteLLMTemplatePayload(**data["data"])
+
+        deleted = model_prompt.delete_std_user_template(payload.name)
+        log.info("Deleted LLM template", name=payload.name, deleted=deleted)
+        self.websocket_handler.queue_put(
+            {
+                "type": "config",
+                "action": "delete_llm_template_complete",
+                "data": {"success": deleted, "name": payload.name},
+            }
+        )
+
     async def handle_set_llm_template(self, data):
         payload = SetLLMTemplatePayload(**data["data"])
 
@@ -159,8 +223,23 @@ class ConfigPlugin(Plugin):
             client_name=payload.client_name,
         )
 
+        spec = PromptSpec()
+        client = None
+        if payload.client_name:
+            try:
+                client = get_client(payload.client_name)
+            except KeyError:
+                client = None
+        reasoning_tokens = 0
+        if client is not None and getattr(client, "reason_enabled", False):
+            reasoning_tokens = getattr(client, "validated_reason_tokens", 0) or 0
+
         prompt_template_example, prompt_template_file = model_prompt(
-            model_name, "sysmsg", "prompt<|BOT|>{LLM coercion}"
+            model_name,
+            "sysmsg",
+            "prompt<|BOT|>{LLM coercion}",
+            reasoning_tokens=reasoning_tokens,
+            spec=spec,
         )
 
         log.info(
@@ -177,6 +256,9 @@ class ConfigPlugin(Plugin):
                     "prompt_template_example": prompt_template_example,
                     "has_prompt_template": True if prompt_template_example else False,
                     "template_file": prompt_template_file,
+                    "reason_response_pattern_default": (
+                        spec.reasoning_pattern or DEFAULT_REASONING_PATTERN
+                    ),
                 },
             }
         )

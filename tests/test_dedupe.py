@@ -1,5 +1,6 @@
 import pytest
 from talemate.util.dedupe import dedupe_sentences, dedupe_string, similarity_matches
+from talemate.util.prompt import CONDENSED_NEWLINE, expand_condensed
 
 
 # Test cases for dedupe_sentences
@@ -456,6 +457,76 @@ def test_dedupe_string(s, min_length, similarity_threshold, expected):
             s, min_length=min_length, similarity_threshold=similarity_threshold
         )
         == expected
+    )
+
+
+# Test cases for dedupe_string with condensed newline markers
+NL = CONDENSED_NEWLINE
+
+
+@pytest.mark.parametrize(
+    "s, min_length, similarity_threshold, expected",
+    [
+        # Identical condensed lines should dedupe (keeps last occurrence)
+        (
+            f"Some intro\nThe char has blue eyes{NL}and wears a red hat.\nMiddle\nThe char has blue eyes{NL}and wears a red hat.",
+            5,
+            95,
+            f"Some intro\nMiddle\nThe char has blue eyes{NL}and wears a red hat.",
+        ),
+        # Markers should not inflate length for min_length check
+        (
+            f"Short{NL}text\nOther line\nShort{NL}text",
+            32,
+            95,
+            f"Short{NL}text\nOther line\nShort{NL}text",
+        ),
+        # Condensed line should dedupe against similar condensed line (fuzzy)
+        (
+            f"The character has blue eyes{NL}and wears a red hat.\nThe character has blue eyes{NL}and wears a red hat!",
+            5,
+            95,
+            f"The character has blue eyes{NL}and wears a red hat!",
+        ),
+        # Mixed: condensed and plain lines should not interfere
+        (
+            f"Plain duplicate line here.\nA condensed{NL}entry here.\nPlain duplicate line here.",
+            5,
+            95,
+            f"A condensed{NL}entry here.\nPlain duplicate line here.",
+        ),
+        # After dedupe, expand_condensed should restore newlines
+    ],
+)
+def test_dedupe_string_with_condensed_markers(
+    s, min_length, similarity_threshold, expected
+):
+    assert (
+        dedupe_string(
+            s, min_length=min_length, similarity_threshold=similarity_threshold
+        )
+        == expected
+    )
+
+
+def test_dedupe_string_condensed_then_expand():
+    """Full pipeline: dedupe removes duplicate condensed lines, then expand restores newlines."""
+    text = (
+        f"Context intro\n"
+        f"The character is tall and strong.{NL}They wear a blue cloak.{NL}Their eyes are green.\n"
+        f"Some middle content\n"
+        f"The character is tall and strong.{NL}They wear a blue cloak.{NL}Their eyes are green."
+    )
+    deduped = dedupe_string(text, min_length=5, similarity_threshold=95)
+    # One copy should be removed
+    assert deduped.count("tall and strong") == 1
+    # Expand markers
+    expanded = expand_condensed(deduped)
+    assert CONDENSED_NEWLINE not in expanded
+    # The surviving entry should now be multiline
+    assert (
+        "The character is tall and strong.\nThey wear a blue cloak.\nTheir eyes are green."
+        in expanded
     )
 
 

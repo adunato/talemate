@@ -100,10 +100,15 @@ RUN chmod +x /app/docker-entrypoint.sh
 # Set PYTHONPATH to include the src directory
 ENV PYTHONPATH=/app/src:$PYTHONPATH
 
+# Bind on all interfaces inside the container by default. Ports can be
+# overridden with TALEMATE_BACKEND_PORT / TALEMATE_FRONTEND_PORT.
+ENV TALEMATE_BACKEND_HOST=0.0.0.0
+ENV TALEMATE_FRONTEND_HOST=0.0.0.0
+
 # Make ports available to the world outside this container
 EXPOSE 5050
-EXPOSE 8080
+EXPOSE 8082
 
 # Use entrypoint for runtime config, CMD for the actual server
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["uv", "run", "src/talemate/server/run.py", "runserver", "--host", "0.0.0.0", "--port", "5050", "--frontend-host", "0.0.0.0", "--frontend-port", "8080"]
+CMD ["uv", "run", "src/talemate/server/run.py", "runserver"]

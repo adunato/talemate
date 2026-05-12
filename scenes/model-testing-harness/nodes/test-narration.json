@@ -1,0 +1,336 @@
+{
+  "title": "Test Narration",
+  "id": "182f8e4b-f9bd-4aae-9210-1245712a4765",
+  "properties": {},
+  "x": 0,
+  "y": 0,
+  "width": 200,
+  "height": 100,
+  "collapsed": false,
+  "inherited": false,
+  "registry": "model-tests/basics/testNarration",
+  "nodes": {
+    "66daf189-ba25-4d4f-a112-bba2ce5d520c": {
+      "title": "IN state",
+      "id": "66daf189-ba25-4d4f-a112-bba2ce5d520c",
+      "properties": {
+        "input_type": "any",
+        "input_name": "state",
+        "input_optional": false,
+        "input_group": "",
+        "num": 0
+      },
+      "x": 23,
+      "y": 81,
+      "width": 210,
+      "height": 154,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Input",
+      "base_type": "core/Node"
+    },
+    "cd6eca19-93bb-4269-8a5b-5c2eca33c481": {
+      "title": "OUT state",
+      "id": "cd6eca19-93bb-4269-8a5b-5c2eca33c481",
+      "properties": {
+        "output_type": "any",
+        "output_name": "state",
+        "num": 0
+      },
+      "x": 293,
+      "y": 81,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "ce3eea10-92ba-4cb6-a35c-b36924c100ca": {
+      "title": "true",
+      "id": "ce3eea10-92ba-4cb6-a35c-b36924c100ca",
+      "properties": {
+        "value": true
+      },
+      "x": 53,
+      "y": 351,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "43887c2b-6dda-4ed9-9fe9-1a2f296c97c4": {
+      "title": "Error Handler",
+      "id": "43887c2b-6dda-4ed9-9fe9-1a2f296c97c4",
+      "properties": {},
+      "x": 1313,
+      "y": 727,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/ErrorHandler",
+      "base_type": "core/Node"
+    },
+    "ab6b6754-5b0f-49d5-9a48-eb6f4f1dd24d": {
+      "title": "FN error_handler",
+      "id": "ab6b6754-5b0f-49d5-9a48-eb6f4f1dd24d",
+      "properties": {
+        "name": "error_handler"
+      },
+      "x": 1063,
+      "y": 730,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "f0d00aef-0d4c-42f0-8344-8a0472036bf7": {
+      "title": "DEF error_handler",
+      "id": "f0d00aef-0d4c-42f0-8344-8a0472036bf7",
+      "properties": {
+        "name": "error_handler"
+      },
+      "x": 812,
+      "y": 728,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "d3852e0b-063b-454d-9fa4-66f28928f339": {
+      "title": "Dict Collector",
+      "id": "d3852e0b-063b-454d-9fa4-66f28928f339",
+      "properties": {},
+      "x": 700,
+      "y": 431,
+      "width": 140,
+      "height": 81,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/DictCollector",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "26c07496-cc2b-47e3-a4d8-8b3c38deb01a": {
+      "title": "Get",
+      "id": "26c07496-cc2b-47e3-a4d8-8b3c38deb01a",
+      "properties": {
+        "attribute": "success"
+      },
+      "x": 1200,
+      "y": 321,
+      "width": 210,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/Get",
+      "base_type": "core/Node"
+    },
+    "4557da8d-dbcc-490a-8cfe-1de532b8004c": {
+      "title": "OUT success",
+      "id": "4557da8d-dbcc-490a-8cfe-1de532b8004c",
+      "properties": {
+        "output_type": "bool",
+        "output_name": "success",
+        "num": 1
+      },
+      "x": 1730,
+      "y": 341,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "a64815b1-fb8e-4582-850e-f0a9e8c481ee": {
+      "title": "Emit Test Result",
+      "id": "a64815b1-fb8e-4582-850e-f0a9e8c481ee",
+      "properties": {
+        "message_title": "Narrative Generation",
+        "message": "Test generating narration without looping into actor turns."
+      },
+      "x": 1460,
+      "y": 321,
+      "width": 210,
+      "height": 142,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/emitTestResult",
+      "base_type": "core/Graph"
+    },
+    "126d2c20-ee08-4789-b10a-2f2cdc874e8f": {
+      "title": "Make Bool",
+      "id": "126d2c20-ee08-4789-b10a-2f2cdc874e8f",
+      "properties": {
+        "value": false
+      },
+      "x": 283,
+      "y": 827,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "320e846d-e03b-43df-8e30-6178bc7749e8": {
+      "title": "Argument",
+      "id": "320e846d-e03b-43df-8e30-6178bc7749e8",
+      "properties": {
+        "name": "exc",
+        "typ": "any"
+      },
+      "x": 23,
+      "y": 727,
+      "width": 210,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Argument",
+      "base_type": "core/Node"
+    },
+    "baee64aa-f036-419c-a3da-713924b45c99": {
+      "title": "Emit Test Result",
+      "id": "baee64aa-f036-419c-a3da-713924b45c99",
+      "properties": {
+        "message_title": "Narrative Generation",
+        "message": "Test generating narration without looping into actor turns."
+      },
+      "x": 560,
+      "y": 730,
+      "width": 210,
+      "height": 142,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/emitTestResult",
+      "base_type": "core/Graph"
+    },
+    "721a9dac-1e8f-4b6b-bc04-2376e158c84d": {
+      "title": "Get Agent",
+      "id": "721a9dac-1e8f-4b6b-bc04-2376e158c84d",
+      "properties": {
+        "agent_name": "narrator"
+      },
+      "x": 770,
+      "y": 390,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "agents/GetAgent",
+      "base_type": "core/Node"
+    },
+    "aba94d23-9d5f-4387-ab43-84a934222cef": {
+      "title": "Generate Progress Narration",
+      "id": "aba94d23-9d5f-4387-ab43-84a934222cef",
+      "properties": {
+        "response_length": 512
+      },
+      "x": 330,
+      "y": 351,
+      "width": 245,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/narrator/GenerateProgress",
+      "base_type": "core/Node"
+    },
+    "cfddbe3c-ef37-4c8c-88d6-5a35c0276084": {
+      "title": "Scoped API Function",
+      "id": "cfddbe3c-ef37-4c8c-88d6-5a35c0276084",
+      "properties": {
+        "code": "generated = arguments[\"generated\"]\nsuccess = True\nfor line in generated.split(\"\\n\"):\n  if line.startswith(\"VERA-7:\") or line.startswith(\"NIKO-12:\"):\n    success = False\n    break\n  elif line in [\"VERA-7\", \"NIKO-12\"]:\n    success = False\n    break\nresult[\"success\"] = success"
+      },
+      "x": 940,
+      "y": 311,
+      "width": 210,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/ScopedAPIFunction",
+      "base_type": "core/Node"
+    }
+  },
+  "edges": {
+    "66daf189-ba25-4d4f-a112-bba2ce5d520c.value": [
+      "cd6eca19-93bb-4269-8a5b-5c2eca33c481.value"
+    ],
+    "ce3eea10-92ba-4cb6-a35c-b36924c100ca.value": [
+      "aba94d23-9d5f-4387-ab43-84a934222cef.state"
+    ],
+    "ab6b6754-5b0f-49d5-9a48-eb6f4f1dd24d.fn": [
+      "43887c2b-6dda-4ed9-9fe9-1a2f296c97c4.fn"
+    ],
+    "d3852e0b-063b-454d-9fa4-66f28928f339.dict": [
+      "cfddbe3c-ef37-4c8c-88d6-5a35c0276084.arguments"
+    ],
+    "26c07496-cc2b-47e3-a4d8-8b3c38deb01a.value": [
+      "a64815b1-fb8e-4582-850e-f0a9e8c481ee.state",
+      "a64815b1-fb8e-4582-850e-f0a9e8c481ee.success"
+    ],
+    "a64815b1-fb8e-4582-850e-f0a9e8c481ee.success": [
+      "4557da8d-dbcc-490a-8cfe-1de532b8004c.value"
+    ],
+    "126d2c20-ee08-4789-b10a-2f2cdc874e8f.value": [
+      "baee64aa-f036-419c-a3da-713924b45c99.success"
+    ],
+    "320e846d-e03b-43df-8e30-6178bc7749e8.value": [
+      "baee64aa-f036-419c-a3da-713924b45c99.state"
+    ],
+    "baee64aa-f036-419c-a3da-713924b45c99.state": [
+      "f0d00aef-0d4c-42f0-8344-8a0472036bf7.nodes"
+    ],
+    "721a9dac-1e8f-4b6b-bc04-2376e158c84d.agent": [
+      "cfddbe3c-ef37-4c8c-88d6-5a35c0276084.agent"
+    ],
+    "aba94d23-9d5f-4387-ab43-84a934222cef.generated": [
+      "d3852e0b-063b-454d-9fa4-66f28928f339.item0",
+      "cfddbe3c-ef37-4c8c-88d6-5a35c0276084.state"
+    ],
+    "cfddbe3c-ef37-4c8c-88d6-5a35c0276084.result": [
+      "26c07496-cc2b-47e3-a4d8-8b3c38deb01a.object"
+    ]
+  },
+  "groups": [
+    {
+      "title": "Error Handling",
+      "x": -2,
+      "y": 652,
+      "width": 1480,
+      "height": 258,
+      "color": "#A88",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Process",
+      "x": -2,
+      "y": 6,
+      "width": 1990,
+      "height": 638,
+      "color": "#3f789e",
+      "font_size": 24,
+      "inherited": false
+    }
+  ],
+  "comments": [],
+  "extends": null,
+  "base_type": "core/Graph",
+  "inputs": [],
+  "outputs": [],
+  "module_properties": {},
+  "style": null
+}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import traceback
 import uuid
 from collections import deque
@@ -50,6 +51,10 @@ from .chatterbox import ChatterboxMixin
 from .websocket_handler import TTSWebsocketHandler
 from .f5tts import F5TTSMixin
 from .pocket_tts import PocketTTSMixin
+from .openai_compatible import (
+    OpenAICompatibleMixin,
+    REGISTRY_KEY as OPENAI_COMPAT_REGISTRY_KEY,
+)  # noqa: F811
 from .audio_tags import AudioTagsMixin
 from .util import parse_chunks, rejoin_chunks
 
@@ -79,6 +84,7 @@ class TTSAgent(
     AudioTagsMixin,
     ElevenLabsMixin,
     OpenAIMixin,
+    OpenAICompatibleMixin,
     GoogleMixin,
     KokoroMixin,
     ChatterboxMixin,
@@ -204,6 +210,16 @@ class TTSAgent(
                         label="Auto-generate for context investigation",
                         description="Generate audio for context investigation messages",
                     ),
+                    "automatic_setup": AgentActionConfig(
+                        type="bool",
+                        value=True,
+                        label="Automatic Setup",
+                        description=(
+                            "Automatically add a backend for any configured "
+                            "client that exposes a TTS endpoint (e.g. KoboldCpp "
+                            "with a TTS model loaded)."
+                        ),
+                    ),
                 },
             ),
         }
@@ -216,6 +232,7 @@ class TTSAgent(
         OpenAIMixin.add_actions(actions)
         F5TTSMixin.add_actions(actions)
         PocketTTSMixin.add_actions(actions)
+        OpenAICompatibleMixin.add_actions(actions)
 
         return actions
 
@@ -223,6 +240,7 @@ class TTSAgent(
         self.is_enabled = False  # tts agent is disabled by default
         self.actions = TTSAgent.init_actions()
         self.playback_done_event = asyncio.Event()
+        self._suppress_auto_generation: int = 0
 
         # Queue management for voice generation
         # Each queue instance gets a unique id so it can later be referenced
@@ -237,6 +255,235 @@ class TTSAgent(
         self._queue_id: str | None = None
         self._queue_task: asyncio.Task | None = None
         self._queue_lock = asyncio.Lock()
+
+    @contextlib.contextmanager
+    def suppress_auto_generation(self):
+        """Context manager to suppress automatic TTS generation.
+
+        While active, reactive generation triggered by game_loop_new_message
+        is skipped. Explicit calls to generate() still work.
+        """
+        self._suppress_auto_generation += 1
+        try:
+            yield
+        finally:
+            self._suppress_auto_generation -= 1
+
+    # ------------------------------------------------------------------
+    # Dynamic OpenAI-compatible backends
+    # ------------------------------------------------------------------
+
+    def dynamic_action_factory(
+        self, registry_key: str, slug: str, label: str
+    ) -> AgentAction:
+        if registry_key == OPENAI_COMPAT_REGISTRY_KEY:
+            return OpenAICompatibleMixin.build_backend_action(slug, label)
+        return super().dynamic_action_factory(registry_key, slug, label)
+
+    def reserved_slugs_for_registry(self, registry_key: str) -> set[str]:
+        """Block dynamic-backend slugs that would shadow a static API or
+        the registry tab itself."""
+        if registry_key == OPENAI_COMPAT_REGISTRY_KEY:
+            # All static api choices (every entry in apis.choices that wasn't
+            # itself injected by a previous dynamic backend), plus the
+            # registry key, plus reserved internal action keys.
+            choices = self.actions["_config"].config["apis"].choices or []
+            static_api_slugs = {
+                c["value"]
+                for c in choices
+                if not c.get("_dynamic_backend") and c.get("value")
+            }
+            return static_api_slugs | {registry_key, "_config"}
+        return super().reserved_slugs_for_registry(registry_key)
+
+    def _refresh_apis_choices(self) -> None:
+        """Rebuild the apis-flag choices to include current dynamic backends.
+
+        Also sanitizes ``apis.value`` against the rebuilt choices list — any
+        enabled slug that no longer has a matching choice (orphaned by a
+        backend deletion, or a stale entry persisted from a previous session)
+        is dropped. Without this, deleting a dynamic backend can leave an
+        unremovable chip in the "Enabled APIs" dropdown because the frontend
+        chip is keyed off ``apis.value`` while the dropdown options come from
+        ``apis.choices``.
+        """
+        # The original choices are populated by static mixins' add_actions.
+        # We rebuild on every change by stripping previously-added dynamic
+        # entries (identified by their value being a registered slug) and
+        # re-appending them with up-to-date labels.
+        choices = self.actions["_config"].config["apis"].choices or []
+        backend_entries = {
+            e["slug"]: e["label"]
+            for e in self.dynamic_children_entries(OPENAI_COMPAT_REGISTRY_KEY)
+        }
+        # Strip previously-injected dynamic entries. Two filters because:
+        #   1. ``value in backend_entries`` covers slugs we are about to
+        #      re-add with a (possibly updated) label — drop the stale copy.
+        #   2. ``_dynamic_backend`` flag covers slugs that are no longer
+        #      registered at all — they need to disappear from the choices
+        #      list so the UI checkbox stops showing them.
+        choices = [
+            c
+            for c in choices
+            if c.get("value") not in backend_entries and not c.get("_dynamic_backend")
+        ]
+        for slug, label in backend_entries.items():
+            choices.append(
+                {
+                    "value": slug,
+                    "label": label,
+                    "help": "OpenAI-compatible backend",
+                    "_dynamic_backend": True,
+                }
+            )
+        self.actions["_config"].config["apis"].choices = choices
+
+        valid_values = {c["value"] for c in choices if c.get("value")}
+        enabled = list(self.actions["_config"].config["apis"].value or [])
+        dropped = [v for v in enabled if v not in valid_values]
+        if dropped:
+            log.info("dropping orphaned apis.value entries", dropped=dropped)
+            self.actions["_config"].config["apis"].value = [
+                v for v in enabled if v in valid_values
+            ]
+
+    def on_dynamic_child_added(self, registry_key: str, slug: str, label: str) -> None:
+        if registry_key != OPENAI_COMPAT_REGISTRY_KEY:
+            return
+        self._refresh_apis_choices()
+
+    def on_dynamic_child_removed(self, registry_key: str, slug: str) -> None:
+        if registry_key != OPENAI_COMPAT_REGISTRY_KEY:
+            return
+        # Drop the slug from the apis-enabled list
+        enabled = list(self.actions["_config"].config["apis"].value or [])
+        if slug in enabled:
+            enabled.remove(slug)
+            self.actions["_config"].config["apis"].value = enabled
+        self._refresh_apis_choices()
+        # Purge any voices whose provider matched this backend (in-memory).
+        # Persistence happens in persist_dynamic_external_state, which the
+        # websocket plugin awaits after this hook returns.
+        try:
+            library = self.voice_library
+        except RuntimeError:
+            return
+        purged = [vid for vid, v in library.voices.items() if v.provider == slug]
+        for vid in purged:
+            del library.voices[vid]
+        if purged:
+            log.info(
+                "purged voices for removed backend",
+                backend=slug,
+                count=len(purged),
+            )
+
+    def on_dynamic_child_renamed(
+        self, registry_key: str, slug: str, label: str
+    ) -> None:
+        if registry_key != OPENAI_COMPAT_REGISTRY_KEY:
+            return
+        self._refresh_apis_choices()
+
+    async def persist_dynamic_external_state(self, registry_key: str) -> None:
+        """Persist the voice library after a backend register/unregister so
+        in-memory voice purges hit disk before the operation reports done.
+        """
+        if registry_key != OPENAI_COMPAT_REGISTRY_KEY:
+            return
+        try:
+            library = self.voice_library
+        except RuntimeError:
+            return
+        await voice_library.save_voice_library(library)
+
+    async def apply_config(self, *args, **kwargs):
+        await super().apply_config(*args, **kwargs)
+        # After config restore, re-extend the apis-flag choices so any saved
+        # dynamic backends show up in the enable-toggle list.
+        self._refresh_apis_choices()
+
+    @property
+    def automatic_setup(self) -> bool:
+        return self.actions["_config"].config["automatic_setup"].value
+
+    async def setup_check(self):
+        """Per-tick auto-setup of TTS backends from configured clients.
+
+        Iterates every configured client and asks each whether it can host an
+        OpenAI-compatible TTS backend (via the
+        ``tts_openai_compatible_setup`` capability method). Each capable
+        client gets to register its own backend. The setup is idempotent —
+        clients are responsible for skipping if they're already registered.
+
+        Side effect: if a new backend was *added* to apis.value during this
+        pass and the agent itself is currently disabled, the agent is auto-
+        enabled — kcpp loading a TTS model implies the user wants voice.
+        """
+        if not self.automatic_setup:
+            return False
+
+        apis_before = set(self.actions["_config"].config["apis"].value or [])
+
+        any_changed = False
+        for client in instance.CLIENTS.values():
+            if not client or not getattr(client, "enabled", True):
+                continue
+            fn = getattr(client, "tts_openai_compatible_setup", None)
+            if not fn:
+                continue
+            try:
+                if await fn(self):
+                    any_changed = True
+            except Exception as exc:
+                log.error(
+                    "tts setup_check raised",
+                    client=getattr(client, "name", "?"),
+                    error=str(exc),
+                )
+
+        if any_changed:
+            apis_after = set(self.actions["_config"].config["apis"].value or [])
+            added_apis = apis_after - apis_before
+            if added_apis and not self.is_enabled:
+                log.info(
+                    "TTS agent auto-enabled by setup_check",
+                    added_apis=sorted(added_apis),
+                )
+                self.is_enabled = True
+            await self.save_config()
+            await self.emit_status()
+        return any_changed
+
+    async def refresh_backend_voices(self, slug: str) -> int:
+        """Fetch voices for *slug* and union them into the global library.
+
+        Returns the number of fetched voices. A return of 0 means the backend
+        has no listing endpoint *or* the response was empty. Hard failures
+        (HTTP errors, JSON shape mismatches, etc.) propagate to the caller
+        so the UI can surface the real error rather than a generic "no
+        endpoint" message.
+        """
+        if slug not in self.dynamic_child_slugs(OPENAI_COMPAT_REGISTRY_KEY):
+            return 0
+        fetcher = self.api_method(slug, "fetch_voices")
+        if fetcher is None:
+            return 0
+        fetched: list[Voice] = await fetcher()
+
+        library = self.voice_library
+        fetched_ids = {v.id for v in fetched}
+        for v in fetched:
+            library.voices.setdefault(v.id, v)
+        # Drop auto-fetched voices the server no longer reports.
+        for vid in list(library.voices.keys()):
+            v = library.voices[vid]
+            if v.provider != slug or vid in fetched_ids:
+                continue
+            if not v.tags and v.label == v.provider_id:
+                del library.voices[vid]
+        await voice_library.save_voice_library(library)
+        return len(fetched)
 
     # general helpers
 
@@ -278,6 +525,17 @@ class TTSAgent(
     def generate_for_context_investigation(self) -> bool:
         return (
             self.actions["_config"].config["generate_for_context_investigation"].value
+        )
+
+    @property
+    def has_auto_generation(self) -> bool:
+        return any(
+            [
+                self.generate_for_npc,
+                self.generate_for_player,
+                self.generate_for_narration,
+                self.generate_for_context_investigation,
+            ]
         )
 
     @property
@@ -355,9 +613,9 @@ class TTSAgent(
             ).model_dump()
 
         for api in used_apis:
-            fn = getattr(self, f"{api}_agent_details", None)
-            if fn:
-                details.update(fn)
+            api_details = self.api_attr(api, "agent_details", None)
+            if api_details:
+                details.update(api_details)
         return details
 
     @property
@@ -379,9 +637,9 @@ class TTSAgent(
         api_status: list[APIStatus] = []
 
         for api in self.all_apis:
-            not_configured_reason = getattr(self, f"{api}_not_configured_reason", None)
-            not_configured_action = getattr(self, f"{api}_not_configured_action", None)
-            api_info: str | None = getattr(self, f"{api}_info", None)
+            not_configured_reason = self.api_attr(api, "not_configured_reason", None)
+            not_configured_action = self.api_attr(api, "not_configured_action", None)
+            api_info: str | None = self.api_attr(api, "info", None)
             messages: list[Note] = []
             if not_configured_reason:
                 messages.append(
@@ -391,7 +649,7 @@ class TTSAgent(
                         icon="mdi-alert-circle-outline",
                         actions=[not_configured_action]
                         if not_configured_action
-                        else None,
+                        else [],
                     )
                 )
             if api_info:
@@ -408,11 +666,11 @@ class TTSAgent(
                 ready=self.api_ready(api),
                 configured=self.api_configured(api),
                 messages=messages,
-                supports_mixing=getattr(self, f"{api}_supports_mixing", False),
+                supports_mixing=self.api_attr(api, "supports_mixing", False),
                 supports_audio_tags=self._api_supports_audio_tags(api),
                 provider=provider(api),
-                default_model=getattr(self, f"{api}_model", None),
-                model_choices=getattr(self, f"{api}_model_choices", []),
+                default_model=self.api_attr(api, "model", None),
+                model_choices=self.api_attr(api, "model_choices", []),
             )
             api_status.append(_status)
 
@@ -464,6 +722,9 @@ class TTSAgent(
         """
         Called when a conversation is generated
         """
+
+        if self._suppress_auto_generation:
+            return
 
         if self.scene.environment == "creative":
             return
@@ -566,7 +827,23 @@ class TTSAgent(
         return self.api_configured(api)
 
     def api_configured(self, api: str) -> bool:
-        return getattr(self, f"{api}_configured", True)
+        return self.api_attr(api, "configured", True)
+
+    # ------------------------------------------------------------------
+    # Per-api dispatch (static mixins + dynamic OpenAI-compatible backends)
+    # ------------------------------------------------------------------
+
+    def api_attr(self, api: str, name: str, default=None):
+        """Resolve a property-like per-api value across static + dynamic APIs."""
+        if api in self.dynamic_child_slugs(OPENAI_COMPAT_REGISTRY_KEY):
+            return self.dynamic_attr(OPENAI_COMPAT_REGISTRY_KEY, api, name, default)
+        return getattr(self, f"{api}_{name}", default)
+
+    def api_method(self, api: str, name: str, default=None):
+        """Resolve a callable per-api method across static + dynamic APIs."""
+        if api in self.dynamic_child_slugs(OPENAI_COMPAT_REGISTRY_KEY):
+            return self.dynamic_method(OPENAI_COMPAT_REGISTRY_KEY, api, name, default)
+        return getattr(self, f"{api}_{name}", default)
 
     def api_used(self, api: str) -> bool:
         """
@@ -765,8 +1042,8 @@ class TTSAgent(
                     api=_api,
                     voice=Voice(**_voice.model_dump()),
                     model=_voice.provider_model,
-                    generate_fn=getattr(self, f"{_api}_generate"),
-                    prepare_fn=getattr(self, f"{_api}_prepare_chunk", None),
+                    generate_fn=self.api_method(_api, "generate"),
+                    prepare_fn=self.api_method(_api, "prepare_chunk"),
                     character_name=character.name if character else None,
                     text=[_dlg_chunk.text],
                     type=_dlg_chunk.type,
@@ -781,8 +1058,8 @@ class TTSAgent(
                     api=_api,
                     voice=Voice(**_voice.model_dump()),
                     model=_voice.provider_model,
-                    generate_fn=getattr(self, f"{_api}_generate"),
-                    prepare_fn=getattr(self, f"{_api}_prepare_chunk", None),
+                    generate_fn=self.api_method(_api, "generate"),
+                    prepare_fn=self.api_method(_api, "prepare_chunk"),
                     character_name=character.name if character else None,
                     text=[text],
                     type="dialogue" if character else "exposition",
@@ -796,13 +1073,15 @@ class TTSAgent(
         # second chunking by splitting into chunks of max_generation_length
 
         for chunk in chunks:
-            api_chunk_size = getattr(self, f"{chunk.api}_chunk_size", 0)
+            api_chunk_size = self.api_attr(chunk.api, "chunk_size", 0)
 
             log.debug("chunking", api=chunk.api, api_chunk_size=api_chunk_size)
 
             _text = []
 
-            max_generation_length = getattr(self, f"{chunk.api}_max_generation_length")
+            max_generation_length = self.api_attr(
+                chunk.api, "max_generation_length", 1024
+            )
 
             if api_chunk_size > 0:
                 max_generation_length = min(max_generation_length, api_chunk_size)

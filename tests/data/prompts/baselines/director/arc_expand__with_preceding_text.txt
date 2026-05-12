@@ -1,0 +1,98 @@
+## Context
+
+## Classification
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: Third person limited, past tense.
+
+Scenario Premise:
+A peaceful clearing in the heart of an ancient forest.
+
+## Scene
+
+Elena: Hello there, traveler.
+The sun filters through the leaves above.
+Marcus: What brings you to these woods?
+
+## Characters
+
+### Hero
+name: Hero
+gender: male
+age: early 30s
+occupation: Adventurer
+
+#### General character guide for Hero
+Speaks calmly and with wisdom.
+
+### Elena
+name: Elena
+gender: female
+age: early 30s
+occupation: Healer
+
+A wandering healer with knowledge of ancient herbs.
+
+#### General character guide for Elena
+Speaks calmly and with wisdom.
+
+## Task
+Write scene prose from the beat descriptions below.
+
+**Arc position:** CLIMAX (chunk 2 of 2, tension 0.5–0.7)
+
+You are writing the CLIMAX — the dramatic high point. Commit fully to the peak intensity. This is where the biggest moments happen.
+
+**This is the FINAL chunk of a CONTINUATION segment.** The story does NOT end here. Stay at peak intensity through the FINAL block. Do NOT wind down. Do NOT let characters regroup. Do NOT close the situation. End on the peak moment itself — the decision, the reveal, the strike, the impact. The user picks up from the live moment. Write the last block as if the scene is about to continue five seconds later.
+
+**Story so far** (continue from here):
+```
+The door creaked open, revealing an empty room. Elena stepped inside cautiously.
+```
+
+CRITICAL: Do NOT repeat, rephrase, or re-describe ANY event, action, dialogue, or image from the story so far. If a beat description asks for something that already happened above, find a NEW angle or skip to the next development. The reader has already seen it.
+
+**Beats to write:**
+
+Beat 2 [dialogue] (pacing: moderate, tension: 0.5)
+  Characters: Elena
+  Elena confronts Hero about what happened last night, demanding answers.
+
+Beat 3 [action] (pacing: fast, tension: 0.7)
+  Characters: Hero, Elena
+  A sudden noise from the basement forces both characters to investigate together.
+
+**OUTPUT FORMAT (mandatory):**
+
+Your response must be a json list inside `<BLOCKS>` tags. Each item has:
+- `type`: either `narrator` or `character`
+- `name`: (character items only) the character's name
+- `content`: the prose content for this block
+
+- Narration/action/transition/reveal beats → `narrator` items
+- Dialogue beats → `character` items (action + body language + dialogue as one unit)
+- Items can appear in any order and frequency
+
+Example:
+```
+<BLOCKS>
+[
+  {"type": "narrator", "content": "The corridor stretched ahead, dark and silent. Three fault lights blinked amber warnings."},
+  {"type": "character", "name": "Elena", "content": "She grabbed his arm, her grip tight. \"We need to leave. Now.\" Her eyes didn't leave the shadows behind them."},
+  {"type": "narrator", "content": "The ship groaned. Somewhere below, metal twisted against metal."}
+]
+</BLOCKS>
+```
+
+**Writing rules:**
+- `character` items must be complete character moments: physical action, body language, AND dialogue together. Not just a quoted line.
+- ONE strong image per paragraph. Develop it — let the reader sit with it before introducing the next. Do not stack multiple phenomena in rapid succession.
+- Do NOT repeat sensory details or character descriptions already established in the "Story so far" section.
+- Vary sentence length. Mix short and long.
+- Show emotion through action, not narration. "His hands shook" not "he felt terror."
+- Low-tension beats must use short sentences, plain language, breathing room.
+- Do NOT start character item content with the character's name — the `name` field already identifies them.
+- **Dialogue variety:** Each character's dialogue must serve a DIFFERENT function across beats. Vary between: questioning, arguing, joking, commanding, confessing, deflecting, comforting, provoking. A character must NOT deliver the same type of speech twice. If a character made a philosophical declaration in one beat, their next line must be a question, a joke, or a pragmatic instruction — anything except another declaration.
+
+The length of your response must fit within 4 paragraphs.
+<|BOT|><BLOCKS>

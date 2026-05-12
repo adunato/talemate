@@ -1,4 +1,8 @@
 ## Characters
+### Hero
+
+### Elena
+A wandering healer with knowledge of ancient herbs.
 
 ## Classification
 
@@ -8,6 +12,8 @@
 
 ## Classification
 Content Classification: Fantasy adventure story
+
+Narrative Perspective: Third person limited, past tense.
 
 The sun filters through the leaves above.
 

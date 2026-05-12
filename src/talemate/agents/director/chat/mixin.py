@@ -1,16 +1,21 @@
 import structlog
-from typing import Any, TYPE_CHECKING, Callable, Awaitable
+from typing import Any, Literal, TYPE_CHECKING, Callable, Awaitable
 
+import talemate.instance as instance
 from talemate.agents.base import set_processing, AgentAction, AgentActionConfig
+from talemate.emit import emit
 from talemate.game.engine.nodes.core import GraphState
 
 from talemate.agents.director.action_core import utils as action_utils
 from talemate.agents.director.action_core.exceptions import (
+    ActionFailed,
     ActionRejected,
     UnknownAction,
 )
 
 from talemate.prompts import Prompt
+from talemate.agents.director.plan.util import get_plan, cleanup_orphaned_plans
+from .context import director_chat_context
 
 from .response_specs import CHAT_TITLE_SPEC
 from .schema import (
@@ -20,6 +25,7 @@ from .schema import (
     DirectorChatBudgets,
     DirectorChatListEntry,
 )
+from .settings import ChatModeSettings
 
 if TYPE_CHECKING:
     from talemate.tale_mate import Scene
@@ -100,11 +106,29 @@ class DirectorChatMixin:
                     min=0.05,
                     max=0.95,
                 ),
+                "action_confirm_timeout": AgentActionConfig(
+                    type="number",
+                    label="Action confirm timeout",
+                    description="How long to wait (in minutes) for user confirmation of write actions. 0 means wait indefinitely.",
+                    value=3,
+                    step=1,
+                    min=0,
+                    max=60,
+                ),
                 "custom_instructions": AgentActionConfig(
                     type="blob",
                     label="Custom instructions",
                     description="Custom instructions to add to the director chat.",
                     value="",
+                ),
+                "generate_arc_iterations_limit": AgentActionConfig(
+                    type="number",
+                    label="Arc generation iteration limit",
+                    description="Maximum iterations for autonomous arc generation. Should be high enough to complete all beats.",
+                    value=200,
+                    step=10,
+                    min=20,
+                    max=500,
                 ),
             },
         )
@@ -118,6 +142,10 @@ class DirectorChatMixin:
     @property
     def chat_auto_iterations_limit(self) -> int:
         return int(self.actions["chat"].config["auto_iterations_limit"].value)
+
+    @property
+    def chat_generate_arc_iterations_limit(self) -> int:
+        return int(self.actions["chat"].config["generate_arc_iterations_limit"].value)
 
     @property
     def chat_response_length(self) -> int:
@@ -138,6 +166,11 @@ class DirectorChatMixin:
     @property
     def chat_custom_instructions(self) -> str:
         return self.actions["chat"].config["custom_instructions"].value
+
+    @property
+    def chat_action_confirm_timeout(self) -> int:
+        """Timeout in seconds. 0 means wait indefinitely."""
+        return int(self.actions["chat"].config["action_confirm_timeout"].value) * 60
 
     # === Node initialization ===
 
@@ -164,21 +197,45 @@ class DirectorChatMixin:
         """Set the last active chat id."""
         self.set_scene_states(**{self.LAST_ACTIVE_CHAT_KEY: chat_id})
 
+    @property
+    def active_chat_plan_id(self) -> str | None:
+        """Return the plan_id linked to the active chat, or None."""
+        chat_id = self.chat_get_last_active_id()
+        if not chat_id:
+            return None
+        chat = self.chat_get(chat_id)
+        return chat.plan_id if chat else None
+
+    @active_chat_plan_id.setter
+    def active_chat_plan_id(self, plan_id: str | None):
+        """Set the plan_id on the active chat."""
+        chat_id = self.chat_get_last_active_id()
+        if not chat_id:
+            return
+        chat = self.chat_get(chat_id)
+        if chat:
+            chat.plan_id = plan_id
+            self._chat_save(chat)
+
     def _chat_save(self, chat: DirectorChat):
         """Persist a single chat back into the chats collection."""
         chats = self.chat_get_all_chats()
         chats[chat.id] = chat.model_dump()
         self.chat_set_all_chats(chats)
 
-    def _chat_initial_message(self) -> str:
+    def _chat_initial_message(
+        self,
+        default_message: str = "Hey, how can I help you with this scene?",
+        persona_field: str = "initial_chat_message",
+    ) -> str:
         """Return initial Director chat message using persona override when present."""
-        default_message = "Hey, how can I help you with this scene?"
         persona = self.scene.agent_persona("director")
-        if persona and persona.initial_chat_message:
+        persona_value = getattr(persona, persona_field) if persona else None
+        if persona_value:
             try:
-                return persona.formatted("initial_chat_message", self.scene, "director")
+                return persona.formatted(persona_field, self.scene, "director")
             except Exception:
-                return persona.initial_chat_message or default_message
+                return persona_value or default_message
         return default_message
 
     def chat_list(self) -> list[DirectorChatListEntry]:
@@ -234,6 +291,42 @@ class DirectorChatMixin:
         )
         self._chat_save(chat)
         self.chat_set_last_active_id(chat.id)
+        cleanup_orphaned_plans(self.scene, self.chat_get_all_chats())
+        return chat
+
+    def chat_create_generate_arc(
+        self,
+        instructions: str,
+        beat_count: int = 8,
+        mode: Literal["generate_arc", "generate_arc_expand"] = "generate_arc",
+        modes: ChatModeSettings | None = None,
+    ) -> DirectorChat:
+        """Create a new chat in generate_arc mode with planning instructions as initial user message."""
+        chat = DirectorChat(
+            messages=[
+                DirectorChatMessage(
+                    message=self._chat_initial_message(
+                        "I'm ready to plan and generate your scene. "
+                        "I'll create an outline, then execute each beat to produce the actual scene content.",
+                        persona_field="initial_arc_chat_message",
+                    ),
+                    source="director",
+                ),
+                DirectorChatMessage(
+                    message=(
+                        f"Plan and generate a scene with {beat_count} beats using the following instructions:\n\n"
+                        f"{instructions}"
+                    ),
+                    source="user",
+                ),
+            ],
+            mode=mode,
+            confirm_write_actions=False,
+            modes=modes or ChatModeSettings(),
+        )
+        self._chat_save(chat)
+        self.chat_set_last_active_id(chat.id)
+        cleanup_orphaned_plans(self.scene, self.chat_get_all_chats())
         return chat
 
     def chat_delete(self, chat_id: str) -> bool:
@@ -251,6 +344,7 @@ class DirectorChatMixin:
                 self.chat_set_last_active_id(remaining[0].id)
             else:
                 self.chat_set_last_active_id(None)
+        cleanup_orphaned_plans(self.scene, self.chat_get_all_chats())
         return True
 
     def chat_clear(self, chat_id: str) -> bool:
@@ -450,7 +544,26 @@ class DirectorChatMixin:
             "director_history_trim": action_utils.reverse_trim_history,
         }
 
+        def _sync_plan_to_context():
+            """Inject active plan into extra_vars for the prompt template."""
+            nonlocal chat
+            # Re-fetch chat to avoid overwriting messages appended by other methods
+            chat = self.chat_get(chat_id) or chat
+            chat_ctx = director_chat_context.get()
+            plan_id = (chat_ctx.plan_id if chat_ctx else None) or (
+                chat.plan_id if chat else None
+            )
+            if plan_id:
+                if chat and chat.plan_id != plan_id:
+                    chat.plan_id = plan_id
+                    self._chat_save(chat)
+                extra_vars["scene_plan"] = get_plan(self.scene, plan_id)
+            else:
+                extra_vars.pop("scene_plan", None)
+
         while True:
+            _sync_plan_to_context()
+
             actions_selected: list[dict] | None
             if pending_actions is None:
                 kind = f"direction_{self.chat_response_length}"
@@ -521,6 +634,18 @@ class DirectorChatMixin:
                     ),
                     on_update=on_update,
                 )
+            except ActionFailed as e:
+                log.warning("director.chat.actions.execute.action_failed", error=e)
+                await self.chat_append_message(
+                    chat_id,
+                    DirectorChatActionResultMessage(
+                        name="action_failed",
+                        result=str(e),
+                        instructions="",
+                        status="error",
+                    ),
+                    on_update=on_update,
+                )
             except ActionRejected as e:
                 await self.chat_append_message(
                     chat_id,
@@ -545,6 +670,8 @@ class DirectorChatMixin:
                     ),
                     on_update=on_update,
                 )
+
+            _sync_plan_to_context()
 
             # Follow-up request
             try:
@@ -584,7 +711,17 @@ class DirectorChatMixin:
                 )
 
             iterations_done += 1
-            if iterations_done >= max(1, self.chat_auto_iterations_limit):
+
+            # generate_arc mode: unlocked iteration (up to hard safety limit)
+            # normal modes: respect the configured auto-iteration limit
+            if mode in ("generate_arc", "generate_arc_expand"):
+                if iterations_done >= self.chat_generate_arc_iterations_limit:
+                    log.warning("director.chat.generate_arc.hard_limit_reached")
+                    break
+                if hasattr(self, "scene") and not self.scene.active:
+                    log.warning("director.chat.generate_arc.scene_inactive")
+                    break
+            elif iterations_done >= max(1, self.chat_auto_iterations_limit):
                 break
 
             pending_actions = follow_actions
@@ -826,3 +963,49 @@ class DirectorChatMixin:
             on_compacted=on_compacted,
             on_title_generated=on_title_generated,
         )
+
+    @set_processing
+    async def chat_start_generate_arc(
+        self,
+        chat_id: str,
+        on_update: Callable[
+            [str, list[DirectorChatMessage | DirectorChatActionResultMessage]],
+            Awaitable[None],
+        ]
+        | None = None,
+        on_done: Callable[[str, DirectorChatBudgets | None], Awaitable[None]]
+        | None = None,
+        on_compacting: Callable[[str], Awaitable[None]] | None = None,
+        on_compacted: Callable[
+            [
+                str,
+                list[DirectorChatMessage | DirectorChatActionResultMessage],
+            ],
+            Awaitable[None],
+        ]
+        | None = None,
+        on_title_generated: Callable[[str, str], Awaitable[None]] | None = None,
+    ) -> DirectorChat:
+        """
+        Start arc generation. Like chat_generate_next but with @set_processing
+        to ensure active_agent context is available.
+
+        Suppresses automatic TTS generation while arcs are being generated to
+        avoid noisy voice synthesis during long multi-step planning.
+        """
+        tts_agent = instance.get_agent("tts")
+        if tts_agent.enabled and tts_agent.has_auto_generation:
+            emit(
+                "status",
+                "Automatic voice generation is paused during multi-turn generation.",
+                status="info",
+            )
+        with tts_agent.suppress_auto_generation():
+            return await self.chat_generate_next(
+                chat_id,
+                on_update=on_update,
+                on_done=on_done,
+                on_compacting=on_compacting,
+                on_compacted=on_compacted,
+                on_title_generated=on_title_generated,
+            )

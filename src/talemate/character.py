@@ -52,6 +52,9 @@ class Character(pydantic.BaseModel):
     shared_attributes: list[str] = pydantic.Field(default_factory=list)
     shared_details: list[str] = pydantic.Field(default_factory=list)
 
+    # user-facing organization (see CharacterMixin.handle_set_character_folder)
+    folder: str | None = None
+
     # dialogue instructions and examples
     dialogue_instructions: str | None = pydantic.Field(
         default=None,
@@ -137,10 +140,11 @@ class Character(pydantic.BaseModel):
             "description": self.description,
         }
 
+        exclude_lower = {e.lower() for e in exclude}
         sheet_list = []
 
         for key, value in sheet.items():
-            if key not in exclude:
+            if key.lower() not in exclude_lower:
                 sheet_list.append(f"{key}: {value}")
 
         return "\n".join(sheet_list)
@@ -386,19 +390,12 @@ class Character(pydantic.BaseModel):
         items = []
 
         if not self.base_attributes or "description" not in self.base_attributes:
-            if not self.description:
-                self.description = ""
-            description_chunks = [
-                chunk.strip() for chunk in self.description.split("\n") if chunk.strip()
-            ]
-
-            for idx in range(len(description_chunks)):
-                chunk = description_chunks[idx]
-
+            description = (self.description or "").strip()
+            if description:
                 items.append(
                     {
-                        "text": f"{self.name}: {chunk}",
-                        "id": f"{self.name}.description.{idx}",
+                        "text": f"{self.name}'s description: {description}",
+                        "id": f"{self.name}.description",
                         "meta": {
                             "character": self.name,
                             "attr": "description",
@@ -657,6 +654,10 @@ class Character(pydantic.BaseModel):
             "current_avatar", None
         )  # current_avatar is scene-specific, not shared
         self.update(**updates)
+
+        # `folder` must propagate even when cleared; the exclude_none=True dump
+        # above would drop None values so we assign explicitly here.
+        self.folder = other_character.folder
 
         for attribute in self.shared_attributes:
             if attribute not in other_character.base_attributes:

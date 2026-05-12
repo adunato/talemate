@@ -8,7 +8,7 @@ Override example:
 -#}
 {% set extra_context_content %}
 <|SECTION:CHARACTER|>
-{{ character.sheet }}
+{{ character.sheet_filtered("description") }}
 {{ character.description }}
 <|CLOSE_SECTION|>
 {% include "task-information.jinja2" %}
@@ -41,7 +41,10 @@ The character MUST feel relatable to the audience.
 
 You must use simple language to describe the character's dialogue instructions.
 
-Keep the format similar and stick to one paragraph.
+**Structure your instructions in two short paragraphs:**
+
+1. **Default register** — How {{ character.name }} normally speaks: vocabulary, formality, sentence structure, verbal habits, how they address others.
+2. **Under pressure** — How their speech changes when stressed, scared, angry, or pushed past their limit. Do NOT write that they simply become "more of the same" (e.g., "gets even more clinical" or "becomes even quieter"). Their composure must crack in a specific, visible way — shorter sentences, different word choices, breaking their own verbal patterns, physical urgency replacing their normal mode. This variation is critical for believable dialogue in dramatic scenes.
 
 {% if instructions -%}
 {{ instructions }}

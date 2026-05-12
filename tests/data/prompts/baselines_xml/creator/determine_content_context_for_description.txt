@@ -1,0 +1,21 @@
+<SCENARIO_DESCRIPTION>
+A post-apocalyptic world overrun by zombies.
+</SCENARIO_DESCRIPTION>
+<TASK>
+Analyze the scenario description and determine a fitting content context.
+
+The content context should be a single short phrase that describes the expected experience when interacting with the scenario.
+
+Your response should be "Content context: a ..."
+
+Examples:
+
+- a fun and engaging slice of life story
+- a terrifying horror story
+- a thrilling action story
+- a mysterious adventure
+- an epic sci-fi adventure
+</TASK>
+
+The length of your response must fit within 4 paragraphs.
+<|BOT|>Content context: a

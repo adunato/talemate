@@ -1,0 +1,79 @@
+{
+  "title": "On Scene Start Run Tests",
+  "id": "88c40c05-762d-40d0-88d5-00dd11f28f35",
+  "properties": {
+    "event_name": "scene_loop_init"
+  },
+  "x": 0,
+  "y": 0,
+  "width": 200,
+  "height": 100,
+  "collapsed": false,
+  "inherited": false,
+  "registry": "model-tests/onSceneStartRunTests",
+  "nodes": {
+    "e1f19ae6-1e7c-4e6a-a847-a00eefc3551f": {
+      "title": "Event",
+      "id": "e1f19ae6-1e7c-4e6a-a847-a00eefc3551f",
+      "properties": {},
+      "x": 30,
+      "y": 50,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "event/Event",
+      "base_type": "core/Graph"
+    },
+    "3689232e-bac9-4034-8f47-0dd1a3e78820": {
+      "title": "Run Model Tests",
+      "id": "3689232e-bac9-4034-8f47-0dd1a3e78820",
+      "properties": {},
+      "x": 230,
+      "y": 50,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/runModelTests",
+      "base_type": "core/Graph"
+    },
+    "e45e6b07-7395-491a-8120-e1504cf88ded": {
+      "title": "Module Style",
+      "id": "e45e6b07-7395-491a-8120-e1504cf88ded",
+      "properties": {
+        "title_color": "#3d315b",
+        "node_color": "#27233a",
+        "auto_title": null,
+        "icon": "F09DE"
+      },
+      "x": 40,
+      "y": 150,
+      "width": 210,
+      "height": 110,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "util/ModuleStyle",
+      "base_type": "core/Node"
+    }
+  },
+  "edges": {
+    "e1f19ae6-1e7c-4e6a-a847-a00eefc3551f.event": [
+      "3689232e-bac9-4034-8f47-0dd1a3e78820.state"
+    ]
+  },
+  "groups": [],
+  "comments": [],
+  "extends": null,
+  "base_type": "core/Event",
+  "inputs": [],
+  "outputs": [],
+  "module_properties": {},
+  "style": {
+    "title_color": "#3d315b",
+    "node_color": "#27233a",
+    "icon": "F09DE",
+    "auto_title": null,
+    "counterpart": null
+  }
+}

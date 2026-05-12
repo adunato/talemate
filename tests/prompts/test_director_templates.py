@@ -26,113 +26,34 @@ from talemate.agents.director.scene_direction.schema import (
 )
 from talemate.context import active_scene
 from talemate.game.engine.nodes.core import GraphState
-from .helpers import create_mock_scene
-
-
-class MockCharacter:
-    """A mock character class for isinstance checks."""
-
-    def __init__(self, name, is_player=False):
-        self.name = name
-        self.is_player = is_player
-        self.description = "A test character."
-        self.gender = "female"
-        self.greeting_text = "Hello there."
-        self.dialogue_instructions = "Speaks normally."
-        self.base_attributes = {"name": name}
-        self.details = {}
-        self.sheet = f"name: {name}"
-        self.example_dialogue = []
-        self.random_dialogue_example = ""
-        self.voice = None
-        self.color = "#ffffff"
+from .helpers import create_mock_character, create_scene_with_characters
 
 
 @pytest.fixture
 def mock_scene():
-    """Create a rich mock scene for testing."""
-    scene = create_mock_scene()
+    """Real Scene with Hero + Elena actors, with IO-ish methods stubbed.
 
-    # Add player character using MockCharacter class
-    player = MockCharacter(name="Hero", is_player=True)
-    npc = MockCharacter(name="Elena", is_player=False)
+    The real ``WorldState`` / ``GameState`` / ``SceneIntent`` / ``Character``
+    instances attached to the scene are exercised directly — tests only stub
+    out methods that would touch agents, memory, or history mutation.
+    """
+    scene = create_scene_with_characters()
 
-    scene.get_player_character = Mock(return_value=player)
-    scene.get_npc_characters = Mock(return_value=[npc])
-    scene.get_characters = Mock(return_value=[player, npc])
-    scene.get_character = Mock(
-        side_effect=lambda name: player if name == "Hero" else npc
-    )
-    scene.writing_style = "descriptive"
-    scene.agent_state = {}
-    scene.characters = [player, npc]
-    scene.all_characters = [player, npc]
-    scene.character_names = ["Hero", "Elena"]
-    scene.all_character_names = ["Hero", "Elena"]
-    scene.player_character_exists = True
-    scene.narrator_character_object = None
-
-    # Mock Character class for isinstance check - use MockCharacter
-    scene.Character = MockCharacter
-    scene.Player = Mock()
-    scene.Actor = Mock()
-
-    # Mock push_history for tests that need it
+    # Stub methods that perform IO or push messages.
     scene.push_history = AsyncMock()
+    scene.snapshot = Mock(return_value="Scene snapshot text")
+    scene.add_actor = AsyncMock()
+    scene.remove_actor = AsyncMock()
+    scene.emit_status = Mock()
+    scene.count_character_messages_since_director = Mock(return_value=0)
 
-    # Mock intent_state
-    scene.intent_state = Mock()
-    scene.intent_state.active = False
-    scene.intent_state.intent = "A test story"
-    scene.intent_state.instructions = ""
-    scene.intent_state.phase = Mock()
-    scene.intent_state.phase.intent = "Test phase"
-    scene.intent_state.current_scene_type = None
-    scene.intent_state.scene_types = {}
-    scene.intent_state.direction = Mock()
-    scene.intent_state.direction.always_on = False
-
-    # Mock game_state
-    scene.game_state = Mock()
-    scene.game_state.state = {}
-    scene.game_state.variables = {}
-
-    # Mock world_state
-    scene.world_state = Mock()
-    scene.world_state.characters = {}
-    scene.world_state.filter_reinforcements = Mock(return_value=[])
-
-    # Mock world_state_manager
-    scene.world_state_manager = Mock()
-    scene.world_state_manager.get_templates = AsyncMock(return_value=Mock(templates=[]))
-    scene.world_state_manager.template_collection = Mock()
-
-    # Mock nodegraph_state
+    # Director tests reach into nodegraph_state.shared directly; give them a
+    # real GraphState seeded with an empty shared dict.
     scene.nodegraph_state = GraphState()
     scene.nodegraph_state.shared = {}
 
-    # Mock voice_library
-    scene.voice_library = Mock()
-    scene.voice_library.get_voice = Mock(return_value=None)
-
-    # Mock rag_cache for memory RAG
+    # Director expects rag_cache on the scene for memory-RAG plumbing.
     scene.rag_cache = {}
-
-    # Mock snapshot
-    scene.snapshot = Mock(return_value="Scene snapshot text")
-
-    # Mock add_actor/remove_actor
-    scene.add_actor = AsyncMock()
-    scene.remove_actor = AsyncMock()
-
-    # Mock emit methods
-    scene.emit_status = Mock()
-
-    # Mock agent_persona
-    scene.agent_persona = Mock(return_value=None)
-
-    # Mock count_character_messages_since_director
-    scene.count_character_messages_since_director = Mock(return_value=0)
 
     return scene
 
@@ -220,6 +141,16 @@ def director_agent(mock_llm_client, mock_scene):
 
 
 @pytest.fixture
+def mock_editor_agent():
+    """Create a mock editor agent used by scene.get_intro() and director chat."""
+    editor = Mock()
+    editor.fix_exposition_enabled = False
+    editor.fix_exposition_narrator = False
+    editor.fix_exposition_in_text = Mock(side_effect=lambda text: text)
+    return editor
+
+
+@pytest.fixture
 def setup_agents(
     mock_summarizer_agent,
     mock_narrator_agent,
@@ -228,6 +159,7 @@ def setup_agents(
     mock_creator_agent,
     mock_memory_agent,
     mock_tts_agent,
+    mock_editor_agent,
 ):
     """Set up the agent registry with mocked agents."""
     # Save original AGENTS dict
@@ -241,6 +173,7 @@ def setup_agents(
     instance.AGENTS["creator"] = mock_creator_agent
     instance.AGENTS["memory"] = mock_memory_agent
     instance.AGENTS["tts"] = mock_tts_agent
+    instance.AGENTS["editor"] = mock_editor_agent
 
     yield
 
@@ -420,8 +353,11 @@ class TestAutoDirectMethods:
         """Test that auto_direct_set_scene_intent calls the LLM client via focal."""
         director = active_context
 
-        # Set up scene types
+        # Set up scene types (preserve the default "roleplay" type that
+        # intent_state.phase.scene_type points at).
+        default_types = director.scene.intent_state.scene_types
         director.scene.intent_state.scene_types = {
+            **default_types,
             "exploration": Mock(id="exploration", name="Exploration"),
             "combat": Mock(id="combat", name="Combat"),
         }
@@ -490,7 +426,7 @@ class TestCharacterManagementMethods:
     ):
         """Test that assign_voice_to_character calls the LLM when TTS is enabled."""
         director = active_context
-        character = MockCharacter(name="TestChar")
+        character = create_mock_character(name="TestChar")
 
         # Enable TTS and voice assignment
         tts_agent = Mock()

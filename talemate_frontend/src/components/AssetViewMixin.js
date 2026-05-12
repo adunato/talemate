@@ -1,10 +1,12 @@
 /**
  * Mixin for components that use AssetView to display and navigate through a list of assets
- * 
+ *
  * Requirements:
  * - Component must implement 'assets' computed property (Array)
  * - Component must implement 'getAssetSrc(assetId)' method (usually from VisualAssetsMixin)
  */
+import { isPrimaryModifier } from '@/utils/keyboardModifiers';
+
 export default {
     data() {
         return {
@@ -32,7 +34,7 @@ export default {
         },
 
         handleAssetClick(event, assetId, onMenuOpen) {
-            if (event.ctrlKey || event.metaKey) {
+            if (isPrimaryModifier(event)) {
                 event.stopPropagation();
                 event.preventDefault();
                 this.viewAsset(assetId);

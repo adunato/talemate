@@ -3,6 +3,8 @@
 ## Classification
 Content Classification: Fantasy adventure story
 
+Narrative Perspective: Third person limited, past tense.
+
 ## Scene
 The sorcerer's tower loomed over the ancient forest.
 

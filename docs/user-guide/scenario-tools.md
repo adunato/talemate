@@ -1,5 +1,8 @@
 # Scene Tools
 
+!!! note "Mac users"
+    Throughout this guide, hold **Cmd** wherever **Ctrl** is mentioned. macOS reserves `Ctrl`+click for the system context menu, so Talemate also accepts the Command key as the primary modifier on every click and shortcut.
+
 ## Agent Activity Bar
 
 ![Agent activity bar showing active agents](/talemate/img/0.35.0/agent-activity-bar.png)
@@ -80,6 +83,34 @@ or
 
 Automatically picks a character to generate dialogue and actions based on the current scene state.
 
+### :material-bullhorn: Director Actions
+
+Opens a context menu with director-driven actions for the scene.
+
+![Director Actions](../img/0.37.0/director-scene-tools-menu.png)
+
+#### :material-tournament: Generate dynamic actions
+
+Asks the director to generate a set of clickable action choices for the current player turn. See [Dynamic Actions](/talemate/user-guide/agents/director/settings/#dynamic-actions) for how to configure this.
+
+!!! note "Keyboard modifiers"
+    Hold `ctrl` (Cmd on macOS) while clicking to provide a one-off direction that guides the generated actions.
+
+#### :material-movie-play: Scene direction turn
+
+Manually triggers a single [Autonomous Scene Direction](/talemate/user-guide/agents/director/scene-direction) turn. Useful when Scene Direction is enabled but auto-progression is off and you want to step the director through the scene one turn at a time.
+
+Greyed out when Scene Direction is disabled in the [director agent settings](/talemate/user-guide/agents/director/scene-direction#enabling-scene-direction).
+
+!!! note "Keyboard modifiers"
+    Hold `ctrl` (Cmd on macOS) while clicking to provide one-off instructions for the director to follow on this turn only.
+
+#### :material-movie-open: Generate long progress
+
+Opens the Generate Long Progress dialog, where the director plans and autonomously generates a multi-beat scene arc from your instructions.
+
+See [Director Planning](/talemate/user-guide/agents/director/planning) for the full workflow and settings.
+
 ### :material-script-text: Narrator Actions
 
 Will open a context menu that allows you to have the narrator perform actions.
@@ -119,8 +150,34 @@ Will prompt you for a question and then have the narrator generate narrative tex
 
 ### :material-clock: Advance time
 
-Opens a context menu with options to advance time in the scene, ranging from 5 minutes to 10 years.
+Opens a menu with options to advance time in the scene. As of version 0.37.0, the presets are organized into per-unit submenus and the menu includes a **Custom...** entry for durations that are not covered by the presets.
 
+![Advance Time menu with grouped presets](../img/0.37.0/advance-time-menu.png)
+
+#### Preset submenus
+
+Hovering a group opens its submenu. Clicking a preset advances time by that amount immediately.
+
+| Group | Options |
+| --- | --- |
+| :material-timer-sand: **Minutes** | 5, 15, 30 minutes |
+| :material-clock-outline: **Hours** | 1, 2, 4, 8, 12 hours |
+| :material-weather-sunny: **Days** | 1, 2, 3 days |
+| :material-calendar-week: **Weeks** | 1, 2 weeks |
+| :material-calendar-month: **Months** | 1, 3, 6 months |
+| :material-calendar-multiple: **Years** | 1, 2, 3, 5, 10 years |
+
+#### Custom time dialog
+
+Selecting **Custom...** at the bottom of the menu opens a small dialog for entering an arbitrary duration.
+
+![Custom time dialog](../img/0.37.0/advance-time-custom-dialog.png)
+
+1. Enter an **Amount** (minimum `1`).
+2. Pick a **Unit** from the dropdown: *minutes*, *hours*, *days*, *weeks*, *months*, or *years*.
+3. Click **Advance** to apply, or **Cancel** to close without advancing.
+
+The dialog defaults to `1 hour` each time it is opened.
 
 By default the [:material-script-text: Narrator Agent](/talemate/user-guide/agents/narrator) will narrate the time jump, but you can disable this in the [:material-script-text: Narrator Agent Settings](/talemate/user-guide/agents/narrator/settings/).
 
@@ -268,7 +325,9 @@ Once it is done, the character will now be part of the scene and can be interact
 
 The visualizer menu provides several options for generating images of your scene and characters. As of version 0.35.0, generated images can appear directly in your scene feed as [inline visuals](/talemate/user-guide/inline-visuals).
 
-![Scene tools visualizer menu](/talemate/img/0.35.0/scene-tools-visual-menu.png)
+![Scene tools visualizer menu](../img/0.37.0/scene-tools-visual-menu.png)
+
+As of version 0.37.0, per-character entries are grouped into submenus. Scene-level actions stay at the top level of the menu; each character in the scene has its own submenu with the character-specific actions inside.
 
 #### Auto-attach visuals
 
@@ -286,13 +345,18 @@ Generates a portrait-oriented cover image of the current scene, suitable for use
 
 Generates a purely environmental image of the scene without characters. Good for establishing shots or backgrounds.
 
-#### :material-brush: Visualize [Character] (Card)
+#### :material-account-tie: / :material-account: Character submenus
 
-Generates a cover image portrait of the selected character in the current scene context. This creates a larger, more detailed character image.
+Each character present in the scene has its own submenu, listed between the scene-level entries and the scene illustration entry. The player character is marked with the :material-account-tie: icon; NPCs are marked with :material-account:. Hovering a character entry opens the submenu.
 
-#### :material-brush: Visualize [Character] (Portrait)
+![Visual tools character submenu expanded](../img/0.37.0/scene-tools-visual-menu-character-submenu.png)
 
-Generates a face-focused portrait of the selected character. These are ideal for showing expressions and are commonly used as character avatars in the message feed.
+Each character submenu contains:
+
+- **:material-brush: Card** — Generates a cover image portrait of the character in the current scene context. This creates a larger, more detailed character image.
+- **:material-brush: Portrait** — Generates a face-focused portrait of the character. These are ideal for showing expressions and are commonly used as character avatars in the message feed.
+
+The **ALT** and **CTRL** keyboard modifiers described above apply to items inside the character submenus as well.
 
 #### :material-image-filter-hdr: Visualize Moment (Illustration)
 

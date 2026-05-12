@@ -30,10 +30,12 @@
         examples=[{}]
     )
 }}
+<|CLOSE_SECTION|>
 <|SECTION:SCENE TYPES|>
 {% for scene_type in scene.intent_state.scene_types.values() -%}
 - `{{ scene_type.id }}`: {{ scene_type.description }}
 {% endfor %}
+<|CLOSE_SECTION|>
 <|SECTION:TASK|>
 {% if not require %}
 Determine whether or not a new scene intention is needed. If so, provide the type classification and intention of the new scene. If not, do nothing.
@@ -53,3 +55,4 @@ Base your decision on the moment in the current scene and the overall story inte
 First analyze your understanding of the scene and the current moment. Then, determine if the scene intention needs to be updated. {% include "scene-intent-inline.jinja2" %}
 
 Call the `set_scene_intention` function to update the scene intention if necessary.
+<|CLOSE_SECTION|>

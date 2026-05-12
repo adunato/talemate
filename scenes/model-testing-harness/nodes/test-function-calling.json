@@ -1,0 +1,1337 @@
+{
+  "title": "Test Function Calling",
+  "id": "fcc9d2df-1e19-4c23-9841-857fe4a8e782",
+  "properties": {},
+  "x": 0,
+  "y": 0,
+  "width": 200,
+  "height": 100,
+  "collapsed": false,
+  "inherited": false,
+  "registry": "model-tests/basics/testFunctionCalling",
+  "nodes": {
+    "bc4094a5-5659-4fe9-8cdf-54aba755c4e6": {
+      "title": "Get Agent",
+      "id": "bc4094a5-5659-4fe9-8cdf-54aba755c4e6",
+      "properties": {
+        "agent_name": "director"
+      },
+      "x": -8,
+      "y": 1034,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/GetAgent",
+      "base_type": "core/Node"
+    },
+    "ce3eea10-92ba-4cb6-a35c-b36924c100ca": {
+      "title": "true",
+      "id": "ce3eea10-92ba-4cb6-a35c-b36924c100ca",
+      "properties": {
+        "value": true
+      },
+      "x": -8,
+      "y": 914,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "66daf189-ba25-4d4f-a112-bba2ce5d520c": {
+      "title": "IN state",
+      "id": "66daf189-ba25-4d4f-a112-bba2ce5d520c",
+      "properties": {
+        "input_type": "any",
+        "input_name": "state",
+        "input_optional": false,
+        "input_group": "",
+        "num": 0
+      },
+      "x": -8,
+      "y": 684,
+      "width": 210,
+      "height": 154,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Input",
+      "base_type": "core/Node"
+    },
+    "cd6eca19-93bb-4269-8a5b-5c2eca33c481": {
+      "title": "OUT state",
+      "id": "cd6eca19-93bb-4269-8a5b-5c2eca33c481",
+      "properties": {
+        "output_type": "any",
+        "output_name": "state",
+        "num": 0
+      },
+      "x": 262,
+      "y": 684,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "8297d3e2-8397-484a-a3e8-6af6bd88c4f4": {
+      "title": "Make String",
+      "id": "8297d3e2-8397-484a-a3e8-6af6bd88c4f4",
+      "properties": {
+        "value": "summarizer"
+      },
+      "x": -268,
+      "y": 1214,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/string/Make",
+      "base_type": "core/Node"
+    },
+    "ad0c804c-2770-4dd1-91b6-092580ef247f": {
+      "title": "Argument",
+      "id": "ad0c804c-2770-4dd1-91b6-092580ef247f",
+      "properties": {
+        "name": "exc",
+        "typ": "any"
+      },
+      "x": -268,
+      "y": 2798,
+      "width": 210,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Argument",
+      "base_type": "core/Node"
+    },
+    "2d23e3f3-8749-4f5b-9823-1c438c0706d7": {
+      "title": "DEF error_handler",
+      "id": "2d23e3f3-8749-4f5b-9823-1c438c0706d7",
+      "properties": {
+        "name": "error_handler"
+      },
+      "x": 502,
+      "y": 2798,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "150970d2-59f9-4a81-91e0-3e15153aed64": {
+      "title": "Error Handler",
+      "id": "150970d2-59f9-4a81-91e0-3e15153aed64",
+      "properties": {},
+      "x": 1022,
+      "y": 2798,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/ErrorHandler",
+      "base_type": "core/Node"
+    },
+    "ed18697d-2f22-4189-ab75-edd84c2bf1d8": {
+      "title": "FN error_handler",
+      "id": "ed18697d-2f22-4189-ab75-edd84c2bf1d8",
+      "properties": {
+        "name": "error_handler"
+      },
+      "x": 772,
+      "y": 2801,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "a85e0c4b-f149-47e6-bdd4-e19c0cf36fcd": {
+      "title": "Make Bool",
+      "id": "a85e0c4b-f149-47e6-bdd4-e19c0cf36fcd",
+      "properties": {
+        "value": false
+      },
+      "x": -8,
+      "y": 2898,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "e70ee960-f12d-43e3-a4fb-938d6f5d181f": {
+      "title": "Emit Test Result",
+      "id": "e70ee960-f12d-43e3-a4fb-938d6f5d181f",
+      "properties": {
+        "message_title": "Function Calling",
+        "message": "Tests whether the model can reliably call functions through Talemate's FOCAL system."
+      },
+      "x": 244,
+      "y": 2798,
+      "width": 210,
+      "height": 142,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/emitTestResult",
+      "base_type": "core/Graph"
+    },
+    "ed3f9350-656b-4889-8530-efe02e12a45b": {
+      "title": "Build Prompt",
+      "id": "ed3f9350-656b-4889-8530-efe02e12a45b",
+      "properties": {
+        "template_file": "base",
+        "scope": "common",
+        "instructions": "",
+        "reserved_tokens": 312,
+        "limit_max_tokens": 0,
+        "include_scene_intent": false,
+        "include_extra_context": true,
+        "include_memory_context": true,
+        "include_scene_context": true,
+        "include_character_context": false,
+        "include_gamestate_context": false,
+        "memory_prompt": "",
+        "prefill_prompt": "",
+        "return_prefill_prompt": false,
+        "dedupe_enabled": true,
+        "response_length": 0,
+        "technical": false
+      },
+      "x": 322,
+      "y": 914,
+      "width": 304,
+      "height": 542,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/BuildPrompt",
+      "base_type": "core/Node"
+    },
+    "0407d440-8d85-4b38-b57e-506fec86b5ae": {
+      "title": "amount",
+      "id": "0407d440-8d85-4b38-b57e-506fec86b5ae",
+      "properties": {
+        "name": "amount",
+        "typ": "int",
+        "instructions": "The amount of item_type to put in the container:\n\nWhen item_type is a liquid the value represents a percentage: 1 = 1%, 50 = 50% etc.\n\nWhen item_type is a solid unit it represents the unit count."
+      },
+      "x": -1928,
+      "y": 1039,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "fafa2d35-68aa-4c9d-91c8-a86cec7e6fca": {
+      "title": "Dict Collector",
+      "id": "fafa2d35-68aa-4c9d-91c8-a86cec7e6fca",
+      "properties": {},
+      "x": -1527,
+      "y": 877,
+      "width": 140,
+      "height": 141,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/DictCollector",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        },
+        {
+          "name": "item2",
+          "type": "*"
+        },
+        {
+          "name": "item3",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "72b1ef1a-ed10-447e-b98a-0d46a58e0a59": {
+      "title": "Get Agent",
+      "id": "72b1ef1a-ed10-447e-b98a-0d46a58e0a59",
+      "properties": {
+        "agent_name": "summarizer"
+      },
+      "x": -1498,
+      "y": 809,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "agents/GetAgent",
+      "base_type": "core/Node"
+    },
+    "393dd1a7-d948-4712-8c02-0bc141b3f42c": {
+      "title": "container",
+      "id": "393dd1a7-d948-4712-8c02-0bc141b3f42c",
+      "properties": {
+        "name": "container",
+        "typ": "str",
+        "instructions": "Specifies the target container.\n\nCan be one of: \"bucket\", \"basket\", \"bowl\""
+      },
+      "x": -1928,
+      "y": 1209,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "9b28b248-1b45-4989-b572-d395ac4bb68e": {
+      "title": "Return",
+      "id": "9b28b248-1b45-4989-b572-d395ac4bb68e",
+      "properties": {},
+      "x": -1058,
+      "y": 839,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "3e4a1fff-5322-45cc-a870-ff85d295530a": {
+      "title": "Jinja2 Format",
+      "id": "3e4a1fff-5322-45cc-a870-ff85d295530a",
+      "properties": {
+        "template": "Use the functions available to you accomplish the following tasks in the order they are presented to you, starting with 1. and ending with 5.\n\nYou will be moving objects and out of two containers: \"bucket\" and \"basket\".\n\nRight now, the \"bucket\" container holds \"water\" and the \"basket\" container is empty.\n\n1. Empty the bucket\n2. Put 3 oranges in the basket\n3. Fill the bucket with wine until it is 50% full\n4. Remove 1 orange in from the basket\n5. Add 1 apple to the basket"
+      },
+      "x": 12,
+      "y": 1204,
+      "width": 210,
+      "height": 133,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/Jinja2Format",
+      "dynamic_inputs": [],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "cc600421-2218-4e3b-b150-2c3f9ea32e76": {
+      "title": "item_type",
+      "id": "cc600421-2218-4e3b-b150-2c3f9ea32e76",
+      "properties": {
+        "name": "item_type",
+        "typ": "str",
+        "instructions": "Specifies the item type.\n\nCan be one of: \"apple\", \"orange\", \"water\", \"wine\", \"banana\", \"juice\""
+      },
+      "x": -1928,
+      "y": 869,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "cf53a471-5d2e-437a-bfea-8c9ae2796a5e": {
+      "title": "AI Function Callback Metadata",
+      "id": "cf53a471-5d2e-437a-bfea-8c9ae2796a5e",
+      "properties": {
+        "instructions": "Add a specific amount of a specific item into a specific container.",
+        "examples": [
+          {
+            "container": "bucket",
+            "item_type": "juice",
+            "amount": 25
+          },
+          {
+            "container": "basket",
+            "banana": 4
+          }
+        ]
+      },
+      "x": -868,
+      "y": 839,
+      "width": 244,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Metadata",
+      "base_type": "core/Node"
+    },
+    "35b6e64e-87a6-437b-a57c-298056f6c802": {
+      "title": "DEF put_into_container",
+      "id": "35b6e64e-87a6-437b-a57c-298056f6c802",
+      "properties": {
+        "name": "put_into_container"
+      },
+      "x": -568,
+      "y": 839,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "94f487bc-5edb-4fc2-a545-7a7603e7cdca": {
+      "title": "FN put_into_container",
+      "id": "94f487bc-5edb-4fc2-a545-7a7603e7cdca",
+      "properties": {
+        "name": "put_into_container"
+      },
+      "x": -260,
+      "y": 1785,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "0428e58b-ab17-4c10-bc34-f69fc7be41da": {
+      "title": "Dict Collector",
+      "id": "0428e58b-ab17-4c10-bc34-f69fc7be41da",
+      "properties": {},
+      "x": -1517,
+      "y": 1616,
+      "width": 140,
+      "height": 141,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/DictCollector",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        },
+        {
+          "name": "item2",
+          "type": "*"
+        },
+        {
+          "name": "item3",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "3cfd423f-e9e3-46ef-b764-14ed2c14a140": {
+      "title": "Get Agent",
+      "id": "3cfd423f-e9e3-46ef-b764-14ed2c14a140",
+      "properties": {
+        "agent_name": "summarizer"
+      },
+      "x": -1487,
+      "y": 1548,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "agents/GetAgent",
+      "base_type": "core/Node"
+    },
+    "a16514b1-de0a-4ad9-a0df-72156ea4fa0b": {
+      "title": "Return",
+      "id": "a16514b1-de0a-4ad9-a0df-72156ea4fa0b",
+      "properties": {},
+      "x": -1047,
+      "y": 1578,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "b6daccdc-d152-4f27-9118-9028cfaf1f55": {
+      "title": "AI Function Callback Metadata",
+      "id": "b6daccdc-d152-4f27-9118-9028cfaf1f55",
+      "properties": {
+        "instructions": "Remove a specific amount of a specific item from a specific container.",
+        "examples": [
+          {
+            "container": "bucket",
+            "item_type": "water",
+            "amount": 100
+          },
+          {
+            "container": "bowl",
+            "apple": 4
+          }
+        ]
+      },
+      "x": -857,
+      "y": 1578,
+      "width": 244,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Metadata",
+      "base_type": "core/Node"
+    },
+    "4cc57619-5d91-4ae2-b8c1-9635e4e6bca3": {
+      "title": "item_type",
+      "id": "4cc57619-5d91-4ae2-b8c1-9635e4e6bca3",
+      "properties": {
+        "name": "item_type",
+        "typ": "str",
+        "instructions": "Specifies the item type.\n\nCan be one of: \"apple\", \"orange\", \"water\", \"wine\", \"banana\", \"juice\""
+      },
+      "x": -1917,
+      "y": 1608,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "6c2bd63c-f9ba-43b5-a76c-d058e85af592": {
+      "title": "amount",
+      "id": "6c2bd63c-f9ba-43b5-a76c-d058e85af592",
+      "properties": {
+        "name": "amount",
+        "typ": "int",
+        "instructions": "The amount of item_type to take out of the container:\n\nWhen item_type is a liquid the value represents a percentage: 1 = 1%, 50 = 50% etc.\n\nWhen item_type is a solid unit it represents the unit count."
+      },
+      "x": -1917,
+      "y": 1778,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "e05ba946-3874-4065-b0f9-9bdb49ce4abb": {
+      "title": "container",
+      "id": "e05ba946-3874-4065-b0f9-9bdb49ce4abb",
+      "properties": {
+        "name": "container",
+        "typ": "str",
+        "instructions": "Specifies the target container.\n\nCan be one of: \"bucket\", \"basket\", \"bowl\""
+      },
+      "x": -1917,
+      "y": 1948,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "6f1e0ed5-ac32-4887-9403-c251fa2150bb": {
+      "title": "DEF remove_from_container",
+      "id": "6f1e0ed5-ac32-4887-9403-c251fa2150bb",
+      "properties": {
+        "name": "remove_from_container"
+      },
+      "x": -558,
+      "y": 1579,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "6d7b2945-199c-4630-a694-38ae01c9eb38": {
+      "title": "FN remove_from_container",
+      "id": "6d7b2945-199c-4630-a694-38ae01c9eb38",
+      "properties": {
+        "name": "remove_from_container"
+      },
+      "x": -260,
+      "y": 1985,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "c0eecf41-84cf-440a-9d02-54f032183aa1": {
+      "title": "Get Agent",
+      "id": "c0eecf41-84cf-440a-9d02-54f032183aa1",
+      "properties": {
+        "agent_name": "summarizer"
+      },
+      "x": -1495,
+      "y": 2287,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "agents/GetAgent",
+      "base_type": "core/Node"
+    },
+    "7a5bb435-6885-4cea-a6b8-e3cf31f5d7a4": {
+      "title": "Return",
+      "id": "7a5bb435-6885-4cea-a6b8-e3cf31f5d7a4",
+      "properties": {},
+      "x": -1055,
+      "y": 2317,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "79dd02de-37db-4815-b002-992450eab3b0": {
+      "title": "container",
+      "id": "79dd02de-37db-4815-b002-992450eab3b0",
+      "properties": {
+        "name": "container",
+        "typ": "str",
+        "instructions": "Specifies the target container.\n\nCan be one of: \"bucket\", \"basket\", \"bowl\""
+      },
+      "x": -1918,
+      "y": 2419,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "ced7384c-5f0e-48aa-9df7-34664fcc9620": {
+      "title": "Dict Collector",
+      "id": "ced7384c-5f0e-48aa-9df7-34664fcc9620",
+      "properties": {},
+      "x": -1528,
+      "y": 2359,
+      "width": 140,
+      "height": 101,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/DictCollector",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "ebd74f28-76e4-49ac-8e6a-371d0ec5106c": {
+      "title": "Scoped API Function",
+      "id": "ebd74f28-76e4-49ac-8e6a-371d0ec5106c",
+      "properties": {
+        "code": "containers = arguments[\"containers\"]\ncontainer_name = arguments[\"container\"]\ncontainers[container_name] = {}\nresult[\"container_name\"] = container_name"
+      },
+      "x": -1315,
+      "y": 2307,
+      "width": 210,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/ScopedAPIFunction",
+      "base_type": "core/Node"
+    },
+    "8920dd2b-8af9-4455-8211-a7dff06fdb7b": {
+      "title": "AI Function Callback Metadata",
+      "id": "8920dd2b-8af9-4455-8211-a7dff06fdb7b",
+      "properties": {
+        "instructions": "Empty a specific container.",
+        "examples": [
+          {
+            "container": "basket"
+          }
+        ]
+      },
+      "x": -865,
+      "y": 2317,
+      "width": 244,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Metadata",
+      "base_type": "core/Node"
+    },
+    "78d8ceb8-ca55-496e-9f19-e700d329451b": {
+      "title": "DEF empty_container",
+      "id": "78d8ceb8-ca55-496e-9f19-e700d329451b",
+      "properties": {
+        "name": "empty_container"
+      },
+      "x": -568,
+      "y": 2319,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "d19ce849-7bcf-4895-beb9-5f3c222f1525": {
+      "title": "List Collector",
+      "id": "d19ce849-7bcf-4895-beb9-5f3c222f1525",
+      "properties": {},
+      "x": 500,
+      "y": 1945,
+      "width": 140,
+      "height": 121,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/ListCollector",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        },
+        {
+          "name": "item2",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "d5bfbc8a-7926-4373-afde-7d1c90855c63": {
+      "title": "FN empty_container",
+      "id": "d5bfbc8a-7926-4373-afde-7d1c90855c63",
+      "properties": {
+        "name": "empty_container"
+      },
+      "x": -260,
+      "y": 2205,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "92af7a74-be28-4407-b8ab-34eaacd4722d": {
+      "title": "AI Function Calling",
+      "id": "92af7a74-be28-4407-b8ab-34eaacd4722d",
+      "properties": {
+        "template": null,
+        "max_calls": 10,
+        "retries": 0,
+        "response_length": 1024,
+        "max_concurrent": 3
+      },
+      "x": 812,
+      "y": 1594,
+      "width": 228,
+      "height": 274,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Focal",
+      "base_type": "core/Node"
+    },
+    "faf951af-e4a6-4460-8d8e-e78dfb5c574e": {
+      "title": "SET local.calls",
+      "id": "faf951af-e4a6-4460-8d8e-e78dfb5c574e",
+      "properties": {
+        "name": "calls",
+        "scope": "local"
+      },
+      "x": 1120,
+      "y": 1615,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "9e54a4e8-b72d-492d-bdab-e6da4c8bda6b": {
+      "title": "Stage 1",
+      "id": "9e54a4e8-b72d-492d-bdab-e6da4c8bda6b",
+      "properties": {
+        "stage": 1
+      },
+      "x": 1410,
+      "y": 1615,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "baba2d63-74f2-4fd4-8b66-4bf7676c1793": {
+      "title": "Stage 0",
+      "id": "baba2d63-74f2-4fd4-8b66-4bf7676c1793",
+      "properties": {
+        "stage": 0
+      },
+      "x": 299,
+      "y": 433,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "bbad84d4-507e-4363-b244-2d63ea653c28": {
+      "title": "AI Function Callback",
+      "id": "bbad84d4-507e-4363-b244-2d63ea653c28",
+      "properties": {
+        "name": "my_function",
+        "allow_multiple_calls": true,
+        "allow_concurrent": false
+      },
+      "x": 30,
+      "y": 2195,
+      "width": 210,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Callback",
+      "base_type": "core/Node"
+    },
+    "7c0c2aca-bf5e-4e5f-9a13-a0b817c23eeb": {
+      "title": "AI Function Callback",
+      "id": "7c0c2aca-bf5e-4e5f-9a13-a0b817c23eeb",
+      "properties": {
+        "name": "my_function",
+        "allow_multiple_calls": true,
+        "allow_concurrent": false
+      },
+      "x": 20,
+      "y": 1985,
+      "width": 210,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Callback",
+      "base_type": "core/Node"
+    },
+    "d14c1137-81b3-4ce9-8a46-cc4f42eb0209": {
+      "title": "AI Function Callback",
+      "id": "d14c1137-81b3-4ce9-8a46-cc4f42eb0209",
+      "properties": {
+        "name": "my_function",
+        "allow_multiple_calls": true,
+        "allow_concurrent": false
+      },
+      "x": 10,
+      "y": 1785,
+      "width": 210,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Callback",
+      "base_type": "core/Node"
+    },
+    "a15ff44a-bbaf-4e0f-af63-d5f48e0f34b3": {
+      "title": "containers",
+      "id": "a15ff44a-bbaf-4e0f-af63-d5f48e0f34b3",
+      "properties": {},
+      "x": 32,
+      "y": 2444,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Watch",
+      "base_type": "core/Node"
+    },
+    "ae65b60b-ecb2-4bdd-a555-77249b12db3b": {
+      "title": "Dict Collector",
+      "id": "ae65b60b-ecb2-4bdd-a555-77249b12db3b",
+      "properties": {},
+      "x": 42,
+      "y": 2614,
+      "width": 140,
+      "height": 81,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/DictCollector",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "272e6d0a-26c1-46e9-ad4c-b92038b6dc78": {
+      "title": "Get Agent",
+      "id": "272e6d0a-26c1-46e9-ad4c-b92038b6dc78",
+      "properties": {
+        "agent_name": "summarizer"
+      },
+      "x": 42,
+      "y": 2554,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "agents/GetAgent",
+      "base_type": "core/Node"
+    },
+    "4b4d93c6-0a49-4e5c-b04f-ee6ed99fe7d0": {
+      "title": "Get",
+      "id": "4b4d93c6-0a49-4e5c-b04f-ee6ed99fe7d0",
+      "properties": {
+        "attribute": "success"
+      },
+      "x": 552,
+      "y": 2534,
+      "width": 210,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/Get",
+      "base_type": "core/Node"
+    },
+    "cdac4a3b-beb5-4b66-a279-6296034f7e97": {
+      "title": "Scoped API Function",
+      "id": "cdac4a3b-beb5-4b66-a279-6296034f7e97",
+      "properties": {
+        "code": "containers = arguments[\"containers\"]\nitem_type = arguments[\"item_type\"]\namount = arguments[\"amount\"]\ncontainer_name = arguments[\"container\"]\n\nif container_name not in containers:\n    containers[container_name] = {}\n\ncontainer = containers[container_name]\n\nif item_type not in container:\n    container[item_type] = 0\n\ncontainer[item_type] = container[item_type] - amount\n\nif container[item_type] < 0:\n  container[item_type] = 0\n\nresult[\"item_type\"] = item_type\nresult[\"container_name\"] = container_name\nresult[\"amount\"] = amount"
+      },
+      "x": -1307,
+      "y": 1568,
+      "width": 210,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/ScopedAPIFunction",
+      "base_type": "core/Node"
+    },
+    "05e7aec4-c6ac-48a2-88fb-0c3594fd01da": {
+      "title": "Scoped API Function",
+      "id": "05e7aec4-c6ac-48a2-88fb-0c3594fd01da",
+      "properties": {
+        "code": "containers = arguments[\"containers\"]\nitem_type = arguments[\"item_type\"]\namount = arguments[\"amount\"]\ncontainer_name = arguments[\"container\"]\n\nif container_name not in containers:\n    containers[container_name] = {}\n\ncontainer = containers[container_name]\n\nif item_type not in container:\n    container[item_type] = 0\n\ncontainer[item_type] = container[item_type] + amount\n\nresult[\"item_type\"] = item_type\nresult[\"container_name\"] = container_name\nresult[\"amount\"] = amount"
+      },
+      "x": -1318,
+      "y": 829,
+      "width": 210,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/ScopedAPIFunction",
+      "base_type": "core/Node"
+    },
+    "ec18ab5a-20a8-40b2-9dba-06f00257a1cb": {
+      "title": "Scoped API Function",
+      "id": "ec18ab5a-20a8-40b2-9dba-06f00257a1cb",
+      "properties": {
+        "code": "# 1. Empty the bucket\n# 2. Put 3 oranges in the basket\n# 3. Fill the bucket with wine until it is 50% full\n# 4. Remove 1 orange in from the basket\n# 5. Add 1 apple to the basket\n# {'bucket': {'wine': 50}, 'basket': {'orange': 2, 'apple': 1}, 'bowl': {}}\ncontainers = arguments[\"containers\"]\nexpected = {\n  \"basket\": {\"orange\": 2, \"apple\": 1},\n  \"bucket\": {\"wine\": 50},\n  \"bowl\": {}\n}\nresult[\"success\"] = (containers == expected)"
+      },
+      "x": 272,
+      "y": 2544,
+      "width": 210,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/ScopedAPIFunction",
+      "base_type": "core/Node"
+    },
+    "68adccc8-bf7c-461c-a6fd-51007c0a27f4": {
+      "title": "Emit Test Result",
+      "id": "68adccc8-bf7c-461c-a6fd-51007c0a27f4",
+      "properties": {
+        "message_title": "Function Calling",
+        "message": "Tests whether the model can reliably call functions through Talemate's FOCAL system."
+      },
+      "x": 872,
+      "y": 2504,
+      "width": 210,
+      "height": 142,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/emitTestResult",
+      "base_type": "core/Graph"
+    },
+    "d54e6e1f-ea0b-40f0-b522-c3d8e83e1063": {
+      "title": "Stage 2",
+      "id": "d54e6e1f-ea0b-40f0-b522-c3d8e83e1063",
+      "properties": {
+        "stage": 2
+      },
+      "x": 1130,
+      "y": 2410,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "87b5e297-d2b2-4d03-a584-2b865225a816": {
+      "title": "Output Socket",
+      "id": "87b5e297-d2b2-4d03-a584-2b865225a816",
+      "properties": {
+        "output_type": "bool",
+        "output_name": "success",
+        "num": 0
+      },
+      "x": 1130,
+      "y": 2580,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "41b302f7-2da7-4522-9335-aa50cec1871a": {
+      "title": "Make Dict",
+      "id": "41b302f7-2da7-4522-9335-aa50cec1871a",
+      "properties": {
+        "data": {
+          "bucket": {},
+          "basket": {},
+          "bowl": {}
+        }
+      },
+      "x": -263,
+      "y": 433,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/MakeDict",
+      "base_type": "core/Node"
+    },
+    "2ae13bfe-9b7e-4ded-8736-da62c2005040": {
+      "title": "SET local.containers",
+      "id": "2ae13bfe-9b7e-4ded-8736-da62c2005040",
+      "properties": {
+        "name": "containers",
+        "scope": "local"
+      },
+      "x": 20,
+      "y": 430,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "0fbf21fe-c638-42fb-978d-ffd6d471282a": {
+      "title": "GET local.containers",
+      "id": "0fbf21fe-c638-42fb-978d-ffd6d471282a",
+      "properties": {
+        "name": "containers",
+        "scope": "local"
+      },
+      "x": -270,
+      "y": 2420,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "ceb94fcf-c4f1-497d-84d0-35ea55c9cde6": {
+      "title": "GET parent.containers",
+      "id": "ceb94fcf-c4f1-497d-84d0-35ea55c9cde6",
+      "properties": {
+        "name": "containers",
+        "scope": "parent"
+      },
+      "x": -1920,
+      "y": 2160,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "fa8559af-5988-4f3b-9dcc-8b15f01c605e": {
+      "title": "GET parent.containers",
+      "id": "fa8559af-5988-4f3b-9dcc-8b15f01c605e",
+      "properties": {
+        "name": "containers",
+        "scope": "parent"
+      },
+      "x": -1920,
+      "y": 1420,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "e68f375f-8cf1-42d5-83f3-c3fb9edaa7ce": {
+      "title": "GET parent.containers",
+      "id": "e68f375f-8cf1-42d5-83f3-c3fb9edaa7ce",
+      "properties": {
+        "name": "containers",
+        "scope": "parent"
+      },
+      "x": -1930,
+      "y": 680,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    }
+  },
+  "edges": {
+    "bc4094a5-5659-4fe9-8cdf-54aba755c4e6.agent": [
+      "ed3f9350-656b-4889-8530-efe02e12a45b.agent"
+    ],
+    "ce3eea10-92ba-4cb6-a35c-b36924c100ca.value": [
+      "ed3f9350-656b-4889-8530-efe02e12a45b.state"
+    ],
+    "66daf189-ba25-4d4f-a112-bba2ce5d520c.value": [
+      "cd6eca19-93bb-4269-8a5b-5c2eca33c481.value"
+    ],
+    "8297d3e2-8397-484a-a3e8-6af6bd88c4f4.value": [
+      "3e4a1fff-5322-45cc-a870-ff85d295530a.scope"
+    ],
+    "ad0c804c-2770-4dd1-91b6-092580ef247f.value": [
+      "e70ee960-f12d-43e3-a4fb-938d6f5d181f.state"
+    ],
+    "ed18697d-2f22-4189-ab75-edd84c2bf1d8.fn": [
+      "150970d2-59f9-4a81-91e0-3e15153aed64.fn"
+    ],
+    "a85e0c4b-f149-47e6-bdd4-e19c0cf36fcd.value": [
+      "e70ee960-f12d-43e3-a4fb-938d6f5d181f.success"
+    ],
+    "e70ee960-f12d-43e3-a4fb-938d6f5d181f.state": [
+      "2d23e3f3-8749-4f5b-9823-1c438c0706d7.nodes"
+    ],
+    "ed3f9350-656b-4889-8530-efe02e12a45b.state": [
+      "92af7a74-be28-4407-b8ab-34eaacd4722d.state"
+    ],
+    "ed3f9350-656b-4889-8530-efe02e12a45b.agent": [
+      "92af7a74-be28-4407-b8ab-34eaacd4722d.agent"
+    ],
+    "ed3f9350-656b-4889-8530-efe02e12a45b.prompt": [
+      "92af7a74-be28-4407-b8ab-34eaacd4722d.prompt"
+    ],
+    "0407d440-8d85-4b38-b57e-506fec86b5ae.value": [
+      "fafa2d35-68aa-4c9d-91c8-a86cec7e6fca.item2"
+    ],
+    "fafa2d35-68aa-4c9d-91c8-a86cec7e6fca.dict": [
+      "05e7aec4-c6ac-48a2-88fb-0c3594fd01da.arguments"
+    ],
+    "72b1ef1a-ed10-447e-b98a-0d46a58e0a59.agent": [
+      "05e7aec4-c6ac-48a2-88fb-0c3594fd01da.state",
+      "05e7aec4-c6ac-48a2-88fb-0c3594fd01da.agent"
+    ],
+    "393dd1a7-d948-4712-8c02-0bc141b3f42c.value": [
+      "fafa2d35-68aa-4c9d-91c8-a86cec7e6fca.item3"
+    ],
+    "9b28b248-1b45-4989-b572-d395ac4bb68e.value": [
+      "cf53a471-5d2e-437a-bfea-8c9ae2796a5e.state"
+    ],
+    "3e4a1fff-5322-45cc-a870-ff85d295530a.result": [
+      "ed3f9350-656b-4889-8530-efe02e12a45b.instructions"
+    ],
+    "cc600421-2218-4e3b-b150-2c3f9ea32e76.value": [
+      "fafa2d35-68aa-4c9d-91c8-a86cec7e6fca.item1"
+    ],
+    "cf53a471-5d2e-437a-bfea-8c9ae2796a5e.state": [
+      "35b6e64e-87a6-437b-a57c-298056f6c802.nodes"
+    ],
+    "94f487bc-5edb-4fc2-a545-7a7603e7cdca.fn": [
+      "d14c1137-81b3-4ce9-8a46-cc4f42eb0209.fn"
+    ],
+    "94f487bc-5edb-4fc2-a545-7a7603e7cdca.name": [
+      "d14c1137-81b3-4ce9-8a46-cc4f42eb0209.name"
+    ],
+    "0428e58b-ab17-4c10-bc34-f69fc7be41da.dict": [
+      "cdac4a3b-beb5-4b66-a279-6296034f7e97.arguments"
+    ],
+    "3cfd423f-e9e3-46ef-b764-14ed2c14a140.agent": [
+      "cdac4a3b-beb5-4b66-a279-6296034f7e97.state",
+      "cdac4a3b-beb5-4b66-a279-6296034f7e97.agent"
+    ],
+    "a16514b1-de0a-4ad9-a0df-72156ea4fa0b.value": [
+      "b6daccdc-d152-4f27-9118-9028cfaf1f55.state"
+    ],
+    "b6daccdc-d152-4f27-9118-9028cfaf1f55.state": [
+      "6f1e0ed5-ac32-4887-9403-c251fa2150bb.nodes"
+    ],
+    "4cc57619-5d91-4ae2-b8c1-9635e4e6bca3.value": [
+      "0428e58b-ab17-4c10-bc34-f69fc7be41da.item1"
+    ],
+    "6c2bd63c-f9ba-43b5-a76c-d058e85af592.value": [
+      "0428e58b-ab17-4c10-bc34-f69fc7be41da.item2"
+    ],
+    "e05ba946-3874-4065-b0f9-9bdb49ce4abb.value": [
+      "0428e58b-ab17-4c10-bc34-f69fc7be41da.item3"
+    ],
+    "6d7b2945-199c-4630-a694-38ae01c9eb38.fn": [
+      "7c0c2aca-bf5e-4e5f-9a13-a0b817c23eeb.fn"
+    ],
+    "6d7b2945-199c-4630-a694-38ae01c9eb38.name": [
+      "7c0c2aca-bf5e-4e5f-9a13-a0b817c23eeb.name"
+    ],
+    "c0eecf41-84cf-440a-9d02-54f032183aa1.agent": [
+      "ebd74f28-76e4-49ac-8e6a-371d0ec5106c.state",
+      "ebd74f28-76e4-49ac-8e6a-371d0ec5106c.agent"
+    ],
+    "7a5bb435-6885-4cea-a6b8-e3cf31f5d7a4.value": [
+      "8920dd2b-8af9-4455-8211-a7dff06fdb7b.state"
+    ],
+    "79dd02de-37db-4815-b002-992450eab3b0.value": [
+      "ced7384c-5f0e-48aa-9df7-34664fcc9620.item1"
+    ],
+    "ced7384c-5f0e-48aa-9df7-34664fcc9620.dict": [
+      "ebd74f28-76e4-49ac-8e6a-371d0ec5106c.arguments"
+    ],
+    "ebd74f28-76e4-49ac-8e6a-371d0ec5106c.result": [
+      "7a5bb435-6885-4cea-a6b8-e3cf31f5d7a4.value"
+    ],
+    "8920dd2b-8af9-4455-8211-a7dff06fdb7b.state": [
+      "78d8ceb8-ca55-496e-9f19-e700d329451b.nodes"
+    ],
+    "d19ce849-7bcf-4895-beb9-5f3c222f1525.list": [
+      "92af7a74-be28-4407-b8ab-34eaacd4722d.callbacks"
+    ],
+    "d5bfbc8a-7926-4373-afde-7d1c90855c63.fn": [
+      "bbad84d4-507e-4363-b244-2d63ea653c28.fn"
+    ],
+    "d5bfbc8a-7926-4373-afde-7d1c90855c63.name": [
+      "bbad84d4-507e-4363-b244-2d63ea653c28.name"
+    ],
+    "92af7a74-be28-4407-b8ab-34eaacd4722d.calls": [
+      "faf951af-e4a6-4460-8d8e-e78dfb5c574e.value"
+    ],
+    "faf951af-e4a6-4460-8d8e-e78dfb5c574e.value": [
+      "9e54a4e8-b72d-492d-bdab-e6da4c8bda6b.state"
+    ],
+    "bbad84d4-507e-4363-b244-2d63ea653c28.callback": [
+      "d19ce849-7bcf-4895-beb9-5f3c222f1525.item2"
+    ],
+    "7c0c2aca-bf5e-4e5f-9a13-a0b817c23eeb.callback": [
+      "d19ce849-7bcf-4895-beb9-5f3c222f1525.item1"
+    ],
+    "d14c1137-81b3-4ce9-8a46-cc4f42eb0209.callback": [
+      "d19ce849-7bcf-4895-beb9-5f3c222f1525.item0"
+    ],
+    "a15ff44a-bbaf-4e0f-af63-d5f48e0f34b3.value": [
+      "ec18ab5a-20a8-40b2-9dba-06f00257a1cb.state"
+    ],
+    "ae65b60b-ecb2-4bdd-a555-77249b12db3b.dict": [
+      "ec18ab5a-20a8-40b2-9dba-06f00257a1cb.arguments"
+    ],
+    "272e6d0a-26c1-46e9-ad4c-b92038b6dc78.agent": [
+      "ec18ab5a-20a8-40b2-9dba-06f00257a1cb.agent"
+    ],
+    "4b4d93c6-0a49-4e5c-b04f-ee6ed99fe7d0.value": [
+      "68adccc8-bf7c-461c-a6fd-51007c0a27f4.state",
+      "68adccc8-bf7c-461c-a6fd-51007c0a27f4.success"
+    ],
+    "cdac4a3b-beb5-4b66-a279-6296034f7e97.result": [
+      "a16514b1-de0a-4ad9-a0df-72156ea4fa0b.value"
+    ],
+    "05e7aec4-c6ac-48a2-88fb-0c3594fd01da.result": [
+      "9b28b248-1b45-4989-b572-d395ac4bb68e.value"
+    ],
+    "ec18ab5a-20a8-40b2-9dba-06f00257a1cb.result": [
+      "4b4d93c6-0a49-4e5c-b04f-ee6ed99fe7d0.object"
+    ],
+    "68adccc8-bf7c-461c-a6fd-51007c0a27f4.state": [
+      "d54e6e1f-ea0b-40f0-b522-c3d8e83e1063.state"
+    ],
+    "68adccc8-bf7c-461c-a6fd-51007c0a27f4.success": [
+      "87b5e297-d2b2-4d03-a584-2b865225a816.value"
+    ],
+    "41b302f7-2da7-4522-9335-aa50cec1871a.dict": [
+      "2ae13bfe-9b7e-4ded-8736-da62c2005040.value"
+    ],
+    "2ae13bfe-9b7e-4ded-8736-da62c2005040.value": [
+      "baba2d63-74f2-4fd4-8b66-4bf7676c1793.state"
+    ],
+    "0fbf21fe-c638-42fb-978d-ffd6d471282a.value": [
+      "a15ff44a-bbaf-4e0f-af63-d5f48e0f34b3.value",
+      "ae65b60b-ecb2-4bdd-a555-77249b12db3b.item0"
+    ],
+    "ceb94fcf-c4f1-497d-84d0-35ea55c9cde6.value": [
+      "ced7384c-5f0e-48aa-9df7-34664fcc9620.item0"
+    ],
+    "fa8559af-5988-4f3b-9dcc-8b15f01c605e.value": [
+      "0428e58b-ab17-4c10-bc34-f69fc7be41da.item0"
+    ],
+    "e68f375f-8cf1-42d5-83f3-c3fb9edaa7ce.value": [
+      "fafa2d35-68aa-4c9d-91c8-a86cec7e6fca.item0"
+    ]
+  },
+  "groups": [
+    {
+      "title": "Process",
+      "x": -293,
+      "y": 604,
+      "width": 1937,
+      "height": 1741,
+      "color": "#3f789e",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Error Handling",
+      "x": -293,
+      "y": 2722,
+      "width": 1480,
+      "height": 258,
+      "color": "#A88",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Function",
+      "x": -1953,
+      "y": 604,
+      "width": 1630,
+      "height": 1946,
+      "color": "#b06634",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Validation",
+      "x": -293,
+      "y": 2348,
+      "width": 1670,
+      "height": 371,
+      "color": "#b58b2a",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Prepare",
+      "x": -288,
+      "y": 358,
+      "width": 822,
+      "height": 222,
+      "color": "#8AA",
+      "font_size": 24,
+      "inherited": false
+    }
+  ],
+  "comments": [],
+  "extends": null,
+  "base_type": "core/Graph",
+  "inputs": [],
+  "outputs": [],
+  "module_properties": {},
+  "style": null
+}

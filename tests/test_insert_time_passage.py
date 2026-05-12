@@ -6,7 +6,6 @@ Tests for time passage operations:
   message-id-based (live scene view)
 """
 
-import types
 import pytest
 
 from talemate.history import (
@@ -39,17 +38,16 @@ def make_scene(
     layered_history: list | None = None,
     ts: str = "PT0S",
 ):
-    """Build a minimal Scene-like namespace with fix_time and message_index."""
-    scene = types.SimpleNamespace(
-        ts=ts,
-        history=history,
-        archived_history=archived_history,
-        layered_history=layered_history or [],
-    )
-    # Bind fix_time so insert_time_passage can call it
-    scene.fix_time = lambda: Scene._fix_time(scene)
-    # Bind message_index for message-id-based operations
-    scene.message_index = lambda mid: Scene.message_index(scene, mid)
+    """Build a real `Scene` populated with the requested timeline state.
+
+    Uses the production `Scene` class so changes to its `fix_time` /
+    `message_index` semantics are caught here.
+    """
+    scene = Scene()
+    scene.ts = ts
+    scene.history = history
+    scene.archived_history = archived_history
+    scene.layered_history = layered_history or []
     return scene
 
 

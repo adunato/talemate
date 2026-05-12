@@ -6,6 +6,8 @@ You can create and remove characters, manage their details, and track their stat
 
 Characters can also be temporarily disabled, which will prevent them from being included in the scene' dialogue generation. (e.g., they are out of the scene for a moment.)
 
+The character list can optionally be organized into collapsible [folders](/talemate/user-guide/world-editor/characters/folders).
+
 ## Character Components
 
 A character is made up of the following components:

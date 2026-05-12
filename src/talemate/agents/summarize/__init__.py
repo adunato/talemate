@@ -250,7 +250,7 @@ class SummarizeAgent(
                 )[-num_previous:]
             else:
                 previous_summaries = [
-                    entry.text
+                    entry["text"]
                     for entry in self.scene.archived_history[end - num_previous : end]
                 ]
 

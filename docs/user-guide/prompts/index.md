@@ -1,8 +1,5 @@
 # Prompt Manager
 
-!!! info "New in 0.36.0"
-    The Prompt Manager is a new unified interface for managing prompt templates, inspecting sent prompts, and reviewing scene context.
-
 The Prompt Manager provides a centralized interface for working with the Jinja2 prompt templates that drive all AI interactions in Talemate. It replaces the need to manually locate and edit template files, offering visual tools for template management, override tracking, and prompt inspection.
 
 ![Prompt Manager overview](../../img/0.36.0/prompt-manager-overview.png)
@@ -13,13 +10,17 @@ The Prompt Manager is accessible from the main application toolbar. Click the **
 
 ![Prompt Manager toolbar](../../img/0.36.0/prompt-manager-toolbar.png)
 
-The Prompt Manager is organized into three main tabs:
+The Prompt Manager is organized into four main tabs:
 
 - **Prompts** -- view prompts that have been sent to the LLM, with full detail inspection
 - **Template Files** -- browse, edit, and manage template groups and overrides
+- **LLM Prompt Templates** -- manage the base chat-format templates (ChatML, Llama3, etc.) used for local LLM inference (see [LLM Prompt Templates](llm-prompt-templates.md))
 - **Scene Context** -- review how scene history is rendered into AI context (see [Scene Context History Review](context-history-review.md))
 
 The sidebar also provides quick-access panels for recent prompts and recently rendered templates.
+
+!!! tip "Outdated override warning"
+    When one or more of your active template overrides is older than the built-in default it overrides, the top-level **Prompts** tab in the main navigation shows a warning icon. Open the **Active** tab (see below) to see which templates are flagged and review or remove them.
 
 ## Template Groups
 

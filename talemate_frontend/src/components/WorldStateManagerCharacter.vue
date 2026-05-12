@@ -16,6 +16,51 @@
                     </template>
                 </v-tooltip>
 
+                <div v-if="!character.is_new" class="folder-combobox-wrap ml-2">
+                    <v-text-field
+                        v-model="folderInput"
+                        placeholder="Ungrouped"
+                        prepend-inner-icon="mdi-folder-outline"
+                        density="compact"
+                        variant="outlined"
+                        hide-details
+                        clearable
+                        :maxlength="folderNameMaxLength"
+                        @click:clear="applyFolder(null)"
+                        @keydown.enter.prevent="submitFolderInput"
+                        @focus="folderMenuOpen = true"
+                    >
+                        <v-menu
+                            v-model="folderMenuOpen"
+                            activator="parent"
+                            :close-on-content-click="false"
+                            location="bottom start"
+                            :open-on-click="false"
+                        >
+                            <v-list density="compact" min-width="220" max-height="260">
+                                <v-list-item
+                                    v-for="folderName in folderSuggestions"
+                                    :key="folderName"
+                                    :active="character.folder === folderName"
+                                    prepend-icon="mdi-folder-outline"
+                                    @click="applyFolder(folderName)"
+                                >
+                                    <v-list-item-title>{{ folderName }}</v-list-item-title>
+                                </v-list-item>
+                                <v-list-item
+                                    v-if="canCreateNewFolder"
+                                    prepend-icon="mdi-folder-plus-outline"
+                                    @click="submitFolderInput"
+                                >
+                                    <v-list-item-title>Create "{{ folderInputTrimmed }}"</v-list-item-title>
+                                </v-list-item>
+                                <v-list-item v-if="folderSuggestions.length === 0 && !canCreateNewFolder" disabled>
+                                    <v-list-item-title class="text-muted">No folders yet — type a name to create one.</v-list-item-title>
+                                </v-list-item>
+                            </v-list>
+                        </v-menu>
+                    </v-text-field>
+                </div>
 
                 <v-dialog v-model="characterColorPicker" scrollable width="300">
                     <v-color-picker v-model="character.color" @update:model-value="onCharacterColorChange"></v-color-picker>
@@ -70,10 +115,10 @@
                                 <!-- GENERATE CHANGE SUGGESTIONS -->
                                 <div>
                                     <v-list-item>
-                                        <v-tooltip max-width="300" :text="`Generate change suggestions for ${character.name}. This will provide a list of suggestions for changes to the character, based on the progression of the story thus far. [Ctrl: Provide instructions]`">
+                                        <v-tooltip max-width="300" :text="`Generate change suggestions for ${character.name}. This will provide a list of suggestions for changes to the character, based on the progression of the story thus far. [${primaryModifierLabel}: Provide instructions]`">
                                             <template v-slot:activator="{ props }">
-                                                <v-btn 
-                                                @click.stop="(event) => { suggestChanges(character.name, event.ctrlKey)}"
+                                                <v-btn
+                                                @click.stop="(event) => { suggestChanges(character.name, isPrimaryModifier(event))}"
                                                 v-bind="props" 
                                                 variant="tonal" 
                                                 :disabled="appBusy || !appReady"
@@ -304,7 +349,8 @@ import WorldStateManagerCharacterReinforcements from './WorldStateManagerCharact
 import WorldStateManagerCharacterActor from './WorldStateManagerCharacterActor.vue';
 import WorldStateManagerCharacterCreator from './WorldStateManagerCharacterCreator.vue';
 import WorldStateManagerCharacterVisuals from './WorldStateManagerCharacterVisuals.vue';
-import { MAX_CONTENT_WIDTH } from '@/constants';
+import { MAX_CONTENT_WIDTH, FOLDER_NAME_MAX_LENGTH } from '@/constants';
+import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 
 export default {
     name: 'WorldStateManagerCharacter',
@@ -349,8 +395,20 @@ export default {
             deleteBusy: false,
             coverImageBusy: false,
             characterColorPicker: false,
+            folderInput: '',
+            folderMenuOpen: false,
             MAX_CONTENT_WIDTH,
+            primaryModifierLabel,
         }
+    },
+    watch: {
+        character: {
+            immediate: true,
+            handler(newVal) {
+                // Sync the text field with whatever the backend says the folder currently is.
+                this.folderInput = (newVal && newVal.folder) ? newVal.folder : '';
+            },
+        },
     },
     emits:[
         'require-scene-save',
@@ -359,7 +417,39 @@ export default {
         'load-pin',
         'add-pin',
     ],
+    computed: {
+        folderNameMaxLength() {
+            return FOLDER_NAME_MAX_LENGTH;
+        },
+        availableFolders() {
+            if (!this.characterList || !this.characterList.characters) {
+                return [];
+            }
+            const names = new Set();
+            for (const character of Object.values(this.characterList.characters)) {
+                if (character.folder) {
+                    names.add(character.folder);
+                }
+            }
+            return [...names].sort((a, b) => a.localeCompare(b));
+        },
+        folderInputTrimmed() {
+            return (this.folderInput || '').trim();
+        },
+        folderSuggestions() {
+            const q = this.folderInputTrimmed.toLowerCase();
+            if (!q) return this.availableFolders;
+            return this.availableFolders.filter((f) => f.toLowerCase().includes(q));
+        },
+        canCreateNewFolder() {
+            const q = this.folderInputTrimmed;
+            if (!q) return false;
+            // Only offer "create" when the typed name isn't already an existing folder
+            return !this.availableFolders.some((f) => f === q);
+        },
+    },
     methods: {
+        isPrimaryModifier,
         reset() {
             this.selected = null;
             this.character = null;
@@ -423,6 +513,28 @@ export default {
                 name: this.character.name,
                 shared: this.character.shared,
             }));
+        },
+
+        applyFolder(folder) {
+            let normalized = null;
+            if (typeof folder === 'string') {
+                const trimmed = folder.trim();
+                normalized = trimmed ? trimmed.slice(0, FOLDER_NAME_MAX_LENGTH) : null;
+            }
+            this.folderMenuOpen = false;
+            if (normalized === (this.character.folder || null)) {
+                this.folderInput = normalized || '';
+                return;
+            }
+            this.getWebsocket().send(JSON.stringify({
+                type: 'world_state_manager',
+                action: 'set_character_folder',
+                name: this.character.name,
+                folder: normalized,
+            }));
+        },
+        submitFolderInput() {
+            this.applyFolder(this.folderInputTrimmed || null);
         },
 
         deleteCharacter() {
@@ -517,3 +629,13 @@ export default {
 }
 
 </script>
+
+<style scoped>
+/* Inline-block wrapper keeps Vuetify's internal v-input grid intact while
+   letting the combobox sit next to the chips in v-card-title. */
+.folder-combobox-wrap {
+    display: inline-block;
+    width: 220px;
+    vertical-align: middle;
+}
+</style>

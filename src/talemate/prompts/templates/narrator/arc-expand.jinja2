@@ -1,0 +1,125 @@
+{#-
+Experimental: data-structure output format for arc expansion.
+Uses YAML list instead of XML-style block tags.
+
+Extractors:
+  - response: AnchorExtractor with parse_data for YAML/JSON list
+-#}
+{{ set_anchor_extractor("response", "<BLOCKS>", "</BLOCKS>", parse_data=True) }}
+{% include "narrate-context.jinja2" %}
+
+{# Character context — dialogue instructions, example dialogue, character sheets #}
+{% with include_dialogue_instructions=True %}
+{% include "character-context.jinja2" %}
+{% endwith %}
+
+{% if director_notes %}
+<|SECTION:DIRECTOR NOTES|>
+{{ director_notes }}
+<|CLOSE_SECTION|>
+{% endif %}
+
+{% include "writing-style-instructions.jinja2" %}
+
+<|SECTION:TASK|>
+Write scene prose from the beat descriptions below.
+
+{% set is_final_chunk = arc_info and arc_info.chunk_index == arc_info.total_chunks - 1 %}
+{% if arc_info and arc_info.total_chunks > 1 %}
+**Arc position:** {{ arc_info.position | upper }} (chunk {{ arc_info.chunk_index + 1 }} of {{ arc_info.total_chunks }}, tension {{ "%.1f"|format(arc_info.tension_range[0]) }}–{{ "%.1f"|format(arc_info.tension_range[1]) }})
+{% if arc_info.position == "opening" %}
+You are writing the OPENING of the story. Establish the world and characters, build tension gradually. Do not peak yet — save the most intense moments for later.
+{% elif arc_info.position == "rising" %}
+You are writing the RISING ACTION. Tension is building. Escalate steadily but leave room for the climax ahead.
+{% if not close_arc and is_final_chunk %}
+**This is the FINAL chunk of a CONTINUATION segment.** The story does NOT end here — it will be continued by the user. End on a forward-facing moment: a question asked but not answered, an action in progress, a threat just revealed, a decision about to be made. Do NOT wind down. Do NOT resolve anything. Leave the wire live.
+{% endif %}
+{% elif arc_info.position == "climax" %}
+You are writing the CLIMAX — the dramatic high point. Commit fully to the peak intensity. This is where the biggest moments happen.
+{% if not close_arc and is_final_chunk %}
+**This is the FINAL chunk of a CONTINUATION segment.** The story does NOT end here. Stay at peak intensity through the FINAL block. Do NOT wind down. Do NOT let characters regroup. Do NOT close the situation. End on the peak moment itself — the decision, the reveal, the strike, the impact. The user picks up from the live moment. Write the last block as if the scene is about to continue five seconds later.
+{% endif %}
+{% elif arc_info.position == "climax_and_resolution" %}
+You are writing the CLIMAX and RESOLUTION. Build to the dramatic peak, then wind down. The final beats must land the consequences and let the characters process what happened — do not end at maximum intensity.
+{% elif arc_info.position == "resolution" %}
+You are writing the RESOLUTION. The peak has passed. Land the consequences, close the arc, and let the characters process what happened.
+{% endif %}
+{% elif arc_info and arc_info.position == "full_open" %}
+**You are writing a CONTINUATION segment as a single chunk.** The story does NOT end here — it is part of a longer roleplay that the user will continue. Build tension through the arc as normal, but DO NOT resolve. The final block must stay at HIGH tension and leave a live thread for the user to pick up: an unanswered question, an action in progress, a decision about to be made, a threat just revealed. Do NOT wind down. Do NOT let characters regroup. The user picks up from the live moment.
+{% endif %}
+
+{% if preceding_text %}
+**Story so far** (continue from here):
+```
+{{ preceding_text }}
+```
+
+CRITICAL: Do NOT repeat, rephrase, or re-describe ANY event, action, dialogue, or image from the story so far. If a beat description asks for something that already happened above, find a NEW angle or skip to the next development. The reader has already seen it.
+{% endif %}
+
+**Beats to write:**
+{% for beat in beats %}
+Beat {{ beat.order }} [{{ beat.type }}] (pacing: {{ beat.pacing }}, tension: {{ beat.tension }})
+{% if beat.characters %}  Characters: {{ beat.characters | join(", ") }}{% endif %}
+  {{ beat.description }}
+
+{% endfor %}
+
+{% if following_beats %}
+**Upcoming beats** (do NOT write these, just be aware for pacing):
+{% for beat in following_beats[:2] %}
+Beat {{ beat.order }} [{{ beat.type }}]: {{ beat.description }}
+{% endfor %}
+{% endif %}
+
+**OUTPUT FORMAT (mandatory):**
+
+Your response must be a {{ data_format_type() }} list inside `<BLOCKS>` tags. Each item has:
+- `type`: either `narrator` or `character`
+- `name`: (character items only) the character's name
+- `content`: the prose content for this block
+
+- Narration/action/transition/reveal beats → `narrator` items
+- Dialogue beats → `character` items (action + body language + dialogue as one unit)
+- Items can appear in any order and frequency
+
+{% if data_format_type() == "json" %}
+Example:
+```
+<BLOCKS>
+[
+  {"type": "narrator", "content": "The corridor stretched ahead, dark and silent. Three fault lights blinked amber warnings."},
+  {"type": "character", "name": "Elena", "content": "She grabbed his arm, her grip tight. \"We need to leave. Now.\" Her eyes didn't leave the shadows behind them."},
+  {"type": "narrator", "content": "The ship groaned. Somewhere below, metal twisted against metal."}
+]
+</BLOCKS>
+```
+{% else %}
+Example:
+```
+<BLOCKS>
+- type: narrator
+  content: |
+    The corridor stretched ahead, dark and silent. Three fault lights blinked amber warnings.
+- type: character
+  name: Elena
+  content: |
+    She grabbed his arm, her grip tight. "We need to leave. Now." Her eyes didn't leave the shadows behind them.
+- type: narrator
+  content: |
+    The ship groaned. Somewhere below, metal twisted against metal.
+</BLOCKS>
+```
+{% endif %}
+
+**Writing rules:**
+- `character` items must be complete character moments: physical action, body language, AND dialogue together. Not just a quoted line.
+- ONE strong image per paragraph. Develop it — let the reader sit with it before introducing the next. Do not stack multiple phenomena in rapid succession.
+- Do NOT repeat sensory details or character descriptions already established in the "Story so far" section.
+- Vary sentence length. Mix short and long.
+- Show emotion through action, not narration. "His hands shook" not "he felt terror."
+- Low-tension beats must use short sentences, plain language, breathing room.
+- Do NOT start character item content with the character's name — the `name` field already identifies them.
+- **Dialogue variety:** Each character's dialogue must serve a DIFFERENT function across beats. Vary between: questioning, arguing, joking, commanding, confessing, deflecting, comforting, provoking. A character must NOT deliver the same type of speech twice. If a character made a philosophical declaration in one beat, their next line must be a question, a joke, or a pragmatic instruction — anything except another declaration.
+<|CLOSE_SECTION|>
+{{ set_prepared_response("<BLOCKS>\n") }}

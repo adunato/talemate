@@ -1,0 +1,8 @@
+## Gamestate
+Path: player/status
+Data format: yaml
+
+```yaml
+hp: 12
+mana: 5
+```

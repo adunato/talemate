@@ -3,13 +3,10 @@
 ## Classification
 Content Classification: Fantasy adventure story
 
+Narrative Perspective: Third person limited, past tense.
+
 Scenario Premise:
 A peaceful clearing in the heart of an ancient forest.
-
-## Intention of this story
-The overarching intention of this story. Use it to guide your decisions in the scene.
-
-<Mock name='mock.intent_state.intent' id='NORMALIZED'>
 
 ## Scene
 Elena: Hello there, traveler.

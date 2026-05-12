@@ -38,6 +38,7 @@
 
 <script>
 import AssetView from './AssetView.vue';
+import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 
 export default {
   name: 'MessageAssetImage',
@@ -164,8 +165,8 @@ export default {
   },
   methods: {
     handleClick(event) {
-      // Ctrl+click directly opens the image view
-      if (event.ctrlKey && this.imageSrc) {
+      // Ctrl/Cmd+click directly opens the image view
+      if (isPrimaryModifier(event) && this.imageSrc) {
         this.openAssetView();
         return;
       }

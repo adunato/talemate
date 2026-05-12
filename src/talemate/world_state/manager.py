@@ -33,6 +33,7 @@ class CharacterSelect(pydantic.BaseModel):
     is_player: bool = False
     shared: bool = False
     avatar: str | None = None
+    folder: str | None = None
 
 
 class ContextDBEntry(pydantic.BaseModel):
@@ -68,6 +69,7 @@ class CharacterDetails(pydantic.BaseModel):
     shared: bool = False
     shared_attributes: list[str] = []
     shared_details: list[str] = []
+    folder: str | None = None
 
 
 class World(pydantic.BaseModel):
@@ -148,6 +150,7 @@ class WorldStateManager:
                 is_player=character.is_player,
                 shared=character.shared,
                 avatar=character.avatar,
+                folder=character.folder,
             )
 
         for character in self.scene.inactive_characters.values():
@@ -157,6 +160,7 @@ class WorldStateManager:
                 is_player=character.is_player,
                 shared=character.shared,
                 avatar=character.avatar,
+                folder=character.folder,
             )
 
         return characters
@@ -196,6 +200,7 @@ class WorldStateManager:
             shared=character.shared,
             shared_attributes=character.shared_attributes,
             shared_details=character.shared_details,
+            folder=character.folder,
         )
 
         # sorted base attributes
@@ -368,6 +373,34 @@ class WorldStateManager:
             return
 
         character.set_color(color)
+
+    async def update_character_folder(self, character_name: str, folder: str | None):
+        """
+        Sets or clears the folder assignment for a single character.
+
+        Arguments:
+            character_name: The name of the character to update.
+            folder: The folder name to assign, or None to clear.
+        """
+        character = self.scene.get_character(character_name)
+        if not character:
+            log.error("character not found", character_name=character_name)
+            return
+
+        character.folder = folder
+
+    async def rename_character_folder(self, old_name: str, new_name: str):
+        """
+        Bulk-renames a folder by updating every character currently assigned to
+        it. Characters whose folder does not match are left untouched.
+
+        Arguments:
+            old_name: The current folder name.
+            new_name: The new folder name (already normalized by the caller).
+        """
+        for character in self.scene.character_data.values():
+            if character.folder == old_name:
+                character.folder = new_name
 
     async def update_character_voice(self, character_name: str, voice_id: str | None):
         """Assign or clear a voice for the given character.
@@ -680,13 +713,14 @@ class WorldStateManager:
 
     async def is_pin_active(self, entry_id: str | ContextIDItem) -> bool:
         """
-        Checks if a pin is active.
+        Checks if a pin is active. Returns False if the pin doesn't exist.
         """
         if isinstance(entry_id, ContextIDItem):
             entry_id = entry_id.memory_id
             if not entry_id:
                 raise ValueError(f"Context ID item {entry_id} cannot be pinned.")
-        return entry_id in self.world_state.pins
+        if entry_id not in self.world_state.pins:
+            return False
         return self.world_state.pins[entry_id].active
 
     async def get_templates(
@@ -1062,12 +1096,14 @@ class WorldStateManager:
         description: str | None = None,
         intro: str | None = None,
         context: str | None = None,
+        perspective: str | None = None,
     ) -> "Scene":
         scene = self.scene
         scene.title = title
         scene.description = description
         scene.intro = intro
         scene.context = context
+        scene.perspective = perspective or ""
 
         return scene
 

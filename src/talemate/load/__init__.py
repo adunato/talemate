@@ -294,6 +294,7 @@ async def load_scene_from_data(
     }
     scene.active_characters = scene_data.get("active_characters", [])
     scene.context = scene_data.get("context", "")
+    scene.perspective = scene_data.get("perspective", "")
     scene.project_name = scene_data.get("project_name")
     scene.intent_state = SceneIntent(**scene_data.get("intent_state", {}))
     scene.history = _load_history(scene_data["history"])

@@ -1,6 +1,6 @@
 [project]
 name = "talemate"
-version = "0.36.1"
+version = "0.37.0"
 description = "AI-backed roleplay and narrative tools"
 authors = [{name = "VeguAITools"}]
 license = {text = "GNU Affero General Public License v3.0"}
@@ -14,8 +14,8 @@ dependencies = [
     "isort>=5.10",
     "jinja2>=3.0",
     "openai>=1",
-    "mistralai>=0.1.8",
-    "cohere>=5.2.2",
+    "mistralai>=2.4.0",
+    "cohere>=6.0.0",
     "anthropic>=0.19.1",
     "groq>=0.5.0",
     "requests>=2.26",
@@ -42,7 +42,7 @@ dependencies = [
     "huggingface-hub>=0.20.2",
     "RestrictedPython>7.1",
     "numpy>=2",
-    "aiofiles>=24.1.0",
+    "aiofiles>=25.1.0",
     "pyyaml>=6.0",
     "limits>=5.0",
     "diff-match-patch>=20241021",
@@ -156,6 +156,9 @@ branch = true
 omit = [
     "*/tests/*",
     "*/__pycache__/*",
+    # Deprecated public game-scripting API surface; excluded from coverage
+    # to avoid skewing totals while it phases out.
+    "src/talemate/game/engine/api/*",
 ]
 
 [tool.coverage.report]

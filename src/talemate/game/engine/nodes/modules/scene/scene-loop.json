@@ -1,6 +1,6 @@
 {
   "title": "Scene Loop",
-  "id": "0f6a7fe1-f5af-4e4a-a58f-f6b09334c4be",
+  "id": "2602f40e-7e55-4d1d-9255-cb548d118b01",
   "properties": {
     "trigger_game_loop": true
   },
@@ -537,21 +537,6 @@
       "registry": "agents/director/events/onPersistCharacterGenerateVisual",
       "base_type": "core/Event"
     },
-    "19963b5e-e2c1-4970-a0c4-fde30195e2b4": {
-      "title": "On Message Set Avatar",
-      "id": "19963b5e-e2c1-4970-a0c4-fde30195e2b4",
-      "properties": {
-        "event_name": "agent.conversation.generated"
-      },
-      "x": -322,
-      "y": 193,
-      "width": 293,
-      "height": 38,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/summarizer/onMessageSetAvatar",
-      "base_type": "core/Event"
-    },
     "149280f6-8834-496b-9583-1ed9ccb2a187": {
       "title": "RSwitch",
       "id": "149280f6-8834-496b-9583-1ed9ccb2a187",
@@ -637,21 +622,6 @@
       "registry": "core/Watch",
       "base_type": "core/Node"
     },
-    "c044e62a-a1c5-4dd5-a20f-6bc22f13df64": {
-      "title": "Stage 10",
-      "id": "c044e62a-a1c5-4dd5-a20f-6bc22f13df64",
-      "properties": {
-        "stage": 10
-      },
-      "x": 1746,
-      "y": 3222,
-      "width": 210,
-      "height": 118,
-      "collapsed": true,
-      "inherited": false,
-      "registry": "core/Stage",
-      "base_type": "core/Node"
-    },
     "1d645864-924c-4ec0-898a-61547529bb56": {
       "title": "Get Input",
       "id": "1d645864-924c-4ec0-898a-61547529bb56",
@@ -667,36 +637,6 @@
       "collapsed": false,
       "inherited": false,
       "registry": "input/WaitForInput",
-      "base_type": "core/Node"
-    },
-    "58468fdb-1d1e-44c9-97e8-889de2f333d0": {
-      "title": "Push History",
-      "id": "58468fdb-1d1e-44c9-97e8-889de2f333d0",
-      "properties": {
-        "emit_message": true
-      },
-      "x": 1285,
-      "y": 3022,
-      "width": 210,
-      "height": 58,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "scene/history/Push",
-      "base_type": "core/Node"
-    },
-    "54983f3e-c788-4bdd-95a1-da9462ada3f3": {
-      "title": "Generate Actor Action",
-      "id": "54983f3e-c788-4bdd-95a1-da9462ada3f3",
-      "properties": {
-        "trigger_conversation_generated": true
-      },
-      "x": 925,
-      "y": 3022,
-      "width": 272,
-      "height": 138,
-      "collapsed": false,
-      "inherited": false,
-      "registry": "agents/conversation/Generate",
       "base_type": "core/Node"
     },
     "0a155c98-458c-43e0-8dce-a0b3cadd6012": {
@@ -1080,7 +1020,7 @@
       "title": "Scene Direction",
       "id": "bad4de23-1028-4be6-b6ab-d85d177060ff",
       "properties": {
-        "max_actions": 10,
+        "max_actions": 0,
         "always_on": false,
         "run_immediately": false
       },
@@ -1118,6 +1058,109 @@
       "inherited": false,
       "registry": "core/ANDRouter",
       "base_type": "core/Node"
+    },
+    "19963b5e-e2c1-4970-a0c4-fde30195e2b4": {
+      "title": "On Message Set Avatar",
+      "id": "19963b5e-e2c1-4970-a0c4-fde30195e2b4",
+      "properties": {
+        "event_name": "agent.conversation.generated"
+      },
+      "x": -332,
+      "y": 193,
+      "width": 304,
+      "height": 38,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/summarizer/onMessageSetAvatar",
+      "base_type": "core/Event"
+    },
+    "21066f68-4cd3-4434-bdd8-1e508f2f836b": {
+      "title": "Auto Narration",
+      "id": "21066f68-4cd3-4434-bdd8-1e508f2f836b",
+      "properties": {
+        "event_name": "game_loop_actor_iter"
+      },
+      "x": -332,
+      "y": 300,
+      "width": 304,
+      "height": 38,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/narrator/autoNarration",
+      "base_type": "core/Event"
+    },
+    "58468fdb-1d1e-44c9-97e8-889de2f333d0": {
+      "title": "Push History",
+      "id": "58468fdb-1d1e-44c9-97e8-889de2f333d0",
+      "properties": {
+        "emit_message": true
+      },
+      "x": 1285,
+      "y": 3022,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "scene/history/Push",
+      "base_type": "core/Node"
+    },
+    "54983f3e-c788-4bdd-95a1-da9462ada3f3": {
+      "title": "Generate Actor Action",
+      "id": "54983f3e-c788-4bdd-95a1-da9462ada3f3",
+      "properties": {
+        "trigger_conversation_generated": true
+      },
+      "x": 925,
+      "y": 3022,
+      "width": 272,
+      "height": 138,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/conversation/Generate",
+      "base_type": "core/Node"
+    },
+    "c044e62a-a1c5-4dd5-a20f-6bc22f13df64": {
+      "title": "Stage 10",
+      "id": "c044e62a-a1c5-4dd5-a20f-6bc22f13df64",
+      "properties": {
+        "stage": 10
+      },
+      "x": 1750,
+      "y": 3220,
+      "width": 210,
+      "height": 118,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "26056c9a-2abc-4036-8193-b77a2b9e62dd": {
+      "title": "GET obj.actor",
+      "id": "26056c9a-2abc-4036-8193-b77a2b9e62dd",
+      "properties": {
+        "attribute": "actor"
+      },
+      "x": 1330,
+      "y": 3150,
+      "width": 210,
+      "height": 98,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "data/Get",
+      "base_type": "core/Node"
+    },
+    "42951d3e-6c6a-4b3c-91ce-59c0a97f706b": {
+      "title": "Game Loop Actor Iteration",
+      "id": "42951d3e-6c6a-4b3c-91ce-59c0a97f706b",
+      "properties": {},
+      "x": 1530,
+      "y": 3100,
+      "width": 210,
+      "height": 46,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "scene/event/trigger/GameLoopActorIter",
+      "base_type": "core/EventTrigger"
     }
   },
   "edges": {
@@ -1241,15 +1284,6 @@
     "1d645864-924c-4ec0-898a-61547529bb56.character": [
       "10bf33d8-41c6-406d-bbf4-944e850f3b61.character"
     ],
-    "58468fdb-1d1e-44c9-97e8-889de2f333d0.message": [
-      "c044e62a-a1c5-4dd5-a20f-6bc22f13df64.state"
-    ],
-    "54983f3e-c788-4bdd-95a1-da9462ada3f3.generated": [
-      "e2fb6f95-ee17-4a2f-acc0-62e245e4ee19.value"
-    ],
-    "54983f3e-c788-4bdd-95a1-da9462ada3f3.message": [
-      "58468fdb-1d1e-44c9-97e8-889de2f333d0.message"
-    ],
     "10bf33d8-41c6-406d-bbf4-944e850f3b61.interaction_state": [
       "c044e62a-a1c5-4dd5-a20f-6bc22f13df64.state_d"
     ],
@@ -1339,6 +1373,24 @@
     ],
     "c432f53d-eec5-47a2-8e67-146a1d66df2b.yes": [
       "bad4de23-1028-4be6-b6ab-d85d177060ff.state"
+    ],
+    "58468fdb-1d1e-44c9-97e8-889de2f333d0.message": [
+      "42951d3e-6c6a-4b3c-91ce-59c0a97f706b.trigger"
+    ],
+    "54983f3e-c788-4bdd-95a1-da9462ada3f3.generated": [
+      "e2fb6f95-ee17-4a2f-acc0-62e245e4ee19.value"
+    ],
+    "54983f3e-c788-4bdd-95a1-da9462ada3f3.message": [
+      "58468fdb-1d1e-44c9-97e8-889de2f333d0.message"
+    ],
+    "54983f3e-c788-4bdd-95a1-da9462ada3f3.character": [
+      "26056c9a-2abc-4036-8193-b77a2b9e62dd.object"
+    ],
+    "26056c9a-2abc-4036-8193-b77a2b9e62dd.value": [
+      "42951d3e-6c6a-4b3c-91ce-59c0a97f706b.actor"
+    ],
+    "42951d3e-6c6a-4b3c-91ce-59c0a97f706b.event": [
+      "c044e62a-a1c5-4dd5-a20f-6bc22f13df64.state"
     ]
   },
   "groups": [
@@ -1407,7 +1459,7 @@
       "x": -357,
       "y": 3,
       "width": 352,
-      "height": 253,
+      "height": 357,
       "color": "#a1309b",
       "font_size": 24,
       "inherited": false

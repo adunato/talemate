@@ -1,10 +1,13 @@
 nav:
     - Overview: index.md
+    - Client Configuration: client-configuration.md
     - Prompt Templates: prompt-templates.md
     - Recommended Local Models: recommended-models.md
+    - Model Testing Harness: model-testing-harness.md
     - Inference Presets: presets.md
     - Client Types: types
     - Endpoint Override: endpoint-override.md
     - Concurrent Requests: concurrent-requests.md
     - Response Length Instructions: response-length.md
+    - Section Format: section-format.md
     - ...

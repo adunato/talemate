@@ -1,0 +1,81 @@
+## Context
+You are a scene planner creating a beat-by-beat outline for an interactive narrative scene.
+
+Content Classification: Fantasy adventure story
+
+Active characters: Hero, Elena
+
+## Scene history
+Elena: Hello there, traveler.
+
+The sun filters through the leaves above.
+
+Marcus: What brings you to these woods?
+
+## Task
+Create a scene outline based on the following instructions:
+
+```instructions
+A tense confrontation between the characters in the library.
+```
+
+Target parameters:
+- Beat count: EXACTLY 8 beats — no more, no less
+- Estimated word output: ~2000 words
+
+Each beat should specify:
+- `type`: one of `narration`, `dialogue`, `action`, `transition`, `reveal`
+- `description`: what happens in this beat (2-4 sentences). Include: what the character DOES (physical action), what CHANGES as a result, and any specific sensory or environmental detail that makes this beat distinct. The description must be detailed enough that a writer can produce 150-250 words from it without inventing new plot.
+- `characters`: list of character names involved (empty for pure narration)
+- `pacing`: `slow`, `moderate`, or `fast`
+- `tension`: float 0.0 to 1.0 representing tension level
+
+Guidelines:
+
+**Story structure:**
+- Every beat must ADVANCE the story — introduce something new, change something, or force a decision. Never create a beat that merely re-describes the current situation from another angle.
+- At least 3 of the 8 beats must have a character making a meaningful choice that changes the trajectory of events. Characters must have agency, not just witness spectacle.
+- Plan for character development: if a character has a defining trait (e.g., denial, fear), that trait must evolve over the scene. It must crack, deepen, or transform — not repeat identically.
+- Build tension with valleys, not just peaks. Include quiet beats between intense ones — moments of reflection, conversation, or uneasy calm that make the intense beats hit harder.
+- **CONTINUATION MODE** — this arc does NOT end. The generated content is a segment inside a longer roleplay that will continue after you finish. You are NOT writing a complete short story.
+- The FINAL beat is a HANDOFF, not a resolution. It must leave the situation LIVE — an unanswered question, an unfinished action, a threat revealed but not confronted, a decision announced but not yet acted on, a door about to open. The user will pick up the scene from whatever moment you stop on.
+- DO NOT resolve the central conflict. DO NOT let characters retreat to safety. DO NOT write a "wind-down" or "reflection" beat. DO NOT end on a character processing what happened. The last beat must push forward, not settle.
+- The final beat's `tension` MUST be HIGH (0.6 or higher). Do NOT descend to low tension at the end.
+- The `tension` value must still show escalation through the arc — early beats low (0.1-0.3), middle beats climbing, final beats high. But unlike a closed arc, the peak is at (or near) the END, not before a resolution. Do not start at high intensity.
+
+**Beat construction:**
+- Approximately 40% of beats should be `dialogue` type — characters need to speak, not just act and observe
+- Vary beat types for engaging pacing (don't stack 5 dialogue beats in a row)
+- Use `transition` beats for time/location changes
+- Use `reveal` beats for key information drops
+- **Dialogue beats focus on ONE character.** List only the speaking/acting character in `characters`. The beat description must specify what that character says or does, including how others react. If two characters need dialogue focus, use two separate dialogue beats — one per character.
+- Use `narration` beats (not `dialogue`) for scenes where multiple characters' actions need equal weight
+- Every beat description must specify a concrete EVENT or ACTION — something that happens, changes, or is decided. Do NOT write purely atmospheric beats ("the shadows deepen", "the air grows heavy"). The writer produces atmosphere naturally; dedicated atmosphere beats create redundant prose.
+- "Elmer discovers the door has vanished" is a good beat. "Elmer feels dread about the situation" is not.
+- **No two beats may have the same character doing the same type of action.** If a character already has a beat where they explain something, their next beat must be a different action — questioning, physically intervening, making a decision, arguing, breaking down, taking charge, etc. Review your beats before finalizing: if two beats could be summarized the same way ("Character X explains Y"), rewrite one of them.
+
+Your response must contain TWO separate blocks in this exact order:
+
+**FIRST:** Output `<PERSPECTIVE>` tags with the narrative perspective and tense. This is a separate block that must appear BEFORE the outline. Do NOT put perspective inside the outline.
+If the user's instructions don't specify, default to third person limited, past tense.
+Example: `<PERSPECTIVE>Write in third person limited, past tense, focused on the protagonist's point of view.</PERSPECTIVE>`
+
+**SECOND:** Output EXACTLY 8 beats as a json list inside `<OUTLINE>` tags. The outline must contain ONLY beat data — no perspective, no preamble.
+
+Full example of the expected response format:
+
+```
+<PERSPECTIVE>Write in third person limited, past tense, focused on the protagonist's point of view.</PERSPECTIVE>
+
+<OUTLINE>
+[
+  {"type": "narration", "description": "The morning sun filters through the dusty windows of the library as footsteps echo in the corridor.", "characters": [], "pacing": "slow", "tension": 0.2},
+  {"type": "dialogue", "description": "The librarian greets the visitor with suspicion, questioning their reason for being here so early.", "characters": ["Librarian"], "pacing": "moderate", "tension": 0.4}
+]
+</OUTLINE>
+```
+
+REMINDER: Generate exactly 8 beats. Count them as you write: beat 1, beat 2, ... beat 8. Stop after beat 8.
+
+The length of your response must fit within 4 paragraphs.
+<|BOT|><PERSPECTIVE>

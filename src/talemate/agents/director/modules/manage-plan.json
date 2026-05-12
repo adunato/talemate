@@ -1,0 +1,1623 @@
+{
+  "title": "Manage Plan",
+  "id": "96b7b46f-f3ea-48ba-a934-c7534d399010",
+  "properties": {
+    "name": "manage_plan",
+    "description": "Allows you set up, track and update your current set of tasks. Use this to setup general plans or plans for creating multiple beats of content over a specific number of beats / turns.",
+    "instructions": "Manage your task plans. Pass plain text instructions describing what you want to do.\n\nTo create a scene outline: describe the scene and specify the beat count.\nTo create a general plan: describe the goal and list the tasks.\nTo complete a task: reference the task ID.\nTo delete the plan: state you want to delete/remove the plan.",
+    "example_json": "[{\"instructions\": \"Create a 6-beat scene outline: A tense encounter in the library where two strangers discover they're searching for the same book.\"}, {\"instructions\": \"Mark task a1b2c3d4 as completed\"}, {\"instructions\": \"Create a plan to investigate the strange signals: 1) Check the antenna array 2) Review the signal logs 3) Report findings to command\"}, {\"instructions\": \"Delete the current plan\"}]"
+  },
+  "x": 0,
+  "y": 0,
+  "width": 200,
+  "height": 100,
+  "collapsed": false,
+  "inherited": false,
+  "registry": "agents/director/plan/managePlan",
+  "nodes": {
+    "dae1fdb4-ed48-48f2-b9f3-3552a5525868": {
+      "title": "instructions",
+      "id": "dae1fdb4-ed48-48f2-b9f3-3552a5525868",
+      "properties": {
+        "name": "instructions",
+        "typ": "str",
+        "instructions": "What the plan should accomplish. For scene outlines: describe the setting, characters involved, tone, themes, and any specific events or arcs. For general plans: describe the goal and scope."
+      },
+      "x": 32,
+      "y": 74,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/ActionArgument",
+      "base_type": "core/Node"
+    },
+    "22f5506b-edbd-46c8-954c-f64b00eef330": {
+      "title": "Validate Value Is Set",
+      "id": "22f5506b-edbd-46c8-954c-f64b00eef330",
+      "properties": {
+        "error_message": "",
+        "blank_string_is_unset": true
+      },
+      "x": 272,
+      "y": 74,
+      "width": 210,
+      "height": 102,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "validation/ValidateValueIsSet",
+      "base_type": "core/Node"
+    },
+    "d139ac87-3fc3-4a96-9bd0-090633919a9b": {
+      "title": "SET local.instructions",
+      "id": "d139ac87-3fc3-4a96-9bd0-090633919a9b",
+      "properties": {
+        "name": "instructions",
+        "scope": "local"
+      },
+      "x": 522,
+      "y": 74,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "29b3ebcb-648e-46f2-929e-9552e49a38b2": {
+      "title": "director",
+      "id": "29b3ebcb-648e-46f2-929e-9552e49a38b2",
+      "properties": {
+        "agent_name": "director"
+      },
+      "x": 376,
+      "y": 349,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "agents/GetAgent",
+      "base_type": "core/Node"
+    },
+    "05d2cdef-ad01-40cc-97c5-eeae9fc6f8e0": {
+      "title": "Make Bool",
+      "id": "05d2cdef-ad01-40cc-97c5-eeae9fc6f8e0",
+      "properties": {
+        "value": true
+      },
+      "x": 376,
+      "y": 309,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "06bea5af-f2d5-48f0-ad36-d7b01195c621": {
+      "title": "Load Template",
+      "id": "06bea5af-f2d5-48f0-ad36-d7b01195c621",
+      "properties": {
+        "scope": "director",
+        "name": "plan"
+      },
+      "x": 26,
+      "y": 419,
+      "width": 210,
+      "height": 102,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/LoadTemplate",
+      "base_type": "core/Node"
+    },
+    "422d7493-4579-448f-b5c3-24d0f92bef50": {
+      "title": "Build Prompt",
+      "id": "422d7493-4579-448f-b5c3-24d0f92bef50",
+      "properties": {
+        "template_file": "base",
+        "scope": "common",
+        "instructions": "",
+        "reserved_tokens": 312,
+        "limit_max_tokens": 0,
+        "include_scene_intent": true,
+        "include_extra_context": true,
+        "include_memory_context": true,
+        "include_scene_context": true,
+        "include_character_context": false,
+        "include_gamestate_context": false,
+        "memory_prompt": "",
+        "prefill_prompt": "",
+        "return_prefill_prompt": false,
+        "dedupe_enabled": true,
+        "response_length": 0,
+        "technical": false
+      },
+      "x": 557,
+      "y": 304,
+      "width": 304,
+      "height": 542,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/BuildPrompt",
+      "base_type": "core/Node"
+    },
+    "e1bd2378-bfa7-4d5d-93f9-4fa608804a76": {
+      "title": "beat_count",
+      "id": "e1bd2378-bfa7-4d5d-93f9-4fa608804a76",
+      "properties": {
+        "name": "beat_count",
+        "typ": "int",
+        "instructions": "The exact number of beats to generate. Each beat represents one narrator or conversation generation turn."
+      },
+      "x": -1722,
+      "y": 642,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "c7e5334f-2f70-414a-b708-8392f7c3c157": {
+      "title": "instructions",
+      "id": "c7e5334f-2f70-414a-b708-8392f7c3c157",
+      "properties": {
+        "name": "instructions",
+        "typ": "str",
+        "instructions": "What the scene outline should cover. Include the setting, characters involved, tone, themes, and any specific events or arcs."
+      },
+      "x": -1722,
+      "y": 482,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "1f391a2f-a696-44fd-8dbb-951f6612d627": {
+      "title": "AI Function Callback Metadata",
+      "id": "1f391a2f-a696-44fd-8dbb-951f6612d627",
+      "properties": {
+        "instructions": "ONLY for creating beat-by-beat scene outlines. Use when the instruction mentions beats, outlines, or a specific beat count. Extract the beat count as an integer and pass the scene description as instructions.",
+        "examples": [
+          {
+            "instructions": "A tense confrontation in the captain's quarters",
+            "beat_count": 8
+          },
+          {
+            "instructions": "Elmer and Kaira encounter spatial distortions on the ship, building from eerie calm to cosmic horror",
+            "beat_count": 4
+          }
+        ]
+      },
+      "x": -546,
+      "y": 542,
+      "width": 244,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Metadata",
+      "base_type": "core/Node"
+    },
+    "bb0aaccf-8d2e-4b7a-9536-ac729b8e02dc": {
+      "title": "Return",
+      "id": "bb0aaccf-8d2e-4b7a-9536-ac729b8e02dc",
+      "properties": {},
+      "x": -773,
+      "y": 1117,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "b48006a3-315a-4917-a476-776eaa3b0d4a": {
+      "title": "FN create_outline",
+      "id": "b48006a3-315a-4917-a476-776eaa3b0d4a",
+      "properties": {
+        "name": "create_outline"
+      },
+      "x": 77,
+      "y": 1164,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "03fbf269-a4c1-40af-9e83-97be7235ea32": {
+      "title": "AI Function Callback",
+      "id": "03fbf269-a4c1-40af-9e83-97be7235ea32",
+      "properties": {
+        "name": "my_function",
+        "allow_multiple_calls": false,
+        "allow_concurrent": false
+      },
+      "x": 357,
+      "y": 1154,
+      "width": 210,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Callback",
+      "base_type": "core/Node"
+    },
+    "e728f40b-355a-46d1-b6d9-ac7c645faca6": {
+      "title": "AI Function Callback",
+      "id": "e728f40b-355a-46d1-b6d9-ac7c645faca6",
+      "properties": {
+        "name": "my_function",
+        "allow_multiple_calls": false,
+        "allow_concurrent": false
+      },
+      "x": 327,
+      "y": 1624,
+      "width": 210,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Callback",
+      "base_type": "core/Node"
+    },
+    "70145e6a-4ed6-4d8a-9f04-09a97aa90b84": {
+      "title": "[Planning] Create Outline",
+      "id": "70145e6a-4ed6-4d8a-9f04-09a97aa90b84",
+      "properties": {
+        "group": "Planning",
+        "action_id": "planning.create_outline",
+        "action_title": "Create Scene Outline",
+        "description_chat": "Create a beat-by-beat scene outline with perspective and pacing.",
+        "description_scene_direction": "",
+        "instruction_examples": [
+          "Create an 8-beat scene outline for a tense confrontation",
+          "Create a 12-beat outline in third person limited, past tense, from the protagonist's perspective"
+        ],
+        "availability": "chat",
+        "force_enabled": false
+      },
+      "x": 617,
+      "y": 1154,
+      "width": 317,
+      "height": 246,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/DirectorChatSubAction",
+      "base_type": "core/Node"
+    },
+    "4d39f9f3-d15c-44d7-b532-452cd64da936": {
+      "title": "[Planning] Create Plan",
+      "id": "4d39f9f3-d15c-44d7-b532-452cd64da936",
+      "properties": {
+        "group": "Planning",
+        "action_id": "planning.create_plan",
+        "action_title": "Create Plan",
+        "description_chat": "Create a general purpose plan for you track things you need to do.",
+        "description_scene_direction": "",
+        "instruction_examples": [],
+        "availability": "chat",
+        "force_enabled": false
+      },
+      "x": 617,
+      "y": 1524,
+      "width": 317,
+      "height": 246,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/DirectorChatSubAction",
+      "base_type": "core/Node"
+    },
+    "32c778ed-68e4-4039-9b95-03726c146323": {
+      "title": "DEF create_plan",
+      "id": "32c778ed-68e4-4039-9b95-03726c146323",
+      "properties": {
+        "name": "create_plan"
+      },
+      "x": -263,
+      "y": 1097,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "d4268d43-56ac-4364-b588-78d31f05f7ff": {
+      "title": "FN create_plan",
+      "id": "d4268d43-56ac-4364-b588-78d31f05f7ff",
+      "properties": {
+        "name": "create_plan"
+      },
+      "x": 67,
+      "y": 1634,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "98aefe0d-3d3a-4f80-a2b7-9c20b881eb34": {
+      "title": "Director Action Summary",
+      "id": "98aefe0d-3d3a-4f80-a2b7-9c20b881eb34",
+      "properties": {},
+      "x": 1321,
+      "y": 95,
+      "width": 193,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/directorActionSummary",
+      "base_type": "core/Graph"
+    },
+    "68099419-d078-4126-8d96-e50ddf2237d5": {
+      "title": "Return",
+      "id": "68099419-d078-4126-8d96-e50ddf2237d5",
+      "properties": {},
+      "x": 1581,
+      "y": 95,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "3c87a026-21f9-460c-ace1-76e741cec66f": {
+      "title": "AI Function Calling",
+      "id": "3c87a026-21f9-460c-ace1-76e741cec66f",
+      "properties": {
+        "template": null,
+        "max_calls": 999,
+        "retries": 0,
+        "response_length": 1024,
+        "max_concurrent": 3
+      },
+      "x": 1412,
+      "y": 1412,
+      "width": 228,
+      "height": 274,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Focal",
+      "base_type": "core/Node"
+    },
+    "e78baec6-f631-4c9e-bb5a-2f13ae26e2ea": {
+      "title": "GET local.focal_calls",
+      "id": "e78baec6-f631-4c9e-bb5a-2f13ae26e2ea",
+      "properties": {
+        "name": "focal_calls",
+        "scope": "local"
+      },
+      "x": 1044,
+      "y": 75,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "d8ffadcb-8b08-4d4b-8b12-333d4f85c824": {
+      "title": "Stage 999",
+      "id": "d8ffadcb-8b08-4d4b-8b12-333d4f85c824",
+      "properties": {
+        "stage": 999
+      },
+      "x": 1784,
+      "y": 85,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "00428b38-317e-439a-a3ba-db387ab2f21f": {
+      "title": "Stage 0",
+      "id": "00428b38-317e-439a-a3ba-db387ab2f21f",
+      "properties": {
+        "stage": 0
+      },
+      "x": 772,
+      "y": 64,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "3b1fa38c-6bc9-497a-964d-d6d16bb339c3": {
+      "title": "instructions",
+      "id": "3b1fa38c-6bc9-497a-964d-d6d16bb339c3",
+      "properties": {
+        "name": "instructions",
+        "typ": "str",
+        "instructions": "A description of what this plan is for. This will be shown in the plan status."
+      },
+      "x": -1363,
+      "y": 967,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "52f08434-e692-466f-837d-85fd39ad611d": {
+      "title": "tasks",
+      "id": "52f08434-e692-466f-837d-85fd39ad611d",
+      "properties": {
+        "name": "tasks",
+        "typ": "any",
+        "instructions": "A list of task objects. Each task should have a 'description' field. For beat tasks, also include 'type', 'characters', 'pacing', and 'tension'."
+      },
+      "x": -1363,
+      "y": 1127,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "411face0-6888-4c42-a426-f8eccad048d7": {
+      "title": "meta",
+      "id": "411face0-6888-4c42-a426-f8eccad048d7",
+      "properties": {
+        "name": "meta",
+        "typ": "any",
+        "instructions": "Optional metadata for the plan as a dictionary. For example: {\"perspective\": \"third person limited\", \"estimated_words\": 2000}."
+      },
+      "x": -1363,
+      "y": 1287,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "c9309352-4080-401f-8e7a-8f82d4cb0cd1": {
+      "title": "Complete Task",
+      "id": "c9309352-4080-401f-8e7a-8f82d4cb0cd1",
+      "properties": {},
+      "x": -1109,
+      "y": 1560,
+      "width": 250,
+      "height": 100,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/plan/CompleteTask",
+      "base_type": "core/Node"
+    },
+    "28a67ae0-ed5e-4b76-ba0d-34ce6300045f": {
+      "title": "Return",
+      "id": "28a67ae0-ed5e-4b76-ba0d-34ce6300045f",
+      "properties": {},
+      "x": -789,
+      "y": 1580,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "1f8e1917-7ef4-4bd3-a846-50aca48045d7": {
+      "title": "DEF complete_task",
+      "id": "1f8e1917-7ef4-4bd3-a846-50aca48045d7",
+      "properties": {
+        "name": "complete_task"
+      },
+      "x": -279,
+      "y": 1560,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "e6a4430c-ff8f-4fe8-a116-df58982ea76d": {
+      "title": "AI Function Callback",
+      "id": "e6a4430c-ff8f-4fe8-a116-df58982ea76d",
+      "properties": {
+        "name": "my_function",
+        "allow_multiple_calls": false,
+        "allow_concurrent": false
+      },
+      "x": 339,
+      "y": 1912,
+      "width": 210,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Callback",
+      "base_type": "core/Node"
+    },
+    "5291a01e-f67d-4f17-adff-91856ff80fd0": {
+      "title": "FN complete_task",
+      "id": "5291a01e-f67d-4f17-adff-91856ff80fd0",
+      "properties": {
+        "name": "complete_task"
+      },
+      "x": 62,
+      "y": 1941,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "ef517014-3f50-43a0-a0df-0445ebe4c74e": {
+      "title": "AI Function Callback Metadata",
+      "id": "ef517014-3f50-43a0-a0df-0445ebe4c74e",
+      "properties": {
+        "instructions": "ONLY for generic task lists (NOT scene outlines, NOT completing tasks). Use when the instruction describes a set of tasks or goals without mentioning beats or outlines.",
+        "examples": [
+          {
+            "instructions": "Investigate the strange signals",
+            "tasks": [
+              {
+                "description": "Check the antenna array"
+              },
+              {
+                "description": "Review the signal logs"
+              },
+              {
+                "description": "Report findings"
+              }
+            ]
+          }
+        ]
+      },
+      "x": -573,
+      "y": 1107,
+      "width": 244,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Metadata",
+      "base_type": "core/Node"
+    },
+    "af837335-681f-40a8-a567-1e4270f72df9": {
+      "title": "AI Function Callback Metadata",
+      "id": "af837335-681f-40a8-a567-1e4270f72df9",
+      "properties": {
+        "instructions": "ONLY for marking tasks as done. Use when the instruction mentions 'mark', 'complete', 'done', or contains a plan ID and task ID. Extract the plan_id and task_id from the instruction text.",
+        "examples": [
+          {
+            "plan_id": "843c4835-3",
+            "task_id": "e7f3877a"
+          },
+          {
+            "plan_id": "abc12345-0",
+            "task_id": "b19c2b5e"
+          }
+        ]
+      },
+      "x": -579,
+      "y": 1550,
+      "width": 244,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Metadata",
+      "base_type": "core/Node"
+    },
+    "88a9ad87-c278-4d7f-947a-ef732695f06c": {
+      "title": "Return",
+      "id": "88a9ad87-c278-4d7f-947a-ef732695f06c",
+      "properties": {},
+      "x": -430,
+      "y": 2141,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "6c492296-3b43-4aa9-b1d5-fc3cbf5beea4": {
+      "title": "Get Active Chat Plan ID",
+      "id": "6c492296-3b43-4aa9-b1d5-fc3cbf5beea4",
+      "properties": {},
+      "x": -890,
+      "y": 2131,
+      "width": 193,
+      "height": 66,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/plan/GetActiveChatPlanId",
+      "base_type": "core/Node"
+    },
+    "90aea186-ed7a-4283-860f-a1c2dd20c28c": {
+      "title": "true",
+      "id": "90aea186-ed7a-4283-860f-a1c2dd20c28c",
+      "properties": {
+        "value": true
+      },
+      "x": -1010,
+      "y": 2151,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "c351c1cd-2e3c-441b-a49f-4cd3391d64e5": {
+      "title": "Switch",
+      "id": "c351c1cd-2e3c-441b-a49f-4cd3391d64e5",
+      "properties": {
+        "pass_through": false
+      },
+      "x": -670,
+      "y": 2131,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Switch",
+      "base_type": "core/Node"
+    },
+    "67b97f37-7df1-4b08-9eba-c1d6d1ed4896": {
+      "title": "DEF no_plan_exists",
+      "id": "67b97f37-7df1-4b08-9eba-c1d6d1ed4896",
+      "properties": {
+        "name": "no_plan_exists"
+      },
+      "x": -250,
+      "y": 2131,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "3cd7de52-3581-44c7-bcf4-24e484d5fbec": {
+      "title": "FN no_plan_exists",
+      "id": "3cd7de52-3581-44c7-bcf4-24e484d5fbec",
+      "properties": {
+        "name": "no_plan_exists"
+      },
+      "x": 402,
+      "y": 1351,
+      "width": 210,
+      "height": 78,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "e70a9b02-0f30-499b-ae0d-80ebb1d38129": {
+      "title": "FN no_plan_exists",
+      "id": "e70a9b02-0f30-499b-ae0d-80ebb1d38129",
+      "properties": {
+        "name": "no_plan_exists"
+      },
+      "x": 392,
+      "y": 1811,
+      "width": 210,
+      "height": 78,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "965fc69a-e517-43be-bd96-03c1a706fbd0": {
+      "title": "Jinja2 Format",
+      "id": "965fc69a-e517-43be-bd96-03c1a706fbd0",
+      "properties": {
+        "template": ""
+      },
+      "x": 282,
+      "y": 411,
+      "width": 210,
+      "height": 153,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/Jinja2Format",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "bedc8a0b-c37b-4b56-b210-6c982a774c5c": {
+      "title": "GET local.instructions",
+      "id": "bedc8a0b-c37b-4b56-b210-6c982a774c5c",
+      "properties": {
+        "name": "instructions",
+        "scope": "local"
+      },
+      "x": 32,
+      "y": 631,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "ce9a5ea3-57cf-4323-8c61-b32a47c310f6": {
+      "title": "Return",
+      "id": "ce9a5ea3-57cf-4323-8c61-b32a47c310f6",
+      "properties": {},
+      "x": -766,
+      "y": 542,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "7e30fd14-030f-42c6-b6c9-06756b2af37f": {
+      "title": "Create Plan",
+      "id": "7e30fd14-030f-42c6-b6c9-06756b2af37f",
+      "properties": {
+        "instructions": "",
+        "status": "ready"
+      },
+      "x": -1053,
+      "y": 1077,
+      "width": 210,
+      "height": 162,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/plan/CreatePlan",
+      "base_type": "core/Node"
+    },
+    "acfef6ab-44e3-4a82-8fef-ff6428374181": {
+      "title": "Jinja2 Format",
+      "id": "acfef6ab-44e3-4a82-8fef-ff6428374181",
+      "properties": {
+        "template": "Plan ID: {{ plan_id }}"
+      },
+      "x": -990,
+      "y": 1300,
+      "width": 210,
+      "height": 153,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "prompt/Jinja2Format",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "506d845f-e842-4e95-9285-2ad407a2146e": {
+      "title": "DEF create_outline",
+      "id": "506d845f-e842-4e95-9285-2ad407a2146e",
+      "properties": {
+        "name": "create_outline"
+      },
+      "x": -256,
+      "y": 542,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "651a5f02-fd36-4da3-8e6a-80d18c415f22": {
+      "title": "Create Outline",
+      "id": "651a5f02-fd36-4da3-8e6a-80d18c415f22",
+      "properties": {},
+      "x": -1206,
+      "y": 542,
+      "width": 212,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/plan/CreateOutline",
+      "base_type": "core/Graph"
+    },
+    "50a06e8b-0b1f-4794-ac11-5b76b6d0a341": {
+      "title": "plan_outline_critique",
+      "id": "50a06e8b-0b1f-4794-ac11-5b76b6d0a341",
+      "properties": {},
+      "x": -1446,
+      "y": 722,
+      "width": 176,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Watch",
+      "base_type": "core/Node"
+    },
+    "0680094e-85a3-4704-a2c5-2a6b9c60085d": {
+      "title": "Director Settings",
+      "id": "0680094e-85a3-4704-a2c5-2a6b9c60085d",
+      "properties": {},
+      "x": -1722,
+      "y": 832,
+      "width": 363,
+      "height": 986,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "agents/director/Settings",
+      "base_type": "core/Node"
+    },
+    "b52af225-f7f7-4466-b27e-3a96b591eb26": {
+      "title": "Jinja2 Format",
+      "id": "b52af225-f7f7-4466-b27e-3a96b591eb26",
+      "properties": {
+        "template": "Plan ID: {{ plan_id }}"
+      },
+      "x": -933,
+      "y": 542,
+      "width": 210,
+      "height": 153,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "prompt/Jinja2Format",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "6bbf4c4a-818a-4eae-99b5-7379402af2a4": {
+      "title": "Return",
+      "id": "6bbf4c4a-818a-4eae-99b5-7379402af2a4",
+      "properties": {},
+      "x": -429,
+      "y": 2323,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "e86e048e-b56e-4890-a2b3-67ccb5d6ca57": {
+      "title": "Get Active Chat Plan ID",
+      "id": "e86e048e-b56e-4890-a2b3-67ccb5d6ca57",
+      "properties": {},
+      "x": -889,
+      "y": 2313,
+      "width": 193,
+      "height": 66,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/plan/GetActiveChatPlanId",
+      "base_type": "core/Node"
+    },
+    "8967a5e5-43f8-4ebd-be05-a66a991ab3e8": {
+      "title": "true",
+      "id": "8967a5e5-43f8-4ebd-be05-a66a991ab3e8",
+      "properties": {
+        "value": true
+      },
+      "x": -1009,
+      "y": 2333,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "e31e7db3-b0dc-4575-b55e-852146923424": {
+      "title": "Switch",
+      "id": "e31e7db3-b0dc-4575-b55e-852146923424",
+      "properties": {
+        "pass_through": false
+      },
+      "x": -669,
+      "y": 2313,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Switch",
+      "base_type": "core/Node"
+    },
+    "c9b113cc-5810-4f82-a503-1596931f7b2d": {
+      "title": "DEF plan_exists",
+      "id": "c9b113cc-5810-4f82-a503-1596931f7b2d",
+      "properties": {
+        "name": "plan_exists"
+      },
+      "x": -250,
+      "y": 2315,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "228e75f4-8145-40a8-8d6d-1594e2253ff1": {
+      "title": "task_id",
+      "id": "228e75f4-8145-40a8-8d6d-1594e2253ff1",
+      "properties": {
+        "name": "task_id",
+        "typ": "str",
+        "instructions": "The ID of the task/beat to mark as completed. Use the task ID from the plan."
+      },
+      "x": -1360,
+      "y": 1570,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Argument",
+      "base_type": "core/Node"
+    },
+    "6cacf949-f729-497a-bd32-fc6ae0faeec8": {
+      "title": "Return",
+      "id": "6cacf949-f729-497a-bd32-fc6ae0faeec8",
+      "properties": {},
+      "x": -764,
+      "y": 1885,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "c595badd-3bf2-45a9-a198-ac6d1ccf088f": {
+      "title": "[Planning] Complete Task",
+      "id": "c595badd-3bf2-45a9-a198-ac6d1ccf088f",
+      "properties": {
+        "group": "Planning",
+        "action_id": "planning.complete_task",
+        "action_title": "Complete Task",
+        "description_chat": "Mark a task / beat as completed in the active plan.",
+        "description_scene_direction": "Mark a task / beat as completed in the active plan.",
+        "instruction_examples": [
+          "Mark beat e7f3877a as completed in plan abc123"
+        ],
+        "availability": "chat",
+        "force_enabled": false
+      },
+      "x": 642,
+      "y": 1911,
+      "width": 260,
+      "height": 246,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/DirectorChatSubAction",
+      "base_type": "core/Node"
+    },
+    "dc667224-ecfa-42e5-9211-d21e29034975": {
+      "title": "AI Function Callback",
+      "id": "dc667224-ecfa-42e5-9211-d21e29034975",
+      "properties": {
+        "name": "my_function",
+        "allow_multiple_calls": true,
+        "allow_concurrent": false
+      },
+      "x": 364,
+      "y": 2302,
+      "width": 210,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Callback",
+      "base_type": "core/Node"
+    },
+    "94689740-53dc-4a6a-914c-060eb64b0846": {
+      "title": "FN delete_plan",
+      "id": "94689740-53dc-4a6a-914c-060eb64b0846",
+      "properties": {
+        "name": "delete_plan"
+      },
+      "x": 74,
+      "y": 2296,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "5b38a2c6-a850-4b01-bf69-439c23d30edb": {
+      "title": "AI Function Callback Metadata",
+      "id": "5b38a2c6-a850-4b01-bf69-439c23d30edb",
+      "properties": {
+        "instructions": "For deleting the entire active plan. Use when the instruction mentions deleting, removing, or discarding the whole plan (not a specific task).",
+        "examples": [
+          {}
+        ]
+      },
+      "x": -564,
+      "y": 1885,
+      "width": 244,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "focal/Metadata",
+      "base_type": "core/Node"
+    },
+    "3435d8ca-bfdd-4373-91b5-d48746d94f2b": {
+      "title": "Stage 1",
+      "id": "3435d8ca-bfdd-4373-91b5-d48746d94f2b",
+      "properties": {
+        "stage": 1
+      },
+      "x": 1951,
+      "y": 1432,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "f0748ba3-9332-4550-b9b3-4fb505e8ac75": {
+      "title": "List Collector",
+      "id": "f0748ba3-9332-4550-b9b3-4fb505e8ac75",
+      "properties": {},
+      "x": 1151,
+      "y": 1712,
+      "width": 140,
+      "height": 141,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/ListCollector",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        },
+        {
+          "name": "item2",
+          "type": "*"
+        },
+        {
+          "name": "item3",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "9d1d77e3-e917-479a-ac4b-875cad440d2a": {
+      "title": "[Planning] Delete Plan",
+      "id": "9d1d77e3-e917-479a-ac4b-875cad440d2a",
+      "properties": {
+        "group": "Planning",
+        "action_id": "planning.delete_plan",
+        "action_title": "Delete Plan",
+        "description_chat": "Remove the currently active plan entirely.",
+        "description_scene_direction": "Remove the currently active plan entirely.",
+        "instruction_examples": [
+          "Delete the current plan",
+          "Remove this plan, I want to start over",
+          "Discard the plan and start fresh"
+        ],
+        "availability": "chat",
+        "force_enabled": false
+      },
+      "x": 670,
+      "y": 2290,
+      "width": 260,
+      "height": 246,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/DirectorChatSubAction",
+      "base_type": "core/Node"
+    },
+    "6361c3ad-923a-4d61-a0cf-e452bc626c20": {
+      "title": "SET local.focal_calls",
+      "id": "6361c3ad-923a-4d61-a0cf-e452bc626c20",
+      "properties": {
+        "name": "focal_calls",
+        "scope": "local"
+      },
+      "x": 1710,
+      "y": 1420,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "712c6d77-aa14-436c-b46a-756144071d66": {
+      "title": "Delete Plan",
+      "id": "712c6d77-aa14-436c-b46a-756144071d66",
+      "properties": {},
+      "x": -968,
+      "y": 1885,
+      "width": 140,
+      "height": 46,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/plan/DeletePlan",
+      "base_type": "core/Node"
+    },
+    "4577c3a6-fefb-442e-8aa1-91a61c649493": {
+      "title": "DEF delete_plan",
+      "id": "4577c3a6-fefb-442e-8aa1-91a61c649493",
+      "properties": {
+        "name": "delete_plan"
+      },
+      "x": -254,
+      "y": 1885,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "36467a04-f2c1-410e-8c6a-2d3bb7598565": {
+      "title": "true",
+      "id": "36467a04-f2c1-410e-8c6a-2d3bb7598565",
+      "properties": {
+        "value": true
+      },
+      "x": -1074,
+      "y": 1885,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "54ba316e-07bc-4fa4-a065-a141db7e4017": {
+      "title": "FN plan_exists",
+      "id": "54ba316e-07bc-4fa4-a065-a141db7e4017",
+      "properties": {
+        "name": "plan_exists"
+      },
+      "x": 420,
+      "y": 2500,
+      "width": 210,
+      "height": 78,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "3b6f099a-1ae0-4282-abb2-9f7baad8aba8": {
+      "title": "FN plan_exists",
+      "id": "3b6f099a-1ae0-4282-abb2-9f7baad8aba8",
+      "properties": {
+        "name": "plan_exists"
+      },
+      "x": 410,
+      "y": 2100,
+      "width": 210,
+      "height": 78,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    }
+  },
+  "edges": {
+    "dae1fdb4-ed48-48f2-b9f3-3552a5525868.value": [
+      "22f5506b-edbd-46c8-954c-f64b00eef330.value"
+    ],
+    "22f5506b-edbd-46c8-954c-f64b00eef330.value": [
+      "d139ac87-3fc3-4a96-9bd0-090633919a9b.value"
+    ],
+    "d139ac87-3fc3-4a96-9bd0-090633919a9b.value": [
+      "00428b38-317e-439a-a3ba-db387ab2f21f.state"
+    ],
+    "29b3ebcb-648e-46f2-929e-9552e49a38b2.agent": [
+      "422d7493-4579-448f-b5c3-24d0f92bef50.agent"
+    ],
+    "05d2cdef-ad01-40cc-97c5-eeae9fc6f8e0.value": [
+      "422d7493-4579-448f-b5c3-24d0f92bef50.state"
+    ],
+    "06bea5af-f2d5-48f0-ad36-d7b01195c621.template_content": [
+      "965fc69a-e517-43be-bd96-03c1a706fbd0.template"
+    ],
+    "06bea5af-f2d5-48f0-ad36-d7b01195c621.scope": [
+      "965fc69a-e517-43be-bd96-03c1a706fbd0.scope"
+    ],
+    "422d7493-4579-448f-b5c3-24d0f92bef50.state": [
+      "3c87a026-21f9-460c-ace1-76e741cec66f.state"
+    ],
+    "422d7493-4579-448f-b5c3-24d0f92bef50.agent": [
+      "3c87a026-21f9-460c-ace1-76e741cec66f.agent"
+    ],
+    "422d7493-4579-448f-b5c3-24d0f92bef50.prompt": [
+      "3c87a026-21f9-460c-ace1-76e741cec66f.prompt"
+    ],
+    "e1bd2378-bfa7-4d5d-93f9-4fa608804a76.value": [
+      "651a5f02-fd36-4da3-8e6a-80d18c415f22.beat_count"
+    ],
+    "c7e5334f-2f70-414a-b708-8392f7c3c157.value": [
+      "651a5f02-fd36-4da3-8e6a-80d18c415f22.state",
+      "651a5f02-fd36-4da3-8e6a-80d18c415f22.instructions"
+    ],
+    "1f391a2f-a696-44fd-8dbb-951f6612d627.state": [
+      "506d845f-e842-4e95-9285-2ad407a2146e.nodes"
+    ],
+    "bb0aaccf-8d2e-4b7a-9536-ac729b8e02dc.value": [
+      "ef517014-3f50-43a0-a0df-0445ebe4c74e.state"
+    ],
+    "b48006a3-315a-4917-a476-776eaa3b0d4a.fn": [
+      "03fbf269-a4c1-40af-9e83-97be7235ea32.fn"
+    ],
+    "b48006a3-315a-4917-a476-776eaa3b0d4a.name": [
+      "03fbf269-a4c1-40af-9e83-97be7235ea32.name"
+    ],
+    "03fbf269-a4c1-40af-9e83-97be7235ea32.callback": [
+      "70145e6a-4ed6-4d8a-9f04-09a97aa90b84.state"
+    ],
+    "e728f40b-355a-46d1-b6d9-ac7c645faca6.callback": [
+      "4d39f9f3-d15c-44d7-b532-452cd64da936.state"
+    ],
+    "70145e6a-4ed6-4d8a-9f04-09a97aa90b84.state": [
+      "f0748ba3-9332-4550-b9b3-4fb505e8ac75.item0"
+    ],
+    "4d39f9f3-d15c-44d7-b532-452cd64da936.state": [
+      "f0748ba3-9332-4550-b9b3-4fb505e8ac75.item1"
+    ],
+    "d4268d43-56ac-4364-b588-78d31f05f7ff.fn": [
+      "e728f40b-355a-46d1-b6d9-ac7c645faca6.fn"
+    ],
+    "d4268d43-56ac-4364-b588-78d31f05f7ff.name": [
+      "e728f40b-355a-46d1-b6d9-ac7c645faca6.name"
+    ],
+    "98aefe0d-3d3a-4f80-a2b7-9c20b881eb34.summary": [
+      "68099419-d078-4126-8d96-e50ddf2237d5.value"
+    ],
+    "68099419-d078-4126-8d96-e50ddf2237d5.value": [
+      "d8ffadcb-8b08-4d4b-8b12-333d4f85c824.state"
+    ],
+    "3c87a026-21f9-460c-ace1-76e741cec66f.calls": [
+      "6361c3ad-923a-4d61-a0cf-e452bc626c20.value"
+    ],
+    "e78baec6-f631-4c9e-bb5a-2f13ae26e2ea.value": [
+      "98aefe0d-3d3a-4f80-a2b7-9c20b881eb34.calls"
+    ],
+    "3b1fa38c-6bc9-497a-964d-d6d16bb339c3.value": [
+      "7e30fd14-030f-42c6-b6c9-06756b2af37f.state",
+      "7e30fd14-030f-42c6-b6c9-06756b2af37f.instructions"
+    ],
+    "52f08434-e692-466f-837d-85fd39ad611d.value": [
+      "7e30fd14-030f-42c6-b6c9-06756b2af37f.tasks"
+    ],
+    "411face0-6888-4c42-a426-f8eccad048d7.value": [
+      "7e30fd14-030f-42c6-b6c9-06756b2af37f.meta"
+    ],
+    "c9309352-4080-401f-8e7a-8f82d4cb0cd1.result": [
+      "28a67ae0-ed5e-4b76-ba0d-34ce6300045f.value"
+    ],
+    "28a67ae0-ed5e-4b76-ba0d-34ce6300045f.value": [
+      "af837335-681f-40a8-a567-1e4270f72df9.state"
+    ],
+    "e6a4430c-ff8f-4fe8-a116-df58982ea76d.callback": [
+      "c595badd-3bf2-45a9-a198-ac6d1ccf088f.state"
+    ],
+    "5291a01e-f67d-4f17-adff-91856ff80fd0.fn": [
+      "e6a4430c-ff8f-4fe8-a116-df58982ea76d.fn"
+    ],
+    "5291a01e-f67d-4f17-adff-91856ff80fd0.name": [
+      "e6a4430c-ff8f-4fe8-a116-df58982ea76d.name"
+    ],
+    "ef517014-3f50-43a0-a0df-0445ebe4c74e.state": [
+      "32c778ed-68e4-4039-9b95-03726c146323.nodes"
+    ],
+    "af837335-681f-40a8-a567-1e4270f72df9.state": [
+      "1f8e1917-7ef4-4bd3-a846-50aca48045d7.nodes"
+    ],
+    "88a9ad87-c278-4d7f-947a-ef732695f06c.value": [
+      "67b97f37-7df1-4b08-9eba-c1d6d1ed4896.nodes"
+    ],
+    "6c492296-3b43-4aa9-b1d5-fc3cbf5beea4.has_plan": [
+      "c351c1cd-2e3c-441b-a49f-4cd3391d64e5.value"
+    ],
+    "90aea186-ed7a-4283-860f-a1c2dd20c28c.value": [
+      "6c492296-3b43-4aa9-b1d5-fc3cbf5beea4.state"
+    ],
+    "c351c1cd-2e3c-441b-a49f-4cd3391d64e5.no": [
+      "88a9ad87-c278-4d7f-947a-ef732695f06c.value"
+    ],
+    "3cd7de52-3581-44c7-bcf4-24e484d5fbec.fn": [
+      "70145e6a-4ed6-4d8a-9f04-09a97aa90b84.condition"
+    ],
+    "e70a9b02-0f30-499b-ae0d-80ebb1d38129.fn": [
+      "4d39f9f3-d15c-44d7-b532-452cd64da936.condition"
+    ],
+    "965fc69a-e517-43be-bd96-03c1a706fbd0.result": [
+      "422d7493-4579-448f-b5c3-24d0f92bef50.instructions"
+    ],
+    "bedc8a0b-c37b-4b56-b210-6c982a774c5c.value": [
+      "965fc69a-e517-43be-bd96-03c1a706fbd0.item0"
+    ],
+    "ce9a5ea3-57cf-4323-8c61-b32a47c310f6.value": [
+      "1f391a2f-a696-44fd-8dbb-951f6612d627.state"
+    ],
+    "7e30fd14-030f-42c6-b6c9-06756b2af37f.plan_id": [
+      "acfef6ab-44e3-4a82-8fef-ff6428374181.template"
+    ],
+    "7e30fd14-030f-42c6-b6c9-06756b2af37f.result": [
+      "acfef6ab-44e3-4a82-8fef-ff6428374181.item0"
+    ],
+    "acfef6ab-44e3-4a82-8fef-ff6428374181.result": [
+      "bb0aaccf-8d2e-4b7a-9536-ac729b8e02dc.value"
+    ],
+    "651a5f02-fd36-4da3-8e6a-80d18c415f22.plan_id": [
+      "b52af225-f7f7-4466-b27e-3a96b591eb26.item0"
+    ],
+    "50a06e8b-0b1f-4794-ac11-5b76b6d0a341.value": [
+      "651a5f02-fd36-4da3-8e6a-80d18c415f22.critique"
+    ],
+    "0680094e-85a3-4704-a2c5-2a6b9c60085d.plan_outline_critique": [
+      "50a06e8b-0b1f-4794-ac11-5b76b6d0a341.value"
+    ],
+    "b52af225-f7f7-4466-b27e-3a96b591eb26.result": [
+      "ce9a5ea3-57cf-4323-8c61-b32a47c310f6.value"
+    ],
+    "6bbf4c4a-818a-4eae-99b5-7379402af2a4.value": [
+      "c9b113cc-5810-4f82-a503-1596931f7b2d.nodes"
+    ],
+    "e86e048e-b56e-4890-a2b3-67ccb5d6ca57.has_plan": [
+      "e31e7db3-b0dc-4575-b55e-852146923424.value"
+    ],
+    "8967a5e5-43f8-4ebd-be05-a66a991ab3e8.value": [
+      "e86e048e-b56e-4890-a2b3-67ccb5d6ca57.state"
+    ],
+    "e31e7db3-b0dc-4575-b55e-852146923424.yes": [
+      "6bbf4c4a-818a-4eae-99b5-7379402af2a4.value"
+    ],
+    "228e75f4-8145-40a8-8d6d-1594e2253ff1.value": [
+      "c9309352-4080-401f-8e7a-8f82d4cb0cd1.state",
+      "c9309352-4080-401f-8e7a-8f82d4cb0cd1.task_id"
+    ],
+    "6cacf949-f729-497a-bd32-fc6ae0faeec8.value": [
+      "5b38a2c6-a850-4b01-bf69-439c23d30edb.state"
+    ],
+    "c595badd-3bf2-45a9-a198-ac6d1ccf088f.state": [
+      "f0748ba3-9332-4550-b9b3-4fb505e8ac75.item2"
+    ],
+    "dc667224-ecfa-42e5-9211-d21e29034975.callback": [
+      "9d1d77e3-e917-479a-ac4b-875cad440d2a.state"
+    ],
+    "94689740-53dc-4a6a-914c-060eb64b0846.fn": [
+      "dc667224-ecfa-42e5-9211-d21e29034975.fn"
+    ],
+    "94689740-53dc-4a6a-914c-060eb64b0846.name": [
+      "dc667224-ecfa-42e5-9211-d21e29034975.name"
+    ],
+    "5b38a2c6-a850-4b01-bf69-439c23d30edb.state": [
+      "4577c3a6-fefb-442e-8aa1-91a61c649493.nodes"
+    ],
+    "f0748ba3-9332-4550-b9b3-4fb505e8ac75.list": [
+      "3c87a026-21f9-460c-ace1-76e741cec66f.callbacks"
+    ],
+    "9d1d77e3-e917-479a-ac4b-875cad440d2a.state": [
+      "f0748ba3-9332-4550-b9b3-4fb505e8ac75.item3"
+    ],
+    "6361c3ad-923a-4d61-a0cf-e452bc626c20.value": [
+      "3435d8ca-bfdd-4373-91b5-d48746d94f2b.state"
+    ],
+    "712c6d77-aa14-436c-b46a-756144071d66.result": [
+      "6cacf949-f729-497a-bd32-fc6ae0faeec8.value"
+    ],
+    "36467a04-f2c1-410e-8c6a-2d3bb7598565.value": [
+      "712c6d77-aa14-436c-b46a-756144071d66.state"
+    ],
+    "54ba316e-07bc-4fa4-a065-a141db7e4017.fn": [
+      "9d1d77e3-e917-479a-ac4b-875cad440d2a.condition"
+    ],
+    "3b6f099a-1ae0-4282-abb2-9f7baad8aba8.fn": [
+      "c595badd-3bf2-45a9-a198-ac6d1ccf088f.condition"
+    ]
+  },
+  "groups": [
+    {
+      "title": "Function",
+      "x": -1747,
+      "y": 402,
+      "width": 1726,
+      "height": 484,
+      "color": "#b06634",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Input",
+      "x": 7,
+      "y": -1,
+      "width": 1000,
+      "height": 222,
+      "color": "#88A",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Output",
+      "x": 1019,
+      "y": 0,
+      "width": 1000,
+      "height": 228,
+      "color": "#8A8",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Process",
+      "x": 1,
+      "y": 229,
+      "width": 2308,
+      "height": 2411,
+      "color": "#3f789e",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Function",
+      "x": -1388,
+      "y": 892,
+      "width": 1366,
+      "height": 525,
+      "color": "#b06634",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Function",
+      "x": -1384,
+      "y": 1425,
+      "width": 1361,
+      "height": 378,
+      "color": "#b06634",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Function - no_plan_exists",
+      "x": -1035,
+      "y": 2051,
+      "width": 1020,
+      "height": 183,
+      "color": "#b06634",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Function - plan_exists",
+      "x": -1035,
+      "y": 2239,
+      "width": 1020,
+      "height": 178,
+      "color": "#b06634",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Function - delete_plan",
+      "x": -1086,
+      "y": 1812,
+      "width": 1066,
+      "height": 179,
+      "color": "#b06634",
+      "font_size": 24,
+      "inherited": false
+    }
+  ],
+  "comments": [],
+  "extends": null,
+  "base_type": "agents/director/DirectorChatAction",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "7d687d88-2d2e-40f4-be47-e3c071d35520",
+      "name": "fn",
+      "optional": false,
+      "group": null,
+      "socket_type": "function"
+    },
+    {
+      "id": "e055a432-5810-41ac-a615-496c0afd4145",
+      "name": "name",
+      "optional": false,
+      "group": null,
+      "socket_type": "str"
+    },
+    {
+      "id": "c95300b8-349d-47f3-bae0-91fa52877fef",
+      "name": "allow_multiple_calls",
+      "optional": false,
+      "group": null,
+      "socket_type": "bool"
+    },
+    {
+      "id": "af4e682f-8711-4a41-b205-21ae6bff6365",
+      "name": "ai_callback",
+      "optional": false,
+      "group": null,
+      "socket_type": "focal/callback"
+    }
+  ],
+  "module_properties": {
+    "name": {
+      "name": "name",
+      "description": "The name of the action",
+      "type": "str",
+      "default": "",
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "description": {
+      "name": "description",
+      "description": "The description of the action",
+      "type": "text",
+      "default": "",
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "instructions": {
+      "name": "instructions",
+      "description": "The instructions for the action",
+      "type": "text",
+      "default": "",
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "example_json": {
+      "name": "example_json",
+      "description": "An example JSON payload for the action",
+      "type": "text",
+      "default": null,
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "allow_concurrent": {
+      "name": "allow_concurrent",
+      "description": "Whether the action can be called concurrently",
+      "type": "bool",
+      "default": false,
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    }
+  },
+  "style": {
+    "title_color": "#573a2e",
+    "node_color": "#392f2c",
+    "icon": "F0295",
+    "auto_title": null,
+    "counterpart": null
+  }
+}

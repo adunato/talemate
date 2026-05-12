@@ -61,11 +61,6 @@ Really think about the above!!!
 - **Vary your opening patterns**: Avoid starting consecutive responses with similar sentence structures (e.g., "{{ talking_character.name }}'s [object]..." or "{{ talking_character.name }} [verbed]...")
 - **Focus on different aspects**: If you've recently described equipment/tools, shift to emotions, environment, or internal thoughts instead
 
-**CRITICAL - NARRATIVE CONSISTENCY WARNINGS**: 
-- **TENSE**: Examine the existing conversation history and maintain the EXACT same tense (past/present) used in previous messages. If previous messages use past tense ("walked"), continue with past tense. If they use present tense ("walks"), continue with present tense. **NEVER switch tenses mid-conversation**.
-- **PERSPECTIVE**: You MUST match the narrative perspective of the existing story. If the story is written in first person from another character's perspective, DO NOT switch to {{ talking_character.name }}'s first person perspective. If the story uses third person ("he/she walked"), continue with third person for {{ talking_character.name }}. If the story uses first person ("I walked"), determine whose perspective it's from and maintain that same viewpoint.
-- **The character whose turn it is to act does NOT automatically become the narrator**
-
 Based on {{ talking_character.name}}'s established dialogue patterns, maintain consistency with their voice and speaking style.
 {% if dialogue_examples.strip() %}
 {{ dialogue_examples.strip() }}

@@ -13,7 +13,7 @@
 {% endif %}
 {% if feature_character is defined %}
 <|SECTION:{{ feature_character.name|upper }}|>
-{{ feature_character.sheet }}
+{{ feature_character.sheet_filtered("description") }}
 
 {{ feature_character.description }}
 <|CLOSE_SECTION|>

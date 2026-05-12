@@ -2,13 +2,17 @@
 
 ### Hero
 name: Hero
-
-A test character.
+gender: male
+age: early 30s
+occupation: Adventurer
 
 ### Elena
 name: Elena
+gender: female
+age: early 30s
+occupation: Healer
 
-A test character.
+A wandering healer with knowledge of ancient herbs.
 
 ## Scene description
 A peaceful clearing in the heart of an ancient forest.
@@ -17,6 +21,8 @@ A peaceful clearing in the heart of an ancient forest.
 
 ## Classification
 Content Classification: Fantasy adventure story
+
+Narrative Perspective: Third person limited, past tense.
 
 ## Task
 You are writing a novel-style narrative continuation featuring Elena in a scene with Elena in Fantasy adventure story.
@@ -62,19 +68,10 @@ Really think about the above!!!
 - **Vary your opening patterns**: Avoid starting consecutive responses with similar sentence structures (e.g., "Elena's [object]..." or "Elena [verbed]...")
 - **Focus on different aspects**: If you've recently described equipment/tools, shift to emotions, environment, or internal thoughts instead
 
-**CRITICAL - NARRATIVE CONSISTENCY WARNINGS**: 
-- **TENSE**: Examine the existing conversation history and maintain the EXACT same tense (past/present) used in previous messages. If previous messages use past tense ("walked"), continue with past tense. If they use present tense ("walks"), continue with present tense. **NEVER switch tenses mid-conversation**.
-- **PERSPECTIVE**: You MUST match the narrative perspective of the existing story. If the story is written in first person from another character's perspective, DO NOT switch to Elena's first person perspective. If the story uses third person ("he/she walked"), continue with third person for Elena. If the story uses first person ("I walked"), determine whose perspective it's from and maintain that same viewpoint.
-- **The character whose turn it is to act does NOT automatically become the narrator**
-
 Based on Elena's established dialogue patterns, maintain consistency with their voice and speaking style.
 
 ``` example
-Hello there.
-```
-
-``` example
-How are you?
+The forest provides all we need.
 ```
 
 Remember: Write clear, engaging prose that captures Elena's experience in this moment. Focus on their thoughts and actions while maintaining the natural flow of the story. Keep it concise and avoid unnecessary embellishment.
@@ -83,8 +80,11 @@ Remember: Write clear, engaging prose that captures Elena's experience in this m
 
 <|RESPONSE_LENGTH_INSTRUCTIONS|>
 
+**TENSE**: Examine the existing conversation history and maintain the EXACT same tense (past/present) used in previous messages. **NEVER switch tenses mid-conversation**.
+**PERSPECTIVE**: The narrative perspective for this scene is — Third person limited, past tense.. Apply it consistently to Elena's actions and thoughts.
+
 ## Scene
-(Broad character guidance for Elena: Speaks normally. )
+(Broad character guidance for Elena: Speaks calmly and with wisdom. )
 
 Elena: Hello there, traveler.
 

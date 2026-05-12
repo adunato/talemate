@@ -10,6 +10,10 @@ Talemate supports and encourages use of multiple clients. We believe it makes se
 
 It is, however, perfectly fine to just use a single client for all tasks if you prefer.
 
+## Checking a model
+
+The bundled [Model Testing Harness](model-testing-harness.md) scene runs a fixed suite of minimum-viability tests against the clients assigned to your agents. Load it after configuring a new client to confirm the model can handle what Talemate will ask of it.
+
 ## Client setup instructions
 
 ### Officially supported APIs

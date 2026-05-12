@@ -14,6 +14,7 @@ from .action_core.gating import (
 from talemate.context import interaction, handle_generation_cancelled
 from talemate.status import set_loading
 from talemate.exceptions import GenerationCancelled
+from .scene_direction.schema import UserInteractionMessage
 
 if TYPE_CHECKING:
     from talemate.tale_mate import Scene
@@ -87,6 +88,21 @@ class DirectorWebsocketHandler(DirectorChatWebsocketMixin, Plugin):
     def director(self):
         return get_agent("director")
 
+    @set_loading("Executing scene direction", cancellable=True, as_async=True)
+    async def handle_scene_direction_turn(self, data: dict):
+        """
+        Manually trigger a scene direction turn.
+        If instructions are provided, they are inserted as a user message
+        in the scene direction history before executing.
+        """
+        payload = InstructionPayload(**data)
+        if payload.instructions:
+            message = UserInteractionMessage(
+                user_input=payload.instructions, is_direction=True
+            )
+            await self.director.direction_append_message(message)
+        await self.director.direction_execute_turn()
+
     @set_loading("Generating dynamic actions", cancellable=True, as_async=True)
     async def handle_request_dynamic_choices(self, data: dict):
         """
@@ -123,10 +139,6 @@ class DirectorWebsocketHandler(DirectorChatWebsocketMixin, Plugin):
 
     async def handle_persist_character(self, data: dict):
         payload = PersistCharacterPayload(**data)
-        scene: "Scene" = self.scene
-
-        if not payload.content:
-            payload.content = scene.snapshot(lines=15)
 
         # add as asyncio task
         task = asyncio.create_task(

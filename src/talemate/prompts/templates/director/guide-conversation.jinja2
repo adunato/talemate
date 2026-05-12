@@ -27,6 +27,7 @@ Override example:
 <|CLOSE_SECTION|>
 {% if volatile_placement == "after_history" %}{{ volatile_context_text }}{% endif %}
 {% include "scene-intent.jinja2" %}
+{% include "director-instructions.jinja2" %}
 <|SECTION:ANALYSIS OF SCENE|>
 {{ analysis }}
 <|CLOSE_SECTION|>

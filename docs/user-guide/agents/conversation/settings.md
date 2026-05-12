@@ -38,7 +38,7 @@ This currently comes in four choices:
 - `Chat (legacy)` -- simple chat-style formatting
 - `AI Aware` -- characters are aware they are AI personas conversing with the user
 
-!!! info "AI Aware mode (New in 0.36.0)"
+!!! info "AI Aware mode"
     The **AI Aware** mode is a special conversation format where characters know they are AI personas. In this mode, characters acknowledge their artificial nature when interacting with the user, enabling more meta-aware conversations. This can be useful for experimental scenarios or when you want characters to engage in discussions about their own nature.
 
 Visually this will make no difference to what you see, it may however affect how the AI interprets the dialogue.

@@ -1,28 +1,6 @@
 ## Examples
 
 <REVIEW>
-The incandescent luminescence of twilight's dying breath painted the heavens in hues of amethyst and vermillion, while shadows danced their ancient waltz across the emerald tapestry of the lawn. Rebecca's heart thundered like a thousand war drums as she glimpsed his silhouette, a dark prince emerging from the veil of dusk's embrace.
-</REVIEW>
-
-<ANALYSIS>
-- Thought process: This is trying way too hard to describe a simple sunset scene. Every single phrase is overwritten with metaphors and fancy vocabulary when it could just say "sunset" and "she saw him."
-- Purple prose: MAJOR ISSUES - "incandescent luminescence," "twilight's dying breath," "ancient waltz," "thousand war drums," "dark prince" 
-- Unnatural dialogue: N/A - no dialogue
-- Over-description: YES - simple sunset/shadow scene made overly complex
-- Length: TOO LONG - could be said in 1-2 sentences
-- Tense: PAST - "Rebecca's heart thundered like a thousand war drums"
-- Mature content: N/A
-- Name overuse: N/A - no dialogue
-- Talking vs Showing: N/A - no dialogue
-</ANALYSIS>
-
-<FIX>
-The sunset cast purple and red across the sky as shadows stretched across the lawn. Rebecca's heart raced when she saw him walking up the driveway.
-</FIX>
-
----
-
-<REVIEW>
 "Hello, Mother. I have returned from my educational institution," said Tim.
 "Excellent. Did you successfully complete your mathematical assignments?" she responded.
 "Affirmative. I achieved a score of ninety-two percent on my algebraic examination."
@@ -46,28 +24,6 @@ The sunset cast purple and red across the sky as shadows stretched across the la
 "Hi sweetie! How'd your math test go?"
 "Pretty good—got a 92."
 "That's great! There's snacks in the kitchen if you're hungry."
-</FIX>
-
----
-
-<REVIEW>
-She reaches for the door handle. Her index finger extends first, followed by her middle finger, then her ring finger, and finally her pinky. Her thumb moves to oppose them. The metal is cool to the touch, approximately 68 degrees Fahrenheit. She grips it with 3.2 pounds of pressure and rotates her wrist 47 degrees clockwise.
-</REVIEW>
-
-<ANALYSIS>
-- Thought process: While the exact measurements and finger-by-finger description is excessive, we should keep that the handle was cold - it's a sensory detail that adds atmosphere without being purple prose.
-- Purple prose: NO
-- Unnatural dialogue: N/A - no dialogue
-- Over-description: EXTREME - every finger movement, exact temperature, precise measurements
-- Length: WAY TOO LONG - should be 3-4 words
-- Tense: PRESENT - "reaches for the door handle"
-- Mature content: N/A
-- Name overuse: N/A
-- Talking vs Showing: N/A - no dialogue
-</ANALYSIS>
-
-<FIX>
-She gripped the cold metal handle and turned it, opening the door.
 </FIX>
 
 ---
@@ -211,6 +167,31 @@ She bit her lip, looking away. "It's just... I mean... um... something feels wro
 ---
 
 <REVIEW>
+"As you know, the dual-phase cooling system requires constant monitoring to prevent a cascade failure in the secondary loop," Dr. Chen explained to her co-engineer, who had been maintaining the reactor for twelve years. "The isothermal regulators must be calibrated every six hours, and the backup condensers need to cycle through their purge sequence before any power increase can be authorized."
+"Indeed, I am well aware of these procedures," he responded. "Perhaps we should also discuss the implications of the recent firmware update on the thermal management subsystem."
+</REVIEW>
+
+<ANALYSIS>
+- Thought process: This is exposition dumped into dialogue. These are two engineers who both know this information — they wouldn't explain it to each other. The dialogue exists purely to inform the reader, not because the characters would actually say it. It needs to be replaced with what they'd actually discuss: the immediate problem, not the textbook explanation.
+- Purple prose: NO
+- Unnatural dialogue: SEVERE - characters explaining things they both already know
+- Over-description: YES - unnecessary technical detail
+- Length: TOO LONG
+- Tense: PAST - "explained"
+- Mature content: N/A
+- Name overuse: NO
+- Talking vs Showing: SEVERE - lecturing the reader through dialogue
+</ANALYSIS>
+
+<FIX>
+"The cooling readings look wrong again." Dr. Chen frowned at her display, tapping one of the fluctuating values.
+He leaned over her shoulder. "That started after the firmware update. Want me to roll it back?"
+"Not yet. Let me check the secondary loop first."
+</FIX>
+
+---
+
+<REVIEW>
 "Hi David, how are you today?" asked Emily.
 "I'm doing well, Emily. Have you seen Michael?"
 "No, David, I haven't seen Michael. But Sarah said she saw him earlier."
@@ -273,7 +254,7 @@ Marcus: What brings you to these woods?
 Elena: Hello there, traveler.
 
 ## Acting instructions for elena
-Speaks normally.
+Speaks calmly and with wisdom.
 
 ## Intention of this story
 The overarching intention of this story. Use it to guide your decisions in the scene.
@@ -282,6 +263,8 @@ A fantasy adventure story.
 
 ## Classification
 Content Classification: Fantasy adventure story
+
+Narrative Perspective: Third person limited, past tense.
 
 ## Task
 Fix bad AI writing by making it simpler, shorter, and more natural. 

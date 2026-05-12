@@ -3,20 +3,29 @@
 ## Classification
 Content Classification: Fantasy adventure story
 
+Narrative Perspective: Third person limited, past tense.
+
 Scenario Premise:
 A peaceful clearing in the heart of an ancient forest.
 
-## Intention of this story
-The overarching intention of this story. Use it to guide your decisions in the scene.
-
-<Mock name='mock.intent_state.intent' id='NORMALIZED'>
-
 ## Characters
+
+### Hero
+name: Hero
+gender: male
+age: early 30s
+occupation: Adventurer
+
+#### General character guide for Hero
+Speaks calmly and with wisdom.
 
 ## Elena
 name: Elena
+gender: female
+age: early 30s
+occupation: Healer
 
-A test character.
+A wandering healer with knowledge of ancient herbs.
 
 ## Scene
 
@@ -31,5 +40,7 @@ Directions for new narration: She leaves quietly
 
 These are directions and the events described have not happened yet, you are writing new narration based on the
 directions.
+
+Maintain an informal, conversational tone.
 
 The length of your final answer must fit within 2 paragraphs.

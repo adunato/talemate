@@ -48,6 +48,9 @@ class Client(pydantic.BaseModel):
     # expected data structure format in responses
     data_format: Literal["json", "yaml"] | None = None
 
+    # prompt section format (how section headers are rendered)
+    section_format: Literal["markdown", "xml"] | None = None
+
     enabled: bool = True
 
     # whether or not to enable reasoning
@@ -85,6 +88,13 @@ class Client(pydantic.BaseModel):
     # that support it. Disable for less capable models that may get confused
     # by non-standard context ordering.
     optimize_prompt_caching: bool = False
+
+    # when enabled, prompt-level deduplication strips near-duplicate lines
+    # from the rendered prompt before sending. Off by default — modern
+    # context windows make the token savings negligible and the rewrites
+    # break prompt caching. Useful when RAG injection produces substantial
+    # duplication and the model's context window is tight.
+    dedupe_enabled: bool = False
 
     # Controls whether token caps and/or response length instructions are
     # sent with prompts. Options:
@@ -140,7 +150,7 @@ ClientType = TypeVar("ClientType", bound=Client)
 
 
 class AgentActionConfig(pydantic.BaseModel):
-    value: Union[int, float, str, bool, list, None] = None
+    value: Union[int, float, str, bool, list, dict, None] = None
 
 
 class AgentAction(pydantic.BaseModel):
@@ -285,7 +295,7 @@ class EmbeddingFunctionPreset(pydantic.BaseModel):
     trust_remote_code: bool = False
     device: str = "cpu"
     distance: float = 1.5
-    distance_mod: int = 1
+    distance_mod: float = 1.0
     distance_function: str = "l2"
     fast: bool = True
     gpu_recommendation: bool = False
@@ -562,6 +572,7 @@ class SceneAppearance(pydantic.BaseModel):
     context_investigation_messages: HidableHistoryMessageStyle = (
         HidableHistoryMessageStyle()
     )
+    information_messages: HistoryMessageStyle = HistoryMessageStyle()
     quotes: MarkupMessageStyle = MarkupMessageStyle()
     parentheses: MarkupMessageStyle = MarkupMessageStyle()
     brackets: MarkupMessageStyle = MarkupMessageStyle()

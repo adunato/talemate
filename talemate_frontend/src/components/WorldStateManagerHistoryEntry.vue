@@ -19,7 +19,7 @@
                 <span class="text-primary">{{ pendingDelete ? 'Deleting...' : 'Regenerating...' }}</span>
             </div>
             <div v-else>
-                <v-btn v-if="hasSourceEntries" :disabled="editing || locked" prepend-icon="mdi-refresh" color="primary" @click="(ev) => regenerateEntry(ev.ctrlKey)">Regenerate</v-btn>
+                <v-btn v-if="hasSourceEntries" :disabled="editing || locked" prepend-icon="mdi-refresh" color="primary" @click="(ev) => regenerateEntry(isPrimaryModifier(ev))">Regenerate</v-btn>
                 <v-btn v-if="hasSourceEntries" :disabled="editing || locked" color="primary" prepend-icon="mdi-magnify-expand" @click="toggleSourceEntries">{{ entry.source_entries ? 'Collapse' : 'Inspect' }}</v-btn>
                 <v-btn v-if="hasSourceEntries" :disabled="editing || locked" prepend-icon="mdi-clock-plus-outline" color="primary" @click="insertingTimePassage = true">Time Passage</v-btn>
                 <ConfirmActionInline
@@ -106,6 +106,7 @@ class HistoryEntry(pydantic.BaseModel):
 */
 
 import { SceneTextParser } from '@/utils/sceneMessageRenderer';
+import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 import ContextualGenerate from './ContextualGenerate.vue';
 import ConfirmActionInline from './ConfirmActionInline.vue';
 
@@ -165,6 +166,7 @@ export default {
         }
     },
     methods: {
+        isPrimaryModifier,
         handleEnter(ev) {
             if(!ev.shiftKey) {
                 ev.preventDefault();

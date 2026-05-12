@@ -181,6 +181,7 @@ class Group(pydantic.BaseModel):
             if not template_type:
                 log.warning("Template has no template_type", template_id=template_id)
                 del data["templates"][template_id]
+                continue
 
             if template_type not in MODELS:
                 log.warning(

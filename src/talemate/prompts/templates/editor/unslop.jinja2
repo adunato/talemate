@@ -9,28 +9,6 @@ Override example:
 ## Examples
 
 <REVIEW>
-The incandescent luminescence of twilight's dying breath painted the heavens in hues of amethyst and vermillion, while shadows danced their ancient waltz across the emerald tapestry of the lawn. Rebecca's heart thundered like a thousand war drums as she glimpsed his silhouette, a dark prince emerging from the veil of dusk's embrace.
-</REVIEW>
-
-<ANALYSIS>
-- Thought process: This is trying way too hard to describe a simple sunset scene. Every single phrase is overwritten with metaphors and fancy vocabulary when it could just say "sunset" and "she saw him."
-- Purple prose: MAJOR ISSUES - "incandescent luminescence," "twilight's dying breath," "ancient waltz," "thousand war drums," "dark prince" 
-- Unnatural dialogue: N/A - no dialogue
-- Over-description: YES - simple sunset/shadow scene made overly complex
-- Length: TOO LONG - could be said in 1-2 sentences
-- Tense: PAST - "Rebecca's heart thundered like a thousand war drums"
-- Mature content: N/A
-- Name overuse: N/A - no dialogue
-- Talking vs Showing: N/A - no dialogue
-</ANALYSIS>
-
-<FIX>
-The sunset cast purple and red across the sky as shadows stretched across the lawn. Rebecca's heart raced when she saw him walking up the driveway.
-</FIX>
-
----
-
-<REVIEW>
 "Hello, Mother. I have returned from my educational institution," said Tim.
 "Excellent. Did you successfully complete your mathematical assignments?" she responded.
 "Affirmative. I achieved a score of ninety-two percent on my algebraic examination."
@@ -54,28 +32,6 @@ The sunset cast purple and red across the sky as shadows stretched across the la
 "Hi sweetie! How'd your math test go?"
 "Pretty good—got a 92."
 "That's great! There's snacks in the kitchen if you're hungry."
-</FIX>
-
----
-
-<REVIEW>
-She reaches for the door handle. Her index finger extends first, followed by her middle finger, then her ring finger, and finally her pinky. Her thumb moves to oppose them. The metal is cool to the touch, approximately 68 degrees Fahrenheit. She grips it with 3.2 pounds of pressure and rotates her wrist 47 degrees clockwise.
-</REVIEW>
-
-<ANALYSIS>
-- Thought process: While the exact measurements and finger-by-finger description is excessive, we should keep that the handle was cold - it's a sensory detail that adds atmosphere without being purple prose.
-- Purple prose: NO
-- Unnatural dialogue: N/A - no dialogue
-- Over-description: EXTREME - every finger movement, exact temperature, precise measurements
-- Length: WAY TOO LONG - should be 3-4 words
-- Tense: PRESENT - "reaches for the door handle"
-- Mature content: N/A
-- Name overuse: N/A
-- Talking vs Showing: N/A - no dialogue
-</ANALYSIS>
-
-<FIX>
-She gripped the cold metal handle and turned it, opening the door.
 </FIX>
 
 ---
@@ -242,6 +198,31 @@ She squeezed his hand, meeting his eyes with a small smile.
 She bit her lip, looking away. "It's just... I mean... um... something feels wrong about it."
 </FIX>
 
+---
+
+<REVIEW>
+"As you know, the dual-phase cooling system requires constant monitoring to prevent a cascade failure in the secondary loop," Dr. Chen explained to her co-engineer, who had been maintaining the reactor for twelve years. "The isothermal regulators must be calibrated every six hours, and the backup condensers need to cycle through their purge sequence before any power increase can be authorized."
+"Indeed, I am well aware of these procedures," he responded. "Perhaps we should also discuss the implications of the recent firmware update on the thermal management subsystem."
+</REVIEW>
+
+<ANALYSIS>
+- Thought process: This is exposition dumped into dialogue. These are two engineers who both know this information — they wouldn't explain it to each other. The dialogue exists purely to inform the reader, not because the characters would actually say it. It needs to be replaced with what they'd actually discuss: the immediate problem, not the textbook explanation.
+- Purple prose: NO
+- Unnatural dialogue: SEVERE - characters explaining things they both already know
+- Over-description: YES - unnecessary technical detail
+- Length: TOO LONG
+- Tense: PAST - "explained"
+- Mature content: N/A
+- Name overuse: NO
+- Talking vs Showing: SEVERE - lecturing the reader through dialogue
+</ANALYSIS>
+
+<FIX>
+"The cooling readings look wrong again." Dr. Chen frowned at her display, tapping one of the fluctuating values.
+He leaned over her shoulder. "That started after the firmware update. Want me to roll it back?"
+"Not yet. Let me check the secondary loop first."
+</FIX>
+
 {% if repetition %}---
 
 <REVIEW>
@@ -256,7 +237,7 @@ Marcus entered the room, his boots clicking against the marble floor. He needed 
 </REPETITION ISSUES>
 
 <ANALYSIS>
-- Thought process: The AI has repeated an exact sentence from earlier - "Marcus entered the room, his boots clicking against the marble floor." This is lazy writing that needs to be replaced with something that moves the scene forward instead of repeating what already happened.
+- Thought process: The AI has repeated an exact sentence from earlier - "Marcus entered the room, his boots clicking against the marble floor." The flagged sentence will be removed entirely. The surrounding text still reads naturally without it.
 - Purple prose: MINOR - "dancing shadows," "vast space"
 - Unnatural dialogue: NO - dialogue is natural
 - Over-description: MINOR - some unnecessary detail
@@ -265,14 +246,14 @@ Marcus entered the room, his boots clicking against the marble floor. He needed 
 - Mature content: N/A
 - Name overuse: NO - names used appropriately
 - Talking vs Showing: OK
-- Repetition: YES - exact sentence repeated from earlier in the scene
+- Repetition: YES - flagged sentence will be deleted, not rewritten
 </ANALYSIS>
 
 <FIX>
 Marcus entered the room, his boots clicking against the marble floor. The chandelier cast shadows across the walls as he surveyed the scene.
 "What happened here?" he demanded.
 Sarah looked up from where she knelt beside the broken vase. "I don't know. I just got here myself."
-He crossed to the window, checking if it had been forced open. "Someone was looking for something specific."
+He needed answers, and he needed them now.
 </FIX>
 
 {% endif %}---
@@ -395,7 +376,7 @@ Fix bad AI writing by making it simpler, shorter, and more natural.
    ONLY use actual names when talking ABOUT someone who isn't there.
 {{ li() }}. SHOW don't tell - Use actions and natural dialogue instead of having characters announce their feelings or narrate their actions
 {% if repetition %}
-{{ li() }}. REMOVE REPETITION - Address the repetition issues. These sentences have been classified as repetition and must either be substantially rewritten or removed. When replacing a sentence, substitute something else, that's meaningful to the story and context.
+{{ li() }}. REMOVE REPETITION - Sentences listed in <REPETITION> have been flagged as repeating earlier content. Repetition here is detected by similarity threshold - it may be verbatim, but it also includes semantic repetition (the same idea, action, or beat expressed in different words). Trust the flag: if a sentence appears in <REPETITION>, treat it as repetition regardless of how different the wording looks. Delete the flagged sentences entirely from the FIX. Do NOT rewrite, paraphrase, or substitute new content in their place - just remove them and let the surrounding text flow on without them.
 {% endif %}
 {% if bad_prose %}
 {{ li() }}. REMOVE UNWANTED PROSE - Address the unwanted prose issues. These phrases have been identified by the director as bad, and MUST be changed accordingly.
@@ -453,4 +434,5 @@ If there are changes needed, provide the fix in the <FIX>...</FIX> block.
 </UNWANTED_PROSE>
 {% endif %}
 
+<|CLOSE_SECTION|>
 {{ set_prepared_response("<ANALYSIS>\n- Thought process") }}

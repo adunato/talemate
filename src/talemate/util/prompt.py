@@ -4,8 +4,13 @@ from typing import Literal
 
 log = structlog.get_logger("talemate.util.prompt")
 
+CONDENSED_NEWLINE = "<|NL|>"
+
 __all__ = [
     "condensed",
+    "condensed_for_dedupe",
+    "expand_condensed",
+    "CONDENSED_NEWLINE",
     "no_chapters",
     "replace_special_tokens",
     "clean_visible_response",
@@ -37,6 +42,32 @@ def condensed(s):
 
     # also replace multiple spaces with a single space
     return re.sub(r"\s+", " ", r)
+
+
+def condensed_for_dedupe(s):
+    """Replace line breaks with a recoverable marker, so dedupe sees a single
+    line but the original structure can be restored afterwards.
+
+    Newlines become ``CONDENSED_NEWLINE`` tokens.  Surrounding whitespace is
+    collapsed exactly like :func:`condensed` so that fuzzy-matching behaves
+    identically.
+    """
+
+    if not isinstance(s, str):
+        return s
+
+    s = s.replace("\r", "")
+
+    # Replace newlines with the marker
+    parts = s.split("\n")
+    # Collapse whitespace within each part (same as condensed)
+    parts = [re.sub(r"\s+", " ", p) for p in parts]
+    return CONDENSED_NEWLINE.join(parts)
+
+
+def expand_condensed(s):
+    """Restore ``CONDENSED_NEWLINE`` markers back to real newlines."""
+    return s.replace(CONDENSED_NEWLINE, "\n")
 
 
 def no_chapters(text: str, replacement: str = "chapter") -> str:

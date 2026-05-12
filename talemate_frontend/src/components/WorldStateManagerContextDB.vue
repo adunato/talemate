@@ -5,6 +5,7 @@
         Manage your context entries through the <v-icon>mdi-earth</v-icon> <strong>World</strong>, <v-icon>mdi-clock</v-icon> <strong>History</strong> and <v-icon>mdi-account-group</v-icon> <strong>Characters</strong> tabs.
         <p class="text-caption">
             Content search is based on <strong class="text-primary">semantic similarity</strong> using embeddings from the Memory agent, its <strong class="text-error">NOT</strong> using exact matching.
+            Use the <strong>Search Strictness</strong> slider to control how closely results must match your query. Lower values require closer matches, higher values allow more loosely related results. This setting is saved to the active embedding preset.
         </p>
     </v-alert>
     <div :style="{ maxWidth: MAX_CONTENT_WIDTH }">
@@ -37,6 +38,13 @@
                             <v-text-field v-else v-model="queryMetaValue" label="Tag value" class="mr-1 mb-1"
                                 :style="{ minWidth: '150px', maxWidth: '200px' }"
                                 variant="underlined" single-line hide-details density="compact"></v-text-field>
+                        </v-col>
+                        <v-col cols="12" sm="6" md="auto" class="pt-4">
+                            <v-slider v-model="distanceMod" min="0.1" max="2.0" step="0.1"
+                                :style="{ minWidth: '250px', maxWidth: '350px' }"
+                                label="Search Strictness" hide-details
+                                thumb-label="always"
+                                @update:model-value="updateDistanceMod"></v-slider>
                         </v-col>
                         <v-col cols="12" sm="auto" md="auto" class="ml-auto d-flex flex-wrap ga-1">
                             <!-- button that opens the tools menu -->
@@ -199,6 +207,7 @@
 
 <script>
 import { MAX_CONTENT_WIDTH } from '@/constants';
+import { debounce } from 'lodash';
 
 export default {
     name: "WorldStateManagerContextDB",
@@ -212,6 +221,7 @@ export default {
     data() {
         return {
             updateTimeout: null,
+            distanceMod: 1.0,
             query: null,
             queryMetaKey: null,
             queryMetaValue: null,
@@ -390,6 +400,21 @@ export default {
             }));
         },
 
+        updateDistanceMod: debounce(function(value) {
+            this.getWebsocket().send(JSON.stringify({
+                type: 'world_state_manager',
+                action: 'update_distance_mod',
+                distance_mod: value,
+            }));
+        }, 300),
+
+        requestDistanceMod() {
+            this.getWebsocket().send(JSON.stringify({
+                type: 'world_state_manager',
+                action: 'get_distance_mod',
+            }));
+        },
+
         resetDB() {
             let confirm = window.confirm("Are you sure you want to reset the context database? This will remove all entries and reimport them from the current save file.");
             if (!confirm) {
@@ -409,10 +434,16 @@ export default {
             else if (message.action === 'context_db_result') {
                 this.contextDB = message.data;
                 this.currentQuery = this.contextDBQuery;
+                if (message.distance_mod !== undefined) {
+                    this.distanceMod = message.distance_mod;
+                }
             }
             else if (message.action === 'context_db_updated') {
                 this.$emit('request-sync')
                 //this.load(message.data.id);
+            }
+            else if (message.action === 'distance_mod_updated') {
+                this.distanceMod = message.distance_mod;
             }
             else if (message.action === 'context_db_deleted') {
                 let entry_id = message.data.id;
@@ -428,6 +459,7 @@ export default {
     },
     created() {
         this.registerMessageHandler(this.handleMessage);
+        this.requestDistanceMod();
     }
 }
 

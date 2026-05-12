@@ -1,6 +1,8 @@
 ## Classification
 Content Classification: Fantasy adventure story
 
+Narrative Perspective: Third person limited, past tense.
+
 Scenario Premise:
 A peaceful clearing in the heart of an ancient forest.
 
@@ -11,15 +13,6 @@ Elena: Hello there, traveler.
 The sun filters through the leaves above.
 
 Marcus: What brings you to these woods?
-
-## Intention of this story
-The overarching intention of this story. Use it to guide your decisions in the scene.
-
-A test story
-
-## Intention of the current scene
-
-Test phase
 
 ## Function calling instructions
 Call the following functions to execute your tasks. Each function is explained by documentation and some examples. Understand the schema and then use the examples to execute your tasks.
@@ -119,16 +112,6 @@ You may only call this function once.
 ## Task
 
 Determine whether or not a new scene intention is needed. If so, provide the type classification and intention of the new scene. If not, do nothing.
-
-Overarching Story Intention:A test story
-
-The current scene classification
-
-```
-type: `` - 
-
-intention: Test phase
-```
 
 Base your decision on the moment in the current scene and the overall story intent:
 ```

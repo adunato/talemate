@@ -78,7 +78,14 @@ COLOR_MAP = {
 COLOR_NAMES = sorted(list(COLOR_MAP.keys()))
 COLORS = sorted(list(COLOR_MAP.values()))
 
-SPECIAL_COLOR_NAMES = ["narrator", "actor", "director", "time", "context_investigation"]
+SPECIAL_COLOR_NAMES = [
+    "narrator",
+    "actor",
+    "director",
+    "time",
+    "context_investigation",
+    "information",
+]
 
 ALL_COLOR_NAMES = SPECIAL_COLOR_NAMES + COLOR_NAMES
 

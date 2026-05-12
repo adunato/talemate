@@ -1,0 +1,37 @@
+<SCENE>
+The party gathered at the inn.
+</SCENE>
+
+<PROGRESS_1>
+They discussed their plan.
+</PROGRESS_1>
+
+<PROGRESS_2>
+The leader gave a rousing speech.
+</PROGRESS_2>
+
+<PROGRESS_3>
+Everyone headed to their rooms for the night.
+</PROGRESS_3>
+
+<PROGRESS_4>
+Morning came swiftly.
+</PROGRESS_4>
+
+<PROGRESS_5>
+The journey began anew.
+</PROGRESS_5>
+
+<TASK>
+Examine the scene progress from the beginning and find the progress items that mark the ending of a scene.  Think of this in terms of a TV show or a play, where there is a build up, peak and denouement. You must identify the denouement points. 
+
+Provide a list of denounment points in the following format:
+
+- Progress {N}
+- Progress {N}
+...
+</TASK>
+
+
+The length of your response must fit within 4 paragraphs.
+<|BOT|>-

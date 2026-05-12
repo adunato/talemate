@@ -1,0 +1,530 @@
+{
+  "title": "Auto Narration",
+  "id": "d91eb5f6-ba2a-4e7a-b672-edd0f2a2af24",
+  "properties": {
+    "event_name": "game_loop_actor_iter"
+  },
+  "x": 0,
+  "y": 0,
+  "width": 200,
+  "height": 100,
+  "collapsed": false,
+  "inherited": false,
+  "registry": "agents/narrator/autoNarration",
+  "nodes": {
+    "4b0f7a90-50ea-402f-8f9d-ca3244e3088e": {
+      "title": "Get Scene State",
+      "id": "4b0f7a90-50ea-402f-8f9d-ca3244e3088e",
+      "properties": {},
+      "x": 30,
+      "y": 74,
+      "width": 140,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "scene/GetSceneState",
+      "base_type": "core/Node"
+    },
+    "eda7a6f9-cd58-486f-b7a4-51d61c2ee80b": {
+      "title": "Switch",
+      "id": "eda7a6f9-cd58-486f-b7a4-51d61c2ee80b",
+      "properties": {
+        "pass_through": true
+      },
+      "x": 240,
+      "y": 114,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Switch",
+      "base_type": "core/Node"
+    },
+    "ea015546-c73a-4b0f-b8d7-04b86082245e": {
+      "title": "Stop",
+      "id": "ea015546-c73a-4b0f-b8d7-04b86082245e",
+      "properties": {
+        "exception": "StopGraphExecution"
+      },
+      "x": 530,
+      "y": 124,
+      "width": 271,
+      "height": 80,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "raise/Stop",
+      "base_type": "core/Node"
+    },
+    "daa78847-531a-46e5-9cb7-280edb3a45a8": {
+      "title": "Stage 0",
+      "id": "daa78847-531a-46e5-9cb7-280edb3a45a8",
+      "properties": {
+        "stage": 0
+      },
+      "x": 860,
+      "y": 84,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "0095c7ee-2c43-4389-b4af-64935e54f16f": {
+      "title": "narrator",
+      "id": "0095c7ee-2c43-4389-b4af-64935e54f16f",
+      "properties": {
+        "agent_name": "narrator"
+      },
+      "x": 29,
+      "y": 317,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/GetAgent",
+      "base_type": "core/Node"
+    },
+    "7bd22494-7e12-46ef-873f-657576b9e237": {
+      "title": "GET obj.auto_narration_action",
+      "id": "7bd22494-7e12-46ef-873f-657576b9e237",
+      "properties": {
+        "attribute": "auto_narration_action"
+      },
+      "x": 299,
+      "y": 317,
+      "width": 244,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/Get",
+      "base_type": "core/Node"
+    },
+    "97baff0c-55f8-4cb6-80f0-d79711df4192": {
+      "title": "Switch",
+      "id": "97baff0c-55f8-4cb6-80f0-d79711df4192",
+      "properties": {
+        "pass_through": true
+      },
+      "x": 609,
+      "y": 327,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Switch",
+      "base_type": "core/Node"
+    },
+    "0cd1c208-4c47-4615-9c58-6712e15f2afa": {
+      "title": "SET local.auto_narration_action",
+      "id": "0cd1c208-4c47-4615-9c58-6712e15f2afa",
+      "properties": {
+        "name": "auto_narration_action",
+        "scope": "local"
+      },
+      "x": 889,
+      "y": 307,
+      "width": 260,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "ef485073-aac4-4c1a-b9be-2a338ee3f4ef": {
+      "title": "Stop",
+      "id": "ef485073-aac4-4c1a-b9be-2a338ee3f4ef",
+      "properties": {
+        "exception": "StopGraphExecution"
+      },
+      "x": 889,
+      "y": 487,
+      "width": 271,
+      "height": 80,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "raise/Stop",
+      "base_type": "core/Node"
+    },
+    "2ef532cb-5402-4645-982d-c15ef20d210b": {
+      "title": "Stage 1",
+      "id": "2ef532cb-5402-4645-982d-c15ef20d210b",
+      "properties": {
+        "stage": 1
+      },
+      "x": 1269,
+      "y": 367,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "b4395073-a676-44eb-950f-aa0ebb59c5d3": {
+      "title": "Generate Scene Narration",
+      "id": "b4395073-a676-44eb-950f-aa0ebb59c5d3",
+      "properties": {
+        "response_length": 0
+      },
+      "x": 817,
+      "y": 842,
+      "width": 245,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/narrator/GenerateSceneNarration",
+      "base_type": "core/Node"
+    },
+    "d34e2b07-7798-41b9-acc7-6b510b9bafae": {
+      "title": "Generate After Dialog Narration",
+      "id": "d34e2b07-7798-41b9-acc7-6b510b9bafae",
+      "properties": {
+        "response_length": 0
+      },
+      "x": 817,
+      "y": 1022,
+      "width": 260,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/narrator/GenerateAfterDialogNarration",
+      "base_type": "core/Node"
+    },
+    "13c5ca48-a09a-4d72-94a4-0a953fcc9fbd": {
+      "title": "Generate Progress Narration",
+      "id": "13c5ca48-a09a-4d72-94a4-0a953fcc9fbd",
+      "properties": {
+        "response_length": 0
+      },
+      "x": 817,
+      "y": 672,
+      "width": 245,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/narrator/GenerateProgress",
+      "base_type": "core/Node"
+    },
+    "580996f7-5162-4045-9b56-30240a33f640": {
+      "title": "Coallesce",
+      "id": "580996f7-5162-4045-9b56-30240a33f640",
+      "properties": {},
+      "x": 1197,
+      "y": 832,
+      "width": 140,
+      "height": 86,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Coallesce",
+      "base_type": "core/Node"
+    },
+    "466d85dd-7cfa-4aae-9256-52bf8c45212f": {
+      "title": "SET local.message",
+      "id": "466d85dd-7cfa-4aae-9256-52bf8c45212f",
+      "properties": {
+        "name": "message",
+        "scope": "local"
+      },
+      "x": 1417,
+      "y": 832,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "095bd9ec-57f7-45b2-a65b-7e3cdb060402": {
+      "title": "Stage 2",
+      "id": "095bd9ec-57f7-45b2-a65b-7e3cdb060402",
+      "properties": {
+        "stage": 2
+      },
+      "x": 1697,
+      "y": 832,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "647b08cd-9d91-4504-a03e-f3c80bb1a20d": {
+      "title": "GET local.auto_narration_action",
+      "id": "647b08cd-9d91-4504-a03e-f3c80bb1a20d",
+      "properties": {
+        "name": "auto_narration_action",
+        "scope": "local"
+      },
+      "x": 27,
+      "y": 762,
+      "width": 260,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "4f0b686e-86ce-479d-b350-79c9b97970d5": {
+      "title": "GET local.message",
+      "id": "4f0b686e-86ce-479d-b350-79c9b97970d5",
+      "properties": {
+        "name": "message",
+        "scope": "local"
+      },
+      "x": 26,
+      "y": 1244,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "714f116e-05aa-45ec-abe0-0c3edfecb887": {
+      "title": "Case",
+      "id": "714f116e-05aa-45ec-abe0-0c3edfecb887",
+      "properties": {
+        "attribute_name": "",
+        "case_a": "progress_story",
+        "case_b": "narrate_scene",
+        "case_c": "narrate_after_dialogue",
+        "case_d": ""
+      },
+      "x": 367,
+      "y": 762,
+      "width": 210,
+      "height": 234,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Case",
+      "base_type": "core/Node"
+    },
+    "ba11f4c2-9915-4a0b-b7ab-b80f6c7dff7a": {
+      "title": "Stop",
+      "id": "ba11f4c2-9915-4a0b-b7ab-b80f6c7dff7a",
+      "properties": {
+        "exception": "StopGraphExecution"
+      },
+      "x": 650,
+      "y": 1040,
+      "width": 271,
+      "height": 80,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "raise/Stop",
+      "base_type": "core/Node"
+    },
+    "e75e2508-4e4a-4d39-aa52-474a587ad35a": {
+      "title": "Push History",
+      "id": "e75e2508-4e4a-4d39-aa52-474a587ad35a",
+      "properties": {
+        "emit_message": true
+      },
+      "x": 306,
+      "y": 1274,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "scene/history/Push",
+      "base_type": "core/Node"
+    },
+    "027e4c90-9eb0-4cc7-b19a-341506a33620": {
+      "title": "Stage 3",
+      "id": "027e4c90-9eb0-4cc7-b19a-341506a33620",
+      "properties": {
+        "stage": 3
+      },
+      "x": 596,
+      "y": 1254,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "1d40f911-5b98-4b87-8870-9ade6d301489": {
+      "title": "GET obj.actor",
+      "id": "1d40f911-5b98-4b87-8870-9ade6d301489",
+      "properties": {
+        "attribute": "actor"
+      },
+      "x": 430,
+      "y": 1110,
+      "width": 210,
+      "height": 98,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "data/Get",
+      "base_type": "core/Node"
+    },
+    "ca86fbd5-cf8b-4a5c-a145-4191dad3466e": {
+      "title": "GET obj.character",
+      "id": "ca86fbd5-cf8b-4a5c-a145-4191dad3466e",
+      "properties": {
+        "attribute": "character"
+      },
+      "x": 620,
+      "y": 1110,
+      "width": 210,
+      "height": 98,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "data/Get",
+      "base_type": "core/Node"
+    },
+    "f62d392b-a4f5-4af1-84fe-936ced61d731": {
+      "title": "Event",
+      "id": "f62d392b-a4f5-4af1-84fe-936ced61d731",
+      "properties": {},
+      "x": 250,
+      "y": 1080,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "event/Event",
+      "base_type": "core/Graph"
+    }
+  },
+  "edges": {
+    "4b0f7a90-50ea-402f-8f9d-ca3244e3088e.auto_progress": [
+      "eda7a6f9-cd58-486f-b7a4-51d61c2ee80b.value"
+    ],
+    "eda7a6f9-cd58-486f-b7a4-51d61c2ee80b.no": [
+      "ea015546-c73a-4b0f-b8d7-04b86082245e.state"
+    ],
+    "ea015546-c73a-4b0f-b8d7-04b86082245e.state": [
+      "daa78847-531a-46e5-9cb7-280edb3a45a8.state"
+    ],
+    "0095c7ee-2c43-4389-b4af-64935e54f16f.agent": [
+      "7bd22494-7e12-46ef-873f-657576b9e237.object"
+    ],
+    "7bd22494-7e12-46ef-873f-657576b9e237.value": [
+      "97baff0c-55f8-4cb6-80f0-d79711df4192.value"
+    ],
+    "97baff0c-55f8-4cb6-80f0-d79711df4192.yes": [
+      "0cd1c208-4c47-4615-9c58-6712e15f2afa.value"
+    ],
+    "97baff0c-55f8-4cb6-80f0-d79711df4192.no": [
+      "ef485073-aac4-4c1a-b9be-2a338ee3f4ef.state"
+    ],
+    "0cd1c208-4c47-4615-9c58-6712e15f2afa.value": [
+      "2ef532cb-5402-4645-982d-c15ef20d210b.state"
+    ],
+    "ef485073-aac4-4c1a-b9be-2a338ee3f4ef.state": [
+      "2ef532cb-5402-4645-982d-c15ef20d210b.state_b"
+    ],
+    "b4395073-a676-44eb-950f-aa0ebb59c5d3.message": [
+      "580996f7-5162-4045-9b56-30240a33f640.b"
+    ],
+    "d34e2b07-7798-41b9-acc7-6b510b9bafae.message": [
+      "580996f7-5162-4045-9b56-30240a33f640.c"
+    ],
+    "13c5ca48-a09a-4d72-94a4-0a953fcc9fbd.message": [
+      "580996f7-5162-4045-9b56-30240a33f640.a"
+    ],
+    "580996f7-5162-4045-9b56-30240a33f640.value": [
+      "466d85dd-7cfa-4aae-9256-52bf8c45212f.value"
+    ],
+    "466d85dd-7cfa-4aae-9256-52bf8c45212f.value": [
+      "095bd9ec-57f7-45b2-a65b-7e3cdb060402.state"
+    ],
+    "647b08cd-9d91-4504-a03e-f3c80bb1a20d.value": [
+      "714f116e-05aa-45ec-abe0-0c3edfecb887.value"
+    ],
+    "4f0b686e-86ce-479d-b350-79c9b97970d5.value": [
+      "e75e2508-4e4a-4d39-aa52-474a587ad35a.message"
+    ],
+    "714f116e-05aa-45ec-abe0-0c3edfecb887.a": [
+      "13c5ca48-a09a-4d72-94a4-0a953fcc9fbd.state"
+    ],
+    "714f116e-05aa-45ec-abe0-0c3edfecb887.b": [
+      "b4395073-a676-44eb-950f-aa0ebb59c5d3.state"
+    ],
+    "714f116e-05aa-45ec-abe0-0c3edfecb887.c": [
+      "d34e2b07-7798-41b9-acc7-6b510b9bafae.state"
+    ],
+    "714f116e-05aa-45ec-abe0-0c3edfecb887.none": [
+      "ba11f4c2-9915-4a0b-b7ab-b80f6c7dff7a.state"
+    ],
+    "e75e2508-4e4a-4d39-aa52-474a587ad35a.message": [
+      "027e4c90-9eb0-4cc7-b19a-341506a33620.state"
+    ],
+    "1d40f911-5b98-4b87-8870-9ade6d301489.value": [
+      "ca86fbd5-cf8b-4a5c-a145-4191dad3466e.object"
+    ],
+    "ca86fbd5-cf8b-4a5c-a145-4191dad3466e.value": [
+      "d34e2b07-7798-41b9-acc7-6b510b9bafae.character"
+    ],
+    "f62d392b-a4f5-4af1-84fe-936ced61d731.event": [
+      "1d40f911-5b98-4b87-8870-9ade6d301489.object"
+    ]
+  },
+  "groups": [
+    {
+      "title": "Validation",
+      "x": 5,
+      "y": -1,
+      "width": 1090,
+      "height": 230,
+      "color": "#b58b2a",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Prepare",
+      "x": 4,
+      "y": 232,
+      "width": 1500,
+      "height": 360,
+      "color": "#8AA",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Process",
+      "x": 2,
+      "y": 597,
+      "width": 1930,
+      "height": 568,
+      "color": "#3f789e",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Process",
+      "x": 1,
+      "y": 1169,
+      "width": 830,
+      "height": 228,
+      "color": "#3f789e",
+      "font_size": 24,
+      "inherited": false
+    }
+  ],
+  "comments": [
+    {
+      "text": "If auto progress is disabled there is no auto-narration.",
+      "x": 550,
+      "y": 10,
+      "width": 200,
+      "inherited": false
+    }
+  ],
+  "extends": null,
+  "base_type": "core/Event",
+  "inputs": [],
+  "outputs": [],
+  "module_properties": {},
+  "style": {
+    "title_color": "#57532e",
+    "node_color": "#39382c",
+    "icon": "F0BF8",
+    "auto_title": null,
+    "counterpart": null
+  }
+}

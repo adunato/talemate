@@ -16,7 +16,15 @@ __all__ = [
     "ContextInvestigationMessage",
     "Flags",
     "MESSAGES",
+    "DIRECTOR_INPUT_PREFIX",
+    "DIRECTOR_INPUT_PREFIX_YIELD",
 ]
+
+# Prefixes the user can type in the main input box to route a message to the
+# director instead of having the player character speak/act. The yield variant
+# must be checked first since it shares the single-character prefix.
+DIRECTOR_INPUT_PREFIX = "#"
+DIRECTOR_INPUT_PREFIX_YIELD = "##"
 
 _message_id = 0
 
@@ -294,10 +302,10 @@ class NarratorMessage(SceneMessage):
 
 @dataclass
 class DirectorMessage(SceneMessage):
-    action: str = "actor_instruction"
+    action: Literal["actor_instruction", "user_direction"] = "actor_instruction"
     source: str = "ai"
     typ = "director"
-    subtype: str | None = None
+    subtype: Literal["function_call", "user_direction"] | None = None
 
     @property
     def character_name(self) -> str:
@@ -353,6 +361,11 @@ class DirectorMessage(SceneMessage):
             self.message = instructions
             self.source = "player"
 
+        # Older saves dropped `subtype` from the serialized payload. Backfill it
+        # from `action` so the frontend can still route to the correct variant.
+        if self.subtype is None and self.action == "user_direction":
+            self.subtype = "user_direction"
+
         return self
 
     def __dict__(self) -> dict:
@@ -360,6 +373,8 @@ class DirectorMessage(SceneMessage):
 
         if self.action:
             rv["action"] = self.action
+        if self.subtype:
+            rv["subtype"] = self.subtype
 
         return rv
 

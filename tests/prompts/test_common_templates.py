@@ -29,6 +29,8 @@ All 28 common templates are include-only templates used by various agent templat
 10. extra-context-static.jinja2 - Static context with reinforcements/pins (included by extra-context)
 11. full-scene-context.jinja2 - Full scene context assembly (includes other commons)
 12. gamestate-context.jinja2 - Game state data section (2 uses)
+12a. gamestate-context-path.jinja2 - Targeted game state slice via path
+     (rendered by render_game_state Jinja global, 0 direct {% include %} uses)
 13. internal-note-help.jinja2 - Internal note help text (8 uses)
 14. memory-context.jinja2 - Memory/RAG context section (12 uses)
 15. memory-query.jinja2 - Memory query helper (included by templates)
@@ -134,6 +136,7 @@ class TestCommonTemplatesDocumentation:
             "extra-context-static.jinja2",
             "full-scene-context.jinja2",
             "gamestate-context.jinja2",
+            "gamestate-context-path.jinja2",
             "internal-note-help.jinja2",
             "memory-context.jinja2",
             "memory-query.jinja2",

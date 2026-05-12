@@ -10,6 +10,5 @@ from ..test_conversation_templates import (  # noqa: F401
     conversation_agent,
     setup_agents,
     active_context,
-    MockActor,
 )
 from ..baselines.test_conversation_baselines import TestConversationBaselines  # noqa: F401

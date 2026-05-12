@@ -21,11 +21,27 @@ The prompt template system uses [Jinja2 templating](https://jinja.palletsproject
 
 ### `Prompt from Template`
 
-The primary node for working with templates. It accepts:
+The primary node for working with templates.
 
-- `template_text` - For inline template content via a connected string input
-- `template_file` - For loading templates from files
-- `variables` - A dictionary of values to substitute into the template
+**Inputs**
+
+- `template_file` - Name of a template file to load (without the `.jinja2` extension). Mutually exclusive with `template_text`.
+- `template_text` - Raw inline template content supplied by a connected string input. Mutually exclusive with `template_file`.
+- `variables` - A dictionary of values to substitute into the template.
+
+**Outputs**
+
+- `prompt` - The rendered `Prompt` instance. Pass it to a `Generate Response` node (or another prompt-aware node) to send it to an agent.
+
+**Properties**
+
+- `scope` - Template scope. One of `scene` or an agent type (`narrator`, `director`, `creator`, `editor`, `summarizer`, `world_state`, …). Controls which `templates/` subfolder is searched for `template_file`. See [Template Scope and File Storage](#template-scope-and-file-storage) below.
+- `template_file` - Fallback template name used when the `template_file` input is not connected.
+- `template_text` - Fallback inline template text used when the `template_text` input is not connected.
+- `dedupe` (default: `true`, added in 0.37.0) - Forces line-level deduplication on or off for the rendered prompt, overriding the client-level **Deduplicate Prompts** toggle. Most users should set this to `false`; see [Prompt Deduplication](../../prompts/deduplication.md) for the reasoning and the narrow case where dedupe is still useful.
+
+!!! warning "Pick one source"
+    Providing both `template_file` and `template_text` raises an input error. Feed the node from exactly one source per run.
 
 ### `Template Variables`
 

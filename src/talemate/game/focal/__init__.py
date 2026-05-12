@@ -97,7 +97,7 @@ class Focal:
                 "state": self.state,
             },
         )
-        return prompt.render()
+        return prompt.render(apply_sectioning=False)
 
     async def request(
         self,

@@ -1,7 +1,7 @@
 import pytest
-import types
 
 from talemate.history import shift_scene_timeline
+from talemate.tale_mate import Scene
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -9,13 +9,15 @@ from talemate.history import shift_scene_timeline
 
 
 @pytest.fixture()
-def dummy_scene():
-    """Return a minimal Scene-like object whose attributes can be adjusted by
-    individual tests. The fixture yields a *factory* so each test can create
-    its own independent instance without repeating boilerplate."""
+def scene_factory():
+    """Return a factory that builds a real `Scene` with the given timeline state.
+
+    Uses real `Scene` (not a stand-in) so tests catch breakage if Scene's
+    `ts`/`archived_history`/`layered_history` API changes.
+    """
 
     def _factory(ts: str = "PT0S", archived=None, layered=None):
-        scene = types.SimpleNamespace()
+        scene = Scene()
         scene.ts = ts
         scene.archived_history = archived or []
         scene.layered_history = layered or []
@@ -85,7 +87,7 @@ def dummy_scene():
     ids=["hour_plus", "hour_minus", "month_plus", "year_minus", "millennia_plus"],
 )
 def test_shift_scene_timeline_basic(
-    dummy_scene,
+    scene_factory,
     initial_ts,
     archived_tss,
     layered_tss,
@@ -99,7 +101,7 @@ def test_shift_scene_timeline_basic(
     archived = [{"ts": ts} for ts in archived_tss]
     layered = [[{"ts": ts} for ts in layered_tss]]
 
-    scene = dummy_scene(initial_ts, archived, layered)
+    scene = scene_factory(initial_ts, archived, layered)
 
     shift_scene_timeline(scene, shift_iso)
 
@@ -108,10 +110,10 @@ def test_shift_scene_timeline_basic(
     assert [e["ts"] for e in scene.layered_history[0]] == expected_layered_ts
 
 
-def test_shift_scene_timeline_noop(dummy_scene):
+def test_shift_scene_timeline_noop(scene_factory):
     """A shift of PT0S (and variants) should not mutate the scene."""
 
-    scene = dummy_scene(
+    scene = scene_factory(
         "PT0S",
         archived=[{"ts": "PT1H", "ts_start": "PT30M", "ts_end": "PT90M"}],
         layered=[[{"ts": "PT15M"}]],

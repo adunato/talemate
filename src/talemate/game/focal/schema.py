@@ -74,14 +74,20 @@ class Call(pydantic.BaseModel):
                         )
         return v
 
-    @pydantic.field_validator("arguments")
-    def join_string_lists(cls, v: dict[str, Any]) -> dict[str, str]:
-        return {
-            key: "\n".join(str(item) for item in value)
-            if isinstance(value, list)
-            else value
-            for key, value in v.items()
-        }
+    # Legacy workaround: older LLMs would sometimes return a list of strings
+    # for arguments expecting a single string value. This collapsed those
+    # into a newline-joined string. Disabled for now — re-evaluate if needed.
+    # @pydantic.field_validator("arguments")
+    # def join_string_lists(cls, v: dict[str, Any]) -> dict[str, str]:
+    #     result = {}
+    #     for key, value in v.items():
+    #         if isinstance(value, list) and all(
+    #             isinstance(item, str) for item in value
+    #         ):
+    #             result[key] = "\n".join(value)
+    #         else:
+    #             result[key] = value
+    #     return result
 
     @property
     def payload(self) -> dict:

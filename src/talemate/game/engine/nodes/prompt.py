@@ -76,6 +76,13 @@ class PromptFromTemplate(Node):
             default="",
         )
 
+        dedupe = PropertyField(
+            name="dedupe",
+            type="bool",
+            default=True,
+            description="Enable prompt deduplication",
+        )
+
     def __init__(self, title="Prompt From Template", **kwargs):
         super().__init__(title=title, **kwargs)
 
@@ -87,6 +94,7 @@ class PromptFromTemplate(Node):
         self.set_property("scope", "scene")
         self.set_property("template_file", "")
         self.set_property("template_text", "")
+        self.set_property("dedupe", True)
 
         self.add_output("prompt", socket_type="prompt")
 
@@ -122,6 +130,8 @@ class PromptFromTemplate(Node):
                 "template_file",
                 "Must provide either template_file or template_text",
             )
+
+        prompt.dedupe_enabled = self.get_property("dedupe")
 
         self.set_output_values({"prompt": prompt})
 
@@ -686,13 +696,22 @@ class GenerateResponse(Node):
         else:
             data_obj = None
 
-        # Handle response extraction if response_spec is provided
+        # Handle response extraction
+        # Priority: response_spec socket > template-defined extractors (in data_obj)
         response_spec: ResponseSpec | None = self.normalized_input_value(
             "response_spec"
         )
         extracted = None
         if response_spec is not None:
             extracted = response_spec.extract_all(response)
+            if any(ext.parse_data for ext in response_spec.extractors.values()):
+                extracted = await response_spec.parse_data_fields(
+                    extracted,
+                    agent.client,
+                    Prompt,
+                )
+        elif isinstance(data_obj, dict):
+            extracted = data_obj
 
         self.set_output_values(
             {

@@ -44,6 +44,17 @@ If you start a message with the `@` character you can have the AI generate the r
 
 This functionality was added in version `0.28.0`
 
+### Player direction (# / ##)
+
+!!! info "New in 0.37.0"
+
+When [Autonomous Scene Direction](/talemate/user-guide/agents/director/scene-direction) is enabled, you can steer the director straight from the main input box by prefixing your input:
+
+- **`#text`** — actively steer the scene without interacting with it. Your direction is your turn.
+- **`##text`** — passively steer the scene while still getting your turn. Your direction is a side hint; the input box re-opens so you can take your turn normally.
+
+See [Nudging the director from the main input](/talemate/user-guide/agents/director/scene-direction/#nudging-the-director-from-the-main-input) for the full behaviour, examples, and the Scene Direction requirement.
+
 ### Autocomplete
 
 When typing out your action / dialogue, you can hit the `ctrl+enter` key combination to generate an autocompletion of your current text. 

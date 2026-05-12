@@ -1,0 +1,41 @@
+{
+  "title": "Scene Loop",
+  "id": "ca6a7c98-7bf6-484d-a4cb-1047c3bb0d1d",
+  "properties": {
+    "trigger_game_loop": true
+  },
+  "x": 0,
+  "y": 0,
+  "width": 200,
+  "height": 100,
+  "collapsed": false,
+  "inherited": false,
+  "registry": "scene/SceneLoop",
+  "nodes": {
+    "30de1b78-0a01-480e-ada0-2fad162bf0dc": {
+      "title": "On Scene Start Run Tests",
+      "id": "30de1b78-0a01-480e-ada0-2fad162bf0dc",
+      "properties": {
+        "event_name": "scene_loop_init"
+      },
+      "x": 10,
+      "y": -60,
+      "width": 250,
+      "height": 38,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/onSceneStartRunTests",
+      "base_type": "core/Event"
+    }
+  },
+  "edges": {},
+  "groups": [],
+  "comments": [],
+  "extends": "src/talemate/game/engine/nodes/modules/scene/scene-loop.json",
+  "sleep": 0.001,
+  "base_type": "scene/SceneLoop",
+  "inputs": [],
+  "outputs": [],
+  "module_properties": {},
+  "style": null
+}

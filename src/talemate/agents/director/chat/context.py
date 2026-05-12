@@ -5,6 +5,8 @@ import asyncio
 
 from talemate.game.engine.context_id.scanner import OpenContextIDScanCollector
 
+from .settings import ChatModeSettings
+
 
 __all__ = [
     "DirectorChatContext",
@@ -20,6 +22,8 @@ director_chat_context = contextvars.ContextVar("director_chat_context", default=
 class DirectorChatContext(pydantic.BaseModel):
     chat_id: str
     confirm_write_actions: bool = True
+    plan_id: str | None = None
+    modes: ChatModeSettings = pydantic.Field(default_factory=ChatModeSettings)
     token: str | None = None
     _context_id_collector: OpenContextIDScanCollector | None = None
 
@@ -40,11 +44,16 @@ def create_task_with_chat_context(
     chat_id: str,
     *args,
     confirm_write_actions: bool = True,
+    plan_id: str | None = None,
+    modes: ChatModeSettings | None = None,
     **kwargs,
 ):
     async def wrapper(*args, **kwargs):
         with DirectorChatContext(
-            chat_id=chat_id, confirm_write_actions=confirm_write_actions
+            chat_id=chat_id,
+            confirm_write_actions=confirm_write_actions,
+            plan_id=plan_id,
+            modes=modes or ChatModeSettings(),
         ):
             return await fn(*args, **kwargs)
 

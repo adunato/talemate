@@ -13,6 +13,7 @@ from talemate.util.time import *  # noqa: F403, F401
 from talemate.util.dedupe import *  # noqa: F403, F401
 from talemate.util.data import *  # noqa: F403, F401
 from talemate.util.colors import *  # noqa: F403, F401
+from talemate.util.strings import *  # noqa: F403, F401
 
 log = structlog.get_logger("talemate.util")
 
@@ -262,3 +263,22 @@ def clean_id(name: str) -> str:
     cleaned_name = re.sub(r"[^a-zA-Z0-9_\- ]", "", name)
 
     return cleaned_name
+
+
+_SLUGIFY_RE = re.compile(r"[^a-z0-9]+")
+
+
+def slugify(label: str) -> str:
+    """Convert a free-form label into an identifier-safe slug.
+
+    Lowercases, collapses every run of non-alphanumeric characters to a
+    single dash, and strips leading/trailing dashes. Returns ``""`` for
+    input that contains no alphanumeric characters.
+
+    Examples::
+
+        slugify("My vLLM Local")  -> "my-vllm-local"
+        slugify("  ___  ")        -> ""
+        slugify("Voice 1!")       -> "voice-1"
+    """
+    return _SLUGIFY_RE.sub("-", (label or "").lower()).strip("-")

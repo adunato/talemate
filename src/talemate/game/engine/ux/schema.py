@@ -6,10 +6,11 @@ import pydantic
 
 __all__ = [
     "UXElementBase",
-    "UXAwaitableElementBase",
+    "UXTimedElementBase",
     "UXChoice",
     "UXChoiceElement",
     "UXTextInputElement",
+    "UXNoticeElement",
     "UXElement",
     "UXSelection",
     "UXPresentPayload",
@@ -30,8 +31,25 @@ class UXElementBase(pydantic.BaseModel):
     # waiting node should be resumed as cancelled.
     closable: bool = True
 
+    # Whether the element blocks other scene input while present. Interactive
+    # elements (choice, text_input) block and are awaited by the backend;
+    # display-only elements (notice) do not and are fire-and-forget.
+    blocking: bool = True
+
     title: str | None = None
     body: str | None = None
+
+    # When true, the frontend renders `body` through the scene-message text
+    # parser, which paints its own per-category colors over the text
+    # (quotes/emphasis/parentheses/brackets). When false, body still renders
+    # markdown formatting but inherits the element's color. Authors flip this
+    # via the `ux/StyleElement` node.
+    apply_scene_colors: bool = False
+
+    # When true, the frontend renders the element in a condensed layout:
+    # smaller icon and text, and the title leads inline into the body instead
+    # of sitting on its own row. Authors flip this via `ux/StyleElement`.
+    compact: bool = False
 
     # Presentation hints for the frontend (Vuetify-style).
     # Kept optional for backward compatibility; frontend may also read these from `meta`.
@@ -41,13 +59,14 @@ class UXElementBase(pydantic.BaseModel):
     meta: dict[str, Any] = pydantic.Field(default_factory=dict)
 
 
-class UXAwaitableElementBase(UXElementBase):
+class UXTimedElementBase(UXElementBase):
     """
-    Base for UX elements that are awaitable and may timeout.
+    Base for UX elements that carry a timeout. For blocking elements the backend
+    enforces the timeout while awaiting the user; for non-blocking elements the
+    frontend uses it to drive a client-side auto-dismiss.
     """
 
-    # Timeout behavior for awaitable elements.
-    # 0 means no timeout (wait forever until user selects/cancels).
+    # 0 means no timeout.
     timeout_seconds: int = 0
 
     # When timeout_seconds > 0, the backend can stamp the start time so the frontend
@@ -66,14 +85,14 @@ class UXChoice(pydantic.BaseModel):
     disabled: bool = False
 
 
-class UXChoiceElement(UXAwaitableElementBase):
+class UXChoiceElement(UXTimedElementBase):
     kind: Literal["choice"] = "choice"
     choices: list[UXChoice] = pydantic.Field(default_factory=list)
     multi_select: bool = False
     default: str | list[str] | None = None
 
 
-class UXTextInputElement(UXAwaitableElementBase):
+class UXTextInputElement(UXTimedElementBase):
     kind: Literal["text_input"] = "text_input"
 
     # Render as textarea when true, single-line input when false.
@@ -89,8 +108,19 @@ class UXTextInputElement(UXAwaitableElementBase):
     trim: bool = True
 
 
+class UXNoticeElement(UXTimedElementBase):
+    """
+    Display-only UX element. Fire-and-forget: the backend emits it and moves on;
+    the frontend renders it until the user dismisses it (when closable) or the
+    client-side timeout expires.
+    """
+
+    kind: Literal["notice"] = "notice"
+    blocking: bool = False
+
+
 UXElement = Annotated[
-    Union[UXChoiceElement, UXTextInputElement],
+    Union[UXChoiceElement, UXTextInputElement, UXNoticeElement],
     pydantic.Field(discriminator="kind"),
 ]
 

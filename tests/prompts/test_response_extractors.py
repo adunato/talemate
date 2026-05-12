@@ -15,6 +15,7 @@ import re
 
 from talemate.prompts.response import (
     AnchorExtractor,
+    BlockListExtractor,
     ComplexAnchorExtractor,
     AsIsExtractor,
     AfterAnchorExtractor,
@@ -966,7 +967,7 @@ Thinking about this...
 
     @pytest.mark.asyncio
     async def test_dedupe_enabled_parameter_accepted(self, mock_client):
-        """Test that dedupe_enabled parameter is accepted (reserved for future use)."""
+        """Test that dedupe_enabled parameter is accepted as an explicit per-send override."""
         from talemate.prompts.base import Prompt
 
         mock_client.send_prompt.return_value = "Simple response"
@@ -1414,3 +1415,529 @@ class TestTemplateExtractorInJinja2:
 
         assert extracted["message"] is not None
         assert "All good here" in extracted["message"]
+
+    def test_complex_extractor_spurious_tracked_tag_in_analysis_text(self):
+        """Test that literal tracked tag mentions in analysis text don't break nesting.
+
+        Regression test: when the LLM mentions a tracked tag literally in its
+        analysis (e.g. 'No <ACTIONS> are required'), the regex picks it up as
+        an opening tag, increments nesting depth, and then </ANALYSIS> only
+        decrements by 1 — leaving nesting_depth > 0. This causes the <MESSAGE>
+        block to be treated as nested and skipped.
+
+        The close-ended fallback (_extract_close_ended) then returns everything
+        from the start of text to </MESSAGE>, including the analysis content.
+        """
+        extractor = ComplexAnchorExtractor(
+            left="<MESSAGE>",
+            right="</MESSAGE>",
+            tracked_tags=["ANALYSIS", "MESSAGE", "DECISION", "ACTIONS"],
+        )
+        response = (
+            '<ANALYSIS> 1. The user has just said "hello," which is an opening greeting.\n'
+            "2. No <ACTIONS> are required yet as I don't have a specific task.\n"
+            "3. I will ask the user how they would like to proceed.\n"
+            "</ANALYSIS>\n\n"
+            "<MESSAGE>\n"
+            "Hello! I'm the Director for **Infinity Quest**.\n"
+            "How would you like to kick things off?\n"
+            "</MESSAGE>\n\n"
+            "<DECISION>\n"
+            "I will wait for the user's input.\n"
+            "</DECISION>"
+        )
+        result = extractor.extract(response)
+        assert result is not None
+        # Should extract ONLY the message content, not the analysis
+        assert "I'm the Director" in result
+        assert "kick things off" in result
+        assert "opening greeting" not in result
+        assert "<ANALYSIS>" not in result
+        assert "</ANALYSIS>" not in result
+
+    @pytest.mark.asyncio
+    async def test_spurious_tracked_tag_in_analysis_full_flow(self, mock_client):
+        """Test the full prompt flow when LLM mentions tracked tags in analysis text.
+
+        End-to-end regression test: the LLM response contains literal <ACTIONS>
+        in the analysis text. After prepending the prepared response, the
+        extraction should still correctly isolate the <MESSAGE> content.
+        """
+        from talemate.prompts.base import Prompt
+
+        # LLM returns response where analysis mentions <ACTIONS> literally
+        mock_client.send_prompt.return_value = (
+            "<ANALYSIS>\n"
+            "1. The user said hello.\n"
+            "2. No <ACTIONS> are required yet.\n"
+            "3. I am ready to discuss.\n"
+            "</ANALYSIS>\n\n"
+            "<MESSAGE>\n"
+            "Hello! I'm the Director.\n"
+            "</MESSAGE>\n\n"
+            "<DECISION>\n"
+            "Waiting for input.\n"
+            "</DECISION>"
+        )
+
+        prompt = Prompt.from_text("Test prompt")
+        prompt.set_prepared_response("<ANALYSIS> 1.", fallback="<ANALYSIS>")
+
+        spec = ResponseSpec(
+            extractors={
+                "message": ComplexAnchorExtractor(
+                    left="<MESSAGE>",
+                    right="</MESSAGE>",
+                    tracked_tags=["ANALYSIS", "MESSAGE", "DECISION", "ACTIONS"],
+                ),
+            },
+            required=[],
+        )
+
+        response, extracted = await prompt.send(
+            mock_client, kind="create", response_spec=spec
+        )
+
+        assert extracted["message"] is not None
+        assert "I'm the Director" in extracted["message"]
+        assert "No <ACTIONS>" not in extracted["message"]
+        assert "user said hello" not in extracted["message"]
+
+
+# ============================================================================
+# Tests for parse_data feature
+# ============================================================================
+
+
+class TestParseData:
+    """Tests for the parse_data extractor feature."""
+
+    def test_parse_data_default_false(self):
+        """Test that parse_data defaults to False on all extractors."""
+        assert AnchorExtractor(left="<A>", right="</A>").parse_data is False
+        assert ComplexAnchorExtractor(left="<A>", right="</A>").parse_data is False
+        assert AsIsExtractor().parse_data is False
+        assert AfterAnchorExtractor(start="X").parse_data is False
+        assert RegexExtractor(pattern=".*").parse_data is False
+        assert StripPrefixExtractor(pattern=".*").parse_data is False
+        assert CodeBlockExtractor(left="<A>", right="</A>").parse_data is False
+        assert ComplexCodeBlockExtractor(left="<A>", right="</A>").parse_data is False
+
+    def test_parse_data_can_be_set(self):
+        """Test that parse_data can be set to True."""
+        extractor = AnchorExtractor(left="<A>", right="</A>", parse_data=True)
+        assert extractor.parse_data is True
+
+    def test_extract_all_without_parse_data_returns_string(self):
+        """Test that extract_all returns raw string when parse_data is False."""
+        spec = ResponseSpec(
+            extractors={
+                "data": AnchorExtractor(left="<DATA>", right="</DATA>"),
+            }
+        )
+        text = '<DATA>[{"key": "value"}]</DATA>'
+        result = spec.extract_all(text)
+        assert isinstance(result["data"], str)
+        assert result["data"] == '[{"key": "value"}]'
+
+    def test_set_anchor_extractor_parse_data(self):
+        """Test that set_anchor_extractor passes parse_data to the extractor."""
+        from talemate.prompts.base import Prompt
+
+        prompt = Prompt.from_text("Test")
+        prompt.set_anchor_extractor(
+            "data",
+            "<DATA>",
+            "</DATA>",
+            parse_data=True,
+        )
+
+        extractor = prompt._template_extractors["data"]
+        assert isinstance(extractor, AnchorExtractor)
+        assert extractor.parse_data is True
+
+    def test_set_anchor_extractor_parse_data_with_tracked_tags(self):
+        """Test that parse_data works with tracked_tags (ComplexAnchorExtractor)."""
+        from talemate.prompts.base import Prompt
+
+        prompt = Prompt.from_text("Test")
+        prompt.set_anchor_extractor(
+            "data",
+            "<DATA>",
+            "</DATA>",
+            tracked_tags=["ANALYSIS", "DATA"],
+            parse_data=True,
+        )
+
+        extractor = prompt._template_extractors["data"]
+        assert isinstance(extractor, ComplexAnchorExtractor)
+        assert extractor.parse_data is True
+
+    def test_set_code_block_extractor_parse_data(self):
+        """Test that set_code_block_extractor passes parse_data to the extractor."""
+        from talemate.prompts.base import Prompt
+
+        prompt = Prompt.from_text("Test")
+        prompt.set_code_block_extractor(
+            "data",
+            "<DATA>",
+            "</DATA>",
+            parse_data=True,
+        )
+
+        extractor = prompt._template_extractors["data"]
+        assert isinstance(extractor, CodeBlockExtractor)
+        assert extractor.parse_data is True
+
+
+class TestParseDataIntegration:
+    """Integration tests for parse_data with Prompt.send()."""
+
+    @pytest.fixture
+    def mock_client(self):
+        """Create a mock client for testing."""
+        from unittest.mock import Mock, AsyncMock
+
+        client = Mock()
+        client.max_token_length = 4096
+        client.decensor_enabled = False
+        client.can_be_coerced = True
+        client.data_format = "json"
+        client.model_name = "test-model"
+        client.send_prompt = AsyncMock()
+        return client
+
+    @pytest.mark.asyncio
+    async def test_parse_data_json_list(self, mock_client):
+        """Test that parse_data parses a JSON list from anchored content."""
+        from talemate.prompts.base import Prompt
+
+        mock_client.send_prompt.return_value = '<DATA>\n```json\n[{"type": "narration", "description": "The sun rises."}]\n```\n</DATA>'
+
+        prompt = Prompt.from_text("Test")
+        prompt._template_extractors["data"] = AnchorExtractor(
+            left="<DATA>",
+            right="</DATA>",
+            parse_data=True,
+        )
+
+        response, extracted = await prompt.send(mock_client, kind="create")
+
+        assert isinstance(extracted["data"], list)
+        assert len(extracted["data"]) == 1
+        assert extracted["data"][0]["type"] == "narration"
+
+    @pytest.mark.asyncio
+    async def test_parse_data_json_object(self, mock_client):
+        """Test that parse_data parses a JSON object from anchored content."""
+        from talemate.prompts.base import Prompt
+
+        mock_client.send_prompt.return_value = (
+            '<DATA>\n```json\n{"name": "test", "value": 42}\n```\n</DATA>'
+        )
+
+        prompt = Prompt.from_text("Test")
+        prompt._template_extractors["data"] = AnchorExtractor(
+            left="<DATA>",
+            right="</DATA>",
+            parse_data=True,
+        )
+
+        response, extracted = await prompt.send(mock_client, kind="create")
+
+        assert isinstance(extracted["data"], dict)
+        assert extracted["data"]["name"] == "test"
+        assert extracted["data"]["value"] == 42
+
+    @pytest.mark.asyncio
+    async def test_parse_data_yaml(self, mock_client):
+        """Test that parse_data parses YAML content."""
+        from talemate.prompts.base import Prompt
+
+        mock_client.data_format = "yaml"
+        mock_client.send_prompt.return_value = "<DATA>\n```yaml\n- type: narration\n  description: The sun rises.\n```\n</DATA>"
+
+        prompt = Prompt.from_text("Test")
+        prompt._template_extractors["data"] = AnchorExtractor(
+            left="<DATA>",
+            right="</DATA>",
+            parse_data=True,
+        )
+
+        response, extracted = await prompt.send(mock_client, kind="create")
+
+        assert isinstance(extracted["data"], list)
+        assert len(extracted["data"]) == 1
+        assert extracted["data"][0]["type"] == "narration"
+
+    @pytest.mark.asyncio
+    async def test_parse_data_leaves_unparseable_as_string(self, mock_client):
+        """Test that parse_data leaves content as string when parsing fails."""
+        from talemate.prompts.base import Prompt
+
+        mock_client.send_prompt.return_value = (
+            "<DATA>This is just plain text, not JSON or YAML.</DATA>"
+        )
+
+        prompt = Prompt.from_text("Test")
+        prompt._template_extractors["data"] = AnchorExtractor(
+            left="<DATA>",
+            right="</DATA>",
+            parse_data=True,
+        )
+
+        response, extracted = await prompt.send(mock_client, kind="create")
+
+        # Should remain as string since it's not parseable
+        assert isinstance(extracted["data"], str)
+        assert "plain text" in extracted["data"]
+
+    @pytest.mark.asyncio
+    async def test_parse_data_mixed_extractors(self, mock_client):
+        """Test that parse_data only applies to extractors with it enabled."""
+        from talemate.prompts.base import Prompt
+
+        mock_client.send_prompt.return_value = (
+            '<OUTLINE>\n```json\n[{"beat": 1}]\n```\n</OUTLINE>\n'
+            "<PERSPECTIVE>Third person limited</PERSPECTIVE>"
+        )
+
+        prompt = Prompt.from_text("Test")
+        prompt._template_extractors["outline"] = AnchorExtractor(
+            left="<OUTLINE>",
+            right="</OUTLINE>",
+            parse_data=True,
+        )
+        prompt._template_extractors["perspective"] = AnchorExtractor(
+            left="<PERSPECTIVE>",
+            right="</PERSPECTIVE>",
+            parse_data=False,
+        )
+
+        response, extracted = await prompt.send(mock_client, kind="create")
+
+        # outline should be parsed
+        assert isinstance(extracted["outline"], list)
+        assert extracted["outline"][0]["beat"] == 1
+
+        # perspective should remain as string
+        assert isinstance(extracted["perspective"], str)
+        assert extracted["perspective"] == "Third person limited"
+
+    @pytest.mark.asyncio
+    async def test_parse_data_with_none_value_skipped(self, mock_client):
+        """Test that parse_data is skipped when extracted value is None."""
+        from talemate.prompts.base import Prompt
+
+        mock_client.send_prompt.return_value = "No data tags here"
+
+        prompt = Prompt.from_text("Test")
+        prompt._template_extractors["data"] = AnchorExtractor(
+            left="<DATA>",
+            right="</DATA>",
+            parse_data=True,
+        )
+
+        response, extracted = await prompt.send(mock_client, kind="create")
+
+        # Should be None, not crash
+        assert extracted["data"] is None
+
+
+# ============================================================================
+# Tests for BlockListExtractor
+# ============================================================================
+
+
+STANDARD_BLOCKS = [
+    ("narrator", r"<NARRATOR>", "</NARRATOR>"),
+    ("character", r'<CHARACTER name="(?P<name>[^"]*)">', "</CHARACTER>"),
+]
+
+
+class TestBlockListExtractor:
+    """Tests for the BlockListExtractor class."""
+
+    def test_basic_narrator_block(self):
+        """Test extracting a single narrator block."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = "<NARRATOR>The sun set over the hills.</NARRATOR>"
+        result = extractor.extract(text)
+        assert result == [
+            {"type": "narrator", "content": "The sun set over the hills."},
+        ]
+
+    def test_character_block_with_name(self):
+        """Test extracting a single character block with name attribute."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = '<CHARACTER name="Kaira">Hello there!</CHARACTER>'
+        result = extractor.extract(text)
+        assert result == [
+            {"type": "character", "name": "Kaira", "content": "Hello there!"},
+        ]
+
+    def test_mixed_narrator_and_character_blocks(self):
+        """Test extracting mixed narrator and character blocks."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = (
+            "<NARRATOR>The door creaked open.</NARRATOR>\n"
+            '<CHARACTER name="Kaira">Who goes there?</CHARACTER>\n'
+            "<NARRATOR>Silence followed.</NARRATOR>"
+        )
+        result = extractor.extract(text)
+        assert len(result) == 3
+        assert result[0] == {"type": "narrator", "content": "The door creaked open."}
+        assert result[1] == {
+            "type": "character",
+            "name": "Kaira",
+            "content": "Who goes there?",
+        }
+        assert result[2] == {"type": "narrator", "content": "Silence followed."}
+
+    def test_merge_consecutive_narrator_blocks(self):
+        """Test that consecutive narrator blocks are merged."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = (
+            "<NARRATOR>The wind howled.</NARRATOR>\n"
+            "<NARRATOR>Rain began to fall.</NARRATOR>"
+        )
+        result = extractor.extract(text)
+        assert len(result) == 1
+        assert result[0]["type"] == "narrator"
+        assert result[0]["content"] == "The wind howled.\nRain began to fall."
+
+    def test_merge_consecutive_same_character_blocks(self):
+        """Test that consecutive blocks from the same character are merged."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = (
+            '<CHARACTER name="Kaira">Hello.</CHARACTER>\n'
+            '<CHARACTER name="Kaira">How are you?</CHARACTER>'
+        )
+        result = extractor.extract(text)
+        assert len(result) == 1
+        assert result[0]["type"] == "character"
+        assert result[0]["name"] == "Kaira"
+        assert result[0]["content"] == "Hello.\nHow are you?"
+
+    def test_no_merge_different_characters(self):
+        """Test that consecutive blocks from different characters are not merged."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = (
+            '<CHARACTER name="Kaira">Hello.</CHARACTER>\n'
+            '<CHARACTER name="Borin">Greetings.</CHARACTER>'
+        )
+        result = extractor.extract(text)
+        assert len(result) == 2
+        assert result[0]["name"] == "Kaira"
+        assert result[1]["name"] == "Borin"
+
+    def test_character_name_stripping(self):
+        """Test that character name prefix is stripped from content."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = '<CHARACTER name="Kaira">Kaira says hello to everyone.</CHARACTER>'
+        result = extractor.extract(text)
+        assert result[0]["content"] == "says hello to everyone."
+
+    def test_character_name_stripping_with_colon(self):
+        """Test that character name prefix with colon is stripped."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = '<CHARACTER name="Kaira">Kaira: Hello there!</CHARACTER>'
+        result = extractor.extract(text)
+        assert result[0]["content"] == "Hello there!"
+
+    def test_character_name_not_stripped_mid_word(self):
+        """Test that character name is not stripped when it's part of another word."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = '<CHARACTER name="Kai">Kaira speaks softly.</CHARACTER>'
+        result = extractor.extract(text)
+        # "Kai" should not be stripped from "Kaira" since it's part of a longer word
+        assert result[0]["content"] == "Kaira speaks softly."
+
+    def test_case_insensitive_tags(self):
+        """Test that tag matching is case-insensitive."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = (
+            "<narrator>The room was dark.</narrator>\n"
+            '<character name="Kaira">I can barely see.</character>'
+        )
+        result = extractor.extract(text)
+        assert len(result) == 2
+        assert result[0]["type"] == "narrator"
+        assert result[1]["type"] == "character"
+
+    def test_mixed_case_tags(self):
+        """Test extraction with mixed-case opening and closing tags."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = "<Narrator>Quiet evening.</Narrator>"
+        result = extractor.extract(text)
+        assert len(result) == 1
+        assert result[0]["type"] == "narrator"
+        assert result[0]["content"] == "Quiet evening."
+
+    def test_empty_text_returns_empty_list(self):
+        """Test that empty text returns an empty list."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        assert extractor.extract("") == []
+        assert extractor.extract(None) == []
+
+    def test_no_valid_blocks_returns_empty_list(self):
+        """Test that text with no valid blocks returns an empty list."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        result = extractor.extract("Just some plain text with no blocks.")
+        assert result == []
+
+    def test_content_trimming(self):
+        """Test that content is trimmed by default."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = "<NARRATOR>  Some spaced content.  </NARRATOR>"
+        result = extractor.extract(text)
+        assert result[0]["content"] == "Some spaced content."
+
+    def test_no_trimming_when_disabled(self):
+        """Test that content is not trimmed when trim=False."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS, trim=False)
+        text = "<NARRATOR>  Some spaced content.  </NARRATOR>"
+        result = extractor.extract(text)
+        assert result[0]["content"] == "  Some spaced content.  "
+
+    def test_story_wrapper_ignored(self):
+        """Test that STORY wrapper does not interfere with extraction."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = (
+            "<STORY>\n"
+            "<NARRATOR>Inside the story.</NARRATOR>\n"
+            '<CHARACTER name="Ava">Ava waves.</CHARACTER>\n'
+            "</STORY>"
+        )
+        result = extractor.extract(text)
+        assert len(result) == 2
+        assert result[0]["type"] == "narrator"
+        assert result[1]["type"] == "character"
+        assert result[1]["name"] == "Ava"
+
+    def test_multiline_block_content(self):
+        """Test blocks with multiline content."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = (
+            "<NARRATOR>\nThe forest was silent.\nNot a creature stirred.\n</NARRATOR>"
+        )
+        result = extractor.extract(text)
+        assert result[0]["content"] == "The forest was silent.\nNot a creature stirred."
+
+    def test_merge_preserves_order(self):
+        """Test that merging preserves the order of blocks."""
+        extractor = BlockListExtractor(blocks=STANDARD_BLOCKS)
+        text = (
+            "<NARRATOR>First.</NARRATOR>\n"
+            '<CHARACTER name="A">Hi.</CHARACTER>\n'
+            "<NARRATOR>Second.</NARRATOR>\n"
+            "<NARRATOR>Third.</NARRATOR>\n"
+            '<CHARACTER name="A">Bye.</CHARACTER>'
+        )
+        result = extractor.extract(text)
+        assert len(result) == 4
+        assert result[0] == {"type": "narrator", "content": "First."}
+        assert result[1] == {"type": "character", "name": "A", "content": "Hi."}
+        # Second and Third narrator blocks should be merged
+        assert result[2] == {"type": "narrator", "content": "Second.\nThird."}
+        assert result[3] == {"type": "character", "name": "A", "content": "Bye."}

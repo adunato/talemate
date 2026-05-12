@@ -3,6 +3,7 @@
 The overarching intention of this story. {% if not task_instructions %}Use it to guide your decisions in the scene.{% else %}{{ task_instructions }}{% endif %}
 
 {{ scene.intent_state.intent }}
+<|CLOSE_SECTION|>
 {% endif %}
 {# intention of the current phase #}{% if scene.intent_state.phase and not exclude_phase_intent %}
 <|SECTION:INTENTION OF THE CURRENT SCENE|>
@@ -12,4 +13,5 @@ The overarching intention of this story. {% if not task_instructions %}Use it to
 {% if scene.intent_state.phase.intent %}
 {{ scene.intent_state.phase.intent }}
 {% endif %}
+<|CLOSE_SECTION|>
 {% endif %}

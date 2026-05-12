@@ -10,20 +10,34 @@ Override example:
 {% set rendered_context -%}
 <|SECTION:CONTEXT|>
 {% include "extra-context-static.jinja2" %}
-{% include "extra-context-dynamic.jinja2" %}
-{% if extra_context %}{% for context in extra_context %}{{ context }}
----
-{% endfor %}{% endif %}
 <|CLOSE_SECTION|>
 {% if include_character_context %}{% include "character-context.jinja2" %}{% endif %}
 {% endset %}
 {# END RENDERED CONTEXT #}
 
+{# VOLATILE CONTEXT #}
+{% set volatile_inner -%}
+{% include "extra-context-dynamic.jinja2" %}
+{% if extra_context %}{% for context in extra_context %}{{ context }}
+---
+{% endfor %}{% endif %}
+{%- endset %}
+{% set volatile_context_text -%}
+{% if volatile_inner.strip() %}<|SECTION:DYNAMIC CONTEXT|>
+{{ volatile_inner }}
+<|CLOSE_SECTION|>
+{% endif %}
+{%- endset %}
+{# END VOLATILE CONTEXT #}
+
 {# RENDER PROMPT #}
+{% set volatile_placement = volatile_context_placement() %}
 {{ rendered_context }}
+{% if volatile_placement != "after_history" %}{{ volatile_context_text }}{% endif %}
 <|SECTION:SCENE|>
 {{ text }}
 <|CLOSE_SECTION|>
+{% if volatile_placement == "after_history" %}{{ volatile_context_text }}{% endif %}
 <|SECTION:TASK|>
 You are assisting with an ongoing story. You have access to a vector database containing factual information about the characters, locations, events, and lore of this narrative world. Your task is to generate up to {{ num_queries }} specific, targeted queries to gather additional context for the current scene or conversation.
 

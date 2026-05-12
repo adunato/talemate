@@ -87,12 +87,6 @@
                     <v-col cols="4">
                       <v-number-input v-model="client.max_token_length" v-if="requiresAPIUrl(client)"
                         label="Context Length" :rules="[rules.required]" :step="64"></v-number-input>
-
-
-                      <v-select label="Inference Presets" :items="availablePresets" v-model="client.preset_group">
-                      </v-select>
-
-                      <v-select label="Structured Data Format" :items="dataManageFormatChoices" v-model="client.data_format" messages="Which formatting to use for data structure communication such as function calling or general data management."></v-select>
                     </v-col>
                     <v-col cols="8"
                       v-if="!typeEditable() && client.data && client.data.prompt_template_example !== null && client.model_name && clientMeta().requires_prompt_template && !client.data.api_handles_prompt_template">
@@ -114,6 +108,8 @@
                         <v-card-actions v-if="!waitingForTemplateSelection">
                           <v-btn @click.stop="determineBestTemplate" prepend-icon="mdi-web-box">Determine via
                             HuggingFace</v-btn>
+                          <v-btn @click.stop="openLLMTemplates" prepend-icon="mdi-file-cog-outline">Manage
+                            Templates</v-btn>
                         </v-card-actions>
                       </v-card>
                       <v-checkbox v-model="client.lock_template" hint="If checked, the prompt template will not longer automatically update." density="compact" color="primary">
@@ -124,44 +120,19 @@
 
                     </v-col>
                   </v-row>
-                  <!-- RATE LIMIT -->
-                  <v-row>
-                    <v-col cols="12">
-                      <v-slider v-model="client.rate_limit" label="Rate Limit" :min="0" :max="100" :step="1" :persistent-hint="true" hint="Requests per minute. (0 = no limit)" thumb-label="always"></v-slider>
-                    </v-col>
-                  </v-row>
-                  <!-- PROMPT CACHING & RESPONSE LENGTH ENFORCEMENT -->
-                  <v-row>
-                    <v-col cols="6">
-                      <v-checkbox v-model="client.optimize_prompt_caching" color="primary" label="Optimize for Prompt Caching" hint="Place volatile context after the scene history for better prompt caching. Recommended for remote API backends. May confuse weaker models." persistent-hint></v-checkbox>
-                    </v-col>
-                    <v-col cols="6">
-                      <v-select
-                        v-model="client.enforce_response_length"
-                        label="Response Length Enforcement"
-                        :items="enforceResponseLengthChoices"
-                        item-title="label"
-                        item-value="value"
-                        hint="Controls whether token limits and/or length instructions are sent with prompts."
-                        persistent-hint
-                      >
-                        <template v-slot:item="{ props, item }">
-                          <v-list-item v-bind="props" :title="item.raw.label" :subtitle="item.raw.help"></v-list-item>
-                        </template>
-                      </v-select>
-                      <v-alert
-                        v-if="client.enforce_response_length === 'uncapped'"
-                        color="warning"
-                        variant="text"
-                        density="compact"
-                        class="mt-1 text-caption"
-                        icon="mdi-alert"
-                      >
-                        Not recommended. Any generation length settings will be ignored when this is selected.
-                      </v-alert>
-                    </v-col>
-                  </v-row>
                   </template>
+                  <!-- Link to advanced options -->
+                  <v-btn
+                    v-if="!simpleView"
+                    variant="text"
+                    color="primary"
+                    size="small"
+                    class="mt-2"
+                    prepend-icon="mdi-cog-outline"
+                    @click.stop="tab = 'advanced'"
+                  >
+                    Advanced Options
+                  </v-btn>
 
                   <v-alert
                     v-if="simpleView"
@@ -235,12 +206,14 @@
                         <v-btn @click.stop="client.reason_response_pattern=''" size="small" color="primary" variant="text">{{ 'Default' }}</v-btn>
                         <!-- gpt-oss -->
                         <v-btn @click.stop="client.reason_response_pattern='.*?final<\\|message\\|>'" size="small" color="primary" variant="text">{{ 'gpt-oss' }}</v-btn>
+                        <!-- gemma-4 -->
+                        <v-btn @click.stop="client.reason_response_pattern='.*?<channel\\|>'" size="small" color="primary" variant="text">{{ 'gemma-4' }}</v-btn>
                         <!-- ◁/think▷ -->
                         <v-btn @click.stop="client.reason_response_pattern='.*?◁/think▷'" size="small" color="primary" variant="text">{{ '.*?◁/think▷' }}</v-btn>
                         <!-- </think> -->
                         <v-btn @click.stop="client.reason_response_pattern='.*?</think>'" size="small" color="primary" variant="text">{{ '.*?</think>' }}</v-btn>
                       </v-sheet>
-                      <v-text-field v-model="client.reason_response_pattern" label="Pattern to strip from the response if the model is reasoning" hint="This is a regular expression that will be used to strip out the thinking tokens from the response." placeholder=".*?</think>"></v-text-field>
+                      <v-text-field v-model="client.reason_response_pattern" label="Pattern to strip from the response if the model is reasoning" hint="This is a regular expression that will be used to strip out the thinking tokens from the response." :placeholder="client.data && client.data.reason_response_pattern_default ? client.data.reason_response_pattern_default : '.*?</think>'"></v-text-field>
                     </v-col>
                   </v-row>
                   <v-row v-if="client.reason_enabled && client.requires_reasoning_pattern">
@@ -272,6 +245,67 @@
                       <v-checkbox v-else-if="field.type === 'bool'" v-model="client[field.name]" :label="field.label" :hint="field.description" persistent-hint></v-checkbox>
                       <v-select v-else-if="field.type === 'select'" v-model="client[field.name]" :label="field.label" :hint="field.description" :items="field.choices" persistent-hint></v-select>
                       <v-alert v-if="field.note" :color="field.note.color" variant="text" density="compact" :icon="field.note.icon" class="mt-2 pre-wrap text-caption">{{ field.note.text.replace(/{client_type}/g, client.type) }}</v-alert>
+                    </v-col>
+                  </v-row>
+                </v-window-item>
+                <!-- ADVANCED -->
+                <v-window-item value="advanced">
+                  <!-- INFERENCE PRESETS -->
+                  <v-row>
+                    <v-col cols="6">
+                      <v-select label="Inference Presets" :items="availablePresets" v-model="client.preset_group"></v-select>
+                    </v-col>
+                  </v-row>
+                  <!-- DATA FORMAT & SECTION FORMAT -->
+                  <v-row>
+                    <v-col cols="6">
+                      <v-select label="Structured Data Format" :items="dataManageFormatChoices" v-model="client.data_format" messages="Which formatting to use for data structure communication such as function calling or general data management."></v-select>
+                    </v-col>
+                    <v-col cols="6">
+                      <v-select label="Section Format" :items="sectionFormatChoices" v-model="client.section_format" messages="How prompt sections are formatted. Markdown uses ## headings, XML uses paired tags like <SECTION>...</SECTION>."></v-select>
+                    </v-col>
+                  </v-row>
+                  <!-- RESPONSE LENGTH ENFORCEMENT -->
+                  <v-row>
+                    <v-col cols="6">
+                      <v-select
+                        v-model="client.enforce_response_length"
+                        label="Response Length Enforcement"
+                        :items="enforceResponseLengthChoices"
+                        item-title="label"
+                        item-value="value"
+                        hint="Controls whether token limits and/or length instructions are sent with prompts."
+                        persistent-hint
+                      >
+                        <template v-slot:item="{ props, item }">
+                          <v-list-item v-bind="props" :title="item.raw.label" :subtitle="item.raw.help"></v-list-item>
+                        </template>
+                      </v-select>
+                      <v-alert
+                        v-if="client.enforce_response_length === 'uncapped'"
+                        color="warning"
+                        variant="text"
+                        density="compact"
+                        class="mt-1 text-caption"
+                        icon="mdi-alert"
+                      >
+                        Not recommended. Any generation length settings will be ignored when this is selected.
+                      </v-alert>
+                    </v-col>
+                    <v-col cols="6">
+                      <v-checkbox v-model="client.optimize_prompt_caching" color="primary" label="Optimize for Prompt Caching" hint="Place volatile context after the scene history for better prompt caching. Recommended for remote API backends. May confuse weaker models." persistent-hint></v-checkbox>
+                    </v-col>
+                  </v-row>
+                  <!-- DEDUPE PROMPT -->
+                  <v-row>
+                    <v-col cols="12">
+                      <v-checkbox v-model="client.dedupe_enabled" color="primary" label="Deduplicate Prompts" hint="Strip near-duplicate lines from rendered prompts before sending. Off by default — modern context windows make the token savings negligible and the rewrites break prompt caching. Enable only if RAG injection is producing substantial duplication and the context window is tight." persistent-hint></v-checkbox>
+                    </v-col>
+                  </v-row>
+                  <!-- RATE LIMIT -->
+                  <v-row>
+                    <v-col cols="12">
+                      <v-slider v-model="client.rate_limit" label="Rate Limit" :min="0" :max="100" :step="1" :persistent-hint="true" hint="Requests per minute. (0 = no limit)" thumb-label="always"></v-slider>
                     </v-col>
                   </v-row>
                 </v-window-item>
@@ -340,6 +374,7 @@ export default {
     'state',
     'getWebsocket',
     'registerMessageHandler',
+    'navigateToLLMTemplates',
   ],
   data() {
     return {
@@ -372,6 +407,11 @@ export default {
         { title: 'JSON', value: 'json' },
         { title: 'YAML', value: 'yaml' },
       ],
+      sectionFormatChoices: [
+        { title: 'Talemate decides', value: null},
+        { title: 'Markdown', value: 'markdown' },
+        { title: 'XML', value: 'xml' },
+      ],
       tabs: {
         general: {
           title: 'General',
@@ -385,6 +425,11 @@ export default {
           condition: () => {
             return this.client.can_be_coerced;
           },
+        },
+        advanced: {
+          title: 'Advanced',
+          value: 'advanced',
+          icon: 'mdi-cog-outline',
         },
         reasoning: {
           title: 'Reasoning',
@@ -505,8 +550,14 @@ export default {
       handler(newVal) {
         this.client = { ...newVal }; // Update client data property when currentClient changes
         this.simpleView = !!newVal._simpleMode;
+        this.tab = 'general';
         this.isInitializing = true;
         this.waitingForTemplateSelection = false;
+      }
+    },
+    simpleView(newVal) {
+      if (newVal) {
+        this.tab = 'general';
       }
     },
     'client.lock_template': {
@@ -543,6 +594,7 @@ export default {
         this.client.double_coercion = defaults.double_coercion || null;
         this.client.rate_limit = defaults.rate_limit || null;
         this.client.data_format = defaults.data_format || null;
+        this.client.section_format = defaults.section_format || null;
         this.client.preset_group = defaults.preset_group || '';
         this.client.reason_enabled = defaults.reason_enabled || false;
         this.client.reason_tokens = defaults.reason_tokens || 0;
@@ -552,6 +604,7 @@ export default {
         this.client.requires_reasoning_pattern = defaults.requires_reasoning_pattern || false;
         this.client.lock_template = defaults.lock_template || false;
         this.client.optimize_prompt_caching = defaults.optimize_prompt_caching || false;
+        this.client.dedupe_enabled = defaults.dedupe_enabled || false;
         this.client.enforce_response_length = defaults.enforce_response_length || 'cap_tokens_and_instructions';
         this.client.template_file = defaults.template_file || null;
         // loop and build name from prefix, checking against current clients
@@ -582,6 +635,10 @@ export default {
     },
     close() {
       this.$emit('update:dialog', false);
+    },
+    openLLMTemplates() {
+      this.close();
+      this.navigateToLLMTemplates();
     },
     save() {
 
@@ -657,6 +714,9 @@ export default {
         this.client.data.has_prompt_template = data.data.has_prompt_template;
         this.client.data.prompt_template_example = data.data.prompt_template_example;
         this.client.data.template_file = data.data.template_file;
+        if (data.data.reason_response_pattern_default !== undefined) {
+          this.client.data.reason_response_pattern_default = data.data.reason_response_pattern_default;
+        }
         this.waitingForTemplateSelection = false;
       } else if (data.type === 'config' && data.action === 'std_llm_templates') {
         console.log("Got std templates", data.data.templates);

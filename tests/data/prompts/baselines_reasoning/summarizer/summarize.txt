@@ -24,11 +24,11 @@ Provide a summarized narrative description of chapter 1.
 Your response must follow this format:
 
 ANALYSIS: <brief analysis the cross over point from previous chapters to chapter 1. How does chapter 1 start and what should be in the summary.>
-WRITING STYLE: <brief understanding of the writing style requirements and the story intention. Note at least one example where you will apply it.>
+
 SUMMARY: <summary of chapter 1 based on analysis. Length: 1 - 2 paragraphs>
 
-## Summary of chapter 1
+The length of your final answer must fit within 6 paragraphs.
 
-The length of your final answer must fit within 4 paragraphs.
+## Summary of chapter 1
 
 After thinking about it, start your answer with: ANALYSIS:

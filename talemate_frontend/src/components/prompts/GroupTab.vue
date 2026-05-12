@@ -317,6 +317,9 @@ export default {
             // Pending template selection (for unsaved changes dialog)
             pendingTemplateSelect: null,
 
+            // Pending uid for async selection from parent (waits for data to load)
+            pendingSelectUid: null,
+
             // Toast notification
             showToast: false,
             toastMessage: '',
@@ -400,6 +403,9 @@ export default {
         },
         templateContent() {
             this.isDirty = this.templateContent !== this.originalContent;
+        },
+        groupTemplates() {
+            this.applyPendingSelection();
         }
     },
     methods: {
@@ -423,6 +429,9 @@ export default {
 
         // Load data from backend
         loadData() {
+            // Drop any pending selection from a previous group — resolving it
+            // against the incoming group's templates would select the wrong file.
+            this.pendingSelectUid = null;
             this.requestAllTemplates();
             this.requestGroupTemplates();
         },
@@ -487,6 +496,28 @@ export default {
                 this.$refs.templateTree.expandToTemplate(template.uid);
             }
             this.loadTemplate(template);
+        },
+
+        // Called by parent to select a template by uid. Queues the selection
+        // until groupTemplates has loaded (websocket data may still be in flight).
+        selectTemplateByUid(uid) {
+            this.pendingSelectUid = uid;
+            this.applyPendingSelection();
+        },
+
+        applyPendingSelection() {
+            if (!this.pendingSelectUid) return;
+            const template = this.groupTemplates.find(t => t.uid === this.pendingSelectUid);
+            if (!template) return;
+            const uid = this.pendingSelectUid;
+            this.pendingSelectUid = null;
+            this.selectedTemplatePath = uid;
+            // Defer expand until the tree has settled its own reactive updates —
+            // TemplateTree's foldersWithOverrides watcher would otherwise clobber
+            // the folders we just opened.
+            this.$nextTick(() => {
+                this.expandAndSelectTemplate(template);
+            });
         },
 
         // Load template content
@@ -703,7 +734,7 @@ export default {
 }
 
 .tree-container {
-    max-height: calc(100vh - 400px);
+    max-height: calc(100vh - 420px);
     max-width: 750px;
     overflow-y: auto;
 }
@@ -713,7 +744,7 @@ export default {
 }
 
 .editor-container {
-    height: calc(100vh - 400px);
+    height: calc(100vh - 420px);
     overflow-y: auto;
     display: flex;
     flex-direction: column;

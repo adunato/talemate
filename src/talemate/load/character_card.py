@@ -1545,7 +1545,7 @@ def load_character_from_json(json_path: str) -> Character:
 
     if spec == ImportSpec.chara_card_v2 or spec == ImportSpec.chara_card_v3:
         return character_from_chara_data(data["data"])
-    elif spec == ImportSpec.chara_card_v1:
+    elif spec == ImportSpec.chara_card_v1 or spec == ImportSpec.chara_card_v0:
         return character_from_chara_data(data)
 
     raise UnknownDataSpec(data)
@@ -1579,7 +1579,10 @@ def character_from_chara_data(data: dict) -> Character:
     if "first_mes" in data:
         character.greeting_text = data["first_mes"]
     if "gender" in data:
-        character.gender = data["gender"]
+        # `Character.gender` is a read-only @property that reads from
+        # `base_attributes["gender"]`; write through to the underlying
+        # base attribute so the value sticks.
+        character.base_attributes["gender"] = data["gender"]
     if "color" in data:
         character.color = data["color"]
     if "mes_example" in data:

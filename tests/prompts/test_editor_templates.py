@@ -7,81 +7,32 @@ to prompt rendering to LLM call, without making actual API calls.
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, AsyncMock
 
 import talemate.instance as instance
 from talemate.agents.editor import EditorAgent
-from .helpers import create_mock_scene
-
-
-class MockCharacter:
-    """A mock character class for isinstance checks."""
-
-    def __init__(self, name, is_player=False):
-        self.name = name
-        self.is_player = is_player
-        self.description = "A test character."
-        self.gender = "female"
-        self.greeting_text = "Hello there."
-        self.dialogue_instructions = "Speaks normally."
-        self.base_attributes = {"name": name}
-        self.details = {}
-        self.sheet = f"name: {name}"
-        self.example_dialogue = []
-        self.random_dialogue_example = ""
-
-    def filtered_sheet(self, *args, **kwargs):
-        return f"name: {self.name}\ngender: {self.gender}"
+from .helpers import create_scene_with_characters
 
 
 @pytest.fixture
 def mock_scene():
-    """Create a rich mock scene for testing."""
-    scene = create_mock_scene()
+    """Real Scene with Hero + Elena actors; IO-ish methods stubbed."""
+    scene = create_scene_with_characters()
 
-    # Add player character using MockCharacter class
-    player = MockCharacter(name="Hero", is_player=True)
-    npc = MockCharacter(name="Elena", is_player=False)
-
-    scene.get_player_character = Mock(return_value=player)
-    scene.get_npc_characters = Mock(return_value=[npc])
-    scene.get_characters = Mock(return_value=[player, npc])
-    scene.get_character = Mock(
-        side_effect=lambda name: player if name == "Hero" else npc
-    )
-    scene.writing_style = None
-    scene.agent_state = {}
-    scene.characters = [player, npc]
-    scene.character_names = [player.name, npc.name]
-
-    # Mock Character class for isinstance check - use MockCharacter
-    scene.Character = MockCharacter
-
-    # Mock push_history for tests that need it
     scene.push_history = AsyncMock()
-
-    # Mock collect_messages for revision methods
     scene.collect_messages = Mock(return_value=[])
-    scene.message_index = Mock(return_value=0)
-
-    # Mock snapshot for fix-continuity templates
     scene.snapshot = Mock(return_value="Current scene state")
 
-    # Mock intent_state
-    intent_state = Mock()
-    intent_state.active = True
-    intent_state.intent = "A fantasy adventure story."
-    intent_state.instructions = "Make the story engaging."
-    intent_state.phase = Mock()
-    intent_state.phase.intent = "The hero explores the forest."
-    intent_state.current_scene_type = Mock(
-        id="exploration",
-        name="Exploration",
-        description="An exploration scene",
-        instructions="Focus on discovery.",
+    # Fill in a story intent + active phase so templates that render the
+    # "intention" section have something to work with. (``create_mock_scene``
+    # zeros out the default phase; editor tests need one present.)
+    from talemate.scene.schema import ScenePhase
+
+    scene.intent_state.intent = "A fantasy adventure story."
+    scene.intent_state.instructions = "Make the story engaging."
+    scene.intent_state.phase = ScenePhase(
+        scene_type="roleplay", intent="The hero explores the forest."
     )
-    intent_state.scene_types = {}
-    scene.intent_state = intent_state
 
     return scene
 
@@ -245,26 +196,18 @@ class TestEditorAddDetailMethod:
 class TestEditorRevisionRewriteMethod:
     """Tests for the revision_rewrite method that calls revision templates."""
 
-    @pytest.mark.asyncio
-    async def test_revision_rewrite_calls_client_when_issues_found(
-        self, active_context, mock_scene, mock_memory_agent
-    ):
-        """Test that revision_rewrite calls the LLM client when issues are found."""
-        editor = active_context
-
-        # Enable revision
+    @staticmethod
+    def _enable_rewrite_with_repetition(editor, mock_scene, mock_memory_agent):
+        """Enable rewrite + force one repetition match so the rewrite path runs."""
         editor.actions["revision"].enabled = True
         editor.actions["revision"].config["revision_method"].value = "rewrite"
         editor.actions["revision"].config["min_issues"].value = 1
 
-        # Provide history messages for comparison
         history_messages = [
             Mock(message="The forest was dark and mysterious.", typ="narrator"),
         ]
         mock_scene.collect_messages = Mock(return_value=history_messages)
 
-        # Mock memory agent to return similarity matches (repetition detected)
-        # [text_index, history_index, similarity]
         mock_memory_agent.compare_string_lists = AsyncMock(
             return_value={
                 "similarity_matches": [[0, 0, 0.9]],
@@ -272,32 +215,105 @@ class TestEditorRevisionRewriteMethod:
             }
         )
 
-        # Mock focal handler response
-        with patch("talemate.game.focal.Focal") as mock_focal_class:
-            mock_focal = AsyncMock()
-            mock_focal.state = Mock()
-            mock_focal.state.calls = [Mock(result="Revised text here.")]
-            mock_focal.request = AsyncMock()
-            mock_focal_class.return_value = mock_focal
+    @pytest.mark.asyncio
+    async def test_revision_rewrite_extracts_revision_tag(
+        self, active_context, mock_scene, mock_memory_agent
+    ):
+        """Rewrite should run a single prompt and return the <REVISION> content."""
+        editor = active_context
+        self._enable_rewrite_with_repetition(editor, mock_scene, mock_memory_agent)
 
-            from talemate.agents.editor.revision import RevisionInformation
-
-            info = RevisionInformation(
-                text="The forest was dark. The forest was quiet.",
-                character=None,
+        expected_revision = "The woods were silent under heavy cloud."
+        editor.client.send_prompt = AsyncMock(
+            return_value=(
+                "Analysis: the draft repeats a prior line.\n"
+                f"<REVISION>{expected_revision}</REVISION>"
             )
+        )
 
-            await editor.revision_rewrite(info)
+        from talemate.agents.editor.revision import RevisionInformation
 
-            # Verify the client's send_prompt was called for analysis
-            editor.client.send_prompt.assert_called()
+        info = RevisionInformation(
+            text="The forest was dark and mysterious.",
+            character=None,
+        )
 
-            # Get the prompt that was sent
-            call_args = editor.client.send_prompt.call_args
-            prompt_text = str(call_args[0][0])
+        response = await editor.revision_rewrite(info)
 
-            # Verify the prompt contains the text
-            assert "forest" in prompt_text.lower()
+        # Only the analysis prompt should fire — no secondary rewrite prompt
+        assert editor.client.send_prompt.call_count == 1
+        assert response == expected_revision
+        assert "<REVISION>" not in response
+
+    @pytest.mark.asyncio
+    async def test_revision_rewrite_returns_original_when_no_revision_tag(
+        self, active_context, mock_scene, mock_memory_agent
+    ):
+        """If the analysis response has no <REVISION> tag, fall back to original."""
+        editor = active_context
+        self._enable_rewrite_with_repetition(editor, mock_scene, mock_memory_agent)
+
+        editor.client.send_prompt = AsyncMock(
+            return_value="Analysis only, no revision produced."
+        )
+
+        from talemate.agents.editor.revision import RevisionInformation
+
+        original_text = "The forest was dark and mysterious."
+        info = RevisionInformation(text=original_text, character=None)
+
+        response = await editor.revision_rewrite(info)
+
+        assert response == original_text
+        assert editor.client.send_prompt.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_revision_rewrite_discards_oversized_revision(
+        self, active_context, mock_scene, mock_memory_agent
+    ):
+        """Rewrites longer than REWRITE_MAX_LENGTH_RATIO should be discarded."""
+        editor = active_context
+        self._enable_rewrite_with_repetition(editor, mock_scene, mock_memory_agent)
+
+        original_text = "The forest was dark and mysterious."
+        # Produce a fix ~3x longer than original — well above the guardrail
+        bloated = " ".join([original_text] * 3)
+        editor.client.send_prompt = AsyncMock(
+            return_value=f"<REVISION>{bloated}</REVISION>"
+        )
+
+        from talemate.agents.editor.revision import RevisionInformation
+
+        info = RevisionInformation(text=original_text, character=None)
+
+        response = await editor.revision_rewrite(info)
+
+        assert response == original_text
+        assert editor.client.send_prompt.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_revision_rewrite_reattaches_character_prefix(
+        self, active_context, mock_scene, mock_memory_agent
+    ):
+        """Character dialogue should have the `Name: ` prefix preserved."""
+        editor = active_context
+        character = mock_scene.get_character("Elena")
+        self._enable_rewrite_with_repetition(editor, mock_scene, mock_memory_agent)
+
+        editor.client.send_prompt = AsyncMock(
+            return_value='<REVISION>"A new line entirely."</REVISION>'
+        )
+
+        from talemate.agents.editor.revision import RevisionInformation
+
+        info = RevisionInformation(
+            text='Elena: "The forest was dark and mysterious."',
+            character=character,
+        )
+
+        response = await editor.revision_rewrite(info)
+
+        assert response == 'Elena: "A new line entirely."'
 
     @pytest.mark.asyncio
     async def test_revision_rewrite_returns_original_when_no_issues(

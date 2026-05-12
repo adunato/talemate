@@ -1,0 +1,1201 @@
+{
+  "title": "Roll Dice",
+  "id": "22bff6cb-65b0-4110-9890-f246adc29adb",
+  "properties": {},
+  "x": 0,
+  "y": 0,
+  "width": 200,
+  "height": 100,
+  "collapsed": false,
+  "inherited": false,
+  "registry": "agents/director/gameplay/rollDice",
+  "nodes": {
+    "6bc1af11-7cf6-41b5-b918-0adb14587872": {
+      "title": "IN state",
+      "id": "6bc1af11-7cf6-41b5-b918-0adb14587872",
+      "properties": {
+        "input_type": "any",
+        "input_name": "state",
+        "input_optional": false,
+        "input_group": "",
+        "num": 0
+      },
+      "x": 0,
+      "y": 0,
+      "width": 210,
+      "height": 154,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Input",
+      "base_type": "core/Node"
+    },
+    "25376c5a-4538-4544-aebd-6676117cd5f5": {
+      "title": "IN min",
+      "id": "25376c5a-4538-4544-aebd-6676117cd5f5",
+      "properties": {
+        "input_type": "int",
+        "input_name": "min",
+        "input_optional": false,
+        "input_group": "",
+        "num": 1
+      },
+      "x": 0,
+      "y": 269,
+      "width": 210,
+      "height": 154,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Input",
+      "base_type": "core/Node"
+    },
+    "e25ccb3d-4e54-431e-95ea-ed5f13ca274a": {
+      "title": "IN max",
+      "id": "e25ccb3d-4e54-431e-95ea-ed5f13ca274a",
+      "properties": {
+        "input_type": "int",
+        "input_name": "max",
+        "input_optional": false,
+        "input_group": "",
+        "num": 2
+      },
+      "x": 0,
+      "y": 471,
+      "width": 210,
+      "height": 154,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Input",
+      "base_type": "core/Node"
+    },
+    "55133bc9-a94a-4891-b20c-761efe885d6a": {
+      "title": "IN reason",
+      "id": "55133bc9-a94a-4891-b20c-761efe885d6a",
+      "properties": {
+        "input_type": "str",
+        "input_name": "reason",
+        "input_optional": false,
+        "input_group": "",
+        "num": 3
+      },
+      "x": 0,
+      "y": 673,
+      "width": 210,
+      "height": 154,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Input",
+      "base_type": "core/Node"
+    },
+    "14f436c3-e2aa-4622-b377-8488897e0c1e": {
+      "title": "OUT state",
+      "id": "14f436c3-e2aa-4622-b377-8488897e0c1e",
+      "properties": {
+        "output_type": "any",
+        "output_name": "state",
+        "num": 0
+      },
+      "x": 360,
+      "y": 0,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "61eaa3ad-90f4-47bb-851b-9c73997c35c5": {
+      "title": "OUT max",
+      "id": "61eaa3ad-90f4-47bb-851b-9c73997c35c5",
+      "properties": {
+        "output_type": "int",
+        "output_name": "max",
+        "num": 2
+      },
+      "x": 1774,
+      "y": 347,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "50191e52-87fc-4b0d-8b87-743eeaa66f76": {
+      "title": "OUT reason",
+      "id": "50191e52-87fc-4b0d-8b87-743eeaa66f76",
+      "properties": {
+        "output_type": "str",
+        "output_name": "reason",
+        "num": 3
+      },
+      "x": 1774,
+      "y": 527,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "8f769b2c-4682-4c79-8341-21adc93e19ae": {
+      "title": "OUT emit_system_message",
+      "id": "8f769b2c-4682-4c79-8341-21adc93e19ae",
+      "properties": {
+        "output_type": "bool",
+        "output_name": "emit_system_message",
+        "num": 4
+      },
+      "x": 1774,
+      "y": 707,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "3373e878-4a67-4169-a147-986e6571d671": {
+      "title": "OUT result",
+      "id": "3373e878-4a67-4169-a147-986e6571d671",
+      "properties": {
+        "output_type": "int",
+        "output_name": "result",
+        "num": 5
+      },
+      "x": 1774,
+      "y": 887,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "d4b63b7f-aeb3-4e31-aec4-eb79dcefa34b": {
+      "title": "Stage 0",
+      "id": "d4b63b7f-aeb3-4e31-aec4-eb79dcefa34b",
+      "properties": {
+        "stage": 0
+      },
+      "x": 883,
+      "y": 576,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "83fbba29-63f6-4dc6-84aa-e91eae314a42": {
+      "title": "SET local.min",
+      "id": "83fbba29-63f6-4dc6-84aa-e91eae314a42",
+      "properties": {
+        "name": "min",
+        "scope": "local"
+      },
+      "x": 360,
+      "y": 269,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "d6a25230-82c6-45e3-af1e-84aedc25e496": {
+      "title": "SET local.max",
+      "id": "d6a25230-82c6-45e3-af1e-84aedc25e496",
+      "properties": {
+        "name": "max",
+        "scope": "local"
+      },
+      "x": 360,
+      "y": 471,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "92b58658-705b-4446-88e6-6fbf93b14a1f": {
+      "title": "SET local.reason",
+      "id": "92b58658-705b-4446-88e6-6fbf93b14a1f",
+      "properties": {
+        "name": "reason",
+        "scope": "local"
+      },
+      "x": 360,
+      "y": 673,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "47ad3e7b-e9ca-497c-affd-ed329975d01b": {
+      "title": "GET local.max",
+      "id": "47ad3e7b-e9ca-497c-affd-ed329975d01b",
+      "properties": {
+        "name": "max",
+        "scope": "local"
+      },
+      "x": 1414,
+      "y": 347,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "5ad41a34-51df-4ca5-bdaa-08b61412e88a": {
+      "title": "GET local.reason",
+      "id": "5ad41a34-51df-4ca5-bdaa-08b61412e88a",
+      "properties": {
+        "name": "reason",
+        "scope": "local"
+      },
+      "x": 1414,
+      "y": 527,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "ee24ae74-4430-45cf-8cdd-c4d778295211": {
+      "title": "GET local.emit_system_message",
+      "id": "ee24ae74-4430-45cf-8cdd-c4d778295211",
+      "properties": {
+        "name": "emit_system_message",
+        "scope": "local"
+      },
+      "x": 1414,
+      "y": 707,
+      "width": 244,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "c594c282-413d-45d8-ad43-20045f9e76ed": {
+      "title": "GET local.result",
+      "id": "c594c282-413d-45d8-ad43-20045f9e76ed",
+      "properties": {
+        "name": "result",
+        "scope": "local"
+      },
+      "x": 1414,
+      "y": 887,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "c072a757-19a5-42a2-a9d2-00de417b4ca0": {
+      "title": "GET local.formatted_result",
+      "id": "c072a757-19a5-42a2-a9d2-00de417b4ca0",
+      "properties": {
+        "name": "formatted_result",
+        "scope": "local"
+      },
+      "x": 1414,
+      "y": 1067,
+      "width": 218,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "f8301baa-8940-4b37-8197-d455d843142a": {
+      "title": "OUT formatted_result",
+      "id": "f8301baa-8940-4b37-8197-d455d843142a",
+      "properties": {
+        "output_type": "str",
+        "output_name": "formatted_result",
+        "num": 6
+      },
+      "x": 1774,
+      "y": 1067,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "ec2a7665-4f94-4b78-b04e-370fb1649617": {
+      "title": "IN emit_system_message",
+      "id": "ec2a7665-4f94-4b78-b04e-370fb1649617",
+      "properties": {
+        "input_type": "bool",
+        "input_name": "emit_system_message",
+        "input_optional": true,
+        "input_group": "",
+        "num": 4
+      },
+      "x": 0,
+      "y": 875,
+      "width": 210,
+      "height": 154,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Input",
+      "base_type": "core/Node"
+    },
+    "2bfc4c62-ae15-4574-a27c-747b25746462": {
+      "title": "As Bool",
+      "id": "2bfc4c62-ae15-4574-a27c-747b25746462",
+      "properties": {
+        "default": false
+      },
+      "x": 240,
+      "y": 907,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/AsBool",
+      "base_type": "core/Node"
+    },
+    "299ce8fa-4692-4171-909a-a7ae6daa423b": {
+      "title": "SET local.emit_system_message",
+      "id": "299ce8fa-4692-4171-909a-a7ae6daa423b",
+      "properties": {
+        "name": "emit_system_message",
+        "scope": "local"
+      },
+      "x": 490,
+      "y": 887,
+      "width": 244,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "173d3100-8427-411a-95a0-87e4c306171f": {
+      "title": "OUT min",
+      "id": "173d3100-8427-411a-95a0-87e4c306171f",
+      "properties": {
+        "output_type": "int",
+        "output_name": "min",
+        "num": 1
+      },
+      "x": 1778,
+      "y": 171,
+      "width": 210,
+      "height": 108,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "b276aa84-c8f7-4fa7-aa06-475ec3193681": {
+      "title": "GET local.min",
+      "id": "b276aa84-c8f7-4fa7-aa06-475ec3193681",
+      "properties": {
+        "name": "min",
+        "scope": "local"
+      },
+      "x": 1425,
+      "y": 161,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "f74fd488-8f90-4cf4-84d1-44ba5511cf9d": {
+      "title": "GET local.max",
+      "id": "f74fd488-8f90-4cf4-84d1-44ba5511cf9d",
+      "properties": {
+        "name": "max",
+        "scope": "local"
+      },
+      "x": 1,
+      "y": 1550,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "bc9d340f-d97b-4b30-8ae2-edc3252fe5d0": {
+      "title": "GET local.min",
+      "id": "bc9d340f-d97b-4b30-8ae2-edc3252fe5d0",
+      "properties": {
+        "name": "min",
+        "scope": "local"
+      },
+      "x": 1,
+      "y": 1370,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "3a1c1e34-5f7d-4bfc-934c-f57ddace7b57": {
+      "title": "Roll",
+      "id": "3a1c1e34-5f7d-4bfc-934c-f57ddace7b57",
+      "properties": {
+        "method": "integer",
+        "min": 0,
+        "max": 1,
+        "mean": 0,
+        "std_dev": 1
+      },
+      "x": 304,
+      "y": 1437,
+      "width": 210,
+      "height": 240,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/number/Random",
+      "base_type": "core/Node"
+    },
+    "9ffd3cfd-8082-4444-9002-df0361823145": {
+      "title": "SET local.base_result",
+      "id": "9ffd3cfd-8082-4444-9002-df0361823145",
+      "properties": {
+        "name": "base_result",
+        "scope": "local"
+      },
+      "x": 594,
+      "y": 1437,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "dc8ff45c-761b-4384-981d-d67eff6d7fe0": {
+      "title": "Stage 1",
+      "id": "dc8ff45c-761b-4384-981d-d67eff6d7fe0",
+      "properties": {
+        "stage": 1
+      },
+      "x": 894,
+      "y": 1437,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "3e2f067a-d1ac-45de-8753-79f4cb168cd2": {
+      "title": "GET local.modifier",
+      "id": "3e2f067a-d1ac-45de-8753-79f4cb168cd2",
+      "properties": {
+        "name": "modifier",
+        "scope": "local"
+      },
+      "x": 3,
+      "y": 1967,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "8c4e9f07-977d-4b06-afc2-1843ffe0f93f": {
+      "title": "GET local.base_result",
+      "id": "8c4e9f07-977d-4b06-afc2-1843ffe0f93f",
+      "properties": {
+        "name": "base_result",
+        "scope": "local"
+      },
+      "x": 3,
+      "y": 1787,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "ab330fcd-2e25-4fac-a95d-9c406f5c5e22": {
+      "title": "SET local.result",
+      "id": "ab330fcd-2e25-4fac-a95d-9c406f5c5e22",
+      "properties": {
+        "name": "result",
+        "scope": "local"
+      },
+      "x": 855,
+      "y": 1897,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "571f1dc5-d0da-47de-a4a2-37959e13ed76": {
+      "title": "Format Roll Message (Director)",
+      "id": "571f1dc5-d0da-47de-a4a2-37959e13ed76",
+      "properties": {
+        "template": "Reason: {{ reason }}\nBase Result: {{ base_result }}\nModifier: {{ modifier }}\nFinal Result {{ result }}"
+      },
+      "x": 483,
+      "y": 2477,
+      "width": 252,
+      "height": 253,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/Jinja2Format",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        },
+        {
+          "name": "item2",
+          "type": "*"
+        },
+        {
+          "name": "item3",
+          "type": "*"
+        },
+        {
+          "name": "item4",
+          "type": "*"
+        },
+        {
+          "name": "item5",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "828b7598-01cd-4670-bc53-63acaa88cbe9": {
+      "title": "SET local.formatted_result",
+      "id": "828b7598-01cd-4670-bc53-63acaa88cbe9",
+      "properties": {
+        "name": "formatted_result",
+        "scope": "local"
+      },
+      "x": 853,
+      "y": 2547,
+      "width": 218,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "3af1e4b7-300f-4265-8006-52af8f05dfff": {
+      "title": "GET local.min",
+      "id": "3af1e4b7-300f-4265-8006-52af8f05dfff",
+      "properties": {
+        "name": "min",
+        "scope": "local"
+      },
+      "x": 18,
+      "y": 2386,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "6693c831-5c78-4647-8603-fc70886c5b64": {
+      "title": "GET local.max",
+      "id": "6693c831-5c78-4647-8603-fc70886c5b64",
+      "properties": {
+        "name": "max",
+        "scope": "local"
+      },
+      "x": 18,
+      "y": 2566,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "7963a2a8-a407-4bf2-ac10-bb0bb61fcbb8": {
+      "title": "GET local.base_result",
+      "id": "7963a2a8-a407-4bf2-ac10-bb0bb61fcbb8",
+      "properties": {
+        "name": "base_result",
+        "scope": "local"
+      },
+      "x": 18,
+      "y": 2756,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "8421ab27-5a8a-4db7-9718-cb4192470d6b": {
+      "title": "GET local.modifier",
+      "id": "8421ab27-5a8a-4db7-9718-cb4192470d6b",
+      "properties": {
+        "name": "modifier",
+        "scope": "local"
+      },
+      "x": 13,
+      "y": 2957,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "c95d0626-2ef6-4bdb-af56-207478ecd2c1": {
+      "title": "GET local.reason",
+      "id": "c95d0626-2ef6-4bdb-af56-207478ecd2c1",
+      "properties": {
+        "name": "reason",
+        "scope": "local"
+      },
+      "x": 13,
+      "y": 3157,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "5c9d7a1c-86d7-4c55-905e-2b29b9305330": {
+      "title": "GET local.result",
+      "id": "5c9d7a1c-86d7-4c55-905e-2b29b9305330",
+      "properties": {
+        "name": "result",
+        "scope": "local"
+      },
+      "x": 23,
+      "y": 2197,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "5a941399-7b96-4026-9c54-72de33bd8141": {
+      "title": "Build Notice Element",
+      "id": "5a941399-7b96-4026-9c54-72de33bd8141",
+      "properties": {
+        "closable": true,
+        "timeout_seconds": 0,
+        "element_title": "",
+        "element_body": ""
+      },
+      "x": 861,
+      "y": 3340,
+      "width": 262,
+      "height": 270,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "ux/BuildNoticeElement",
+      "base_type": "core/Node"
+    },
+    "1900db1b-3e4d-4788-b942-2d57279f9429": {
+      "title": "Style UX Element",
+      "id": "1900db1b-3e4d-4788-b942-2d57279f9429",
+      "properties": {
+        "tint": "director",
+        "icon": "mdi-dice-multiple",
+        "apply_scene_colors": true,
+        "compact": true
+      },
+      "x": 1201,
+      "y": 3340,
+      "width": 245,
+      "height": 230,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "ux/StyleElement",
+      "base_type": "core/Node"
+    },
+    "a0c91057-ee0e-40da-a8b8-33fffff389e2": {
+      "title": "Format Roll Message (User)",
+      "id": "a0c91057-ee0e-40da-a8b8-33fffff389e2",
+      "properties": {
+        "template": "{{ reason }} - rolled {{ base_result }}{% if modifier > 0 %} (+{{ modifier }}){% elif modifier < 0 %} ({{ modifier }}){% endif %} - final **{{ result }}**"
+      },
+      "x": 503,
+      "y": 2857,
+      "width": 218,
+      "height": 253,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/Jinja2Format",
+      "dynamic_inputs": [
+        {
+          "name": "item0",
+          "type": "*"
+        },
+        {
+          "name": "item1",
+          "type": "*"
+        },
+        {
+          "name": "item2",
+          "type": "*"
+        },
+        {
+          "name": "item3",
+          "type": "*"
+        },
+        {
+          "name": "item4",
+          "type": "*"
+        },
+        {
+          "name": "item5",
+          "type": "*"
+        }
+      ],
+      "base_type": "core/DynamicSocketNodeBase"
+    },
+    "44e423f2-d62a-425c-a8d9-b8634492662d": {
+      "title": "Emit UX Element",
+      "id": "44e423f2-d62a-425c-a8d9-b8634492662d",
+      "properties": {},
+      "x": 1503,
+      "y": 3347,
+      "width": 178,
+      "height": 146,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "ux/EmitElement",
+      "base_type": "core/Node"
+    },
+    "0440a8ce-4561-45b4-abd7-01b762f68ef7": {
+      "title": "Stage 2",
+      "id": "0440a8ce-4561-45b4-abd7-01b762f68ef7",
+      "properties": {
+        "stage": 3
+      },
+      "x": 1953,
+      "y": 3037,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "61cc4abf-3a76-46f1-96b6-3a06888de403": {
+      "title": "GET local.emit_system_message",
+      "id": "61cc4abf-3a76-46f1-96b6-3a06888de403",
+      "properties": {
+        "name": "emit_system_message",
+        "scope": "local"
+      },
+      "x": 3,
+      "y": 3367,
+      "width": 244,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "a3a65d12-b6ec-4f57-b6c5-b8b89e3c1bc2": {
+      "title": "if emit_system_message",
+      "id": "a3a65d12-b6ec-4f57-b6c5-b8b89e3c1bc2",
+      "properties": {
+        "pass_through": true
+      },
+      "x": 403,
+      "y": 3387,
+      "width": 210,
+      "height": 86,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Switch",
+      "base_type": "core/Node"
+    },
+    "9cb95656-1bc1-4f24-b674-d0950e5eecb2": {
+      "title": "Module Style",
+      "id": "9cb95656-1bc1-4f24-b674-d0950e5eecb2",
+      "properties": {
+        "title_color": "#3d315b",
+        "node_color": "#27233a",
+        "auto_title": null,
+        "icon": "F076E"
+      },
+      "x": 650,
+      "y": 30,
+      "width": 210,
+      "height": 110,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "util/ModuleStyle",
+      "base_type": "core/Node"
+    },
+    "9aebe27e-d765-47df-8501-14fb347c3983": {
+      "title": "Stage 2",
+      "id": "9aebe27e-d765-47df-8501-14fb347c3983",
+      "properties": {
+        "stage": 2
+      },
+      "x": 1141,
+      "y": 1889,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "5bb0227b-fffd-43df-884b-b7a3074277b2": {
+      "title": "Basic Arithmetic",
+      "id": "5bb0227b-fffd-43df-884b-b7a3074277b2",
+      "properties": {
+        "operation": "add",
+        "a": 0,
+        "b": 0
+      },
+      "x": 281,
+      "y": 1889,
+      "width": 210,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/number/BasicArithmetic",
+      "base_type": "core/Node"
+    },
+    "9b688401-3c9f-4b81-a0ed-2b0d0c5d3d01": {
+      "title": "As Number",
+      "id": "9b688401-3c9f-4b81-a0ed-2b0d0c5d3d01",
+      "properties": {
+        "number_type": "int"
+      },
+      "x": 580,
+      "y": 1920,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/number/AsNumber",
+      "base_type": "core/Node"
+    },
+    "8799626b-675d-4675-adba-c444373d4d17": {
+      "title": "Stage 0",
+      "id": "8799626b-675d-4675-adba-c444373d4d17",
+      "properties": {
+        "stage": 0
+      },
+      "x": 900,
+      "y": 1130,
+      "width": 210,
+      "height": 130,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "efa684e8-6910-4b16-8228-0d47c0d2d74f": {
+      "title": "IN modifier",
+      "id": "efa684e8-6910-4b16-8228-0d47c0d2d74f",
+      "properties": {
+        "input_type": "int",
+        "input_name": "modifier",
+        "input_optional": true,
+        "input_group": "",
+        "num": 5
+      },
+      "x": 2,
+      "y": 1107,
+      "width": 210,
+      "height": 154,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Input",
+      "base_type": "core/Node"
+    },
+    "6311d600-4617-44e0-bfc7-280a0fcf8e18": {
+      "title": "Zero",
+      "id": "6311d600-4617-44e0-bfc7-280a0fcf8e18",
+      "properties": {
+        "value": 0,
+        "number_type": "int"
+      },
+      "x": 240,
+      "y": 1220,
+      "width": 210,
+      "height": 82,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "data/number/Make",
+      "base_type": "core/Node"
+    },
+    "5455d9d6-9456-41e2-9444-b05926051442": {
+      "title": "As Number",
+      "id": "5455d9d6-9456-41e2-9444-b05926051442",
+      "properties": {
+        "number_type": "int"
+      },
+      "x": 380,
+      "y": 1140,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/number/AsNumber",
+      "base_type": "core/Node"
+    },
+    "2749ed93-7ba6-4449-91e1-29859f7aaab5": {
+      "title": "SET local.modifier",
+      "id": "2749ed93-7ba6-4449-91e1-29859f7aaab5",
+      "properties": {
+        "name": "modifier",
+        "scope": "local"
+      },
+      "x": 640,
+      "y": 1120,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    }
+  },
+  "edges": {
+    "6bc1af11-7cf6-41b5-b918-0adb14587872.value": [
+      "14f436c3-e2aa-4622-b377-8488897e0c1e.value"
+    ],
+    "25376c5a-4538-4544-aebd-6676117cd5f5.value": [
+      "83fbba29-63f6-4dc6-84aa-e91eae314a42.value"
+    ],
+    "e25ccb3d-4e54-431e-95ea-ed5f13ca274a.value": [
+      "d6a25230-82c6-45e3-af1e-84aedc25e496.value"
+    ],
+    "55133bc9-a94a-4891-b20c-761efe885d6a.value": [
+      "92b58658-705b-4446-88e6-6fbf93b14a1f.value"
+    ],
+    "83fbba29-63f6-4dc6-84aa-e91eae314a42.value": [
+      "d4b63b7f-aeb3-4e31-aec4-eb79dcefa34b.state"
+    ],
+    "d6a25230-82c6-45e3-af1e-84aedc25e496.value": [
+      "d4b63b7f-aeb3-4e31-aec4-eb79dcefa34b.state_b"
+    ],
+    "92b58658-705b-4446-88e6-6fbf93b14a1f.value": [
+      "d4b63b7f-aeb3-4e31-aec4-eb79dcefa34b.state_c"
+    ],
+    "47ad3e7b-e9ca-497c-affd-ed329975d01b.value": [
+      "61eaa3ad-90f4-47bb-851b-9c73997c35c5.value"
+    ],
+    "5ad41a34-51df-4ca5-bdaa-08b61412e88a.value": [
+      "50191e52-87fc-4b0d-8b87-743eeaa66f76.value"
+    ],
+    "ee24ae74-4430-45cf-8cdd-c4d778295211.value": [
+      "8f769b2c-4682-4c79-8341-21adc93e19ae.value"
+    ],
+    "c594c282-413d-45d8-ad43-20045f9e76ed.value": [
+      "3373e878-4a67-4169-a147-986e6571d671.value"
+    ],
+    "c072a757-19a5-42a2-a9d2-00de417b4ca0.value": [
+      "f8301baa-8940-4b37-8197-d455d843142a.value"
+    ],
+    "ec2a7665-4f94-4b78-b04e-370fb1649617.value": [
+      "2bfc4c62-ae15-4574-a27c-747b25746462.value"
+    ],
+    "2bfc4c62-ae15-4574-a27c-747b25746462.value": [
+      "299ce8fa-4692-4171-909a-a7ae6daa423b.value"
+    ],
+    "299ce8fa-4692-4171-909a-a7ae6daa423b.value": [
+      "d4b63b7f-aeb3-4e31-aec4-eb79dcefa34b.state_d"
+    ],
+    "b276aa84-c8f7-4fa7-aa06-475ec3193681.value": [
+      "173d3100-8427-411a-95a0-87e4c306171f.value"
+    ],
+    "f74fd488-8f90-4cf4-84d1-44ba5511cf9d.value": [
+      "3a1c1e34-5f7d-4bfc-934c-f57ddace7b57.max"
+    ],
+    "bc9d340f-d97b-4b30-8ae2-edc3252fe5d0.value": [
+      "3a1c1e34-5f7d-4bfc-934c-f57ddace7b57.min"
+    ],
+    "3a1c1e34-5f7d-4bfc-934c-f57ddace7b57.result": [
+      "9ffd3cfd-8082-4444-9002-df0361823145.value"
+    ],
+    "9ffd3cfd-8082-4444-9002-df0361823145.value": [
+      "dc8ff45c-761b-4384-981d-d67eff6d7fe0.state"
+    ],
+    "3e2f067a-d1ac-45de-8753-79f4cb168cd2.value": [
+      "5bb0227b-fffd-43df-884b-b7a3074277b2.b"
+    ],
+    "8c4e9f07-977d-4b06-afc2-1843ffe0f93f.value": [
+      "5bb0227b-fffd-43df-884b-b7a3074277b2.a"
+    ],
+    "ab330fcd-2e25-4fac-a95d-9c406f5c5e22.value": [
+      "9aebe27e-d765-47df-8501-14fb347c3983.state"
+    ],
+    "571f1dc5-d0da-47de-a4a2-37959e13ed76.result": [
+      "828b7598-01cd-4670-bc53-63acaa88cbe9.value"
+    ],
+    "828b7598-01cd-4670-bc53-63acaa88cbe9.value": [
+      "0440a8ce-4561-45b4-abd7-01b762f68ef7.state"
+    ],
+    "3af1e4b7-300f-4265-8006-52af8f05dfff.value": [
+      "571f1dc5-d0da-47de-a4a2-37959e13ed76.item1",
+      "a0c91057-ee0e-40da-a8b8-33fffff389e2.item1"
+    ],
+    "6693c831-5c78-4647-8603-fc70886c5b64.value": [
+      "571f1dc5-d0da-47de-a4a2-37959e13ed76.item2",
+      "a0c91057-ee0e-40da-a8b8-33fffff389e2.item2"
+    ],
+    "7963a2a8-a407-4bf2-ac10-bb0bb61fcbb8.value": [
+      "571f1dc5-d0da-47de-a4a2-37959e13ed76.item3",
+      "a0c91057-ee0e-40da-a8b8-33fffff389e2.item3"
+    ],
+    "8421ab27-5a8a-4db7-9718-cb4192470d6b.value": [
+      "571f1dc5-d0da-47de-a4a2-37959e13ed76.item4",
+      "a0c91057-ee0e-40da-a8b8-33fffff389e2.item4"
+    ],
+    "c95d0626-2ef6-4bdb-af56-207478ecd2c1.value": [
+      "571f1dc5-d0da-47de-a4a2-37959e13ed76.item5",
+      "a0c91057-ee0e-40da-a8b8-33fffff389e2.item5"
+    ],
+    "5c9d7a1c-86d7-4c55-905e-2b29b9305330.value": [
+      "571f1dc5-d0da-47de-a4a2-37959e13ed76.item0",
+      "a0c91057-ee0e-40da-a8b8-33fffff389e2.item0"
+    ],
+    "5a941399-7b96-4026-9c54-72de33bd8141.state": [
+      "1900db1b-3e4d-4788-b942-2d57279f9429.state"
+    ],
+    "5a941399-7b96-4026-9c54-72de33bd8141.ux_element": [
+      "1900db1b-3e4d-4788-b942-2d57279f9429.ux_element"
+    ],
+    "1900db1b-3e4d-4788-b942-2d57279f9429.state": [
+      "44e423f2-d62a-425c-a8d9-b8634492662d.state"
+    ],
+    "1900db1b-3e4d-4788-b942-2d57279f9429.ux_element": [
+      "44e423f2-d62a-425c-a8d9-b8634492662d.ux_element"
+    ],
+    "a0c91057-ee0e-40da-a8b8-33fffff389e2.result": [
+      "5a941399-7b96-4026-9c54-72de33bd8141.body"
+    ],
+    "44e423f2-d62a-425c-a8d9-b8634492662d.state": [
+      "0440a8ce-4561-45b4-abd7-01b762f68ef7.state_b"
+    ],
+    "61cc4abf-3a76-46f1-96b6-3a06888de403.value": [
+      "a3a65d12-b6ec-4f57-b6c5-b8b89e3c1bc2.value"
+    ],
+    "a3a65d12-b6ec-4f57-b6c5-b8b89e3c1bc2.yes": [
+      "5a941399-7b96-4026-9c54-72de33bd8141.state"
+    ],
+    "5bb0227b-fffd-43df-884b-b7a3074277b2.result": [
+      "9b688401-3c9f-4b81-a0ed-2b0d0c5d3d01.value"
+    ],
+    "9b688401-3c9f-4b81-a0ed-2b0d0c5d3d01.value": [
+      "ab330fcd-2e25-4fac-a95d-9c406f5c5e22.value"
+    ],
+    "efa684e8-6910-4b16-8228-0d47c0d2d74f.value": [
+      "5455d9d6-9456-41e2-9444-b05926051442.value"
+    ],
+    "6311d600-4617-44e0-bfc7-280a0fcf8e18.value": [
+      "5455d9d6-9456-41e2-9444-b05926051442.default"
+    ],
+    "5455d9d6-9456-41e2-9444-b05926051442.value": [
+      "2749ed93-7ba6-4449-91e1-29859f7aaab5.value"
+    ],
+    "2749ed93-7ba6-4449-91e1-29859f7aaab5.value": [
+      "8799626b-675d-4675-adba-c444373d4d17.state"
+    ]
+  },
+  "groups": [
+    {
+      "title": "Passthrough",
+      "x": -25,
+      "y": -65,
+      "width": 620,
+      "height": 242,
+      "color": "#88A",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Stage 0",
+      "x": -25,
+      "y": 189,
+      "width": 1149,
+      "height": 1101,
+      "color": "#3f789e",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Output",
+      "x": 1389,
+      "y": 101,
+      "width": 646,
+      "height": 1129,
+      "color": "#8A8",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Process",
+      "x": -24,
+      "y": 1295,
+      "width": 1152,
+      "height": 410,
+      "color": "#3f789e",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Process",
+      "x": -22,
+      "y": 1712,
+      "width": 1485,
+      "height": 400,
+      "color": "#3f789e",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Process",
+      "x": -22,
+      "y": 2122,
+      "width": 2210,
+      "height": 1512,
+      "color": "#3f789e",
+      "font_size": 24,
+      "inherited": false
+    }
+  ],
+  "comments": [],
+  "extends": null,
+  "base_type": "core/Graph",
+  "inputs": [],
+  "outputs": [],
+  "module_properties": {},
+  "style": {
+    "title_color": "#3d315b",
+    "node_color": "#27233a",
+    "icon": "F076E",
+    "auto_title": null,
+    "counterpart": null
+  }
+}

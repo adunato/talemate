@@ -1,8 +1,15 @@
+import mimetypes
 import os
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException
+
+# Fix for Windows systems where the registry may map .js to text/plain
+# instead of the correct MIME type, causing browsers to reject module scripts.
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
 
 # Get the directory of the current file
 current_dir = os.path.dirname(os.path.abspath(__file__))

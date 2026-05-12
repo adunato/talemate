@@ -806,6 +806,54 @@ human_names_male = {
 
 # SCIFI TROPES
 
+# DRAMATIC MECHANISMS — how a beat advances the story
+
+dramatic_mechanisms = [
+    "discovery",
+    "confrontation",
+    "sacrifice",
+    "betrayal",
+    "confession",
+    "escape",
+    "surrender",
+    "reversal",
+    "loss",
+    "alliance",
+    "deception",
+    "rescue",
+    "dilemma",
+    "bargain",
+    "transformation",
+    "recognition",
+    "separation",
+    "reunion",
+    "provocation",
+    "submission",
+]
+
+# EMOTIONAL REGISTERS — the feeling a beat should evoke
+
+emotional_registers = [
+    "dread",
+    "wonder",
+    "grief",
+    "defiance",
+    "tenderness",
+    "humor",
+    "resignation",
+    "rage",
+    "longing",
+    "relief",
+    "shame",
+    "pride",
+    "curiosity",
+    "disgust",
+    "serenity",
+    "paranoia",
+    "euphoria",
+    "numbness",
+]
+
 scifi_tropes = [
     "AI",
     "Alien",
@@ -919,6 +967,24 @@ class ThematicGenerator:
 
     def scifi_trope(self):
         return random.choice(scifi_tropes)
+
+    def dramatic_mechanism(self):
+        return random.choice(dramatic_mechanisms)
+
+    def emotional_register(self):
+        return random.choice(emotional_registers)
+
+    def beat_seed(self):
+        """Generate a dramatic mechanism + emotional register pair for beat sculpting."""
+        return f"{random.choice(dramatic_mechanisms)} / {random.choice(emotional_registers)}"
+
+    def beat_seeds(self, count: int) -> list[str]:
+        """Generate unique beat seeds, avoiding repeated mechanisms."""
+        mechanisms = random.sample(
+            dramatic_mechanisms, min(count, len(dramatic_mechanisms))
+        )
+        registers = [random.choice(emotional_registers) for _ in range(count)]
+        return [f"{m} / {r}" for m, r in zip(mechanisms, registers)]
 
     def human_name_female(self, ethnicity: str = None):
         if not ethnicity:

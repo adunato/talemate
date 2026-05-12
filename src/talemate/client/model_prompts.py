@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import shutil
@@ -23,6 +24,9 @@ BASE_TEMPLATE_PATH = os.path.join(
 # holds the default templates
 STD_TEMPLATE_PATH = os.path.join(BASE_TEMPLATE_PATH, "std")
 
+# user-supplied base templates (sits inside std/ but gitignored)
+STD_USER_TEMPLATE_PATH = os.path.join(STD_TEMPLATE_PATH, "user")
+
 # llm prompt templates provided by talemate
 TALEMATE_TEMPLATE_PATH = os.path.join(BASE_TEMPLATE_PATH, "talemate")
 
@@ -40,6 +44,10 @@ def register_template_identifier(cls):
 
 
 log = structlog.get_logger("talemate.model_prompts")
+
+
+def _raise_exception(msg):
+    raise Exception(msg)
 
 
 class PromptSpec(pydantic.BaseModel):
@@ -76,8 +84,11 @@ class ModelPrompt:
 
     @property
     def std_templates(self) -> list[str]:
-        env = Environment(loader=FileSystemLoader(STD_TEMPLATE_PATH))
-        return sorted(env.list_templates())
+        # Built-in templates from std/ (excluding user/ subdir)
+        builtin = [t["name"] for t in self.list_std_builtin_templates()]
+        # User-supplied templates from std/user/, prefixed with "user/"
+        user = [f"user/{t['name']}" for t in self.list_std_user_templates()]
+        return sorted(builtin) + sorted(user)
 
     def __call__(
         self,
@@ -112,9 +123,18 @@ class ModelPrompt:
 
         spec.template = template_file
 
+        # Build GGUF/llama.cpp compatible messages list
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        messages.append({"role": "user", "content": user_message.strip()})
+        if coercion_message:
+            messages.append({"role": "assistant", "content": coercion_message})
+
         return (
             template.render(
                 {
+                    # Talemate native vars
                     "system_message": system_message,
                     "prompt": prompt.strip(),
                     "user_message": user_message.strip(),
@@ -124,6 +144,15 @@ class ModelPrompt:
                     ),
                     "reasoning_tokens": reasoning_tokens,
                     "spec": spec,
+                    # GGUF/llama.cpp compatible vars
+                    "messages": messages,
+                    "bos_token": "",
+                    "eos_token": "",
+                    "add_generation_prompt": True,
+                    "enable_thinking": reasoning_tokens > 0,
+                    "thinking_budget": reasoning_tokens,
+                    "strftime_now": lambda fmt: datetime.datetime.now().strftime(fmt),
+                    "raise_exception": _raise_exception,
                 }
             ),
             template_file,
@@ -193,19 +222,81 @@ class ModelPrompt:
 
     def create_user_override(self, template_name: str, model_name: str):
         """
-        Will copy STD_TEMPLATE_PATH/template_name to USER_TEMPLATE_PATH/model_name.jinja2
+        Will copy a std template to USER_TEMPLATE_PATH/model_name.jinja2
+
+        Supports both built-in templates (e.g. "ChatML.jinja2") and
+        user-supplied templates (e.g. "user/MyTemplate.jinja2").
         """
 
         template_name = template_name.split(".jinja2")[0]
 
         cleaned_model_name = self.clean_model_name(model_name)
 
-        shutil.copyfile(
-            os.path.join(STD_TEMPLATE_PATH, template_name + ".jinja2"),
-            os.path.join(USER_TEMPLATE_PATH, cleaned_model_name + ".jinja2"),
-        )
+        if template_name.startswith("user/"):
+            safe_name = os.path.basename(template_name[5:])
+            source_path = os.path.join(STD_USER_TEMPLATE_PATH, safe_name + ".jinja2")
+        else:
+            source_path = os.path.join(STD_TEMPLATE_PATH, template_name + ".jinja2")
 
-        return os.path.join(USER_TEMPLATE_PATH, cleaned_model_name + ".jinja2")
+        dest_path = os.path.join(USER_TEMPLATE_PATH, cleaned_model_name + ".jinja2")
+        shutil.copyfile(source_path, dest_path)
+
+        return dest_path
+
+    def _list_templates_in_dir(self, directory: str) -> list[dict]:
+        """List .jinja2 templates in a directory with their content."""
+        if not os.path.isdir(directory):
+            return []
+        results = []
+        for fname in sorted(os.listdir(directory)):
+            if not fname.endswith(".jinja2"):
+                continue
+            fpath = os.path.join(directory, fname)
+            if not os.path.isfile(fpath):
+                continue
+            with open(fpath, "r", encoding="utf-8") as f:
+                results.append({"name": fname, "content": f.read()})
+        return results
+
+    def list_std_builtin_templates(self) -> list[dict]:
+        """List built-in std/ templates with their content."""
+        return self._list_templates_in_dir(STD_TEMPLATE_PATH)
+
+    def list_std_user_templates(self) -> list[dict]:
+        """List user-supplied templates in std/user/ with their content."""
+        return self._list_templates_in_dir(STD_USER_TEMPLATE_PATH)
+
+    def get_std_template_content(self, template_name: str) -> str | None:
+        """Read content of a template from std/ or std/user/."""
+        safe_name = os.path.basename(template_name)
+        if template_name.startswith("user/"):
+            fpath = os.path.join(STD_USER_TEMPLATE_PATH, safe_name)
+        else:
+            fpath = os.path.join(STD_TEMPLATE_PATH, safe_name)
+        if not os.path.isfile(fpath):
+            return None
+        with open(fpath, "r", encoding="utf-8") as f:
+            return f.read()
+
+    def save_std_user_template(self, template_name: str, content: str) -> str:
+        """Save/create a template in std/user/. Returns the file path."""
+        os.makedirs(STD_USER_TEMPLATE_PATH, exist_ok=True)
+        safe_name = os.path.basename(template_name)
+        if not safe_name.endswith(".jinja2"):
+            safe_name += ".jinja2"
+        fpath = os.path.join(STD_USER_TEMPLATE_PATH, safe_name)
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write(content)
+        return fpath
+
+    def delete_std_user_template(self, template_name: str) -> bool:
+        """Delete a template from std/user/."""
+        safe_name = os.path.basename(template_name)
+        fpath = os.path.join(STD_USER_TEMPLATE_PATH, safe_name)
+        if os.path.isfile(fpath):
+            os.remove(fpath)
+            return True
+        return False
 
     def query_hf_for_prompt_template_suggestion(self, model_name: str):
         api = huggingface_hub.HfApi()

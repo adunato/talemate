@@ -114,6 +114,7 @@
 <script>
 import { SceneTextParser } from '@/utils/sceneMessageRenderer';
 import { insertNewlineAtCursor } from '@/utils/textAreaUtils';
+import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 import MessageAssetImage from './MessageAssetImage.vue';
 import MessageAssetMixin from './MessageAssetMixin.js';
 export default {
@@ -282,7 +283,7 @@ export default {
       // else -> submit
       // shift -> newline
 
-      if (event.ctrlKey) {
+      if (isPrimaryModifier(event)) {
         this.autocompleteEdit();
       } else if (event.shiftKey) {
         insertNewlineAtCursor(this.$refs.textarea, this.editing_text, (v) => this.editing_text = v);

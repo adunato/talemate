@@ -101,6 +101,12 @@
                     <v-chip v-bind="props" v-if="client.data_format" label size="x-small" color="grey" variant="tonal" class="mb-1" prepend-icon="mdi-code-json">{{ client.data_format.toUpperCase() }}</v-chip>
                   </template>
                 </v-tooltip>
+                <!-- section format -->
+                <v-tooltip text="Section format">
+                  <template v-slot:activator="{ props }">
+                    <v-chip v-bind="props" v-if="client.section_format" label size="x-small" color="grey" variant="tonal" class="mb-1" prepend-icon="mdi-xml">{{ client.section_format.toUpperCase() }}</v-chip>
+                  </template>
+                </v-tooltip>
               </div>
             </v-list-item-title>
 
@@ -306,6 +312,7 @@ export default {
           double_coercion: null,
           rate_limit: null,
           data_format: null,
+          section_format: null,
           enforce_response_length: 'cap_tokens_and_instructions',
           data: {
             has_prompt_template: false,
@@ -391,9 +398,9 @@ export default {
     },
     openModal(initialData = null) {
       this.state.currentClient = {
-        name: 'TextGenWebUI',
-        type: 'textgenwebui',
-        api_url: 'http://localhost:5000',
+        name: 'llama.cpp',
+        type: 'llamacpp',
+        api_url: 'http://localhost:8080',
         model_name: '',
         max_token_length: 8192,
         enforce_response_length: 'cap_tokens_and_instructions',
@@ -561,6 +568,7 @@ export default {
           client.manual_model_choices = data.data.manual_model_choices;
           client.rate_limit = data.data.rate_limit;
           client.data_format = data.data.data_format;
+          client.section_format = data.data.section_format;
           client.data = data.data;
           client.enabled = data.data.enabled;
           client.system_prompts = data.data.system_prompts;
@@ -569,6 +577,7 @@ export default {
           client.embeddings_model_name = data.data.embeddings_model_name;
           client.dedicated_default_template = data.data.dedicated_default_template;
           client.optimize_prompt_caching = data.data.optimize_prompt_caching;
+          client.dedupe_enabled = data.data.dedupe_enabled;
           client.enforce_response_length = data.data.enforce_response_length;
           for (let key in client.data.meta.extra_fields) {
             if (client.data[key] === null || client.data[key] === undefined) {
@@ -596,6 +605,7 @@ export default {
             manual_model_choices: data.data.manual_model_choices,
             rate_limit: data.data.rate_limit,
             data_format: data.data.data_format,
+            section_format: data.data.section_format,
             data: data.data,
             enabled: data.data.enabled,
             system_prompts: data.data.system_prompts,
@@ -613,6 +623,7 @@ export default {
             reasoning_display: data.data.reasoning_display,
             dedicated_default_template: data.data.dedicated_default_template,
             optimize_prompt_caching: data.data.optimize_prompt_caching,
+            dedupe_enabled: data.data.dedupe_enabled,
             enforce_response_length: data.data.enforce_response_length,
           });
 

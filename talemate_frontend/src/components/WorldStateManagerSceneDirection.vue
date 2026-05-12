@@ -43,18 +43,34 @@
                     </v-card-text>
                 </v-card>
 
-                
+                <!-- director instructions -->
+                <v-card class="my-2" variant="text">
+                    <v-card-title class="text-white">
+                        <v-icon color="primary" size="small" class="mr-2">mdi-note-text</v-icon>
+                        Director Instructions
+                    </v-card-title>
+                    <v-textarea
+                        v-model="sceneIntent.instructions"
+                        label="General"
+                        rows="3"
+                        auto-grow
+                        messages="Omnipresent instructions available to the director during automated scene direction and director chat."
+                        :color="dirty['instructions'] ? 'dirty' : ''"
+                        @update:model-value="setFieldDirty('instructions')"
+                        @blur="updateSceneIntent()"
+                    ></v-textarea>
 
-                <v-textarea
-                    v-model="sceneIntent.instructions"
-                    label="Director Instructions"
-                    rows="4"
-                    auto-grow
-                    messages="Omnipresent instructions available to the director during automated scene direction and director chat."
-                    :color="dirty['instructions'] ? 'dirty' : ''"
-                    @update:model-value="setFieldDirty('instructions')"
-                    @blur="updateSceneIntent()"
-                ></v-textarea>
+                    <v-select
+                        v-model="sceneIntent.instruction_template"
+                        :items="instructionTemplateItems"
+                        label="Instruction template"
+                        clearable
+                        messages="Optional. Jinja2 template from the scene's template directory. Rendered alongside the general instructions above."
+                        :color="dirty['instruction_template'] ? 'dirty' : ''"
+                        @update:model-value="setFieldDirty('instruction_template'); updateSceneIntent()"
+                    ></v-select>
+
+                </v-card>
 
                 <!-- overall intention -->
                 <v-card-title>
@@ -195,6 +211,7 @@
                     <tr>
                         <th class="name-column">Name</th>
                         <th class="description-column">Description</th>
+                        <th class="template-column">Instructions</th>
                         <th class="actions-column" style="text-align: right; width: 120px;">Actions</th>
                     </tr>
                 </thead>
@@ -203,6 +220,25 @@
                         <td class="name-column">{{ sceneType.name }}</td>
                         <td class="description-column align-start">
                             <div class="full-cell-content bg-mutedbg">{{ sceneType.description }}</div>
+                        </td>
+                        <td class="template-column">
+                            <div v-if="sceneType.instructions || sceneType.instruction_template">
+                                <div v-if="sceneType.instructions && sceneType.instructions.trim()" class="d-flex align-center mb-1">
+                                    <v-icon size="small" color="primary" class="mr-1">mdi-text-box-outline</v-icon>
+                                    <span class="text-caption">Text</span>
+                                </div>
+                                <div v-if="sceneType.instruction_template" class="d-flex align-center">
+                                    <v-icon
+                                        size="small"
+                                        :color="sceneTemplateFiles.includes(sceneType.instruction_template) ? 'primary' : 'warning'"
+                                        class="mr-1"
+                                    >
+                                        {{ sceneTemplateFiles.includes(sceneType.instruction_template) ? 'mdi-file-code' : 'mdi-file-alert' }}
+                                    </v-icon>
+                                    <span class="text-caption">{{ sceneType.instruction_template }}</span>
+                                </div>
+                            </div>
+                            <span v-else class="text-muted text-caption">—</span>
                         </td>
                         <td class="actions-column text-right">
                             <div class="action-buttons">
@@ -275,6 +311,14 @@
                         max-rows="30"
                         label="Instructions"
                     ></v-textarea>
+
+                    <v-select
+                        v-model="sceneType.instruction_template"
+                        :items="instructionTemplateItems"
+                        label="Instruction template"
+                        clearable
+                        messages="Optional. Jinja2 template from the scene's template directory. Rendered alongside the instructions above."
+                    ></v-select>
                 </v-form>
             </v-card-text>
             <v-card-actions>
@@ -293,7 +337,12 @@
 }
 
 .description-column {
-    width: 65%;
+    width: 50%;
+}
+
+.template-column {
+    width: 15%;
+    min-width: 140px;
 }
 
 .instructions-text {
@@ -347,13 +396,14 @@ const BLANK_SCENE_TYPE = {
     name: '',
     description: '',
     instructions: '',
+    instruction_template: '',
 }
 
 export default {
     name: 'WorldStateManagerSceneDirection',
     components: {
         ConfirmActionInline,
-        ContextualGenerate
+        ContextualGenerate,
     },
     props: {
         immutableScene: Object,
@@ -378,6 +428,18 @@ export default {
         },
         sceneTypes() {
             return Object.values(this.sceneIntent.scene_types);
+        },
+        instructionTemplateItems() {
+            // Always surface the currently-stored value even if the file was
+            // renamed/removed, so the user can see what's set and fix it.
+            const items = this.sceneTemplateFiles.map(name => ({ title: name, value: name }));
+            const current = [this.sceneIntent?.instruction_template, this.sceneType?.instruction_template];
+            for (const value of current) {
+                if (value && !this.sceneTemplateFiles.includes(value)) {
+                    items.push({ title: `${value} (missing)`, value, props: { disabled: false } });
+                }
+            }
+            return items;
         },
         filteredSceneTypeTemplates() {
             // Check if we have templates from props
@@ -409,7 +471,13 @@ export default {
             handler(value) {
                 if(value) {
                     this.getSceneIntent();
+                    this.requestSceneTemplateFiles();
                 }
+            }
+        },
+        sceneTypeEditor(value) {
+            if(value) {
+                this.requestSceneTemplateFiles();
             }
         },
         templates: {
@@ -426,6 +494,7 @@ export default {
                 scene_types: {},
                 intent: '',
                 instructions: '',
+                instruction_template: '',
                 direction: {
                     always_on: false,
                     run_immediately: false,
@@ -442,6 +511,7 @@ export default {
             dirty: {},
             deleteColumnWidth: 200,
             selectedSceneTypeTemplate: null,
+            sceneTemplateFiles: [],
         }
     },
     methods: {
@@ -502,6 +572,13 @@ export default {
             }));
         },
 
+        requestSceneTemplateFiles() {
+            this.getWebsocket().send(JSON.stringify({
+                type: 'prompts',
+                action: 'list_templates',
+            }));
+        },
+
         updateSceneIntent() {
             if(!this.sceneIntent) {
                 return;
@@ -551,6 +628,17 @@ export default {
                 if (!hasDirty) {
                     this.sceneIntent = message.data;
                 }
+                return;
+            }
+
+            if (message.type === 'prompts' && message.action === 'list_templates') {
+                // Offer only flat scene-dir templates (agent=="") as
+                // instruction-template candidates. Agent-specific scene
+                // templates are for overriding named prompts, not includes.
+                const templates = (message.data && message.data.templates) || [];
+                this.sceneTemplateFiles = templates
+                    .filter(t => t.agent === '' && (t.available_in || []).includes('scene'))
+                    .map(t => `${t.name}.jinja2`);
                 return;
             }
 

@@ -9,6 +9,7 @@ import talemate.emit.async_signals as async_signals
 import talemate.util as util
 from talemate.scene_message import (
     CharacterMessage,
+    DIRECTOR_INPUT_PREFIX,
     NarratorMessage,
 )
 
@@ -89,10 +90,10 @@ class SceneDirectionMixin:
                     type="number",
                     label="Max actions per turn",
                     description="Maximum number of actions to execute per scene direction turn.",
-                    value=5,
+                    value=10,
                     step=1,
                     min=1,
-                    max=20,
+                    max=99,
                 ),
                 "missing_response_retry_max": AgentActionConfig(
                     type="number",
@@ -210,6 +211,12 @@ class SceneDirectionMixin:
 
         user_input = emission.message
 
+        # # and ## prefixed input is routed through WaitForInput as an explicit
+        # player direction, which appends its own is_direction=True message.
+        # Skip the default auto-append to avoid duplicate/noisy entries.
+        if user_input.startswith(DIRECTOR_INPUT_PREFIX):
+            return
+
         # Create user interaction message
         message = UserInteractionMessage(
             user_input=user_input,
@@ -306,9 +313,7 @@ class SceneDirectionMixin:
         Emit a websocket passthrough event for newly appended direction messages.
         """
         try:
-            visible_new_messages = [
-                m for m in (new_messages or []) if m.type != "user_interaction"
-            ]
+            visible_new_messages = new_messages or []
             if not visible_new_messages:
                 return
             emit(
@@ -625,6 +630,7 @@ class SceneDirectionMixin:
         # Direction-specific template variables
         turn_balance = self._direction_compute_turn_balance()
         user_agency = self._direction_compute_user_agency_metrics()
+
         extra_vars = {
             "direction_enable_analysis": self.direction_enable_analysis,
             "custom_instructions": self.direction_custom_instructions,

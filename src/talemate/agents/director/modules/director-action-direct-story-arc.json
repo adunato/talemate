@@ -1,0 +1,430 @@
+{
+  "title": "Director Action Direct Story Arc",
+  "id": "ccb39d43-c849-49e9-a10f-9fb0ddd9c454",
+  "properties": {
+    "name": "direct_story_arc",
+    "description": "Generate a complete story arc from the active plan's beats. All beats are expanded into prose in chunks and pushed to scene history automatically. Use this instead of direct_scene when in expand mode.",
+    "instructions": "",
+    "example_json": "[]"
+  },
+  "x": 0,
+  "y": 0,
+  "width": 200,
+  "height": 100,
+  "collapsed": false,
+  "inherited": false,
+  "registry": "agents/director/chat/directorActionDirectStoryArc",
+  "nodes": {
+    "3abaa4b8-d1c0-4e9d-aa40-0a97352789b0": {
+      "title": "Validate Value Is Set",
+      "id": "3abaa4b8-d1c0-4e9d-aa40-0a97352789b0",
+      "properties": {
+        "error_message": "",
+        "blank_string_is_unset": true
+      },
+      "x": 304,
+      "y": 70,
+      "width": 210,
+      "height": 102,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "validation/ValidateValueIsSet",
+      "base_type": "core/Node"
+    },
+    "a0f4f688-0cfe-4337-8ed5-dfe667a42351": {
+      "title": "Stage 0",
+      "id": "a0f4f688-0cfe-4337-8ed5-dfe667a42351",
+      "properties": {
+        "stage": 0
+      },
+      "x": 810,
+      "y": 70,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "35aba577-cff7-4cdc-ab65-d94069b899ff": {
+      "title": "SET local.instructions",
+      "id": "35aba577-cff7-4cdc-ab65-d94069b899ff",
+      "properties": {
+        "name": "instructions",
+        "scope": "local"
+      },
+      "x": 550,
+      "y": 60,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/SetState",
+      "base_type": "core/Node"
+    },
+    "4dc2471a-b1a3-4d7e-a3e6-e1cf3ade5851": {
+      "title": "instructions",
+      "id": "4dc2471a-b1a3-4d7e-a3e6-e1cf3ade5851",
+      "properties": {
+        "name": "instructions",
+        "typ": "str",
+        "instructions": "Any additional notes or context for the story generation. Include world details, character information, or specific guidance gathered from queries. These notes will be passed to the writer alongside the beat descriptions. Can be empty if no additional context is needed."
+      },
+      "x": 30,
+      "y": 70,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/ActionArgument",
+      "base_type": "core/Node"
+    },
+    "32f0b1c1-537e-4f65-a462-afa169d494d7": {
+      "title": "GET local.instructions",
+      "id": "32f0b1c1-537e-4f65-a462-afa169d494d7",
+      "properties": {
+        "name": "instructions",
+        "scope": "local"
+      },
+      "x": 263,
+      "y": 548,
+      "width": 210,
+      "height": 122,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "state/GetState",
+      "base_type": "core/Node"
+    },
+    "b6079126-1364-4fcf-b98b-08dbb79f9615": {
+      "title": "true",
+      "id": "b6079126-1364-4fcf-b98b-08dbb79f9615",
+      "properties": {
+        "value": true
+      },
+      "x": -260,
+      "y": 310,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "b12ebc94-8767-4ce4-9d97-1f8adfa8ae66": {
+      "title": "Return",
+      "id": "b12ebc94-8767-4ce4-9d97-1f8adfa8ae66",
+      "properties": {},
+      "x": 870,
+      "y": 360,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "f6183662-351c-4251-874c-8ea593df1551": {
+      "title": "Director Chat Sub Action",
+      "id": "f6183662-351c-4251-874c-8ea593df1551",
+      "properties": {
+        "group": "Direct Story Arc",
+        "action_id": "direct_story_arc",
+        "action_title": "Direct Story Arc",
+        "description_chat": "Generate the complete story arc from the active plan. Pass any context notes you have gathered as the instructions. The system handles beat expansion, scene history, and plan progress automatically. Call this ONCE \u2014 do NOT call it per-beat.",
+        "description_scene_direction": "Generate the complete story arc from the active plan. Pass any context notes you have gathered as the instructions. The system handles beat expansion, scene history, and plan progress automatically. Call this ONCE \u2014 do NOT call it per-beat.",
+        "instruction_examples": [
+          "The ship is a modified scout vessel. Kaira's species has four-fingered hands and violet skin. The anomaly was first detected three weeks ago.",
+          "No additional context needed."
+        ],
+        "availability": "chat",
+        "force_enabled": false
+      },
+      "x": 20,
+      "y": 300,
+      "width": 210,
+      "height": 246,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/chat/DirectorChatSubAction",
+      "base_type": "core/Node"
+    },
+    "a30b01b3-84da-46c0-8783-785660b85ccb": {
+      "title": "Expand Story Arc",
+      "id": "a30b01b3-84da-46c0-8783-785660b85ccb",
+      "properties": {
+        "chunk_size": 5
+      },
+      "x": 570,
+      "y": 320,
+      "width": 220,
+      "height": 198,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/plan/ExpandStoryArc",
+      "base_type": "core/Node"
+    },
+    "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061": {
+      "title": "plan_expand_chunk_size",
+      "id": "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061",
+      "properties": {},
+      "x": 200,
+      "y": 760,
+      "width": 294,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Watch",
+      "base_type": "core/Node"
+    },
+    "9b188432-1182-4fe0-82d4-28ad012a7a9a": {
+      "title": "As Number",
+      "id": "9b188432-1182-4fe0-82d4-28ad012a7a9a",
+      "properties": {
+        "number_type": "int"
+      },
+      "x": 530,
+      "y": 770,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "data/number/AsNumber",
+      "base_type": "core/Node"
+    },
+    "08c18906-862b-4450-a1b1-71937b095717": {
+      "title": "plan_expand_critique",
+      "id": "08c18906-862b-4450-a1b1-71937b095717",
+      "properties": {},
+      "x": 230,
+      "y": 850,
+      "width": 168,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Watch",
+      "base_type": "core/Node"
+    },
+    "673c3bef-fe28-409e-8f3a-1be74aa33780": {
+      "title": "As Bool",
+      "id": "673c3bef-fe28-409e-8f3a-1be74aa33780",
+      "properties": {
+        "default": false
+      },
+      "x": 450,
+      "y": 870,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/AsBool",
+      "base_type": "core/Node"
+    },
+    "dc9bff13-a1bb-46a7-9159-090287494766": {
+      "title": "Director Settings",
+      "id": "dc9bff13-a1bb-46a7-9159-090287494766",
+      "properties": {},
+      "x": 10,
+      "y": 770,
+      "width": 363,
+      "height": 1006,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "agents/director/Settings",
+      "base_type": "core/Node"
+    },
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf": {
+      "title": "Get Active Plan",
+      "id": "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf",
+      "properties": {},
+      "x": 343,
+      "y": 328,
+      "width": 144,
+      "height": 146,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/director/plan/GetActivePlan",
+      "base_type": "core/Node"
+    }
+  },
+  "edges": {
+    "3abaa4b8-d1c0-4e9d-aa40-0a97352789b0.value": [
+      "35aba577-cff7-4cdc-ab65-d94069b899ff.value"
+    ],
+    "35aba577-cff7-4cdc-ab65-d94069b899ff.value": [
+      "a0f4f688-0cfe-4337-8ed5-dfe667a42351.state"
+    ],
+    "4dc2471a-b1a3-4d7e-a3e6-e1cf3ade5851.value": [
+      "3abaa4b8-d1c0-4e9d-aa40-0a97352789b0.value"
+    ],
+    "32f0b1c1-537e-4f65-a462-afa169d494d7.value": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.director_notes"
+    ],
+    "b6079126-1364-4fcf-b98b-08dbb79f9615.value": [
+      "f6183662-351c-4251-874c-8ea593df1551.state"
+    ],
+    "f6183662-351c-4251-874c-8ea593df1551.state": [
+      "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.state"
+    ],
+    "a30b01b3-84da-46c0-8783-785660b85ccb.result": [
+      "b12ebc94-8767-4ce4-9d97-1f8adfa8ae66.value"
+    ],
+    "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061.value": [
+      "9b188432-1182-4fe0-82d4-28ad012a7a9a.value"
+    ],
+    "9b188432-1182-4fe0-82d4-28ad012a7a9a.value": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.chunk_size"
+    ],
+    "08c18906-862b-4450-a1b1-71937b095717.value": [
+      "673c3bef-fe28-409e-8f3a-1be74aa33780.value"
+    ],
+    "673c3bef-fe28-409e-8f3a-1be74aa33780.value": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.expand_critique"
+    ],
+    "dc9bff13-a1bb-46a7-9159-090287494766.plan_expand_chunk_size": [
+      "fe4b0231-b5ec-4dd2-9ff5-8e3b2bfad061.value"
+    ],
+    "dc9bff13-a1bb-46a7-9159-090287494766.plan_expand_critique": [
+      "08c18906-862b-4450-a1b1-71937b095717.value"
+    ],
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.state": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.state"
+    ],
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.plan_id": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.plan_id"
+    ],
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.beats": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.beats"
+    ],
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.perspective": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.perspective"
+    ],
+    "b2ed4db4-6f43-4d45-a69f-a2b9edc1dddf.close_arc": [
+      "a30b01b3-84da-46c0-8783-785660b85ccb.close_arc"
+    ]
+  },
+  "groups": [
+    {
+      "title": "Input",
+      "x": -1,
+      "y": -5,
+      "width": 1050,
+      "height": 228,
+      "color": "#88A",
+      "font_size": 24,
+      "inherited": false
+    },
+    {
+      "title": "Process",
+      "x": -2,
+      "y": 226,
+      "width": 1050,
+      "height": 675,
+      "color": "#3f789e",
+      "font_size": 24,
+      "inherited": false
+    }
+  ],
+  "comments": [],
+  "extends": null,
+  "base_type": "agents/director/DirectorChatAction",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "6c0ff769-5e2d-49d9-8317-3647bd937484",
+      "name": "fn",
+      "optional": false,
+      "group": null,
+      "socket_type": "function"
+    },
+    {
+      "id": "70cbb47f-4448-44e7-88cb-db3c65ae865e",
+      "name": "name",
+      "optional": false,
+      "group": null,
+      "socket_type": "str"
+    },
+    {
+      "id": "0f329eb9-79b4-4330-bb10-1d01efe54832",
+      "name": "allow_multiple_calls",
+      "optional": false,
+      "group": null,
+      "socket_type": "bool"
+    },
+    {
+      "id": "d5e4a954-73f3-4163-be14-b68efa6c358c",
+      "name": "ai_callback",
+      "optional": false,
+      "group": null,
+      "socket_type": "focal/callback"
+    }
+  ],
+  "module_properties": {
+    "name": {
+      "name": "name",
+      "description": "The name of the action",
+      "type": "str",
+      "default": "",
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "description": {
+      "name": "description",
+      "description": "The description of the action",
+      "type": "text",
+      "default": "",
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "instructions": {
+      "name": "instructions",
+      "description": "The instructions for the action",
+      "type": "text",
+      "default": "",
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "example_json": {
+      "name": "example_json",
+      "description": "An example JSON payload for the action",
+      "type": "text",
+      "default": null,
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    },
+    "allow_concurrent": {
+      "name": "allow_concurrent",
+      "description": "Whether the action can be called concurrently",
+      "type": "bool",
+      "default": false,
+      "choices": null,
+      "readonly": false,
+      "step": null,
+      "min": null,
+      "max": null,
+      "ephemeral": false
+    }
+  },
+  "style": {
+    "title_color": "#573a2e",
+    "node_color": "#392f2c",
+    "icon": "F0295",
+    "auto_title": null,
+    "counterpart": null
+  }
+}

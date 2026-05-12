@@ -9,14 +9,15 @@ import pytest
 from unittest.mock import AsyncMock
 
 from ..conftest import mock_llm_client  # noqa: F401
+from ..helpers import create_mock_character
 from ..test_summarizer_templates import (  # noqa: F401
     mock_scene,
     mock_conversation_agent,
     mock_summarizer_agent_for_registry,
+    mock_memory_agent,
     summarizer_agent,
     setup_agents,
     active_context,
-    MockCharacter,
 )
 from .conftest import capture_prompt
 
@@ -137,7 +138,7 @@ class TestSummarizerBaselines:
         summarizer.client.send_prompt = AsyncMock(
             return_value="Scene analysis for conversation."
         )
-        character = MockCharacter(name="TestChar")
+        character = create_mock_character(name="TestChar")
         await summarizer.analyze_scene_for_next_action(
             typ="conversation", character=character, length=512
         )

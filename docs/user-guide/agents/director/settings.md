@@ -226,6 +226,18 @@ When the chat history needs to be compacted (summarized), this controls what fra
 
 Default is 0.70 (70% will be summarized when compaction is triggered).
 
+##### Action confirm timeout
+
+!!! info "New in 0.37.0"
+
+How long the chat will wait for you to confirm or reject a write action before it gives up and treats the action as rejected. See [Write action confirmation](/talemate/user-guide/agents/director/chat/#write-action-confirmation) for the confirmation workflow.
+
+- **Range**: 0 to 60 minutes
+- **Default**: 3 minutes
+- **0**: Wait indefinitely — the confirmation card stays open until you click Confirm or Reject
+
+The countdown is shown in the top-right corner of each confirmation card and turns red when less than 30 seconds remain.
+
 ##### Custom instructions
 
 Add custom instructions that will be included in all director chat prompts. Use this to customize the director's behavior for your specific scene or storytelling style.

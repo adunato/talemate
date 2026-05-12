@@ -7,9 +7,6 @@ Introduced in version 0.33.0 the director chat feature allows you interact with 
 
 As part of the chat session the director can query for information as well as make changes to the scene.
 
-!!! info "Multiple Chats (New in 0.36.0)"
-    The director chat now supports [multiple concurrent conversations](#multiple-chats). You can create, switch between, and delete separate chat sessions, each with their own history and settings.
-
 !!! warning "Strong model recommended"
     In my personal testing I've found that while its possible to have a coherent chat session with weaker models, the experience is going to be
     significantly better with [reasoning enabled](/talemate/user-guide/clients/reasoning/) models past the 100B parameter mark.
@@ -119,6 +116,18 @@ When rejected, the director acknowledges and waits for your next instruction:
 
 ![Action Rejected](/talemate/img/0.33.0/director-chat-reject-0002.png)
 
+### Confirmation timeout
+
+!!! info "New in 0.37.0"
+
+Each confirmation card shows a countdown timer in the top-right corner. The number turns red when less than 30 seconds remain.
+
+![Confirmation Timer](/talemate/img/0.37.0/director-chat-confirm-timer.png)
+
+If the timer runs out before you confirm or reject, the action is treated as rejected and the director will acknowledge and wait for your next instruction — the same behaviour as clicking **Reject**.
+
+The default timeout is **3 minutes**. You can change it (or disable it entirely) from the [Director Chat settings](/talemate/user-guide/agents/director/settings/#action-confirm-timeout).
+
 ## Enabling and Disabling Actions
 
 The director has access to many different actions for querying information, making changes, and progressing your story. You can control which actions the director is allowed to use by enabling or disabling them through the Actions menu.
@@ -179,8 +188,6 @@ To create or manage personas, select "Manage Personas" from the persona dropdown
 
 ## Multiple Chats
 
-!!! info "New in 0.36.0"
-
 The director chat supports multiple concurrent conversations. Each chat maintains its own independent message history, mode, confirm-write-actions setting, and auto-generated title.
 
 ![Multiple director chats](../../../img/0.36.0/director-chat-multiple-chats.png)
@@ -212,6 +219,4 @@ To delete a chat you no longer need, use the delete option in the chat selector.
 
 ### Concurrent Query Execution
 
-!!! info "New in 0.36.0"
-
-The director's **Query** action now supports concurrent execution. When the director needs to gather information from multiple sources (for example, querying world information and character details simultaneously), these queries can run in parallel rather than sequentially. This results in faster responses when the director needs to consult multiple information sources to answer your questions.
+The director's **Query** action supports concurrent execution. When the director needs to gather information from multiple sources (for example, querying world information and character details simultaneously), these queries can run in parallel rather than sequentially. This results in faster responses when the director needs to consult multiple information sources to answer your questions.

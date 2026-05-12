@@ -1,0 +1,672 @@
+{
+  "title": "Run Model Tests",
+  "id": "b07d091b-dbf7-4b78-8da5-e941bd55c8e6",
+  "properties": {},
+  "x": 0,
+  "y": 0,
+  "width": 200,
+  "height": 100,
+  "collapsed": false,
+  "inherited": false,
+  "registry": "model-tests/runModelTests",
+  "nodes": {
+    "e01ef872-6252-40ec-a710-b4d9f6df9b51": {
+      "title": "true",
+      "id": "e01ef872-6252-40ec-a710-b4d9f6df9b51",
+      "properties": {
+        "value": true
+      },
+      "x": 35,
+      "y": 644,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "9d0b2138-bd53-4f8b-9daa-55003b324d0e": {
+      "title": "true",
+      "id": "9d0b2138-bd53-4f8b-9daa-55003b324d0e",
+      "properties": {
+        "value": true
+      },
+      "x": 35,
+      "y": 774,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "4a7d393a-5f72-4eb6-91a3-dd2f8f0f77fc": {
+      "title": "IN state",
+      "id": "4a7d393a-5f72-4eb6-91a3-dd2f8f0f77fc",
+      "properties": {
+        "input_type": "any",
+        "input_name": "state",
+        "input_optional": false,
+        "input_group": "",
+        "num": 0
+      },
+      "x": 30,
+      "y": -180,
+      "width": 210,
+      "height": 154,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Input",
+      "base_type": "core/Node"
+    },
+    "aff70fe7-c7cb-479f-902e-c238c6a932c6": {
+      "title": "OUT state",
+      "id": "aff70fe7-c7cb-479f-902e-c238c6a932c6",
+      "properties": {
+        "output_type": "any",
+        "output_name": "state",
+        "num": 0
+      },
+      "x": 300,
+      "y": -180,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "4aaa9c81-8650-409d-a5b7-58edc0fd181d": {
+      "title": "true",
+      "id": "4aaa9c81-8650-409d-a5b7-58edc0fd181d",
+      "properties": {
+        "value": true
+      },
+      "x": 35,
+      "y": 934,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "3a5bb26c-ff73-4814-9237-b512fc0a5d99": {
+      "title": "Test Data Response",
+      "id": "3a5bb26c-ff73-4814-9237-b512fc0a5d99",
+      "properties": {},
+      "x": 315,
+      "y": 744,
+      "width": 216,
+      "height": 46,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/basics/testDataResponse",
+      "base_type": "core/Graph"
+    },
+    "0708de35-b0e2-4727-b619-169bb3fc1577": {
+      "title": "Test Conversation",
+      "id": "0708de35-b0e2-4727-b619-169bb3fc1577",
+      "properties": {},
+      "x": 315,
+      "y": 904,
+      "width": 195,
+      "height": 46,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/basics/testConversation",
+      "base_type": "core/Graph"
+    },
+    "7d1e1acf-c4d1-4931-ab9f-5aa2565eebf8": {
+      "title": "Stage 1",
+      "id": "7d1e1acf-c4d1-4931-ab9f-5aa2565eebf8",
+      "properties": {
+        "stage": 1
+      },
+      "x": 675,
+      "y": 774,
+      "width": 210,
+      "height": 118,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "79dd51ee-daa1-4ad6-a52d-8c7856dee81f": {
+      "title": "Stage 2",
+      "id": "79dd51ee-daa1-4ad6-a52d-8c7856dee81f",
+      "properties": {
+        "stage": 2
+      },
+      "x": 675,
+      "y": 934,
+      "width": 210,
+      "height": 118,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "cf834bbf-943b-4a13-b550-af49b14029d4": {
+      "title": "true",
+      "id": "cf834bbf-943b-4a13-b550-af49b14029d4",
+      "properties": {
+        "value": true
+      },
+      "x": 35,
+      "y": 1094,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "684309f1-d558-4d8c-8670-b0116dcf59a5": {
+      "title": "Test Narration",
+      "id": "684309f1-d558-4d8c-8670-b0116dcf59a5",
+      "properties": {},
+      "x": 315,
+      "y": 1064,
+      "width": 140,
+      "height": 46,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/basics/testNarration",
+      "base_type": "core/Graph"
+    },
+    "2225b6e7-1df3-4738-ad37-25f5a1c7a9ad": {
+      "title": "Stage 3",
+      "id": "2225b6e7-1df3-4738-ad37-25f5a1c7a9ad",
+      "properties": {
+        "stage": 3
+      },
+      "x": 675,
+      "y": 1094,
+      "width": 210,
+      "height": 118,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "5d71ab5f-5030-45e2-90d3-970e0151c1ba": {
+      "title": "true",
+      "id": "5d71ab5f-5030-45e2-90d3-970e0151c1ba",
+      "properties": {
+        "value": true
+      },
+      "x": 35,
+      "y": 1249,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "34d9d026-ddc5-4589-ade8-ed3c6c223496": {
+      "title": "Stage 0",
+      "id": "34d9d026-ddc5-4589-ade8-ed3c6c223496",
+      "properties": {
+        "stage": 0
+      },
+      "x": 675,
+      "y": 644,
+      "width": 210,
+      "height": 118,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "e7f269a9-0ce3-4cfe-bd85-fa28842c8f73": {
+      "title": "Test Function Calling",
+      "id": "e7f269a9-0ce3-4cfe-bd85-fa28842c8f73",
+      "properties": {},
+      "x": 315,
+      "y": 1224,
+      "width": 176,
+      "height": 46,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/basics/testFunctionCalling",
+      "base_type": "core/Graph"
+    },
+    "45e44419-2d63-4739-93ea-0fa0e8f2c137": {
+      "title": "Stage 4",
+      "id": "45e44419-2d63-4739-93ea-0fa0e8f2c137",
+      "properties": {
+        "stage": 4
+      },
+      "x": 675,
+      "y": 1254,
+      "width": 210,
+      "height": 118,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "66611655-e2fb-4a50-bf04-981bbc5003be": {
+      "title": "Test Problem Solving",
+      "id": "66611655-e2fb-4a50-bf04-981bbc5003be",
+      "properties": {},
+      "x": 315,
+      "y": 1374,
+      "width": 168,
+      "height": 46,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/basics/testProblemSolving",
+      "base_type": "core/Graph"
+    },
+    "2990320b-cd30-48fb-a79d-b120477f22e6": {
+      "title": "Stage 5",
+      "id": "2990320b-cd30-48fb-a79d-b120477f22e6",
+      "properties": {
+        "stage": 5
+      },
+      "x": 675,
+      "y": 1404,
+      "width": 210,
+      "height": 118,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "c24ea44f-cc84-46bf-985d-f150ac3f2452": {
+      "title": "true",
+      "id": "c24ea44f-cc84-46bf-985d-f150ac3f2452",
+      "properties": {
+        "value": true
+      },
+      "x": 35,
+      "y": 1404,
+      "width": 210,
+      "height": 58,
+      "collapsed": true,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "2650cbe1-85ff-4564-8f0d-89e4ef0f26e0": {
+      "title": "Test Basic Instruction Following",
+      "id": "2650cbe1-85ff-4564-8f0d-89e4ef0f26e0",
+      "properties": {},
+      "x": 310,
+      "y": 610,
+      "width": 269,
+      "height": 46,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/basics/testBasicInstructionFollowing",
+      "base_type": "core/Graph"
+    },
+    "8da5ee0f-5d5b-4bc9-9a86-20b1338714c3": {
+      "title": "true",
+      "id": "8da5ee0f-5d5b-4bc9-9a86-20b1338714c3",
+      "properties": {
+        "value": true
+      },
+      "x": 32,
+      "y": 77,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "3d2962f1-1c7f-415b-b68d-218d36e8d504": {
+      "title": "Stage -2",
+      "id": "3d2962f1-1c7f-415b-b68d-218d36e8d504",
+      "properties": {
+        "stage": -2
+      },
+      "x": 800,
+      "y": 90,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "986770c4-6d00-47fe-9145-a4cc5320ee5b": {
+      "title": "Stage -1",
+      "id": "986770c4-6d00-47fe-9145-a4cc5320ee5b",
+      "properties": {
+        "stage": -1
+      },
+      "x": 800,
+      "y": 360,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "bb07ad64-b58d-475d-907b-529b4b9ada0a": {
+      "title": "Emit Status",
+      "id": "bb07ad64-b58d-475d-907b-529b4b9ada0a",
+      "properties": {
+        "message": "Tests Running",
+        "status": "busy",
+        "as_scene_message": true
+      },
+      "x": 290,
+      "y": 360,
+      "width": 210,
+      "height": 146,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "event/EmitStatus",
+      "base_type": "core/Node"
+    },
+    "57a248d4-351f-4b6c-a258-097e23a7d66f": {
+      "title": "Emit Status",
+      "id": "57a248d4-351f-4b6c-a258-097e23a7d66f",
+      "properties": {
+        "message": "Tests Finished",
+        "status": "success",
+        "as_scene_message": true
+      },
+      "x": 311,
+      "y": 1562,
+      "width": 210,
+      "height": 146,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "event/EmitStatus",
+      "base_type": "core/Node"
+    },
+    "9070bf35-0ef9-44b1-a4bd-53ae3a39df91": {
+      "title": "Stage 9999",
+      "id": "9070bf35-0ef9-44b1-a4bd-53ae3a39df91",
+      "properties": {
+        "stage": 9999
+      },
+      "x": 620,
+      "y": 1570,
+      "width": 210,
+      "height": 118,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Stage",
+      "base_type": "core/Node"
+    },
+    "208419be-8f02-48c7-9453-9dad9d6f87f0": {
+      "title": "Emit System Message",
+      "id": "208419be-8f02-48c7-9453-9dad9d6f87f0",
+      "properties": {
+        "message_title": "Tests starting",
+        "message": "Running a series of tests against the currently configured / assigned clients to determine viability for use with Talemate. Please note that passing these tests is **NOT** a guarantee that the model will perform well, but failures will almost certainly mean that the model may not be sufficient for Talemate's more complex systems.",
+        "font_color": "deep-purple-lighten-3",
+        "icon": "mdi-information",
+        "display": "text",
+        "as_markdown": true
+      },
+      "x": 282,
+      "y": 87,
+      "width": 210,
+      "height": 218,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "event/EmitSystemMessage",
+      "base_type": "core/Node"
+    },
+    "aef4170b-7691-4641-a219-372178a6b331": {
+      "title": "exc",
+      "id": "aef4170b-7691-4641-a219-372178a6b331",
+      "properties": {
+        "name": "exc",
+        "typ": "str"
+      },
+      "x": 20,
+      "y": 2012,
+      "width": 210,
+      "height": 82,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Argument",
+      "base_type": "core/Node"
+    },
+    "a9c8d9b2-43fe-4068-a6e4-2de892d1b912": {
+      "title": "FN error_handler",
+      "id": "a9c8d9b2-43fe-4068-a6e4-2de892d1b912",
+      "properties": {
+        "name": "error_handler"
+      },
+      "x": 1466,
+      "y": 1934,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/GetFunction",
+      "base_type": "core/Node"
+    },
+    "993cf5f3-4284-405f-a2bf-d89ba549f8f2": {
+      "title": "Return",
+      "id": "993cf5f3-4284-405f-a2bf-d89ba549f8f2",
+      "properties": {},
+      "x": 1461,
+      "y": 2106,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/Return",
+      "base_type": "core/Node"
+    },
+    "424fd5b4-9f18-4a39-b172-8f405688b928": {
+      "title": "Emit Status (Conditional)",
+      "id": "424fd5b4-9f18-4a39-b172-8f405688b928",
+      "properties": {
+        "message": "Something went wrong",
+        "status": "error",
+        "as_scene_message": true
+      },
+      "x": 884,
+      "y": 2186,
+      "width": 267,
+      "height": 168,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "event/EmitStatusConditional",
+      "base_type": "core/Node"
+    },
+    "bfcf4cee-2e60-4615-b96d-bc14452facb1": {
+      "title": "Error Handler",
+      "id": "bfcf4cee-2e60-4615-b96d-bc14452facb1",
+      "properties": {},
+      "x": 1708,
+      "y": 1952,
+      "width": 140,
+      "height": 26,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/ErrorHandler",
+      "base_type": "core/Node"
+    },
+    "d33953fb-e3f6-4b6a-95a8-d81b8b34fadd": {
+      "title": "Unpack Exception",
+      "id": "d33953fb-e3f6-4b6a-95a8-d81b8b34fadd",
+      "properties": {},
+      "x": 280,
+      "y": 2012,
+      "width": 170,
+      "height": 46,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/UnpackException",
+      "base_type": "core/Node"
+    },
+    "94cd59d2-d86b-45d9-904c-49a914eff1f9": {
+      "title": "DEF error_handler",
+      "id": "94cd59d2-d86b-45d9-904c-49a914eff1f9",
+      "properties": {
+        "name": "error_handler"
+      },
+      "x": 1666,
+      "y": 2101,
+      "width": 210,
+      "height": 78,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/functions/DefineFunction",
+      "base_type": "core/Node"
+    },
+    "30d281e8-2682-4d7c-a715-0a5076c74473": {
+      "title": "Case",
+      "id": "30d281e8-2682-4d7c-a715-0a5076c74473",
+      "properties": {
+        "attribute_name": "",
+        "case_a": "GenerationCancelled",
+        "case_b": "",
+        "case_c": "",
+        "case_d": ""
+      },
+      "x": 514,
+      "y": 2016,
+      "width": 277,
+      "height": 235,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Case",
+      "base_type": "core/Node"
+    },
+    "bd932080-9342-415a-afc7-78a7d6cef68e": {
+      "title": "Coallesce",
+      "id": "bd932080-9342-415a-afc7-78a7d6cef68e",
+      "properties": {},
+      "x": 1264,
+      "y": 2116,
+      "width": 140,
+      "height": 86,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Coallesce",
+      "base_type": "core/Node"
+    },
+    "5f7cde96-97bb-4889-81c1-819ebcfe9e03": {
+      "title": "Emit Status (Conditional)",
+      "id": "5f7cde96-97bb-4889-81c1-819ebcfe9e03",
+      "properties": {
+        "message": "Tests Interrupted - Reload the scene to restart the tests.",
+        "status": "warning",
+        "as_scene_message": true
+      },
+      "x": 884,
+      "y": 1959,
+      "width": 267,
+      "height": 168,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "event/EmitStatusConditional",
+      "base_type": "core/Node"
+    }
+  },
+  "edges": {
+    "e01ef872-6252-40ec-a710-b4d9f6df9b51.value": [
+      "2650cbe1-85ff-4564-8f0d-89e4ef0f26e0.state"
+    ],
+    "9d0b2138-bd53-4f8b-9daa-55003b324d0e.value": [
+      "3a5bb26c-ff73-4814-9237-b512fc0a5d99.state"
+    ],
+    "4a7d393a-5f72-4eb6-91a3-dd2f8f0f77fc.value": [
+      "aff70fe7-c7cb-479f-902e-c238c6a932c6.value"
+    ],
+    "4aaa9c81-8650-409d-a5b7-58edc0fd181d.value": [
+      "0708de35-b0e2-4727-b619-169bb3fc1577.state"
+    ],
+    "3a5bb26c-ff73-4814-9237-b512fc0a5d99.state": [
+      "7d1e1acf-c4d1-4931-ab9f-5aa2565eebf8.state"
+    ],
+    "0708de35-b0e2-4727-b619-169bb3fc1577.state": [
+      "79dd51ee-daa1-4ad6-a52d-8c7856dee81f.state"
+    ],
+    "cf834bbf-943b-4a13-b550-af49b14029d4.value": [
+      "684309f1-d558-4d8c-8670-b0116dcf59a5.state"
+    ],
+    "684309f1-d558-4d8c-8670-b0116dcf59a5.state": [
+      "2225b6e7-1df3-4738-ad37-25f5a1c7a9ad.state"
+    ],
+    "5d71ab5f-5030-45e2-90d3-970e0151c1ba.value": [
+      "e7f269a9-0ce3-4cfe-bd85-fa28842c8f73.state"
+    ],
+    "e7f269a9-0ce3-4cfe-bd85-fa28842c8f73.state": [
+      "45e44419-2d63-4739-93ea-0fa0e8f2c137.state"
+    ],
+    "66611655-e2fb-4a50-bf04-981bbc5003be.state": [
+      "2990320b-cd30-48fb-a79d-b120477f22e6.state"
+    ],
+    "c24ea44f-cc84-46bf-985d-f150ac3f2452.value": [
+      "66611655-e2fb-4a50-bf04-981bbc5003be.state"
+    ],
+    "2650cbe1-85ff-4564-8f0d-89e4ef0f26e0.state": [
+      "34d9d026-ddc5-4589-ade8-ed3c6c223496.state"
+    ],
+    "8da5ee0f-5d5b-4bc9-9a86-20b1338714c3.value": [
+      "208419be-8f02-48c7-9453-9dad9d6f87f0.state"
+    ],
+    "bb07ad64-b58d-475d-907b-529b4b9ada0a.emitted": [
+      "986770c4-6d00-47fe-9145-a4cc5320ee5b.state"
+    ],
+    "57a248d4-351f-4b6c-a258-097e23a7d66f.emitted": [
+      "9070bf35-0ef9-44b1-a4bd-53ae3a39df91.state"
+    ],
+    "208419be-8f02-48c7-9453-9dad9d6f87f0.state": [
+      "3d2962f1-1c7f-415b-b68d-218d36e8d504.state"
+    ],
+    "aef4170b-7691-4641-a219-372178a6b331.value": [
+      "d33953fb-e3f6-4b6a-95a8-d81b8b34fadd.exc"
+    ],
+    "a9c8d9b2-43fe-4068-a6e4-2de892d1b912.fn": [
+      "bfcf4cee-2e60-4615-b96d-bc14452facb1.fn"
+    ],
+    "993cf5f3-4284-405f-a2bf-d89ba549f8f2.value": [
+      "94cd59d2-d86b-45d9-904c-49a914eff1f9.nodes"
+    ],
+    "424fd5b4-9f18-4a39-b172-8f405688b928.state": [
+      "bd932080-9342-415a-afc7-78a7d6cef68e.b"
+    ],
+    "d33953fb-e3f6-4b6a-95a8-d81b8b34fadd.name": [
+      "30d281e8-2682-4d7c-a715-0a5076c74473.value"
+    ],
+    "30d281e8-2682-4d7c-a715-0a5076c74473.a": [
+      "5f7cde96-97bb-4889-81c1-819ebcfe9e03.state"
+    ],
+    "30d281e8-2682-4d7c-a715-0a5076c74473.none": [
+      "424fd5b4-9f18-4a39-b172-8f405688b928.state"
+    ],
+    "bd932080-9342-415a-afc7-78a7d6cef68e.value": [
+      "993cf5f3-4284-405f-a2bf-d89ba549f8f2.value"
+    ],
+    "5f7cde96-97bb-4889-81c1-819ebcfe9e03.state": [
+      "bd932080-9342-415a-afc7-78a7d6cef68e.a"
+    ]
+  },
+  "groups": [
+    {
+      "title": "Error Handling",
+      "x": -4,
+      "y": 1859,
+      "width": 1906,
+      "height": 520,
+      "color": "#A88",
+      "font_size": 24,
+      "inherited": false
+    }
+  ],
+  "comments": [],
+  "extends": null,
+  "base_type": "core/Graph",
+  "inputs": [],
+  "outputs": [],
+  "module_properties": {},
+  "style": null
+}

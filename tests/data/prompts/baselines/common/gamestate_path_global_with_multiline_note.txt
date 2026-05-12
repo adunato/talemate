@@ -1,0 +1,13 @@
+## Gamestate
+Path: player/status
+
+Player status snapshot.
+Updated each turn from sensors.
+
+Data format: json
+
+```json
+{
+  "hp": 12
+}
+```

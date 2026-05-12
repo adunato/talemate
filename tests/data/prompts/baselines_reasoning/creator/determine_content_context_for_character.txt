@@ -1,6 +1,6 @@
 ## Character and context
 Elena
-A test character.
+A wandering healer with knowledge of ancient herbs.
 
 ## Task
 Analyze the character information and context and determine a fitting content context.

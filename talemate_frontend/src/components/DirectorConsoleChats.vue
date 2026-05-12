@@ -20,6 +20,7 @@
 
     <v-card class="chat-card">
         <v-card-text>
+            <DirectorConsoleChatPlanBanner :plan="activePlan" />
             <DirectorConsoleChatMessages
                 :messages="chatMessages"
                 :confirming="confirming"
@@ -68,9 +69,10 @@ import ConfirmActionPrompt from './ConfirmActionPrompt.vue';
 import DirectorConsoleChatsToolbar from './DirectorConsoleChatsToolbar.vue';
 import DirectorConsoleChatMessages from './DirectorConsoleChatMessages.vue';
 import DirectorConsoleChatInput from './DirectorConsoleChatInput.vue';
+import DirectorConsoleChatPlanBanner from './DirectorConsoleChatPlanBanner.vue';
 export default {
     name: 'DirectorConsoleChats',
-    components: { ConfirmActionPrompt, DirectorConsoleChatsToolbar, DirectorConsoleChatMessages, DirectorConsoleChatInput },
+    components: { ConfirmActionPrompt, DirectorConsoleChatsToolbar, DirectorConsoleChatMessages, DirectorConsoleChatInput, DirectorConsoleChatPlanBanner },
     inject: [
         'getWebsocket',
         'registerMessageHandler',
@@ -99,6 +101,7 @@ export default {
             confirming: {},
             currentChatMode: 'normal',
             confirmWriteActions: true,
+            activePlan: null,
         }
     },
     methods: {
@@ -110,6 +113,7 @@ export default {
             this.tokenTotal = null;
             this.isProcessing = false;
             this.currentChatMode = 'normal';
+            this.activePlan = null;
             this.requestChatList();
         },
         updateChatMode(newMode) {
@@ -142,18 +146,18 @@ export default {
             if(!params || !params.chat_id) return;
             this.deleteChat();
         },
-        addOrUpdateConfirmRequest(id, name, description) {
+        addOrUpdateConfirmRequest(id, name, description, timer) {
             try {
                 // If there's already a pending entry for this id, just update its details
                 const pendingIdx = this.chatMessages.findIndex((m) => m.type === 'confirm_request' && m.id === id && !m.decision);
                 if (pendingIdx !== -1) {
                     const existing = this.chatMessages[pendingIdx];
-                    const updated = { ...existing, name: name ?? existing.name, description: description ?? existing.description };
+                    const updated = { ...existing, name: name ?? existing.name, description: description ?? existing.description, timer: timer ?? existing.timer };
                     this.chatMessages.splice(pendingIdx, 1, updated);
                     return;
                 }
                 // If previous entries exist but are already decided, push a new one
-                this.chatMessages.push({ source: 'director', type: 'confirm_request', id, name, description, decision: null });
+                this.chatMessages.push({ source: 'director', type: 'confirm_request', id, name, description, timer, decision: null });
             } catch (e) { /* safely ignore malformed confirm requests */ }
         },
         markConfirmRequestDecision(id, decision) {
@@ -253,6 +257,7 @@ export default {
             this.activeChatId = chatId;
             this.chatMessages = [];
             this.tokenTotal = null;
+            this.activePlan = null;
             this.getWebsocket().send(JSON.stringify({
                 type: 'director',
                 action: 'chat_select',
@@ -343,7 +348,7 @@ export default {
                 console.log('request_action_confirmation', data);
                 // Remove any trailing thinking placeholder while waiting for user decision
                 this.removeTrailingPlaceholder();
-                this.addOrUpdateConfirmRequest(data.id, data.name, data.description);
+                this.addOrUpdateConfirmRequest(data.id, data.name, data.description, data.timer);
                 return;
             }
 
@@ -367,6 +372,9 @@ export default {
             if(message.action === 'chat_created') {
                 this.chats = message.chat_list || [];
                 this.activeChatId = message.chat_id;
+                this.chatMessages = [];
+                this.tokenTotal = null;
+                this.activePlan = null;
                 // Proactively request history to avoid any race ordering
                 this.onSelectChat();
                 return;
@@ -399,6 +407,9 @@ export default {
                     this.tokenTotal = message.token_total ?? null;
                     this.currentChatMode = message.mode || 'normal';
                     this.confirmWriteActions = (message.confirm_write_actions !== undefined) ? !!message.confirm_write_actions : true;
+                    if('plan' in message) {
+                        this.activePlan = message.plan || null;
+                    }
                 }
                 return;
             }
@@ -446,6 +457,12 @@ export default {
             if(message.action === 'chat_require_sync') {
                 if(message.chat_id === this.activeChatId) {
                     this.onSelectChat();
+                }
+                return;
+            }
+            if(message.action === 'plan_updated') {
+                if(message.chat_id === this.activeChatId) {
+                    this.activePlan = message.plan || null;
                 }
                 return;
             }

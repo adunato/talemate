@@ -29,11 +29,9 @@ Help the AI summarize by including the last few summaries as additional context.
 
 ##### Custom Instructions
 
-!!! info "New in 0.36.0"
-
 Custom instructions for the summarization agent. These instructions are included in the summarization prompt to guide how summaries are generated. Use this to customize the summarization style, focus areas, or format for your specific needs.
 
-Additionally, as of 0.36.0, writing style instructions are now included during summarization to maintain consistency with your scene's chosen writing style.
+Writing style instructions are also included during summarization to maintain consistency with your scene's chosen writing style.
 
 ## Layered History
 

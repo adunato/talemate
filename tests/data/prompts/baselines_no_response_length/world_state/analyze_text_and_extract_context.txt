@@ -1,6 +1,8 @@
 ## Classification
 Content Classification: Fantasy adventure story
 
+Narrative Perspective: Third person limited, past tense.
+
 ## Main context
 The kingdom has been at war for a decade.
 
@@ -10,6 +12,8 @@ Answer the following questions:
 Your answers should be truthful and contain relevant data. Pay close attention to timestamps when retrieving information from the context.
 
 Provide your answers in a clear and concise manner. 1 paragraph per answer is sufficient.
+
+The length of your response must fit within 6 paragraphs.
 
 ## Relevant context
 <|BOT|>Answers:

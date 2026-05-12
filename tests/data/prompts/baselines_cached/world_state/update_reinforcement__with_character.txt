@@ -3,7 +3,9 @@
 ## Classification
 Content Classification: Fantasy adventure story
 
-Elena's description: A test character.
+Narrative Perspective: Third person limited, past tense.
+
+Elena's description: A wandering healer with knowledge of ancient herbs.
 
 ## Scene
 
@@ -11,12 +13,6 @@ Elena's description: A test character.
 2. The sun filters through the leaves above.
 3. Marcus: What brings you to these woods?
 No dialogue so far
-
-## Potentially relevant information
-These entries were collected through semantic similarity matching and may or may not be relevant to the current context. Use them as such.
-query1
-
-## Writing style
 
 ## Task
 

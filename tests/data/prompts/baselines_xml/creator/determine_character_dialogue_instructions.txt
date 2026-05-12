@@ -1,0 +1,36 @@
+<SCENE>
+Elena: Hello there, traveler.
+The sun filters through the leaves above.
+Marcus: What brings you to these woods?
+</SCENE>
+<CHARACTER>
+name: Elena
+gender: female
+age: early 30s
+occupation: Healer
+A wandering healer with knowledge of ancient herbs.
+</CHARACTER>
+
+<TASK>
+Your task is to determine fitting dialogue instructions for Elena.
+
+By default all actors are given the following instructions for their character(s):
+
+Dialogue instructions: "Use an informal and colloquial register with a conversational tone. Overall, Elena's dialog is informal, conversational, natural, and spontaneous, with a sense of immediacy."
+
+However you can override this default instruction by providing your own instructions below.
+
+Elena is a character in Fantasy adventure story. The goal is always for Elena to feel like a believable character in the context of the scene.
+
+The character MUST feel relatable to the audience.
+
+You must use simple language to describe the character's dialogue instructions.
+
+**Structure your instructions in two short paragraphs:**
+
+1. **Default register** — How Elena normally speaks: vocabulary, formality, sentence structure, verbal habits, how they address others.
+2. **Under pressure** — How their speech changes when stressed, scared, angry, or pushed past their limit. Do NOT write that they simply become "more of the same" (e.g., "gets even more clinical" or "becomes even quieter"). Their composure must crack in a specific, visible way — shorter sentences, different word choices, breaking their own verbal patterns, physical urgency replacing their normal mode. This variation is critical for believable dialogue in dramatic scenes.
+</TASK>
+
+The length of your response must fit within 4 paragraphs.
+<|BOT|>Dialogue instructions:

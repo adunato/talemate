@@ -20,7 +20,6 @@ from ..test_creator_templates import (  # noqa: F401
     creator_agent,
     setup_agents,
     active_context,
-    MockCharacter,
 )
 from .conftest import capture_prompt
 
@@ -140,7 +139,6 @@ class TestCreatorCharacterBaselines:
     ):
         creator = active_context
         character = mock_scene.get_character("Elena")
-        character.set_detail = AsyncMock()
         creator.client.send_prompt.return_value = "Elena wants to find a cure."
         await creator.determine_character_goals(
             character=character, goal_instructions="Focus on character growth."
@@ -237,6 +235,20 @@ class TestCreatorContextualGenerateBaselines:
             AGENT,
             "contextual_generate__character_attribute_with_instructions",
         )
+
+    @pytest.mark.asyncio
+    async def test_contextual_generate__list(
+        self, active_context, mock_scene, baseline_checker
+    ):
+        creator = active_context
+        creator.client.send_prompt.return_value = '["sword", "shield", "potion"]'
+        generation_context = ContentGenerationContext(
+            context="list:Items in inventory",
+            instructions="Generate inventory items",
+            length=256,
+        )
+        await creator.contextual_generate(generation_context)
+        baseline_checker(capture_prompt(creator), AGENT, "contextual_generate__list")
 
 
 class TestCreatorAutocompleteBaselines:

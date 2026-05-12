@@ -1,8 +1,5 @@
 # Scene Context History Review
 
-!!! info "New in 0.36.0"
-    The context history review panel is a new tool for understanding and tuning how scene history is rendered into AI context.
-
 The Scene Context History Review panel visualizes exactly how your scene history is assembled into the context that gets sent to the AI. It shows the rendered text broken into sections with per-section token counts, budget allocation, and adjustable settings that let you tune the context distribution and preview the result before applying changes.
 
 ## Accessing the Review Panel

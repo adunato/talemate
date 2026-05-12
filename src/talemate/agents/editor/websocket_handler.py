@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from talemate.instance import get_agent
 from talemate.server.websocket_plugin import Plugin
 from talemate.scene_message import CharacterMessage
+from talemate.status import background_task
 from talemate.agents.editor.revision import RevisionContext, RevisionInformation
 
 if TYPE_CHECKING:
@@ -32,6 +33,7 @@ class EditorWebsocketHandler(Plugin):
     def editor(self):
         return get_agent("editor")
 
+    @background_task("Revising message")
     async def handle_request_revision(self, data: dict):
         """
         Generate clickable actions for the user

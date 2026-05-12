@@ -1,8 +1,5 @@
 # API Key Encryption
 
-!!! info "New in 0.36.0"
-    API keys stored in `config.yaml` are now encrypted at rest using Fernet symmetric encryption.
-
 Starting with version 0.36.0, Talemate automatically encrypts all API keys before writing them to `config.yaml`. This protects your credentials from being exposed if the configuration file is accidentally shared, committed to version control, or accessed by unauthorized parties.
 
 ## How It Works

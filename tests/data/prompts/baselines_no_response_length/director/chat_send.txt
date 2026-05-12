@@ -13,22 +13,10 @@ The overarching intention of this story. Use it to guide your decisions in the s
 
 THIS IS NOT THE STORY DESCRIPTION, IT IS THE INTENTION OF THE STORY.
 
-A test story
-
-## Special instructions for managing this experience
-Context IDs: `story_configuration:director_instructions`
-
-## Intention of the current scene
-Context IDs: `story_configuration:scene_intention`, `story_configuration:scene_type`
-
-Scene type: `` - 
-
-### INTENTION OF THE CURRENT SCENE
----
-Test phase
----
+There is NO overal intention / set of expectations for this experience.
 
 ## Scene types
+- ID:`roleplay`: DESCRIPTION: Freeform dialogue between one or more characters with occasional narration.
 
 ## Player character
 IMPORTANT: There is a designated `player` character in the scene, that is controlled by the user: "Hero".
@@ -42,6 +30,8 @@ Marcus: What brings you to these woods?
 [CHAT_START_MARKER: User conversation began after the above scene snapshot]
 
 ## Important notes
+
+UNPLAYED: There has been no progress in the interactive story yet.
 
 STORY TITLE: The Forest Clearing
 
@@ -178,6 +168,8 @@ ALWAYS: Discuss scene as observer | Answer what happened | Suggest future possib
 ## Instruction
 Respond to user's CHAT MESSAGES as Director (scene is background context only). Reference prior messages when useful. Don't narrate story - discuss scene out-of-character to assist user.
 
+Active characters in the scene: Hero, Elena
+
 For information requests: Use actions to retrieve canonical data, quote exactly. Conversational but brief tone, prioritize accuracy. Use chat history for task context, not scene assumptions.
 
 NORMAL MODE: You are operating in normal mode. You are allowed to discuss the story, and you are allowed to reveal information that could potentially spoil the story as you make your decisions and changes.
@@ -197,6 +189,7 @@ Analyze chat history for message [#2] context.
 
 `<DECISION>` FINAL ACTION CHOICE:
 Actions this turn + which ones + why/why not
+
 You must never do more than asked.
 
 If you have executed an action, process the result in your response.

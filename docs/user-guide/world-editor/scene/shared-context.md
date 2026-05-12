@@ -186,3 +186,5 @@ Shared world entries appear with an orange/amber highlight. These entries contai
 - **Static History** - Manually created history entries (not summarized layers)
 
 These elements remain synchronized across all scenes linked to the same shared context.
+
+A shared character's [folder assignment](/talemate/user-guide/world-editor/characters/folders) is also synchronized — organizing a shared character into a folder in one scene places it in the same folder in every linked scene.

@@ -1,0 +1,98 @@
+{#-
+Extractors:
+  - response: BlockListExtractor(blocks=[("narrator", ...), ("character", ...)])
+-#}
+{{ set_block_list_extractor("response", blocks=[
+    ("narrator", "<NARRATOR>", "</NARRATOR>"),
+    ("character", '<CHARACTER name="(?P<name>[^"]*)">', "</CHARACTER>"),
+]) }}
+{% include "narrate-context.jinja2" %}
+
+{# Character context — dialogue instructions, example dialogue, character sheets #}
+{% with include_dialogue_instructions=True %}
+{% include "character-context.jinja2" %}
+{% endwith %}
+
+{% if director_notes %}
+<|SECTION:DIRECTOR NOTES|>
+{{ director_notes }}
+<|CLOSE_SECTION|>
+{% endif %}
+
+{% include "writing-style-instructions.jinja2" %}
+
+<|SECTION:TASK|>
+Write scene prose from the beat descriptions below.
+
+{% if arc_info and arc_info.total_chunks > 1 %}
+**Arc position:** {{ arc_info.position | upper }} (chunk {{ arc_info.chunk_index + 1 }} of {{ arc_info.total_chunks }}, tension {{ "%.1f"|format(arc_info.tension_range[0]) }}–{{ "%.1f"|format(arc_info.tension_range[1]) }})
+{% if arc_info.position == "opening" %}
+You are writing the OPENING of the story. Establish the world and characters, build tension gradually. Do not peak yet — save the most intense moments for later.
+{% elif arc_info.position == "rising" %}
+You are writing the RISING ACTION. Tension is building. Escalate steadily but leave room for the climax ahead.
+{% elif arc_info.position == "climax" %}
+You are writing the CLIMAX — the dramatic high point. Commit fully to the peak intensity. This is where the biggest moments happen.
+{% elif arc_info.position == "climax_and_resolution" %}
+You are writing the CLIMAX and RESOLUTION. Build to the dramatic peak, then wind down. The final beats must land the consequences and let the characters process what happened — do not end at maximum intensity.
+{% elif arc_info.position == "resolution" %}
+You are writing the RESOLUTION. The peak has passed. Land the consequences, close the arc, and let the characters process what happened.
+{% endif %}
+{% endif %}
+
+{% if preceding_text %}
+**Story so far** (continue from here):
+```
+{{ preceding_text }}
+```
+
+CRITICAL: Do NOT repeat, rephrase, or re-describe ANY event, action, dialogue, or image from the story so far. If a beat description asks for something that already happened above, find a NEW angle or skip to the next development. The reader has already seen it.
+{% endif %}
+
+**Beats to write:**
+{% for beat in beats %}
+Beat {{ beat.order }} [{{ beat.type }}] (pacing: {{ beat.pacing }}, tension: {{ beat.tension }})
+{% if beat.characters %}  Characters: {{ beat.characters | join(", ") }}{% endif %}
+  {{ beat.description }}
+
+{% endfor %}
+
+{% if following_beats %}
+**Upcoming beats** (do NOT write these, just be aware for pacing):
+{% for beat in following_beats[:2] %}
+Beat {{ beat.order }} [{{ beat.type }}]: {{ beat.description }}
+{% endfor %}
+{% endif %}
+
+**OUTPUT FORMAT (mandatory):**
+
+Your response MUST be a sequence of `<NARRATOR>` and `<CHARACTER name="Name">` blocks. No prose outside of blocks.
+
+- Narration/action/transition/reveal beats → `<NARRATOR>` blocks (1-3 paragraphs of prose)
+- Dialogue beats → `<CHARACTER name="CharacterName">` blocks (action + body language + dialogue as one unit)
+
+Structure (blocks can appear in any order and frequency — you do NOT need to alternate):
+
+```
+<NARRATOR>
+... narration prose here (1-3 paragraphs) ...
+</NARRATOR>
+
+<NARRATOR>
+... more narration if needed ...
+</NARRATOR>
+
+<CHARACTER name="CharacterName">
+... physical action, body language, and dialogue together as one unit ...
+</CHARACTER>
+```
+
+**Writing rules:**
+- `<CHARACTER>` blocks must be complete character moments: physical action, body language, AND dialogue together. Not just a quoted line.
+- ONE strong image per paragraph. Develop it — let the reader sit with it before introducing the next. Do not stack multiple phenomena in rapid succession.
+- Do NOT repeat sensory details or character descriptions already established in the "Story so far" section.
+- Vary sentence length. Mix short and long.
+- Show emotion through action, not narration. "His hands shook" not "he felt terror."
+- Low-tension beats must use short sentences, plain language, breathing room.
+- Do NOT start CHARACTER block content with the character's name — the tag already identifies them.
+- **Dialogue variety:** Each character's dialogue must serve a DIFFERENT function across beats. Vary between: questioning, arguing, joking, commanding, confessing, deflecting, comforting, provoking. A character must NOT deliver the same type of speech twice. If a character made a philosophical declaration in one beat, their next line must be a question, a joke, or a pragmatic instruction — anything except another declaration.
+<|CLOSE_SECTION|>

@@ -1,6 +1,8 @@
 ## Classification
 Content Classification: Fantasy adventure story
 
+Narrative Perspective: Third person limited, past tense.
+
 Scenario Premise:
 A peaceful clearing in the heart of an ancient forest.
 

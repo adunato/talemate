@@ -5,6 +5,8 @@ import pydantic
 import re  # Add import for regex
 from typing import Callable
 
+from talemate.util.prompt import CONDENSED_NEWLINE
+
 __all__ = [
     "similarity_score",
     "similarity_matches",
@@ -384,7 +386,11 @@ def dedupe_string(
             deduped.append(line)
             continue
 
-        if len(stripped_line) > min_length:
+        # Strip condensed newline markers so they don't inflate length
+        # or affect similarity scores.
+        compare_current = stripped_line.replace(CONDENSED_NEWLINE, " ")
+
+        if len(compare_current) > min_length:
             similar_found = False
             existing_in_codeblock = False
 
@@ -398,7 +404,8 @@ def dedupe_string(
                 if existing_in_codeblock:
                     continue
 
-                similarity = fuzz.ratio(stripped_line, existing_line.strip())
+                compare_existing = existing_line.strip().replace(CONDENSED_NEWLINE, " ")
+                similarity = fuzz.ratio(compare_current, compare_existing)
                 if similarity >= similarity_threshold:
                     similar_found = True
                     if debug:

@@ -1,0 +1,11 @@
+## Gamestate
+Path: inventory
+Data format: json
+
+```json
+[
+  "sword",
+  "potion",
+  "key"
+]
+```

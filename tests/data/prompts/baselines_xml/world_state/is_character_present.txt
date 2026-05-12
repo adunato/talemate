@@ -1,0 +1,12 @@
+<TEXT>
+You find yourself in a quiet forest clearing.
+</TEXT>
+
+<TASK>
+Analyze the text above and answer the question.
+
+Question: Is Elena present AND active in the current scene? Answer with 'yes' or 'no'.
+</TASK>
+
+The length of your response must fit within 4 paragraphs.
+<|BOT|>Answer:

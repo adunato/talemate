@@ -1,0 +1,22 @@
+<CLASSIFICATION>
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: Third person limited, past tense.
+</CLASSIFICATION>
+
+Scenario Premise:
+A peaceful clearing in the heart of an ancient forest.
+
+<SCENE>
+Elena: Hello there, traveler.
+The sun filters through the leaves above.
+Marcus: What brings you to these woods?
+</SCENE>
+<TASK>
+Paraphrase the following text to fit the narrative thus far. Keep the information and the meaning the same, but change the wording and sentence structure.
+
+Text to paraphrase:
+
+"The warrior drew his sword and prepared for battle."
+</TASK>
+The length of your response must fit within 4 paragraphs.

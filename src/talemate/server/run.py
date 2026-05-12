@@ -19,6 +19,7 @@ import websockets
 import talemate.config  # noqa: F401
 from talemate.version import VERSION
 from talemate.path import LOGS_DIR
+from talemate.environ import env_port, env_str
 
 print("Initialization time", time.perf_counter() - t_import_start)
 
@@ -82,7 +83,8 @@ async def install_punkt():
     log.info("Download complete")
 
 
-async def log_stream(stream, log_func):
+async def log_stream(stream, log_func, on_started=None):
+    started_emitted = False
     while True:
         line = await stream.readline()
         if not line:
@@ -97,8 +99,16 @@ async def log_stream(stream, log_func):
             # Use the provided log_func for other messages
             log_func("uvicorn", message=decoded_line)
 
+        if (
+            on_started
+            and not started_emitted
+            and "Application startup complete" in decoded_line
+        ):
+            started_emitted = True
+            on_started()
 
-async def run_frontend(host: str = "localhost", port: int = 8080):
+
+async def run_frontend(host: str, port: int, on_started=None):
     if sys.platform == "win32":
         activate_cmd = ".\\.venv\\Scripts\\activate.bat"
         frontend_cmd = f"{activate_cmd} && uvicorn --host {host} --port {port} frontend_wsgi:application"
@@ -125,7 +135,9 @@ async def run_frontend(host: str = "localhost", port: int = 8080):
 
     try:
         stdout_task = asyncio.create_task(log_stream(process.stdout, log.info))
-        stderr_task = asyncio.create_task(log_stream(process.stderr, log.error))
+        stderr_task = asyncio.create_task(
+            log_stream(process.stderr, log.error, on_started=on_started)
+        )
 
         await asyncio.gather(stdout_task, stderr_task)
         await process.wait()
@@ -227,9 +239,30 @@ def run_server(args):
     # start task to unstall punkt
     loop.create_task(install_punkt())
 
+    def _on_frontend_started():
+        if args.frontend_port == 8082:
+            display_host = (
+                "localhost" if args.frontend_host == "0.0.0.0" else args.frontend_host
+            )
+            separator = " " * 70
+            log.info(separator)
+            log.info("NOTICE: Talemate's default frontend port is now 8082 (was 8080) ")
+            log.info("        to avoid conflicting with llama.cpp")
+            log.info(
+                f"        Open Talemate at: http://{display_host}:{args.frontend_port}"
+            )
+            log.info(
+                "        To revert to the old port: set TALEMATE_FRONTEND_PORT=8080"
+            )
+            log.info(separator)
+
     if not args.backend_only:
         frontend_task = loop.create_task(
-            run_frontend(args.frontend_host, args.frontend_port)
+            run_frontend(
+                args.frontend_host,
+                args.frontend_port,
+                on_started=_on_frontend_started,
+            )
         )
     else:
         frontend_task = None
@@ -275,18 +308,32 @@ def main():
     runserver_parser = subparser.add_parser(
         "runserver", help="Run the talemate api server"
     )
-    runserver_parser.add_argument("--host", default="localhost", help="Hostname")
-    runserver_parser.add_argument("--port", type=int, default=6000, help="Port")
+    runserver_parser.add_argument(
+        "--host",
+        default=env_str("TALEMATE_BACKEND_HOST", "localhost"),
+        help="Hostname (env: TALEMATE_BACKEND_HOST)",
+    )
+    runserver_parser.add_argument(
+        "--port",
+        type=int,
+        default=env_port("TALEMATE_BACKEND_PORT", 5050),
+        help="Port (env: TALEMATE_BACKEND_PORT)",
+    )
     runserver_parser.add_argument(
         "--backend-only", action="store_true", help="Run the backend only"
     )
 
     # frontend host and port
     runserver_parser.add_argument(
-        "--frontend-host", default="localhost", help="Frontend Hostname"
+        "--frontend-host",
+        default=env_str("TALEMATE_FRONTEND_HOST", "localhost"),
+        help="Frontend Hostname (env: TALEMATE_FRONTEND_HOST)",
     )
     runserver_parser.add_argument(
-        "--frontend-port", type=int, default=8080, help="Frontend Port"
+        "--frontend-port",
+        type=int,
+        default=env_port("TALEMATE_FRONTEND_PORT", 8082),
+        help="Frontend Port (env: TALEMATE_FRONTEND_PORT)",
     )
 
     args = parser.parse_args()

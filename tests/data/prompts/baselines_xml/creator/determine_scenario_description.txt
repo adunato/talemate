@@ -1,0 +1,7 @@
+<CONTENT>
+A dark fantasy world where magic is forbidden.
+</CONTENT>
+<TASK>
+Extract and summarize a scenario description from the content
+</TASK>
+The length of your response must fit within 4 paragraphs.

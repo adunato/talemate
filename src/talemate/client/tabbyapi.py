@@ -166,6 +166,9 @@ class TabbyAPIClient(ClientBase):
                 "model": self.model_name,
                 "prompt": prompt,
                 "stream": True,
+                "stream_options": {
+                    "include_usage": True,
+                },
                 **parameters,
             }
             endpoint = "completions"
@@ -218,18 +221,19 @@ class TabbyAPIClient(ClientBase):
                                     or choice.get("text")
                                 )
 
-                                usage = data_obj.get("usage", {})
-
-                                if not usage:
-                                    continue
-
-                                completion_tokens = usage.get("completion_tokens", 0)
-                                prompt_tokens = usage.get("prompt_tokens", 0)
-
                                 if content:
                                     response_text += content
                                     self.update_request_tokens(
                                         self.count_tokens(content)
+                                    )
+
+                                usage = data_obj.get("usage") or {}
+                                if usage:
+                                    completion_tokens = usage.get(
+                                        "completion_tokens", completion_tokens
+                                    )
+                                    prompt_tokens = usage.get(
+                                        "prompt_tokens", prompt_tokens
                                     )
                             except (json.JSONDecodeError, IndexError):
                                 # ignore malformed json chunks

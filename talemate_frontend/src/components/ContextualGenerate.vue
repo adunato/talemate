@@ -55,6 +55,7 @@
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
+                <v-btn color="warning" variant="text" prepend-icon="mdi-stop-circle-outline" @click="cancel" :disabled="!busy">Cancel</v-btn>
                 <v-btn  v-if="withInstructions" color="primary" variant="text" prepend-icon="mdi-auto-fix" @click="generate" :disabled="busy">Generate</v-btn>
             </v-card-actions>
         </v-card>
@@ -71,6 +72,7 @@
 </template>
 <script>
 import { v4 as uuidv4 } from 'uuid';
+import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 
 // In-memory (non-persistent) per-uid selection memory, capped to 100 entries.
 // Uses Map insertion order as an LRU: re-setting a key moves it to the end.
@@ -260,8 +262,8 @@ export default {
             this.dialog = true;
             this.busy = false;
             
-            // if ctrl key is pressed, open with instructions
-            this.withInstructions = event.ctrlKey || this.requiresInstructions;
+            // if ctrl/cmd key is pressed, open with instructions
+            this.withInstructions = isPrimaryModifier(event) || this.requiresInstructions;
             
             // if alt key is pressed, open with original
             this.withOriginal = event.altKey && this.rewriteEnabled;
@@ -313,9 +315,27 @@ export default {
             }));
         },
 
+        cancel() {
+            this.getWebsocket().send(JSON.stringify({ type: 'interrupt' }));
+        },
+
         handleMessage(message) {
+            if (message.type === "assistant" && message.action === "contextual_generate_cancelled") {
+                if(message.data.uid !== this.uid)
+                    return;
+                this.busy = false;
+                this.dialog = false;
+                return;
+            }
+            if (message.type === "assistant" && message.action === "contextual_generate_failed") {
+                if(message.data.uid !== this.uid)
+                    return;
+                this.busy = false;
+                this.dialog = false;
+                return;
+            }
             if (message.type === "assistant" && message.action === "contextual_generate_done") {
-                
+
                 if(message.data.uid !== this.uid)
                     return;
 

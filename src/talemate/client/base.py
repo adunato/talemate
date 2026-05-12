@@ -4,6 +4,7 @@ A unified client base, based on the openai API
 
 import ipaddress
 import logging
+import os
 import re
 import random
 import time
@@ -17,6 +18,8 @@ import dataclasses
 import structlog
 import urllib3
 
+import json
+
 import talemate.client.presets as presets
 import talemate.instance as instance
 import talemate.util as util
@@ -27,6 +30,7 @@ from talemate.client.ratelimit import CounterRateLimiter
 from talemate.context import active_scene
 from talemate.prompts.base import Prompt, active_template_uid
 from talemate.emit import emit
+from talemate.path import LOGS_DIR
 from talemate.config import get_config, Config
 from talemate.config.schema import EmbeddingFunctionPreset, Client as ClientConfig
 import talemate.emit.async_signals as async_signals
@@ -132,11 +136,13 @@ def resolve_generation_error(request_id: str, action: str):
 class CommonDefaults(pydantic.BaseModel):
     rate_limit: int | None = None
     data_format: Literal["yaml", "json"] | None = None
+    section_format: Literal["markdown", "xml"] | None = None
     preset_group: str | None = None
     reason_enabled: bool = False
     reason_tokens: int = 1024
     reason_response_pattern: str | None = None
     reason_prefill: str | None = None
+    dedupe_enabled: bool = False
 
 
 class Defaults(CommonDefaults, pydantic.BaseModel):
@@ -368,6 +374,10 @@ class ClientBase:
         return self.client_config.data_format
 
     @property
+    def section_format(self) -> Literal["markdown", "xml"] | None:
+        return self.client_config.section_format
+
+    @property
     def enabled(self) -> bool:
         return self.client_config.enabled
 
@@ -406,6 +416,10 @@ class ClientBase:
     @property
     def optimize_prompt_caching(self) -> bool:
         return self.client_config.optimize_prompt_caching
+
+    @property
+    def dedupe_enabled(self) -> bool:
+        return self.client_config.dedupe_enabled
 
     @property
     def enforce_response_length(self) -> str:
@@ -699,31 +713,34 @@ class ClientBase:
 
         if (
             spec.reasoning_pattern
-            and spec.reasoning_pattern != self.reason_response_pattern
+            and spec.reasoning_pattern != self.client_config.reason_response_pattern
         ):
             log.info("reasoning pattern determined from prompt template", spec=spec)
             self.client_config.reason_response_pattern = spec.reasoning_pattern
 
         return prompt
 
-    def prompt_template_example(self):
+    def prompt_template_example(self) -> tuple[str | None, str | None, PromptSpec]:
         if not getattr(self, "model_name", None):
-            return None, None
+            return None, None, PromptSpec()
 
         if not self.enabled:
-            return None, None
+            return None, None, PromptSpec()
 
         model_name = self.model_name
         if self.lock_template:
             model_name = locked_model_template(self.name, self.model_name)
 
-        return model_prompt(
+        spec = PromptSpec()
+        rendered, template_file = model_prompt(
             model_name,
             "{sysmsg}",
             "{prompt}<|BOT|>{LLM coercion}",
             default_template=self.default_prompt_template,
             reasoning_tokens=self.validated_reason_tokens if self.reason_enabled else 0,
+            spec=spec,
         )
+        return rendered, template_file, spec
 
     def split_prompt_for_coercion(self, prompt: str) -> tuple[str, str]:
         """
@@ -792,7 +809,7 @@ class ClientBase:
             self.log.warn(
                 "remote service unreachable, disabling client", client=self.name
             )
-            self.enabled = False
+            self.client_config.enabled = False
             return True
 
         return False
@@ -829,6 +846,20 @@ class ClientBase:
 
         return sys_prompt
 
+    _prompt_log_file = None
+
+    def _log_prompt_to_file(self, prompt_data: PromptData):
+        """Append a prompt+response to the JSON-lines prompt log file."""
+        if ClientBase._prompt_log_file is None:
+            LOGS_DIR.mkdir(parents=True, exist_ok=True)
+            ClientBase._prompt_log_file = open(
+                LOGS_DIR / "prompt_log.jsonl", "a", encoding="utf-8"
+            )
+        ClientBase._prompt_log_file.write(
+            json.dumps(prompt_data.model_dump(), default=str) + "\n"
+        )
+        ClientBase._prompt_log_file.flush()
+
     def emit_status(self, processing: bool = None):
         """
         Sets and emits the client status.
@@ -855,7 +886,9 @@ class ClientBase:
 
         default_prompt_template = self.default_prompt_template
 
-        prompt_template_example, prompt_template_file = self.prompt_template_example()
+        prompt_template_example, prompt_template_file, prompt_template_spec = (
+            self.prompt_template_example()
+        )
         has_prompt_template = (
             prompt_template_file and prompt_template_file != default_prompt_template
         )
@@ -875,7 +908,7 @@ class ClientBase:
                 log.debug("auto_determine_prompt_template", model_name=self.model_name)
                 self.auto_determine_prompt_template_attempt = self.model_name
                 self.determine_prompt_template()
-                prompt_template_example, prompt_template_file = (
+                prompt_template_example, prompt_template_file, prompt_template_spec = (
                     self.prompt_template_example()
                 )
                 has_prompt_template = (
@@ -890,6 +923,9 @@ class ClientBase:
             "has_prompt_template": has_prompt_template,
             "dedicated_default_template": dedicated_default_template,
             "template_file": prompt_template_file,
+            "reason_response_pattern_default": (
+                prompt_template_spec.reasoning_pattern or DEFAULT_REASONING_PATTERN
+            ),
             "meta": self.Meta().model_dump(),
             "error_action": None,
             "double_coercion": self.double_coercion,
@@ -931,6 +967,7 @@ class ClientBase:
             "preset_group": self.preset_group or "",
             "rate_limit": self.rate_limit,
             "data_format": self.data_format,
+            "section_format": self.section_format,
             "manual_model_choices": getattr(self.Meta(), "manual_model_choices", []),
             "supports_embeddings": self.supports_embeddings,
             "embeddings_status": self.embeddings_status,
@@ -940,7 +977,7 @@ class ClientBase:
             "reason_enabled": self.reason_enabled,
             "reason_tokens": self.reason_tokens,
             "min_reason_tokens": self.min_reason_tokens,
-            "reason_response_pattern": self.reason_response_pattern,
+            "reason_response_pattern": self.client_config.reason_response_pattern,
             "reason_prefill": self.reason_prefill,
             "reason_failure_behavior": self.reason_failure_behavior,
             "requires_reasoning_pattern": self.requires_reasoning_pattern,
@@ -954,6 +991,7 @@ class ClientBase:
             "lock_template": self.lock_template,
             "system_prompts": self.system_prompts.model_dump(),
             "optimize_prompt_caching": self.optimize_prompt_caching,
+            "dedupe_enabled": self.dedupe_enabled,
             "enforce_response_length": self.enforce_response_length,
             "vision_capable": self.vision_capable,
             "vision_enabled": self.vision_enabled,
@@ -1592,26 +1630,29 @@ class ClientBase:
 
             agent_context = active_agent.get()
 
-            emit(
-                "prompt_sent",
-                data=PromptData(
-                    kind=kind,
-                    prompt=finalized_prompt,
-                    response=response,
-                    prompt_tokens=self._returned_prompt_tokens or token_length,
-                    response_tokens=self._returned_response_tokens
-                    or self.count_tokens(response),
-                    agent_stack=agent_context.agent_stack if agent_context else [],
-                    client_name=self.name,
-                    client_type=self.client_type,
-                    time=time_end - time_start,
-                    generation_parameters=prompt_param,
-                    inference_preset=client_context_attribute("inference_preset"),
-                    preset_group=self.preset_group,
-                    reasoning=self._reasoning_response,
-                    template_uid=active_template_uid.get(),
-                ).model_dump(),
+            prompt_data = PromptData(
+                kind=kind,
+                prompt=finalized_prompt,
+                response=response,
+                prompt_tokens=self._returned_prompt_tokens or token_length,
+                response_tokens=self._returned_response_tokens
+                or self.count_tokens(response),
+                agent_stack=agent_context.agent_stack if agent_context else [],
+                client_name=self.name,
+                client_type=self.client_type,
+                time=time_end - time_start,
+                generation_parameters=prompt_param,
+                inference_preset=client_context_attribute("inference_preset"),
+                preset_group=self.preset_group,
+                reasoning=self._reasoning_response,
+                template_uid=active_template_uid.get(),
             )
+
+            emit("prompt_sent", data=prompt_data.model_dump())
+
+            # File-based prompt logging for test scripts
+            if os.environ.get("TALEMATE_LOG_PROMPTS"):
+                self._log_prompt_to_file(prompt_data)
 
             return response
         except GenerationCancelled:
@@ -1649,6 +1690,10 @@ class ClientBase:
 
     def jiggle_enabled_for(self, kind: str, auto: bool = False) -> bool:
         agent_context = active_agent.get()
+
+        if agent_context is None:
+            return False
+
         agent = agent_context.agent
 
         if not agent:

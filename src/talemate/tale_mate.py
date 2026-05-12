@@ -176,6 +176,7 @@ class Scene(Emitter):
         self.immutable_save = False
 
         self.context = ""
+        self.perspective = ""
         self.commands = commands.Manager(self)
         self.environment = "scene"
         self.world_state = WorldState()
@@ -1065,6 +1066,9 @@ class Scene(Emitter):
         if isinstance(character, str):
             character = self.get_character(character)
 
+        if character is None:
+            return False
+
         return character.name in self.character_names
 
     def get_character(self, character_name: str, partial: bool = False):
@@ -1267,6 +1271,7 @@ class Scene(Emitter):
                 "explicit_player_character": self.player_character_exists,
                 "inactive_characters": list(self.inactive_characters.keys()),
                 "context": self.context,
+                "perspective": self.perspective,
                 "assets": self.assets.dict(),
                 "characters": [actor.character.model_dump() for actor in self.actors],
                 "character_colors": {
@@ -1296,6 +1301,11 @@ class Scene(Emitter):
                 "agent_persona_names": self.agent_persona_names,
                 "intent": self.intent,
                 "story_intent": self.story_intent,
+                "direction_always_on": (
+                    self.intent_state.direction.always_on
+                    if self.intent_state
+                    else False
+                ),
                 "id": self.id,
                 "rev": self.rev,
                 "shared_context": self.shared_context.filename

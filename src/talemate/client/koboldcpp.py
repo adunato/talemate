@@ -29,6 +29,7 @@ import talemate.emit.async_signals as async_signals
 
 if TYPE_CHECKING:
     from talemate.agents.visual import VisualBase
+    from talemate.agents.tts import TTSAgent
 
 log = structlog.get_logger("talemate.client.koboldcpp")
 
@@ -247,6 +248,8 @@ class KoboldCppClient(OpenAIVisionMixin, ClientBase):
         self.ensure_api_endpoint_specified()
         self._visual_setup_task: asyncio.Task | None = None
         self._visual_setup_lock: asyncio.Lock = asyncio.Lock()
+        self._tts_setup_task: asyncio.Task | None = None
+        self._tts_setup_lock: asyncio.Lock = asyncio.Lock()
 
     async def get_embeddings_model_name(self):
         # if self._embeddings_model_name is set, return it
@@ -413,6 +416,8 @@ class KoboldCppClient(OpenAIVisionMixin, ClientBase):
         sse = sseclient.SSEClient(stream_response)
 
         for event in sse.events():
+            if event.data == "[DONE]":
+                break
             payload = json.loads(event.data)
             chunk = payload["token"]
             response += chunk
@@ -557,3 +562,197 @@ class KoboldCppClient(OpenAIVisionMixin, ClientBase):
             "api_url"
         ].value = self.url
         return True
+
+    async def tts_openai_compatible_setup(self, tts_agent: "TTSAgent") -> bool:
+        """Auto-register a TTS backend pointing at this KoboldCpp instance
+        if it currently has a TTS model loaded.
+
+        Mirrors the visual auto-setup pattern: serialized via a lock,
+        idempotent (skips if a backend already targets this URL), and a
+        no-op when KoboldCpp has no TTS model loaded (the voice list is
+        empty). On first successful setup it also auto-refreshes the
+        backend's voices so the user opens a populated library.
+        """
+        async with self._tts_setup_lock:
+            if self._tts_setup_task and not self._tts_setup_task.done():
+                try:
+                    return await self._tts_setup_task
+                except Exception as exc:
+                    log.error("TTS setup task failed", exc=exc)
+                    self._tts_setup_task = None
+
+            self._tts_setup_task = asyncio.create_task(
+                self._tts_openai_compatible_setup_impl(tts_agent)
+            )
+            try:
+                return await self._tts_setup_task
+            except Exception as exc:
+                log.error("TTS setup task failed", exc=exc)
+                return False
+
+    async def _tts_openai_compatible_setup_impl(self, tts_agent: "TTSAgent") -> bool:
+        """Internal: keep the TTS agent's enabled-apis state in sync with
+        what this KoboldCpp instance currently has loaded.
+
+        Three kinds of state changes can happen here:
+
+          * **First-time register** — kobold has TTS loaded and we don't yet
+            track it: add a backend, enable it in apis, refresh voices.
+          * **Re-enable** — backend already exists (matched by api_url) but
+            isn't in apis.value; kobold reports voices: add it back.
+          * **Auto-disable** — backend exists and is in apis.value; kobold is
+            up and definitively reports no voices (e.g. restarted without a
+            TTS model): drop the slug from apis.value, keep the backend so
+            the user's saved config (key, model overrides, etc.) survives.
+
+        Connectivity failures are *uncertain* — they don't trigger a state
+        change in either direction, so a brief network blip can't toggle
+        the user's setup off.
+        """
+        # Lazy imports to avoid circular dependencies at module load time.
+        from talemate.agents.tts.openai_compatible import (
+            REGISTRY_KEY as OPENAI_COMPAT_REGISTRY_KEY,
+        )
+        from talemate.util import slugify
+
+        if not self.connected:
+            return False
+
+        target_url = f"{self.url}/v1"
+
+        # Find any existing backend tracking this kobold (matched by api_url).
+        existing_slug: str | None = None
+        for slug in tts_agent.dynamic_child_slugs(OPENAI_COMPAT_REGISTRY_KEY):
+            action = tts_agent.actions.get(slug)
+            if action and action.config["api_url"].value == target_url:
+                existing_slug = slug
+                break
+
+        # Tristate probe: True (voices loaded), False (definitively no voices),
+        # None (couldn't tell — leave state alone).
+        voices_loaded = await self._probe_kcpp_tts_loaded()
+        if voices_loaded is None:
+            return False
+
+        apis_value = list(tts_agent.actions["_config"].config["apis"].value or [])
+
+        if voices_loaded:
+            if existing_slug is None:
+                # First-time register.
+                base_slug = slugify(self.name) or "kobold-tts"
+                reserved = tts_agent.reserved_slugs_for_registry(
+                    OPENAI_COMPAT_REGISTRY_KEY
+                )
+                taken = set(tts_agent.dynamic_child_slugs(OPENAI_COMPAT_REGISTRY_KEY))
+                slug, n = base_slug, 2
+                while slug in taken or slug in reserved:
+                    slug = f"{base_slug}-{n}"
+                    n += 1
+
+                log.info(
+                    "KoboldCpp TTS auto-setup",
+                    client=self.name,
+                    slug=slug,
+                    url=target_url,
+                )
+                tts_agent.register_dynamic_child(
+                    OPENAI_COMPAT_REGISTRY_KEY, slug, self.name
+                )
+                tts_agent.actions[slug].config["api_url"].value = target_url
+                if slug not in apis_value:
+                    apis_value.append(slug)
+                    tts_agent.actions["_config"].config["apis"].value = apis_value
+                # Best-effort voice refresh; failure doesn't undo setup.
+                # Bounded so a hung server can't pin the periodic status
+                # loop that calls into setup_check.
+                try:
+                    await asyncio.wait_for(
+                        tts_agent.refresh_backend_voices(slug), timeout=15
+                    )
+                except Exception as exc:
+                    log.warning(
+                        "Voice refresh after TTS auto-setup failed",
+                        client=self.name,
+                        slug=slug,
+                        error=str(exc),
+                    )
+                return True
+
+            # Backend already tracking this kobold — re-enable if disabled.
+            if existing_slug not in apis_value:
+                log.info(
+                    "KoboldCpp TTS auto-enable",
+                    client=self.name,
+                    slug=existing_slug,
+                )
+                apis_value.append(existing_slug)
+                tts_agent.actions["_config"].config["apis"].value = apis_value
+                return True
+
+            # Already tracking and enabled. If two distinct clients ever end
+            # up with the same configured URL, the first to register owns
+            # the backend
+            return False
+
+        # voices_loaded is False (definitive: kobold up, no TTS model). Auto-
+        # disable the matching backend if we have one, but keep its config.
+        if existing_slug is None:
+            return False
+        if existing_slug in apis_value:
+            log.info(
+                "KoboldCpp TTS auto-disable",
+                client=self.name,
+                slug=existing_slug,
+            )
+            apis_value.remove(existing_slug)
+            tts_agent.actions["_config"].config["apis"].value = apis_value
+            return True
+        return False
+
+    async def _probe_kcpp_tts_loaded(self) -> bool | None:
+        """Probe KoboldCpp's capabilities endpoint to determine TTS state.
+
+        Uses ``GET /api/extra/version`` and reads the ``tts`` flag — the
+        only reliable signal for whether a TTS model is currently loaded.
+        ``/v1/audio/voices`` is *not* usable here: it always returns the
+        hardcoded default voice list (``kobo``, ``cheery``, etc.) even when
+        no TTS model is loaded, so a non-empty response there does not
+        prove TTS is available.
+
+        Returns:
+            * ``True`` — capabilities report ``tts: true``.
+            * ``False`` — capabilities report ``tts: false`` (definitive
+              answer; backend should be auto-disabled).
+            * ``None`` — probe was inconclusive (network error, non-JSON
+              body, missing field, unexpected status, older kobold build
+              without the endpoint). State is left alone.
+        """
+        version_url = urljoin(self.url, "/api/extra/version")
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url=version_url, timeout=2)
+            except Exception as exc:
+                log.debug(
+                    "KoboldCpp TTS probe failed",
+                    url=version_url,
+                    error=str(exc),
+                )
+                return None
+
+        if response.status_code != 200:
+            return None
+        try:
+            payload = response.json()
+        except ValueError:
+            return None
+        if not isinstance(payload, dict) or "tts" not in payload:
+            return None
+        # Strict: only a real boolean answers the probe. Anything else
+        # (string "true", number, None) is treated as inconclusive so a
+        # weird payload can't accidentally flip backend state.
+        flag = payload["tts"]
+        if flag is True:
+            return True
+        if flag is False:
+            return False
+        return None

@@ -30,5 +30,6 @@ Scenario Premise:
 {% if technical %}`{{ pin.context_id }}`: {% else %}{{ pin.title }}: {{ pin.time_aware_text|condensed }}{% endif %}
 ---
 {% endfor %}
+{% if scene.active_pins and technical %}<|CLOSE_SECTION|>{% endif %}
 {# END ACTIVE PINS #}
 {% endblock %}

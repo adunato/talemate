@@ -1,8 +1,5 @@
 # Response Length Enforcement
 
-!!! info "New in 0.36.0"
-    Response length enforcement is now configurable per client with four modes.
-
 Talemate can control response length in two ways: by capping the token budget sent to the API (`max_tokens`) and by appending human-readable length instructions to the prompt. The **Response Length Enforcement** setting lets you choose which of these mechanisms to use.
 
 ## How It Works
@@ -37,10 +34,11 @@ The instruction is derived from the configured max token count for the current g
 
 ## Configuration
 
-The setting is found in the client settings under the **General** tab.
+The setting is found on the **Advanced** tab of the [client configuration](client-configuration.md) dialog.
 
-1. Open the client settings by clicking on a client in the sidebar
-2. Find the **Response Length Enforcement** dropdown
-3. Select the desired mode
+1. Click the cogwheels on a client in the sidebar to open its configuration
+2. Open the **Advanced** tab
+3. Find the **Response Length Enforcement** dropdown and select the desired mode
+4. Click **Save**
 
 This setting defaults to **Limit tokens and send instructions**.

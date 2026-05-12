@@ -59,7 +59,7 @@
     <RequestInput
         ref="requestDirectedRegenerate"
         title="Directed regenerate"
-        instructions="Provide instructions for regeneration. Ctrl+Enter submits."
+        :instructions="`Provide instructions for regeneration. ${primaryModifierLabel}+Enter submits.`"
         icon="mdi-refresh"
         inputType="multiline"
         @continue="directedRegenerateContinue"
@@ -107,7 +107,7 @@
                 </v-tooltip>
 
                 <v-tooltip :disabled="appBusy || !appReady" location="top"
-                    :text="'Redo most recent AI message.\n[Ctrl: Provide instructions, +Alt: Rewrite]'"
+                    :text="`Redo most recent AI message.\n[${primaryModifierLabel}: Provide instructions, +Alt: Rewrite]`"
                     class="pre-wrap"
                     max-width="300px">
                     <template v-slot:activator="{ props }">
@@ -119,7 +119,7 @@
                 </v-tooltip>
 
                 <v-tooltip :disabled="appBusy || !appReady" location="top"
-                    :text="'Redo most recent AI message (Nuke Option - use this to attempt to break out of repetition) \n[Ctrl: Provide instructions, +Alt: Rewrite]'"
+                    :text="`Redo most recent AI message (Nuke Option - use this to attempt to break out of repetition) \n[${primaryModifierLabel}: Provide instructions, +Alt: Rewrite]`"
                     class="pre-wrap"
                     max-width="300px">
                     <template v-slot:activator="{ props }">
@@ -161,24 +161,11 @@
 
                 <!-- director actions -->
 
-                <SceneToolsDirector :disabled="appBusy || !appReady" ref="directorTools" :npc-characters="npc_characters" />
+                <SceneToolsDirector :disabled="appBusy || !appReady" ref="directorTools" :npc-characters="npc_characters" :scene-characters="scene_characters" :agent-status="agentStatus" />
 
                 <!-- advance time -->
 
-                <v-menu>
-                    <template v-slot:activator="{ props }">
-                        <v-btn class="hotkey mx-1" v-bind="props" :disabled="appBusy || !appReady" color="primary" icon variant="text">
-                            <v-icon>mdi-clock</v-icon>
-                        </v-btn>
-                    </template>
-                    <v-list density="compact">
-                        <v-list-subheader>Advance Time</v-list-subheader>
-                        <v-list-item density="compact" v-for="(option, index) in advanceTimeOptions" :key="index"
-                            @click="advanceTime(option.value)">
-                            <v-list-item-title density="compact" class="text-capitalize">{{ option.title }}</v-list-item-title>
-                        </v-list-item>
-                    </v-list>
-                </v-menu>
+                <SceneToolsTime :disabled="appBusy || !appReady" />
 
                 <!-- world tools -->
                 <SceneToolsWorld 
@@ -234,7 +221,9 @@ import SceneToolsVisual from './SceneToolsVisual.vue';
 import SceneToolsWorld from './SceneToolsWorld.vue';
 import SceneToolsSettings from './SceneToolsSettings.vue';
 import SceneToolsSave from './SceneToolsSave.vue';
+import SceneToolsTime from './SceneToolsTime.vue';
 import RequestInput from './RequestInput.vue';
+import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 export default {
 
     name: 'SceneTools',
@@ -247,6 +236,7 @@ export default {
         SceneToolsSave,
         SceneToolsWorld,
         SceneToolsSettings,
+        SceneToolsTime,
         RequestInput,
     },
     props: {
@@ -295,6 +285,7 @@ export default {
     },
     data() {
         return {
+            primaryModifierLabel,
             commandActive: false,
             commandName: null,
             autoSave: true,
@@ -304,35 +295,13 @@ export default {
             sceneExperimental: false,
             canAutoSave: false,
             npc_characters: [],
+            scene_characters: [],
             agentMessages: {},
             messageHighlights: {},
             pendingDirectedRegen: null,
             quickSettings: [
                 {"value": "toggleAutoSave", "title": "Auto Save", "icon": "mdi-content-save", "description": "Automatically save after each game-loop", "status": () => { return this.canAutoSave ? this.autoSave : "Manually save scene for auto-save to be available"; }},
                 {"value": "toggleAutoProgress", "title": "Auto Progress", "icon": "mdi-robot", "description": "AI automatically progresses after player turn.", "status": () => { return this.autoProgress }},
-            ],
-            advanceTimeOptions: [
-                {"value" : "P10Y", "title": "10 years"},
-                {"value" : "P5Y", "title": "5 years"},
-                {"value" : "P3Y", "title": "3 years"},
-                {"value" : "P2Y", "title": "2 years"},
-                {"value" : "P1Y", "title": "1 year"},
-                {"value" : "P6M", "title": "6 months"},
-                {"value" : "P3M", "title": "3 months"},
-                {"value" : "P1M", "title": "1 month"},
-                {"value" : "P14D:2 Weeks later", "title": "2 weeks"},
-                {"value" : "P7D:1 Week later", "title": "1 week"},
-                {"value" : "P3D", "title": "3 days"},
-                {"value" : "P2D", "title": "2 days"},
-                {"value" : "P1D", "title": "1 day"},
-                {"value" : "PT12H", "title": "12 hours"},
-                {"value" : "PT8H", "title": "8 hours"},
-                {"value" : "PT4H", "title": "4 hours"},
-                {"value" : "PT2H", "title": "2 hours"},
-                {"value" : "PT1H", "title": "1 hour"},
-                {"value" : "PT30M", "title": "30 minutes"},
-                {"value" : "PT15M", "title": "15 minutes"},
-                {"value" : "PT5M", "title": "5 minutes"}
             ],
         }
     },
@@ -401,9 +370,9 @@ export default {
         },
 
         regenerate(event) {
-            // if ctrl is pressed use directed regenerate
-            let withDirection = event.ctrlKey;
-            let method = event.altKey || event.metaKey ? "edit" : "replace";
+            // primary modifier (Ctrl/Cmd) opens the directed regenerate dialog
+            let withDirection = isPrimaryModifier(event);
+            let method = event.altKey ? "edit" : "replace";
             const nuke_repetition = 0.0;
 
             if (withDirection) {
@@ -423,9 +392,9 @@ export default {
         },
 
         regenerateNuke(event) {
-            // if ctrl is pressed use directed regenerate
-            let withDirection = event.ctrlKey;
-            let method = event.altKey || event.metaKey ? "edit" : "replace";
+            // primary modifier (Ctrl/Cmd) opens the directed regenerate dialog
+            let withDirection = isPrimaryModifier(event);
+            let method = event.altKey ? "edit" : "replace";
             const nuke_repetition = 0.5;
 
             if (withDirection) {
@@ -459,10 +428,6 @@ export default {
             this.$emit('cancel-audio-queue');
         },
 
-        advanceTime(duration) {
-            this.getWebsocket().send(JSON.stringify({ type: 'world_state_agent', action: 'advance_time', duration: duration }));
-        },
-
         // Handle incoming messages
 
         handleMessage(data) {
@@ -485,6 +450,7 @@ export default {
 
                 // collect npc characters
                 this.npc_characters = [];
+                this.scene_characters = data.data.characters || [];
                 for (let character of data.data.characters) {
                     if (!character.is_player) {
                         this.npc_characters.push(character.name);

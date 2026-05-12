@@ -14,6 +14,7 @@
                     :name="m.name"
                     :description="m.description"
                     :decision="m.decision"
+                    :timer="m.timer"
                     :confirming="confirming[m.id]"
                     @decide="onDecide"
                 />
@@ -29,8 +30,9 @@
                     :message="m.message"
                 />
                 <div v-else-if="m.type === 'user_interaction'" class="text-body-2">
-                    <v-chip size="x-small" label color="primary" class="mr-2">user</v-chip>
-                    <span v-if="m.user_input && m.user_input.trim()">User interacted: {{ m.preview || m.user_input }}</span>
+                    <v-chip size="x-small" label color="primary" class="mr-2">{{ m.is_direction ? 'instruction' : 'user' }}</v-chip>
+                    <span v-if="m.is_direction">{{ m.user_input }}</span>
+                    <span v-else-if="m.user_input && m.user_input.trim()">User interacted: {{ m.preview || m.user_input }}</span>
                     <span v-else>User decided to yield the turn back to you</span>
                 </div>
                 <DirectorConsoleChatMessageMarkdown v-else-if="!m.loading && m.type !== 'compaction_notice'" :text="m.message" />

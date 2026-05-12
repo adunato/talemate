@@ -16,7 +16,7 @@
                 @click="actionProgress" 
                 prepend-icon="mdi-script-text-play"
             >
-                <v-list-item-title>Progress Story <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">Ctrl: Provide direction</v-chip></v-list-item-title>
+                <v-list-item-title>Progress Story <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">{{ primaryModifierLabel }}: Provide direction</v-chip></v-list-item-title>
                 <v-btn @click.stop="(e) => { actionProgress(e, PROGRESS_SHORTCUT_MINOR) }" variant="tonal" color="highlight2" class="mr-1" size="x-small" :prepend-icon="'mdi-dice-multiple'">Minor</v-btn>
                 <v-btn @click.stop="(e) => { actionProgress(e, PROGRESS_SHORTCUT_MAJOR) }" variant="tonal" color="highlight2" class="mr-1" size="x-small" :prepend-icon="'mdi-dice-multiple'">Major</v-btn>
                 <v-btn @click.stop="(e) => { actionProgress(e, PROGRESS_SHORTCUT_CURVEBALL) }" variant="tonal" color="highlight2" size="x-small" :prepend-icon="'mdi-dice-multiple'">Curveball</v-btn>
@@ -28,7 +28,7 @@
                 @click="actionNarrateEnvironment" 
                 prepend-icon="mdi-waves"
             >
-                <v-list-item-title>Narrate Environment <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">Ctrl: Provide direction</v-chip></v-list-item-title>
+                <v-list-item-title>Narrate Environment <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">{{ primaryModifierLabel }}: Provide direction</v-chip></v-list-item-title>
             </v-list-item>
 
             <!-- Look at Scene -->
@@ -37,7 +37,7 @@
                 @click="actionLookAtScene" 
                 prepend-icon="mdi-image-filter-hdr"
             >
-                <v-list-item-title>Look at Scene <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">Ctrl: Provide direction</v-chip></v-list-item-title>
+                <v-list-item-title>Look at Scene <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">{{ primaryModifierLabel }}: Provide direction</v-chip></v-list-item-title>
             </v-list-item>
 
             <!-- Look at NPCs -->
@@ -47,7 +47,7 @@
                 @click="(ev) => { actionLookAtCharacter(ev, null, {character: npc_name}) }" 
                 prepend-icon="mdi-account-eye"
             >
-                <v-list-item-title>Look at {{ npc_name }} <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">Ctrl: Provide direction</v-chip></v-list-item-title>
+                <v-list-item-title>Look at {{ npc_name }} <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">{{ primaryModifierLabel }}: Provide direction</v-chip></v-list-item-title>
             </v-list-item>
 
             <!-- Query -->
@@ -76,6 +76,7 @@
 
 <script>
 import RequestInput from './RequestInput.vue';
+import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 
 const PROGRESS_SHORTCUT_MINOR = "Introduce a minor change to the story.";
 const PROGRESS_SHORTCUT_MAJOR = "Introduce a major shift in the story.";
@@ -96,6 +97,7 @@ export default {
             PROGRESS_SHORTCUT_MINOR,
             PROGRESS_SHORTCUT_MAJOR,
             PROGRESS_SHORTCUT_CURVEBALL,
+            primaryModifierLabel,
         }
     },
     methods: {
@@ -146,7 +148,7 @@ export default {
 
         actionProgress(ev, narrativeDirection="") {
 
-            if (ev.ctrlKey) {
+            if (isPrimaryModifier(ev)) {
                 this.requestDirection({action: 'Progress', input: narrativeDirection});
                 return;
             }
@@ -168,7 +170,7 @@ export default {
 
         actionNarrateEnvironment(ev, narrativeDirection="") {
 
-            if (ev.ctrlKey) {
+            if (isPrimaryModifier(ev)) {
                 this.requestDirection({action: 'NarrateEnvironment'});
                 return;
             }
@@ -191,7 +193,7 @@ export default {
 
         actionLookAtScene(ev, narrativeDirection="") {
 
-            if (ev.ctrlKey) {
+            if (isPrimaryModifier(ev)) {
                 this.requestDirection({action: 'LookAtScene'});
                 return;
             }
@@ -213,8 +215,8 @@ export default {
          */
 
         actionLookAtCharacter(ev, narrativeDirection="", params) {
-            
-            if (ev.ctrlKey) {
+
+            if (isPrimaryModifier(ev)) {
                 this.requestDirection({action: 'LookAtCharacter', ...params});
                 return;
             }

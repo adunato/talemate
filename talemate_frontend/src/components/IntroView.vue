@@ -1,6 +1,10 @@
 <template>
   <IntroRecentScenes :config="config" :scene-is-loading="sceneIsLoading" :scene-loading-available="sceneLoadingAvailable"  @request-scene-load="requestSceneLoad" @request-backup-restore="requestBackupRestore"/>
   <WhatsNew />
+  <v-btn variant="text" class="ml-2" href="https://vegu-ai.github.io/talemate/" target="_blank" rel="noopener">
+    <v-icon size="x-small" class="mr-1" color="primary">mdi-help-box-multiple-outline</v-icon>
+    Documentation
+  </v-btn>
 </template>
 
 <script>

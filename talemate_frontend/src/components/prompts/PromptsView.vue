@@ -24,6 +24,11 @@
                 <v-tab value="templates">
                     <v-icon start>mdi-file-document-multiple-outline</v-icon>
                     Template Files
+                    <v-icon v-if="outdatedCount > 0" size="x-small" color="warning" class="ml-1">mdi-alert</v-icon>
+                </v-tab>
+                <v-tab value="llm-templates">
+                    <v-icon start>mdi-code-braces</v-icon>
+                    LLM Prompt Templates
                 </v-tab>
                 <v-tab :disabled="!sceneLoaded" value="context-review">
                     <v-icon start>mdi-view-split-horizontal</v-icon>
@@ -84,6 +89,7 @@
                                     @update:priority="setGroupPriority"
                                     @set-template-source="setTemplateSource"
                                     @request-template="requestTemplate"
+                                    @override-in-group="handleOverrideInGroup"
                                 />
                             </v-window-item>
 
@@ -157,6 +163,11 @@
                     </template>
                 </v-window-item>
 
+                <!-- LLM Prompt Templates Tab -->
+                <v-window-item value="llm-templates">
+                    <LLMTemplatesTab />
+                </v-window-item>
+
                 <!-- Context Review Tab -->
                 <v-window-item value="context-review">
                     <SceneContextReviewInline
@@ -223,6 +234,7 @@
 <script>
 import ActiveTab from './ActiveTab.vue';
 import GroupTab from './GroupTab.vue';
+import LLMTemplatesTab from './LLMTemplatesTab.vue';
 import PromptDetailView from './PromptDetailView.vue';
 import SceneContextReviewInline from '../SceneContextReviewInline.vue';
 
@@ -231,6 +243,7 @@ export default {
     components: {
         ActiveTab,
         GroupTab,
+        LLMTemplatesTab,
         PromptDetailView,
         SceneContextReviewInline,
     },
@@ -296,6 +309,9 @@ export default {
             return this.groups.filter(g =>
                 g.name !== 'scene' && g.name !== 'default'
             );
+        },
+        outdatedCount() {
+            return this.templates.filter(t => t.is_outdated).length;
         }
     },
     watch: {
@@ -354,6 +370,12 @@ export default {
             if (this.activePromptIndex >= this.openPrompts.length) {
                 this.activePromptIndex = Math.max(0, this.openPrompts.length - 1);
             }
+        },
+
+        // Handle "Override in X" shortcut from ActiveTab preview
+        handleOverrideInGroup({ uid, group }) {
+            if (!uid || !group) return;
+            this.navigateToTemplate(uid, group);
         },
 
         // Handle navigation to template from PromptDetailView
@@ -429,14 +451,12 @@ export default {
                     }
                 }
             } else {
-                // Find the ref for GroupTab instances
-                const groupTabRef = this.$refs[`groupTab_${this.activeTab}`];
-                if (groupTabRef) {
-                    const template = groupTabRef.groupTemplates?.find(t => t.uid === uid);
-                    if (template) {
-                        groupTabRef.selectedTemplatePath = uid;
-                        groupTabRef.expandAndSelectTemplate(template);
-                    }
+                // Find the ref for GroupTab instances. v-for refs may be arrays.
+                let groupTabRef = this.$refs[`groupTab_${this.activeTab}`];
+                if (Array.isArray(groupTabRef)) groupTabRef = groupTabRef[0];
+                if (groupTabRef && typeof groupTabRef.selectTemplateByUid === 'function') {
+                    // GroupTab queues the selection until its data finishes loading.
+                    groupTabRef.selectTemplateByUid(uid);
                 }
             }
         },

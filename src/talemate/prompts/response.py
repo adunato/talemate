@@ -11,10 +11,16 @@ from __future__ import annotations
 import json
 import re
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
+
+from talemate.util.data import extract_data_auto
+
+if TYPE_CHECKING:
+    from talemate.client.base import ClientBase
+    from talemate.prompts.base import Prompt as PromptBase
 
 
 __all__ = [
@@ -29,6 +35,7 @@ __all__ = [
     "StripPrefixExtractor",
     "CodeBlockExtractor",
     "ComplexCodeBlockExtractor",
+    "BlockListExtractor",
     "ResponseSpec",
 ]
 
@@ -45,6 +52,7 @@ class Extractor(BaseModel, ABC):
     model_config = ConfigDict(frozen=False)
 
     trim: bool = True
+    parse_data: bool = False
 
     @abstractmethod
     def extract(self, text: str) -> Union[str, list[str], None]:
@@ -106,6 +114,23 @@ class AnchorExtractorBase(Extractor):
             start = idx + 1
 
         return positions
+
+    def _extract_close_ended(self, text: str) -> str | None:
+        """
+        Extract content from start of text to the last closing tag.
+
+        Used as fallback when no opening tag is found.
+        """
+        close_positions = self._find_all_markers(text, self.right)
+
+        if not close_positions:
+            return None
+
+        # Use the last closing tag
+        last_close = close_positions[-1]
+        content = text[:last_close]
+
+        return content if content.strip() else None
 
 
 class AnchorExtractor(AnchorExtractorBase):
@@ -208,7 +233,12 @@ class AnchorExtractor(AnchorExtractorBase):
         if open_ended is not None:
             return self._apply_trim(open_ended)
 
-        # Step 3: If fallback_to_full is enabled, return the full response
+        # Step 3: Try close-ended extraction (no opening tag)
+        close_ended = self._extract_close_ended(text)
+        if close_ended is not None:
+            return self._apply_trim(close_ended)
+
+        # Step 4: If fallback_to_full is enabled, return the full response
         if self.fallback_to_full:
             return self._apply_trim(text)
 
@@ -400,6 +430,37 @@ class ComplexAnchorExtractor(AnchorExtractorBase):
 
         return content if content.strip() else None
 
+    def _extract_simple(self, text: str) -> str | None:
+        """
+        Fall back to simple (non-nesting-aware) extraction.
+
+        Used when nesting-aware extraction fails but the target tags exist
+        in the text — typically because spurious tracked-tag mentions in
+        content broke the nesting depth counter.
+        """
+        open_positions = self._find_all_markers(text, self.left)
+        close_positions = self._find_all_markers(text, self.right)
+
+        if not open_positions:
+            return None
+
+        if close_positions:
+            # Find the last complete block by matching last open before last close
+            last_close = close_positions[-1]
+            # Find the latest open that comes before the last close
+            best_open = None
+            for pos in open_positions:
+                if pos < last_close:
+                    best_open = pos
+            if best_open is not None:
+                content = text[best_open + len(self.left) : last_close]
+                return content if content.strip() else None
+
+        # Open-ended: last opening tag to end
+        last_open = open_positions[-1]
+        content = text[last_open + len(self.left) :]
+        return content if content.strip() else None
+
     def extract(self, text: str) -> str | None:
         """
         Extract content between anchor tags with nesting awareness.
@@ -424,7 +485,19 @@ class ComplexAnchorExtractor(AnchorExtractorBase):
         if open_ended is not None:
             return self._apply_trim(open_ended)
 
-        # Step 3: If fallback_to_full is enabled, return the full response
+        # Step 3: If the target tag exists but nesting-aware extraction
+        # failed (e.g. spurious tracked-tag mentions in content broke the
+        # depth counter), fall back to simple positional extraction.
+        simple = self._extract_simple(text)
+        if simple is not None:
+            return self._apply_trim(simple)
+
+        # Step 4: Try close-ended extraction (no opening tag)
+        close_ended = self._extract_close_ended(text)
+        if close_ended is not None:
+            return self._apply_trim(close_ended)
+
+        # Step 5: If fallback_to_full is enabled, return the full response
         if self.fallback_to_full:
             return self._apply_trim(text)
 
@@ -793,6 +866,114 @@ class ComplexCodeBlockExtractor(ComplexAnchorExtractor, CodeBlockExtractorMixin)
         return None
 
 
+class BlockListExtractor(Extractor):
+    """
+    Extract tagged blocks from text using configurable anchor patterns.
+
+    Each block definition is a tuple of ``(type_name, left_regex, right_string)``.
+    The left pattern is a regex that can contain named capture groups which
+    will be included in the block dict. The right pattern is matched literally
+    (case-insensitive).
+
+    Example block definitions::
+
+        blocks = [
+            ("narrator", r"<NARRATOR>", "</NARRATOR>"),
+            ("character", r'<CHARACTER name="(?P<name>[^"]*)">', "</CHARACTER>"),
+        ]
+
+    Each extracted block is a dict::
+
+        {"type": "narrator", "content": "..."}
+        {"type": "character", "name": "Kaira", "content": "..."}
+
+    Named groups from the left regex are added to the dict automatically.
+    When a ``name`` group is captured, the extractor strips a leading
+    name prefix from content if the LLM echoed it.
+
+    Consecutive blocks of the same type and named groups are merged.
+    Tag matching is case-insensitive.
+    """
+
+    blocks: list[tuple[str, str, str]] = []
+
+    def _strip_name_prefix(self, content: str, name: str) -> str:
+        """Strip leading name prefix from content if present."""
+        stripped = content.lstrip()
+        if stripped.lower().startswith(name.lower()):
+            after = stripped[len(name) :]
+            if after and (after[0] in " \t:"):
+                return after.lstrip(" \t:").lstrip()
+            if not after:
+                return ""
+        return content
+
+    def extract(self, text: str) -> list[dict]:
+        """
+        Extract blocks from text.
+
+        Returns:
+            List of block dicts. Empty list if no valid blocks found.
+        """
+        if not text or not self.blocks:
+            return []
+
+        # Find all block matches with their positions for ordering
+        found: list[tuple[int, dict]] = []
+        text_lower = text.lower()
+
+        for block_type, left_pattern, right_literal in self.blocks:
+            right_lower = right_literal.lower()
+
+            for left_match in re.finditer(left_pattern, text, re.IGNORECASE):
+                content_start = left_match.end()
+
+                # Find the closing anchor (case-insensitive) after this opening
+                right_pos = text_lower.find(right_lower, content_start)
+                if right_pos < 0:
+                    continue
+
+                content = text[content_start:right_pos]
+                if self.trim:
+                    content = content.strip()
+
+                # Build block dict with type and content
+                block = {"type": block_type, "content": content}
+
+                # Add any named capture groups from the left regex
+                named_groups = left_match.groupdict()
+                block.update(named_groups)
+
+                # Strip name prefix from content if a "name" group was captured
+                if named_groups.get("name") and content:
+                    block["content"] = self._strip_name_prefix(
+                        content, named_groups["name"]
+                    )
+
+                found.append((left_match.start(), block))
+
+        # Sort by position in text
+        found.sort(key=lambda x: x[0])
+        blocks = [b for _, b in found]
+
+        # Merge consecutive blocks with same type and same named groups
+        if not blocks:
+            return []
+
+        merged: list[dict] = [blocks[0]]
+        for block in blocks[1:]:
+            prev = merged[-1]
+            # Same type and same values for all keys except content
+            prev_key = {k: v for k, v in prev.items() if k != "content"}
+            block_key = {k: v for k, v in block.items() if k != "content"}
+            if prev_key == block_key:
+                prev["content"] = prev["content"] + "\n" + block["content"]
+            else:
+                merged.append(block)
+
+        return merged
+
+
 class ResponseSpec(BaseModel):
     """
     Specification for what to extract from a response.
@@ -819,6 +1000,40 @@ class ResponseSpec(BaseModel):
                 raise ExtractionError(f"Required field '{name}' not found in response")
             result[name] = value
         return result
+
+    async def parse_data_fields(
+        self,
+        extracted: dict,
+        client: "ClientBase",
+        prompt_cls: "PromptBase",
+    ) -> dict:
+        """
+        Post-process extracted fields that have parse_data=True using extract_data_auto.
+
+        Call this after extract_all() when a client is available.
+        Modifies and returns the extracted dict in-place.
+        """
+        schema_format = (client.data_format or "json").lower()
+
+        for name, extractor in self.extractors.items():
+            if not extractor.parse_data:
+                continue
+            value = extracted.get(name)
+            if not isinstance(value, str):
+                continue
+            try:
+                items = await extract_data_auto(
+                    value,
+                    client,
+                    prompt_cls,
+                    schema_format=schema_format,
+                )
+            except Exception:
+                continue
+            if items:
+                extracted[name] = items[0] if len(items) == 1 else items
+
+        return extracted
 
     @classmethod
     def simple(

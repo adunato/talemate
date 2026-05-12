@@ -1,0 +1,34 @@
+## Task
+You are an editor reviewing the following scene prose. Your job is to revise it to fix these specific problems:
+
+1. **Repeated imagery/vocabulary:** If the same image, metaphor, or sensory detail appears in multiple blocks (e.g., "pulsing" used 5 times, "copper taste" in 3 blocks, the ship "dissolving" described identically twice), rewrite the later occurrences to use different language or cut them entirely.
+
+2. **Intensity monotony:** If every block is at maximum intensity with no breathing room, revise 1-2 blocks to be quieter — shorter sentences, less sensory detail, a moment of stillness or thought.
+
+3. **Repeated dialogue structure:** If a character delivers the same type of speech multiple times (e.g., two exposition monologues with the same structure), rewrite one to be shorter, more fragmented, or serve a different function.
+
+**Rules:**
+- Keep all plot events intact — do NOT change what happens, only how it's written.
+- Keep the same number of blocks in the same order.
+- Keep block types (narrator/character) and character names unchanged.
+- Your revisions must be subtle — polish, not rewrite. Cut redundant sentences, vary repeated words, adjust intensity. Do not add new plot elements.
+- **CONTINUATION MODE:** This scene is a SEGMENT of a longer roleplay — it does NOT end here. The final block is intentionally OPEN. Do NOT "tidy up" the ending. Do NOT soften the final block into a resolution. Do NOT wind down. Do NOT add reflection or closure. The final block must remain LIVE — high tension, forward-facing, unresolved. If anything, sharpen the last block's open quality.
+
+**Original prose:**
+
+```json
+[
+
+  {"type": "narrator", "content": "The room was dark and cold. A chill ran down her spine."},
+
+  {"type": "character", "name": "Elena", "content": "She stepped forward, her hands trembling. \"Who\u0027s there?\" she whispered."},
+
+  {"type": "narrator", "content": "A chill ran through the room. The darkness pressed in from all sides."}
+
+]
+```
+
+Output the revised version as a json list inside `<BLOCKS>` tags using the same format. Every block from the original must appear in your output.
+
+The length of your response must fit within 4 paragraphs.
+<|BOT|><BLOCKS>

@@ -532,7 +532,12 @@ export default {
     },
     watch: {
         character: {
-            handler(newVal) {
+            handler(newVal, oldVal) {
+                // Must precede checkReferenceAssets() — the assets watcher (immediate: true)
+                // will also call it and relies on the gate already being reset.
+                if (newVal?.name !== oldVal?.name) {
+                    this.hasCheckedReferences = false;
+                }
                 // Update local reactive references to default and current avatar
                 this.defaultAvatarId = newVal?.avatar || null;
                 this.currentAvatarId = newVal?.current_avatar || null;
@@ -684,48 +689,26 @@ export default {
                 this.userChangedReference = false;
                 this.hasCheckedReferences = true;
             } else {
-                // No local assets found, try searching
+                // No local assets found
                 this.referenceAssetIds = [];
                 this.selectedReferenceAssetId = null;
                 this.referenceSelectionReason = null;
                 this.userChangedReference = false;
-                
-                // Search for CHARACTER_PORTRAIT assets that can be used as references
-                this.getWebsocket().send(JSON.stringify({
-                    type: 'scene_assets',
-                    action: 'search',
-                    vis_type: targetVisType,
-                    character_name: this.character.name,
-                    reference_vis_types: [targetVisType],
-                }));
+
+                // Search once per character. Mark as checked BEFORE sending so re-entry
+                // (e.g. via watchers firing while waiting for the response) doesn't spam
+                // the backend with identical search requests.
+                if (!this.hasCheckedReferences) {
+                    this.hasCheckedReferences = true;
+                    this.getWebsocket().send(JSON.stringify({
+                        type: 'scene_assets',
+                        action: 'search',
+                        vis_type: targetVisType,
+                        character_name: this.character.name,
+                        reference_vis_types: [targetVisType],
+                    }));
+                }
             }
-        },
-        
-        setReferenceAsset(assetId, reason) {
-            // Legacy method for backward compatibility with search results
-            // This sets a single asset, but we'll convert to ordered list
-            const asset = this.anyCharacterAssets.find(a => a.id === assetId);
-            if (asset) {
-                const targetVisType = 'CHARACTER_PORTRAIT';
-                const coverImageId = this.character?.cover_image;
-                const { selectedId, orderedIds } = computeCharacterReferenceOptions(
-                    targetVisType,
-                    this.anyCharacterAssets,
-                    assetId,
-                    this.assets, // same-vis-type assets
-                    coverImageId // fallback
-                );
-                this.referenceAssetIds = orderedIds;
-                this.selectedReferenceAssetId = selectedId || assetId;
-                this.referenceSelectionReason = reason ? { reason } : null;
-                this.userChangedReference = false;
-            } else {
-                this.referenceAssetIds = [assetId];
-                this.selectedReferenceAssetId = assetId;
-                this.referenceSelectionReason = reason ? { reason } : null;
-                this.userChangedReference = false;
-            }
-            this.hasCheckedReferences = true;
         },
         
         onReferenceSelectionChange(newId) {
@@ -911,18 +894,22 @@ export default {
             
             // Handle asset search results
             if (data.type === 'asset_search_results') {
-                if (data.character_name === this.character?.name && 
+                if (data.character_name === this.character?.name &&
                     data.vis_type === 'CHARACTER_PORTRAIT') {
                     const assetIds = data.asset_ids || [];
-                    
-                    // Use explicit reference assets if found from search
+
+                    // Apply results directly. Calling checkReferenceAssets() here would
+                    // re-run the same logic, find no local assets, and fire another
+                    // search — looping until the dialog is closed. Any local-asset
+                    // changes that arrive after this request are picked up by the
+                    // assets / character.cover_image / character.avatar watchers.
                     if (assetIds.length > 0) {
-                        // Recompute with search results included
-                        this.checkReferenceAssets();
-                    } else {
-                        // Fallback to local assets if search returned no explicit references
-                        this.checkReferenceAssets();
+                        this.referenceAssetIds = assetIds;
+                        this.selectedReferenceAssetId = assetIds[0];
+                        this.referenceSelectionReason = { reason: 'Found via asset search' };
+                        this.userChangedReference = false;
                     }
+                    this.hasCheckedReferences = true;
                 }
             }
             

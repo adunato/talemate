@@ -1,0 +1,41 @@
+## Classification
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: Third person limited, past tense.
+
+Scenario Premise:
+A peaceful clearing in the heart of an ancient forest.
+
+## Characters
+
+### Hero
+name: Hero
+gender: male
+age: early 30s
+occupation: Adventurer
+
+### Elena
+name: Elena
+gender: female
+age: early 30s
+occupation: Healer
+
+A wandering healer with knowledge of ancient herbs.
+
+## Scene
+
+Elena: Hello there, traveler.
+
+The sun filters through the leaves above.
+
+Marcus: What brings you to these woods?
+
+## Task
+
+Generate the list of 20 items. The list MUST BE plain text numbered list with one item per line.
+
+### Editorial Instructions
+Generate inventory items
+
+<|BOT|>items:
+1.

@@ -1,0 +1,276 @@
+{
+  "title": "Test Basic Instruction Following",
+  "id": "c49285a9-1a87-41f8-a173-24d0b33e565f",
+  "properties": {},
+  "x": 0,
+  "y": 0,
+  "width": 200,
+  "height": 100,
+  "collapsed": false,
+  "inherited": false,
+  "registry": "model-tests/basics/testBasicInstructionFollowing",
+  "nodes": {
+    "bc4094a5-5659-4fe9-8cdf-54aba755c4e6": {
+      "title": "Get Agent",
+      "id": "bc4094a5-5659-4fe9-8cdf-54aba755c4e6",
+      "properties": {
+        "agent_name": "director"
+      },
+      "x": 19,
+      "y": 391,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "agents/GetAgent",
+      "base_type": "core/Node"
+    },
+    "ce3eea10-92ba-4cb6-a35c-b36924c100ca": {
+      "title": "true",
+      "id": "ce3eea10-92ba-4cb6-a35c-b36924c100ca",
+      "properties": {
+        "value": true
+      },
+      "x": 19,
+      "y": 271,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/MakeBool",
+      "base_type": "core/Node"
+    },
+    "4c4f8ccd-ce68-464f-9484-90848397d762": {
+      "title": "Anchor Extractor",
+      "id": "4c4f8ccd-ce68-464f-9484-90848397d762",
+      "properties": {
+        "name": "response",
+        "left": "<TEST>",
+        "right": "</TEST>",
+        "fallback_to_full": false,
+        "trim": true
+      },
+      "x": 439,
+      "y": 881,
+      "width": 210,
+      "height": 194,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "response/AnchorExtractor",
+      "base_type": "core/Node"
+    },
+    "7a161440-e500-4a0e-a9df-5f7eb731063f": {
+      "title": "Generate Response",
+      "id": "7a161440-e500-4a0e-a9df-5f7eb731063f",
+      "properties": {
+        "data_output": false,
+        "data_multiple": false,
+        "response_length": 256,
+        "action_type": "scene_direction",
+        "attempts": 1
+      },
+      "x": 729,
+      "y": 271,
+      "width": 270,
+      "height": 334,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/GenerateResponse",
+      "base_type": "core/Node"
+    },
+    "7c00728e-4e4c-46b8-a8a3-d51b6d4858f5": {
+      "title": "GET obj.response",
+      "id": "7c00728e-4e4c-46b8-a8a3-d51b6d4858f5",
+      "properties": {
+        "attribute": "response"
+      },
+      "x": 1029,
+      "y": 451,
+      "width": 210,
+      "height": 98,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/Get",
+      "base_type": "core/Node"
+    },
+    "9181bb8b-e562-4978-9391-1aed55b8a786": {
+      "title": "Make Text",
+      "id": "9181bb8b-e562-4978-9391-1aed55b8a786",
+      "properties": {
+        "value": "Start the testing sequence by acknowledging this request and including the following pattern in your response: `<TEST>Start</TEST>`."
+      },
+      "x": 19,
+      "y": 511,
+      "width": 210,
+      "height": 58,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/string/MakeText",
+      "base_type": "core/Node"
+    },
+    "66daf189-ba25-4d4f-a112-bba2ce5d520c": {
+      "title": "IN state",
+      "id": "66daf189-ba25-4d4f-a112-bba2ce5d520c",
+      "properties": {
+        "input_type": "any",
+        "input_name": "state",
+        "input_optional": false,
+        "input_group": "",
+        "num": 0
+      },
+      "x": 19,
+      "y": 41,
+      "width": 210,
+      "height": 154,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Input",
+      "base_type": "core/Node"
+    },
+    "cd6eca19-93bb-4269-8a5b-5c2eca33c481": {
+      "title": "OUT state",
+      "id": "cd6eca19-93bb-4269-8a5b-5c2eca33c481",
+      "properties": {
+        "output_type": "any",
+        "output_name": "state",
+        "num": 0
+      },
+      "x": 289,
+      "y": 41,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    },
+    "a64815b1-fb8e-4582-850e-f0a9e8c481ee": {
+      "title": "Emit Test Result",
+      "id": "a64815b1-fb8e-4582-850e-f0a9e8c481ee",
+      "properties": {
+        "message_title": "Basic Instruction Following",
+        "message": "Tests whether the model reliably formats its output based on specific instructions."
+      },
+      "x": 1579,
+      "y": 441,
+      "width": 210,
+      "height": 142,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "model-tests/emitTestResult",
+      "base_type": "core/Graph"
+    },
+    "422085cb-8853-4f6f-a1bf-5d78e9e504ba": {
+      "title": "String Check",
+      "id": "422085cb-8853-4f6f-a1bf-5d78e9e504ba",
+      "properties": {
+        "substring": "Start",
+        "mode": "exact",
+        "case_sensitive": true
+      },
+      "x": 1309,
+      "y": 441,
+      "width": 210,
+      "height": 126,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "data/string/StringCheck",
+      "base_type": "core/Node"
+    },
+    "ed3f9350-656b-4889-8530-efe02e12a45b": {
+      "title": "Build Prompt",
+      "id": "ed3f9350-656b-4889-8530-efe02e12a45b",
+      "properties": {
+        "template_file": "base",
+        "scope": "common",
+        "instructions": "",
+        "reserved_tokens": 312,
+        "limit_max_tokens": 0,
+        "include_scene_intent": false,
+        "include_extra_context": true,
+        "include_memory_context": true,
+        "include_scene_context": true,
+        "include_character_context": false,
+        "include_gamestate_context": false,
+        "memory_prompt": "",
+        "prefill_prompt": "",
+        "return_prefill_prompt": false,
+        "dedupe_enabled": true,
+        "response_length": 0,
+        "technical": false
+      },
+      "x": 349,
+      "y": 271,
+      "width": 304,
+      "height": 542,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "prompt/BuildPrompt",
+      "base_type": "core/Node"
+    },
+    "4557da8d-dbcc-490a-8cfe-1de532b8004c": {
+      "title": "OUT success",
+      "id": "4557da8d-dbcc-490a-8cfe-1de532b8004c",
+      "properties": {
+        "output_type": "bool",
+        "output_name": "success",
+        "num": 1
+      },
+      "x": 1870,
+      "y": 480,
+      "width": 210,
+      "height": 106,
+      "collapsed": false,
+      "inherited": false,
+      "registry": "core/Output",
+      "base_type": "core/Node"
+    }
+  },
+  "edges": {
+    "bc4094a5-5659-4fe9-8cdf-54aba755c4e6.agent": [
+      "ed3f9350-656b-4889-8530-efe02e12a45b.agent"
+    ],
+    "ce3eea10-92ba-4cb6-a35c-b36924c100ca.value": [
+      "ed3f9350-656b-4889-8530-efe02e12a45b.state"
+    ],
+    "4c4f8ccd-ce68-464f-9484-90848397d762.spec": [
+      "7a161440-e500-4a0e-a9df-5f7eb731063f.response_spec"
+    ],
+    "7a161440-e500-4a0e-a9df-5f7eb731063f.extracted": [
+      "7c00728e-4e4c-46b8-a8a3-d51b6d4858f5.object"
+    ],
+    "7c00728e-4e4c-46b8-a8a3-d51b6d4858f5.value": [
+      "422085cb-8853-4f6f-a1bf-5d78e9e504ba.string"
+    ],
+    "9181bb8b-e562-4978-9391-1aed55b8a786.value": [
+      "ed3f9350-656b-4889-8530-efe02e12a45b.instructions"
+    ],
+    "66daf189-ba25-4d4f-a112-bba2ce5d520c.value": [
+      "cd6eca19-93bb-4269-8a5b-5c2eca33c481.value"
+    ],
+    "a64815b1-fb8e-4582-850e-f0a9e8c481ee.success": [
+      "4557da8d-dbcc-490a-8cfe-1de532b8004c.value"
+    ],
+    "422085cb-8853-4f6f-a1bf-5d78e9e504ba.result": [
+      "a64815b1-fb8e-4582-850e-f0a9e8c481ee.state",
+      "a64815b1-fb8e-4582-850e-f0a9e8c481ee.success"
+    ],
+    "ed3f9350-656b-4889-8530-efe02e12a45b.state": [
+      "7a161440-e500-4a0e-a9df-5f7eb731063f.state"
+    ],
+    "ed3f9350-656b-4889-8530-efe02e12a45b.agent": [
+      "7a161440-e500-4a0e-a9df-5f7eb731063f.agent"
+    ],
+    "ed3f9350-656b-4889-8530-efe02e12a45b.prompt": [
+      "7a161440-e500-4a0e-a9df-5f7eb731063f.prompt"
+    ]
+  },
+  "groups": [],
+  "comments": [],
+  "extends": null,
+  "base_type": "core/Graph",
+  "inputs": [],
+  "outputs": [],
+  "module_properties": {},
+  "style": null
+}

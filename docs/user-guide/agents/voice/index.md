@@ -22,6 +22,7 @@ In 0.32.0 Talemate's TTS (Text-to-Speech) agent has been completely refactored t
 - **[ElevenLabs](elevenlabs.md)** - Professional voice synthesis with voice cloning
 - **[Google Gemini-TTS](google.md)** - Google's text-to-speech service
 - **[OpenAI](openai.md)** - OpenAI's TTS-1 and TTS-1-HD models
+- **[OpenAI Compatible](openai-compatible.md)** - Any server exposing an OpenAI-style `/v1/audio/speech` endpoint
 
 ## Troubleshooting
 
@@ -37,8 +38,8 @@ If your voice agent is disabled - indicated by the grey dot next to the agent - 
 
 ![Agent disabled](/talemate/img/0.26.0/agent-disabled.png) ![Agent enabled](/talemate/img/0.26.0/agent-enabled.png)
 
-!!! note "Ctrl click to toggle agent"
-    You can use Ctrl click to toggle the agent on and off.
+!!! note "Ctrl/Cmd click to toggle agent"
+    You can use Ctrl click (or Cmd click on macOS) to toggle the agent on and off.
 
 ## Voice Library Management
 

@@ -11,8 +11,9 @@ from talemate.game.schema import ConditionGroup
 from talemate.export import ExportOptions, export
 from talemate.instance import get_agent
 from talemate.world_state.manager import WorldStateManager, Suggestion
-from talemate.status import set_loading
+from talemate.status import background_task, set_loading
 import talemate.game.focal as focal
+from talemate.config import save_config
 from talemate.server.websocket_plugin import Plugin
 
 from .scene_intent import SceneIntentMixin
@@ -89,6 +90,10 @@ class SetWorldEntryReinforcementPayload(pydantic.BaseModel):
 class WorldEntryReinforcementPayload(pydantic.BaseModel):
     question: str
     reset: bool = False
+
+
+class UpdateDistanceModPayload(pydantic.BaseModel):
+    distance_mod: float = pydantic.Field(gt=0, le=2.0)
 
 
 class QueryContextDBPayload(pydantic.BaseModel):
@@ -168,6 +173,7 @@ class SceneOutlinePayload(pydantic.BaseModel):
     description: str | None = None
     intro: str | None = None
     context: str | None = None
+    perspective: str | None = None
 
 
 class SceneSettingsPayload(pydantic.BaseModel):
@@ -211,6 +217,11 @@ class WorldStateManagerPlugin(
     @property
     def scene(self):
         return self.websocket_handler.scene
+
+    @property
+    def current_embeddings_config(self):
+        memory_agent = get_agent("memory")
+        return memory_agent.embeddings_config if memory_agent else None
 
     @property
     def world_state_manager(self):
@@ -397,6 +408,7 @@ class WorldStateManagerPlugin(
         await self.handle_get_character_details({"name": payload.name})
         await self.signal_operation_done()
 
+    @background_task("Refreshing reinforcement")
     async def handle_run_character_detail_reinforcement(self, data):
         payload = CharacterDetailReinforcementPayload(**data)
 
@@ -595,6 +607,7 @@ class WorldStateManagerPlugin(
         await self.handle_get_world({})
         await self.signal_operation_done()
 
+    @background_task("Refreshing world state")
     async def handle_run_world_state_reinforcement(self, data):
         payload = WorldEntryReinforcementPayload(**data)
 
@@ -654,15 +667,51 @@ class WorldStateManagerPlugin(
             payload.query, **payload.meta
         )
 
+        embeddings_config = self.current_embeddings_config
+
         self.websocket_handler.queue_put(
             {
                 "type": "world_state_manager",
                 "action": "context_db_result",
                 "data": context_db.model_dump(),
+                "distance_mod": embeddings_config.distance_mod
+                if embeddings_config
+                else 1.0,
             }
         )
 
         await self.signal_operation_done()
+
+    async def handle_get_distance_mod(self, data):
+        embeddings_config = self.current_embeddings_config
+
+        self.websocket_handler.queue_put(
+            {
+                "type": "world_state_manager",
+                "action": "distance_mod_updated",
+                "distance_mod": embeddings_config.distance_mod
+                if embeddings_config
+                else 1.0,
+            }
+        )
+
+    async def handle_update_distance_mod(self, data):
+        payload = UpdateDistanceModPayload(**data)
+
+        embeddings_config = self.current_embeddings_config
+        if not embeddings_config:
+            return
+
+        embeddings_config.distance_mod = payload.distance_mod
+        save_config()
+
+        self.websocket_handler.queue_put(
+            {
+                "type": "world_state_manager",
+                "action": "distance_mod_updated",
+                "distance_mod": payload.distance_mod,
+            }
+        )
 
     async def handle_update_context_db(self, data):
         payload = UpdateContextDBPayload(**data)
@@ -755,6 +804,7 @@ class WorldStateManagerPlugin(
         await self.scene.load_active_pins()
         self.scene.emit_status()
 
+    @background_task("Applying template")
     async def handle_apply_template(self, data):
         payload = ApplyWorldStateTemplatePayload(**data)
 
@@ -821,6 +871,7 @@ class WorldStateManagerPlugin(
         await self.handle_get_templates({})
         await self.signal_operation_done()
 
+    @background_task("Applying templates")
     async def handle_apply_templates(self, data):
         payload = ApplyWorldStateTemplatesPayload(**data)
 
@@ -907,6 +958,7 @@ class WorldStateManagerPlugin(
         await self.handle_get_templates({})
         await self.signal_operation_done()
 
+    @background_task("Generating dialogue instructions")
     async def handle_generate_character_dialogue_instructions(self, data):
         payload = SelectiveCharacterPayload(**data)
 
@@ -937,8 +989,10 @@ class WorldStateManagerPlugin(
             }
         )
 
+        # signal_operation_done already emits scene status on the
+        # non-auto-save branch (and scene.save() emits it on the auto-save
+        # branch), so no trailing emit_status() is needed here.
         await self.signal_operation_done()
-        self.scene.emit_status()
 
     async def handle_delete_character(self, data):
         payload = SelectiveCharacterPayload(**data)

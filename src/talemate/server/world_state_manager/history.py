@@ -19,6 +19,7 @@ from talemate.history import (
 )
 from talemate.scene_message import TimePassageMessage
 from talemate.server.world_state_manager import world_state_templates
+from talemate.status import background_task
 from talemate.util.time import (
     amount_unit_to_iso8601_duration,
     iso8601_duration_to_human,
@@ -152,6 +153,7 @@ class HistoryMixin:
 
         await self.signal_operation_done()
 
+    @background_task("Regenerating history entry")
     async def handle_regenerate_history_entry(self, data):
         """
         Regenerate a single history entry.
@@ -161,15 +163,8 @@ class HistoryMixin:
 
         log.debug("regenerate_history_entry", payload=payload)
 
-        try:
-            entry = await regenerate_history_entry(self.scene, payload.entry)
-        except Exception as e:
-            log.error("regenerate_history_entry", error=e)
-            await self.signal_operation_failed(str(e))
-            return
-
+        entry = await regenerate_history_entry(self.scene, payload.entry)
         log.debug("regenerate_history_entry (done)", entry=entry)
-
         self.websocket_handler.queue_put(
             {
                 "type": "world_state_manager",
@@ -177,7 +172,6 @@ class HistoryMixin:
                 "data": entry.model_dump(),
             }
         )
-
         await self.signal_operation_done()
 
     async def handle_inspect_history_entry(self, data):

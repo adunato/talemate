@@ -1,0 +1,88 @@
+## Context
+You are a scene planner reviewing and refining a beat-by-beat outline for an interactive narrative scene.
+
+Content Classification: Fantasy adventure story
+
+Active characters: Hero, Elena
+
+- Hero: A wandering healer with knowledge of ancient herbs.
+
+- Elena: A wandering healer with knowledge of ancient herbs.
+
+## Scene history
+Elena: Hello there, traveler.
+
+The sun filters through the leaves above.
+
+Marcus: What brings you to these woods?
+
+## Task
+Review and improve the following scene outline. The outline was generated from these instructions:
+
+```instructions
+A tense confrontation between the characters in the library.
+```
+
+Perspective: Third person limited, past tense.
+
+Current outline (3 beats):
+
+Beat 1 [narration] (pacing: slow, tension: 0.3)
+  Characters: Elena
+  The protagonist discovers the door is locked from the inside.
+
+Beat 2 [dialogue] (pacing: moderate, tension: 0.5)
+  Characters: Elena
+  Elena confronts Hero about what happened last night, demanding answers.
+
+Beat 3 [action] (pacing: fast, tension: 0.7)
+  Characters: Hero, Elena
+  A sudden noise from the basement forces both characters to investigate together.
+
+Evaluate the outline against these criteria and revise beats that have problems:
+
+**Redundancy and merging:** Do any beats describe the same event, image, or emotional state as another beat? Each beat MUST introduce something genuinely NEW — a new event, a new piece of information, a new character action, or a new environmental change. Beats that "set the mood" or "establish atmosphere" without advancing the story must be reworked into beats that DO something. If two consecutive non-dialogue beats cover similar narrative ground at similar tension levels, MERGE their content into one beat and use the freed slot for a dialogue or character-agency beat instead. Only merge beats that are genuinely redundant — preserve beats with different pacing or tension purposes.
+
+**Character agency:** Do characters make decisions that affect what happens next? At least 1 of the 3 beats must involve a character choosing, deciding, refusing, or acting — not just witnessing or reacting. If a beat says a character "notices" or "feels" something, ask: what do they DO about it?
+
+**Pacing and tension shape:** Tension should not be a straight line up. There must be at least one valley — a beat where tension drops before rising again. Check that the `tension` values actually vary and that early beats start low (0.1-0.3).
+
+**Beat descriptions as writer directions:** Each beat description will be given to a writer as their ONLY instruction. The description MUST be specific enough to write from and MUST be 2-4 sentences long. A single sentence is too thin — the writer will have to invent details, leading to generic or repetitive prose. Each description must include:
+1. What the character DOES (physical action, not just observation)
+2. What CHANGES as a result (consequence, new information, shift in situation)
+3. A specific sensory or environmental detail that makes THIS beat distinct from every other beat
+
+"The tension builds" is useless. "She explains what happened" is too thin. "She pries open the maintenance panel and discovers the wiring has been replaced by something organic — wet, dark filaments that pulse with heat. She recoils, dropping her tool into the gap, where it dissolves on contact" is writable.
+
+Every beat description must specify a concrete EVENT or ACTION — something that happens, changes, or is decided. Do NOT write beats that are purely atmospheric ("the shadows deepen", "the air grows heavy"). The writer will produce atmosphere naturally; dedicated atmosphere beats produce redundant prose.
+
+**Handoff quality (CONTINUATION MODE):** This arc is a SEGMENT of a longer roleplay — it does NOT end here. The final beat must be a HANDOFF, not a resolution. Check the current last beat:
+- Does it resolve the central conflict? REWRITE it so the situation stays LIVE.
+- Does tension drop at the end? REWRITE it so tension stays HIGH (0.6+).
+- Is the final beat a wind-down, reflection, or "characters process what happened"? REWRITE it as a forward-facing moment: a new threat, an unanswered question, an action in progress, a decision about to be made.
+- The reader must finish the last beat wanting to know what happens next. If they feel "that was a nice ending," it's wrong.
+- Do NOT add resolution beats. Do NOT let characters "regroup" or "retreat to safety." Do NOT close the situation.
+
+**Dialogue ratio:** Approximately 40% of beats should be `dialogue` type. Characters need to speak, argue, and reveal information through conversation — not just act and observe. If the outline is heavily skewed toward narration, convert some beats to dialogue.
+
+**Perspective consistency:** All beat descriptions must be compatible with the stated perspective (Third person limited, past tense.). If the perspective is limited to one character, beats must not describe another character's internal thoughts.
+
+---
+
+If any beats need revision, output the COMPLETE revised outline (all 3 beats, including unchanged ones) inside `<REVISED_OUTLINE>` tags using json format.
+
+If the outline is already strong and no changes are needed, output `<NO_CHANGES/>` instead.
+
+Also output a brief summary of what you changed inside `<CHANGES>` tags — one line per changed beat.
+
+Do NOT change the number of beats. Do NOT change beat types unless there is a clear structural reason. Focus on improving descriptions, adjusting tension values, and strengthening character agency.
+
+Example format:
+```json
+[
+  {"type": "narration", "description": "...", "characters": [], "pacing": "slow", "tension": 0.2},
+  {"type": "dialogue", "description": "...", "characters": ["Librarian"], "pacing": "moderate", "tension": 0.4}
+]
+```
+
+The length of your response must fit within 4 paragraphs.

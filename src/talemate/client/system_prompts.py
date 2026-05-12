@@ -167,8 +167,16 @@ class SystemPrompts(pydantic.BaseModel):
 
         key = f"{kind}_decensor" if decensor else kind
 
-        if getattr(self, key):
-            return getattr(self, key)
-        if self.parent is not None:
-            return self.parent.get(kind, decensor)
-        return render_prompt(kind, decensor)
+        prompt = getattr(self, key)
+        if prompt:
+            pass
+        elif self.parent is not None:
+            prompt = self.parent.get(kind, decensor)
+        else:
+            prompt = render_prompt(kind, decensor)
+
+        if "{{ system_prompt }}" in prompt:
+            default_prompt = render_prompt(kind, decensor)
+            prompt = prompt.replace("{{ system_prompt }}", default_prompt)
+
+        return prompt
