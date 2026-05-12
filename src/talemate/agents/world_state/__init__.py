@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import dataclasses
 import json
 import time
 from typing import TYPE_CHECKING
@@ -48,7 +47,6 @@ log = structlog.get_logger("talemate.agents.world_state")
 talemate.emit.async_signals.register("agent.world_state.time")
 
 
-@dataclasses.dataclass
 class WorldStateAgentEmission(AgentEmission):
     """
     Emission class for world state agent
@@ -57,15 +55,14 @@ class WorldStateAgentEmission(AgentEmission):
     pass
 
 
-@dataclasses.dataclass
 class TimePassageEmission(WorldStateAgentEmission):
     """
     Emission class for time passage
     """
 
     duration: str
-    narrative: str
-    human_duration: str = None
+    narrative: str | None = None
+    human_duration: str | None = None
 
 
 @register()

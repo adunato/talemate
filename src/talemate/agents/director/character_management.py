@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 import traceback
-import dataclasses
 import structlog
 import talemate.instance as instance
 import talemate.agents.tts.voice_library as voice_library
@@ -35,7 +34,6 @@ if TYPE_CHECKING:
     from talemate.agents.tts import TTSAgent
 
 
-@dataclasses.dataclass
 class PersistCharacterEmission(AgentEmission):
     character: "Character"
 

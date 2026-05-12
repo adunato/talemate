@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import dataclasses
 from functools import wraps
 from typing import TYPE_CHECKING
 
+import pydantic
 import structlog
 
 import talemate.client as client
@@ -45,11 +45,10 @@ if TYPE_CHECKING:
 log = structlog.get_logger("talemate.agents.narrator")
 
 
-@dataclasses.dataclass
 class NarratorAgentEmission(AgentEmission):
-    generation: list[str] = dataclasses.field(default_factory=list)
-    response: str = dataclasses.field(default="")
-    dynamic_instructions: list[DynamicInstruction] = dataclasses.field(
+    generation: list[str] = pydantic.Field(default_factory=list)
+    response: str = ""
+    dynamic_instructions: list[DynamicInstruction] = pydantic.Field(
         default_factory=list
     )
 

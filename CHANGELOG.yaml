@@ -1,3 +1,8 @@
+0.38.0.dev:
+  improvements:
+  - "Dataclass to Pydantic Migration: All 49 `@dataclass` definitions across the codebase have been converted to `pydantic.BaseModel`. Agent emissions, event payloads, scene messages, the `Prompt` class, and assorted internal data holders are now validated pydantic models. Forward-ref resolution for `Actor`/`Scene`/`Character`/`SceneMessage` is centralized in a new `talemate.model_rebuild` module imported once at package load. Existing `SceneMessage(message_str, ...)` positional construction is preserved via a custom `__init__`; all other call sites use kwargs. Several latent type lies the dataclass tolerated were surfaced and widened to match real call sites."
+  fixes:
+  - "Game Loop Event: Fixed `GameLoopEvent` in the scene loop being constructed with the `SceneLoop` node passed as `scene=` instead of the actual `Scene`. The bug was masked by the pre-pydantic dataclass not validating; pydantic surfaced it during the migration."
 0.37.0:
   features:
   - "System Prompt Template Variable: Added {{ system_prompt }} template variable for system prompt overrides. Use it to include the default system prompt within a custom override, at both the app and client level."

@@ -2042,6 +2042,3 @@ class Scene(Emitter):
             raise GenerationCancelled("action cancelled")
 
 
-Character.model_rebuild()
-CharacterContextItem.model_rebuild()
-CharacterContext.model_rebuild()

@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 import structlog
 from functools import wraps
-import dataclasses
 from talemate.agents.base import (
     set_processing as _set_processing,
     AgentAction,
@@ -28,7 +27,6 @@ talemate.emit.async_signals.register(
 )
 
 
-@dataclasses.dataclass
 class DirectorGuidanceEmission(AgentTemplateEmission):
     pass
 

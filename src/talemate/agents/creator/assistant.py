@@ -2,7 +2,6 @@ import json
 import re
 import random
 from typing import TYPE_CHECKING, Tuple
-import dataclasses
 import traceback
 import uuid
 import pydantic
@@ -46,7 +45,6 @@ async_signals.register(
 )
 
 
-@dataclasses.dataclass
 class ContextualGenerateEmission(AgentTemplateEmission):
     """
     A context for generating content.
@@ -64,7 +62,6 @@ class ContextualGenerateEmission(AgentTemplateEmission):
         return self.content_generation_context.computed_context[1]
 
 
-@dataclasses.dataclass
 class AutocompleteEmission(AgentTemplateEmission):
     """
     A context for generating content.

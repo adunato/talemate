@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import dataclasses
 import functools
 import json
 from inspect import signature
@@ -1124,20 +1123,19 @@ class Agent(ABC):
         )
 
 
-@dataclasses.dataclass
-class AgentEmission:
+class AgentEmission(pydantic.BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     agent: Agent
 
 
-@dataclasses.dataclass
 class AgentTemplateEmission(AgentEmission):
-    template_vars: dict = dataclasses.field(default_factory=dict)
-    response: str = None
-    dynamic_instructions: list[DynamicInstruction] = dataclasses.field(
+    template_vars: dict = pydantic.Field(default_factory=dict)
+    response: str | None = None
+    dynamic_instructions: list[DynamicInstruction] = pydantic.Field(
         default_factory=list
     )
 
 
-@dataclasses.dataclass
 class RagBuildSubInstructionEmission(AgentEmission):
     sub_instruction: str | None = None

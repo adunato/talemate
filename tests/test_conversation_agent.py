@@ -40,11 +40,11 @@ def _canned_prompt(raw: str, extracted: dict) -> Prompt:
 
     The function-under-test (``ConversationAgent.converse``) calls
     ``await prompt.send(client, kind="conversation")``. We construct a real
-    ``Prompt`` (a dataclass) and shadow ``send`` on the instance — the
-    surrounding contract (the ``Prompt`` class itself, its constructor
-    fields, and the ``send`` method's signature) stays anchored to the
-    real production type. Renaming ``Prompt`` or removing ``.send`` on the
-    real class fails the test instead of being papered over.
+    ``Prompt`` and shadow ``send`` on the instance — the surrounding contract
+    (the ``Prompt`` class itself, its constructor fields, and the ``send``
+    method's signature) stays anchored to the real production type. Renaming
+    ``Prompt`` or removing ``.send`` on the real class fails the test instead
+    of being papered over.
     """
     prompt = Prompt(
         uid="conversation.test",
@@ -56,7 +56,10 @@ def _canned_prompt(raw: str, extracted: dict) -> Prompt:
     async def _send(client, kind, **kwargs):
         return raw, extracted
 
-    prompt.send = _send  # type: ignore[method-assign]
+    # Bypass pydantic's strict field-only assignment to shadow send on this
+    # instance; pydantic forbids `prompt.send = ...` because `send` is not a
+    # declared field.
+    object.__setattr__(prompt, "send", _send)
     return prompt
 
 

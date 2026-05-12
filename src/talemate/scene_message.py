@@ -1,8 +1,9 @@
 import enum
 import re
 import structlog
-from dataclasses import dataclass, field
 from typing import Literal
+
+import pydantic
 
 log = structlog.get_logger("talemate.scene_message")
 
@@ -49,17 +50,18 @@ class Flags(enum.IntFlag):
     HIDDEN = 0x1
 
 
-@dataclass
-class SceneMessage:
+class SceneMessage(pydantic.BaseModel):
     """
     Base class for all messages that are sent to the scene.
     """
+
+    model_config = pydantic.ConfigDict(extra="ignore")
 
     # the mesage itself
     message: str
 
     # the id of the message
-    id: int = field(default_factory=get_message_id)
+    id: int = pydantic.Field(default_factory=get_message_id)
 
     # the source of the message (e.g. "ai", "progress_story", "director")
     source: str = ""
@@ -68,9 +70,20 @@ class SceneMessage:
 
     flags: Flags = Flags.NONE
 
-    typ = "scene"
+    typ: str = "scene"
 
     rev: int = 0
+
+    def __init__(self, message: str | None = None, **data):
+        # Preserve the positional `message` construction style from the
+        # dataclass era — many call sites pass it as the first positional arg.
+        if message is not None:
+            if "message" in data:
+                raise TypeError(
+                    f"{type(self).__name__}() got multiple values for 'message'"
+                )
+            data["message"] = message
+        super().__init__(**data)
 
     def __str__(self):
         return self.message
@@ -87,7 +100,7 @@ class SceneMessage:
     def __contains__(self, other):
         return self.message in other
 
-    def __dict__(self) -> dict:
+    def to_dict(self) -> dict:
         rv = {
             "message": self.message,
             "id": self.id,
@@ -175,9 +188,8 @@ class SceneMessage:
         self.meta.update(kwargs)
 
 
-@dataclass
 class CharacterMessage(SceneMessage):
-    typ = "character"
+    typ: str = "character"
     source: str = "ai"
     from_choice: str | None = None
     asset_id: str | None = None
@@ -223,8 +235,8 @@ class CharacterMessage(SceneMessage):
 
         return f"\n{self.character_name.upper()}\n{message}\nEND-OF-LINE\n"
 
-    def __dict__(self) -> dict:
-        rv = super().__dict__()
+    def to_dict(self) -> dict:
+        rv = super().to_dict()
 
         if self.from_choice:
             rv["from_choice"] = self.from_choice
@@ -245,10 +257,9 @@ class CharacterMessage(SceneMessage):
         return self.message
 
 
-@dataclass
 class NarratorMessage(SceneMessage):
     source: str = "ai"
-    typ = "narrator"
+    typ: str = "narrator"
     asset_id: str | None = None
     asset_type: Literal["avatar", "card", "scene_illustration"] | None = None
 
@@ -289,8 +300,8 @@ class NarratorMessage(SceneMessage):
 
         return self
 
-    def __dict__(self) -> dict:
-        rv = super().__dict__()
+    def to_dict(self) -> dict:
+        rv = super().to_dict()
 
         if self.asset_id:
             rv["asset_id"] = self.asset_id
@@ -300,11 +311,10 @@ class NarratorMessage(SceneMessage):
         return rv
 
 
-@dataclass
 class DirectorMessage(SceneMessage):
     action: Literal["actor_instruction", "user_direction"] = "actor_instruction"
     source: str = "ai"
-    typ = "director"
+    typ: str = "director"
     subtype: Literal["function_call", "user_direction"] | None = None
 
     @property
@@ -368,8 +378,8 @@ class DirectorMessage(SceneMessage):
 
         return self
 
-    def __dict__(self) -> dict:
-        rv = super().__dict__()
+    def to_dict(self) -> dict:
+        rv = super().to_dict()
 
         if self.action:
             rv["action"] = self.action
@@ -401,21 +411,19 @@ class DirectorMessage(SceneMessage):
                 return f"# {self.as_story_progression}"
 
 
-@dataclass
 class TimePassageMessage(SceneMessage):
     ts: str = "PT0S"
     source: str = "manual"
-    typ = "time"
+    typ: str = "time"
 
-    def __dict__(self) -> dict:
-        rv = super().__dict__()
+    def to_dict(self) -> dict:
+        rv = super().to_dict()
         rv["ts"] = self.ts
         return rv
 
 
-@dataclass
 class ReinforcementMessage(SceneMessage):
-    typ = "reinforcement"
+    typ: str = "reinforcement"
     source: str = "ai"
 
     @property
@@ -453,9 +461,8 @@ class ReinforcementMessage(SceneMessage):
         self.set_source("world_state", "update_reinforcement", **parameters)
 
 
-@dataclass
 class ContextInvestigationMessage(SceneMessage):
-    typ = "context_investigation"
+    typ: str = "context_investigation"
     source: str = "ai"
     sub_type: str | None = None
     asset_id: str | None = None
@@ -494,8 +501,8 @@ class ContextInvestigationMessage(SceneMessage):
     def __str__(self):
         return f"# {self.title}: {self.message}"
 
-    def __dict__(self) -> dict:
-        rv = super().__dict__()
+    def to_dict(self) -> dict:
+        rv = super().to_dict()
         rv["sub_type"] = self.sub_type
 
         if self.asset_id:

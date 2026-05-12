@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-import dataclasses
 
 import structlog
 from typing import TYPE_CHECKING, Literal
@@ -57,15 +56,13 @@ talemate.emit.async_signals.register(
 )
 
 
-@dataclasses.dataclass
 class BuildArchiveEmission(AgentEmission):
     generation_options: GenerationOptions | None = None
 
 
-@dataclasses.dataclass
 class SummarizeEmission(AgentTemplateEmission):
     text: str = ""
-    extra_context: str | None = None
+    extra_context: list[str] | str | None = None
     extra_instructions: str | None = None
     generation_options: GenerationOptions | None = None
     summarization_history: list[str] | None = None

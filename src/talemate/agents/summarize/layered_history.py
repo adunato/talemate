@@ -6,7 +6,7 @@ from talemate.agents.base import (
     AgentActionConfig,
     AgentEmission,
 )
-import dataclasses
+import pydantic
 import talemate.emit.async_signals
 from talemate.exceptions import GenerationCancelled
 from talemate.world_state.templates import GenerationOptions
@@ -25,10 +25,9 @@ talemate.emit.async_signals.register(
 )
 
 
-@dataclasses.dataclass
 class LayeredHistoryFinalizeEmission(AgentEmission):
     entry: LayeredArchiveEntry | None = None
-    summarization_history: list[str] = dataclasses.field(default_factory=lambda: [])
+    summarization_history: list[str] = pydantic.Field(default_factory=list)
 
     @property
     def response(self) -> str | None:

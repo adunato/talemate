@@ -11,7 +11,6 @@ import structlog
 import uuid
 import pydantic
 from pydantic import ConfigDict
-import dataclasses
 import re
 from talemate.agents.base import (
     set_processing,
@@ -174,14 +173,13 @@ async_signals.register(
 )
 
 
-@dataclasses.dataclass
 class RevisionEmission(AgentTemplateEmission):
     """
     Emission for the revision agent
     """
 
-    info: RevisionInformation = dataclasses.field(default_factory=RevisionInformation)
-    issues: Issues = dataclasses.field(default_factory=Issues)
+    info: RevisionInformation = pydantic.Field(default_factory=RevisionInformation)
+    issues: Issues = pydantic.Field(default_factory=Issues)
 
 
 # Maximum ratio of fix length to original length before discarding

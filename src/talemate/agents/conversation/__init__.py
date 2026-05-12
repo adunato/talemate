@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import dataclasses
 import re
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
+import pydantic
 import structlog
 
 import talemate.client as client
@@ -44,12 +44,11 @@ if TYPE_CHECKING:
 log = structlog.get_logger("talemate.agents.conversation")
 
 
-@dataclasses.dataclass
 class ConversationAgentEmission(AgentEmission):
-    actor: Actor
-    character: Character
+    actor: "Actor | None" = None
+    character: "Character"
     response: str
-    dynamic_instructions: list[DynamicInstruction] = dataclasses.field(
+    dynamic_instructions: list[DynamicInstruction] = pydantic.Field(
         default_factory=list
     )
     avatar: str | None = None

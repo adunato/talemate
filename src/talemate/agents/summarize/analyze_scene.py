@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 import structlog
-import dataclasses
+import pydantic
 from talemate.agents.base import (
     set_processing,
     AgentAction,
@@ -59,21 +59,19 @@ SCENE_ANALYSIS_SPEC = ResponseSpec(
 )
 
 
-@dataclasses.dataclass
 class SceneAnalysisEmission(AgentTemplateEmission):
     analysis_type: str | None = None
 
 
-@dataclasses.dataclass
 class SceneAnalysisDeepAnalysisEmission(AgentEmission):
     analysis: str = ""
     analysis_type: str | None = None
     analysis_sub_type: str | None = None
     max_content_investigations: int = 0  # backwards compat, will be dropped
-    character: "Character" = None
+    character: "Character | None" = None
     investigate: str = ""
     deep_analysis_context: str = ""
-    dynamic_instructions: list[DynamicInstruction] = dataclasses.field(
+    dynamic_instructions: list[DynamicInstruction] = pydantic.Field(
         default_factory=list
     )
 

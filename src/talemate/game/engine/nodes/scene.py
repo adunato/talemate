@@ -13,7 +13,6 @@ from .core import (
     PropertyField,
     Trigger,
 )
-import dataclasses
 from .registry import register, get_nodes_by_base_type, get_node
 from .event import connect_listeners, disconnect_listeners
 import talemate.events as events
@@ -46,10 +45,8 @@ async_signals.register(
 )
 
 
-@dataclasses.dataclass
 class SceneLoopEvent(events.Event):
-    scene: "Scene"
-    event_type: str
+    pass
 
 
 @register("scene/GetSceneState")
@@ -1993,7 +1990,7 @@ class SceneLoop(Loop):
             # Re-evaluate gamestate-controlled pins before the game loop
             await scene.load_active_pins()
             game_loop = events.GameLoopEvent(
-                scene=self, event_type="game_loop", had_passive_narration=False
+                scene=scene, event_type="game_loop", had_passive_narration=False
             )
             state.shared["game_loop"] = game_loop
         if state.shared.get("signal_game_loop", True) and trigger_game_loop:

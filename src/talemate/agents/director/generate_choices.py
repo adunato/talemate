@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 import random
 import structlog
-import dataclasses
+import pydantic
 from talemate.agents.base import (
     set_processing,
     AgentAction,
@@ -32,10 +32,9 @@ if TYPE_CHECKING:
     from talemate.tale_mate import Character
 
 
-@dataclasses.dataclass
 class GenerateChoicesEmission(AgentTemplateEmission):
     character: "Character | None" = None
-    choices: list[str] = dataclasses.field(default_factory=list)
+    choices: list[str] = pydantic.Field(default_factory=list)
 
 
 class GenerateChoicesMixin:

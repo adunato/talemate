@@ -14,7 +14,6 @@ import uuid
 from typing import Callable, Union, Literal, TYPE_CHECKING
 
 import pydantic
-import dataclasses
 import structlog
 import urllib3
 
@@ -249,15 +248,17 @@ class RequestInformation(pydantic.BaseModel):
         return time.time() - self.end_time
 
 
-@dataclasses.dataclass
-class ClientEmbeddingsStatus:
+class ClientEmbeddingsStatus(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
     client: "ClientBase | None" = None
     embedding_name: str | None = None
     seen: bool = False
 
 
-@dataclasses.dataclass
-class ClientStatus:
+class ClientStatus(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
     client: "ClientBase | None" = None
     enabled: bool = False
 
