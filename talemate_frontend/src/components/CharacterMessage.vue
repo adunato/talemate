@@ -29,6 +29,15 @@
       <span class="character-name-chip" :style="{ color: color }">
         {{ character }}
       </span>
+      <span v-if="revisionsCount > 1 && isLastMessage" class="revision-nav" :title="revisionNavTitle">
+        <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="revisionIndex <= 0 || uxLocked" @click="$emit('navigate-revision', -1)">
+          <v-icon size="small">mdi-chevron-left</v-icon>
+        </v-btn>
+        <span class="revision-counter">{{ revisionIndex + 1 }}/{{ revisionsCount }}</span>
+        <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="revisionIndex >= revisionsCount - 1 || uxLocked" @click="$emit('navigate-revision', 1)">
+          <v-icon size="small">mdi-chevron-right</v-icon>
+        </v-btn>
+      </span>
       <div class="character-content">
         <v-textarea 
           ref="textarea" 
@@ -188,7 +197,16 @@ export default {
       type: Boolean,
       default: false,
     },
+    revisionsCount: {
+      type: Number,
+      default: 0,
+    },
+    revisionIndex: {
+      type: Number,
+      default: 0,
+    },
   },
+  emits: ['navigate-revision'],
   inject: [
     'requestDeleteMessage',
     'getWebsocket', 
@@ -254,18 +272,21 @@ export default {
       if (this.disable_avatar_fallback) {
         return (this.asset_type && this.asset_id) ? this.asset_id : null;
       }
-      
+
       // Normal behavior: use message asset_id if present
       if (this.asset_id && this.asset_type) {
         return this.asset_id;
       }
-      
+
       // Fall back to character's default avatar if message doesn't have an asset and type is avatar
       if (this.asset_type === "avatar" || !this.asset_type) {
         return this.characterData?.avatar || null;
       }
-      
+
       return null;
+    },
+    revisionNavTitle() {
+      return `Revision ${this.revisionIndex + 1} of ${this.revisionsCount}. Use ← / → to switch.`;
     },
   },
   data() {
@@ -356,7 +377,7 @@ export default {
       });
     },
     submitEdit() {
-      this.getWebsocket().send(JSON.stringify({ type: 'edit_message', id: this.message_id, text: this.character+": "+this.editing_text }));
+      this.getWebsocket().send(JSON.stringify({ type: 'scene_message', action: 'edit', id: this.message_id, text: this.character+": "+this.editing_text }));
       this.editing = false;
     },
     deleteMessage() {
@@ -390,6 +411,29 @@ export default {
   margin-right: 10px;
   margin-top: 0;
   font-weight: bold;
+}
+
+.revision-nav {
+  float: left;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 10px;
+  margin-top: -2px;
+  color: rgb(var(--v-theme-muted));
+  font-size: 0.75rem;
+  opacity: 0.7;
+  user-select: none;
+}
+
+.revision-nav .revision-counter {
+  margin: 0 2px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.revision-nav .revision-arrow {
+  width: 18px;
+  height: 18px;
 }
 
 

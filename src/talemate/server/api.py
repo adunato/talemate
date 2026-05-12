@@ -216,9 +216,6 @@ async def websocket_endpoint(websocket):
                 elif action_type == "request_assets":
                     log.info("request_assets")
                     handler.request_assets(data.get("assets"))
-                elif action_type == "edit_message":
-                    log.info("edit_message", data=data)
-                    handler.edit_message(data.get("id"), data.get("text"))
                 elif action_type == "generation_error_response":
                     request_id = data.get("request_id")
                     action = data.get("action")

@@ -24,6 +24,7 @@ from talemate.server import (
     config,
     devtools,
     quick_settings,
+    scene_message as scene_message_plugin,
     time_passage,
     ux,
     world_state_manager,
@@ -78,6 +79,9 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
             ),
             ux.UxPlugin.router: ux.UxPlugin(self),
             time_passage.TimePassagePlugin.router: time_passage.TimePassagePlugin(self),
+            scene_message_plugin.SceneMessagePlugin.router: scene_message_plugin.SceneMessagePlugin(
+                self
+            ),
         }
 
         # unconveniently named function, this `connect` method is called
@@ -775,28 +779,6 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
     def delete_message(self, message_id):
         self.scene.delete_message(message_id)
 
-    def edit_message(self, message_id, new_text):
-        message = self.scene.get_message(message_id)
-
-        editor = instance.get_agent("editor")
-
-        if (
-            editor.enabled
-            and message.typ == "character"
-            and editor.fix_exposition_enabled
-            and editor.fix_exposition_user_input
-        ):
-            character = self.scene.get_character(message.character_name)
-            loop = asyncio.get_event_loop()
-            new_text = loop.run_until_complete(
-                editor.cleanup_character_message(
-                    new_text,
-                    character,
-                    strip_partial=not editor.allow_incomplete_sentences,
-                )
-            )
-
-        self.scene.edit_message(message_id, new_text)
 
     def handle_character_card_upload(self, image_data_url: str, filename: str) -> str:
         image_data = base64.b64decode(image_data_url.split(",")[1])

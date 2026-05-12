@@ -45,6 +45,15 @@
       </v-textarea>
       <div v-else @dblclick="startEdit()" v-html="renderedText">
       </div>
+      <span v-if="revisionsCount > 1 && isLastMessage" class="revision-nav" :title="revisionNavTitle">
+        <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="revisionIndex <= 0 || uxLocked" @click.stop="$emit('navigate-revision', -1)">
+          <v-icon size="small">mdi-chevron-left</v-icon>
+        </v-btn>
+        <span class="revision-counter">{{ revisionIndex + 1 }}/{{ revisionsCount }}</span>
+        <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="revisionIndex >= revisionsCount - 1 || uxLocked" @click.stop="$emit('navigate-revision', 1)">
+          <v-icon size="small">mdi-chevron-right</v-icon>
+        </v-btn>
+      </span>
     </div>
 
     <v-sheet v-if="hovered" rounded="sm" color="transparent">
@@ -142,6 +151,9 @@ export default {
     messageAsset() {
       return (this.asset_id && this.asset_type) ? this.asset_id : null;
     },
+    revisionNavTitle() {
+      return `Revision ${this.revisionIndex + 1} of ${this.revisionsCount}. Use ← / → to switch.`;
+    },
   },
   props: {
     message: Object,
@@ -167,7 +179,16 @@ export default {
       type: String,
       default: null,
     },
+    revisionsCount: {
+      type: Number,
+      default: 0,
+    },
+    revisionIndex: {
+      type: Number,
+      default: 0,
+    },
   },
+  emits: ['navigate-revision'],
   inject: ['requestDeleteMessage', 'getWebsocket', 'createPin', 'autocompleteRequest', 'autocompleteInfoMessage', 'getMessageStyle', 'getMessageColor', 'generateTTS'],
   methods: {
     toggle() {
@@ -217,10 +238,11 @@ export default {
       });
     },
     submitEdit() {
-      this.getWebsocket().send(JSON.stringify({ 
-        type: 'edit_message', 
-        id: this.message.id, 
-        text: this.editing_text 
+      this.getWebsocket().send(JSON.stringify({
+        type: 'scene_message',
+        action: 'edit',
+        id: this.message.id,
+        text: this.editing_text
       }));
       this.editing = false;
     }
@@ -235,6 +257,27 @@ export default {
 
 .context-message {
   display: block;
+}
+
+.revision-nav {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 2px;
+  color: rgb(var(--v-theme-muted));
+  font-size: 0.75rem;
+  opacity: 0.7;
+  user-select: none;
+}
+
+.revision-nav .revision-counter {
+  margin: 0 2px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.revision-nav .revision-arrow {
+  width: 18px;
+  height: 18px;
 }
 
 :deep(.scene-paragraph) {
