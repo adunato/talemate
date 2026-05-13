@@ -175,7 +175,7 @@ class AssistantPlugin(Plugin):
         Intended for UX-triggered regeneration (e.g., hotbuttons).
         """
         payload = RegeneratePayload(**data)
-        allowed, err = ensure_regenerate_allowed(self.scene, idx=-1)
+        allowed, err = ensure_regenerate_allowed(self.scene)
         if not allowed:
             emit("status", message=err, status="error")
             self.websocket_handler.queue_put(
@@ -184,7 +184,7 @@ class AssistantPlugin(Plugin):
             return
         try:
             with ClientContext(nuke_repetition=payload.nuke_repetition):
-                task = asyncio.create_task(regenerate(self.scene, -1))
+                task = asyncio.create_task(regenerate(self.scene))
                 task.add_done_callback(
                     self.create_task_done_callback(
                         "regenerate_done",
@@ -208,7 +208,7 @@ class AssistantPlugin(Plugin):
         `!regenerate_directed` (and without prompting via wait_for_input).
         """
         payload = RegenerateDirectedPayload(**data)
-        allowed, err = ensure_regenerate_allowed(self.scene, idx=-1)
+        allowed, err = ensure_regenerate_allowed(self.scene)
         if not allowed:
             emit("status", message=err, status="error")
             self.websocket_handler.queue_put(
@@ -226,7 +226,7 @@ class AssistantPlugin(Plugin):
                 with ClientContext(
                     direction=direction, nuke_repetition=payload.nuke_repetition
                 ):
-                    task = asyncio.create_task(regenerate(self.scene, -1))
+                    task = asyncio.create_task(regenerate(self.scene))
                     task.add_done_callback(
                         self.create_task_done_callback(
                             "regenerate_done",

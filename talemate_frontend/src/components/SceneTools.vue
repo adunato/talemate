@@ -318,6 +318,10 @@ export default {
         'formatWorldStateTemplateString',
         'characterSheet',
         'openAppConfig',
+        // Provided by SceneMessages; flags the last regen-eligible
+        // message as `regenerating` so its pager spinner shows up
+        // before the in-place edit lands.
+        'requestRegenerateLastMessage',
     ],
     emits: [
         'open-world-state-manager',
@@ -360,6 +364,7 @@ export default {
             this.pendingDirectedRegen = null;
 
             this.setInputDisabled(true);
+            this.requestRegenerateLastMessage();
             this.getWebsocket().send(JSON.stringify({
                 type: 'assistant',
                 action: 'regenerate_directed',
@@ -384,6 +389,7 @@ export default {
             if (this.appBusy) return;
 
             this.setInputDisabled(true);
+            this.requestRegenerateLastMessage();
             this.getWebsocket().send(JSON.stringify({
                 type: 'assistant',
                 action: 'regenerate',
@@ -406,6 +412,7 @@ export default {
             if (this.appBusy) return;
 
             this.setInputDisabled(true);
+            this.requestRegenerateLastMessage();
             this.getWebsocket().send(JSON.stringify({
                 type: 'assistant',
                 action: 'regenerate',

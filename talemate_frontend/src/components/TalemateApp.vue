@@ -828,6 +828,7 @@ export default {
       getTrackedWorldState: (question) => this.$refs.worldState.trackedWorldState(question),
       getTrackedWorldStates: () => this.$refs.worldState.trackedWorldStates(),
       getPlayerCharacterName: () => this.getPlayerCharacterName(),
+      requestRegenerateLastMessage: () => this.$refs.sceneMessages?.requestRegenerateLastMessage(),
       getActAsCharacterName: () => this.actAs || this.getPlayerCharacterName(),
       formatWorldStateTemplateString: (templateString, chracterName) => this.formatWorldStateTemplateString(templateString, chracterName),
       openVisualLibraryWithAsset: (assetId, initialTab = 'info') => {

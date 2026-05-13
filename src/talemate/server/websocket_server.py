@@ -535,12 +535,14 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
         )
 
     def handle_message_edited(self, emission: Emission):
-        reason = (emission.data or {}).get("reason")
+        data = emission.data or {}
+        reason = data.get("reason")
         payload = {
             "type": "message_edited",
             "message": emission.message,
             "id": emission.id,
             "character": emission.character.name if emission.character else "",
+            "mutations": data.get("mutations") or [],
         }
         if reason:
             payload["reason"] = reason

@@ -974,25 +974,41 @@ class Scene(Emitter):
         self,
         message_id: int,
         message: str,
-        reason: Literal["revision"] | None = None,
+        reason: Literal["revision", "regenerate"] | None = None,
+        mutations: list[str] | None = None,
     ):
         """
         Finds the message in `history` by its id and will update its contents.
 
         `reason` is an optional tag forwarded on the wire so the UI can
-        distinguish *why* an edit happened (e.g. `revision` so the frontend
-        can append a new entry to its revision stack instead of replacing
-        the current one). Plain user edits omit it.
+        distinguish *why* an edit happened:
+        - ``revision``: editor-driven manual revision; frontend appends a
+          new entry to its revision stack after the current one.
+        - ``regenerate``: in-place regenerate; frontend appends the prior
+          intermediate(s) (``mutations``) and the new canonical text to
+          its stack.
+        Plain user edits omit the reason and ship no metadata.
+
+        ``mutations`` is the list of pre-canonical intermediate texts to
+        attach as additional revision-stack entries before the new
+        canonical text. Only meaningful when ``reason`` is set.
         """
 
         for i, _message in enumerate(self.history):
             if _message.id == message_id:
                 self.history[i].message = message
+                if reason is None and mutations is None:
+                    data = None
+                else:
+                    data = {
+                        "reason": reason,
+                        "mutations": mutations or [],
+                    }
                 emit(
                     "message_edited",
                     self.history[i],
                     id=message_id,
-                    data={"reason": reason} if reason else None,
+                    data=data,
                 )
                 self.log.info("Message edited", message=message, id=message_id)
                 return

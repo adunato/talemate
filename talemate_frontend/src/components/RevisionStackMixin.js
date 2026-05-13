@@ -8,32 +8,24 @@
  * when the user navigates.
  *
  * Two mechanisms feed the stack:
- *  1. Pending-regen stitching: when the backend emits a `remove_message` with
- *     `reason === "regenerate"`, the host calls `revisionBeginPendingRegen`
- *     to defer the removal. The next AI message that arrives consumes the
- *     pending slot via `revisionAddOrCommit`, inheriting the prior stack.
- *  2. Editor revision: when the backend emits a `message_edited` with
- *     `reason === "revision"`, the host calls `revisionAppendAfterCurrent`
- *     to splice the new revised text in after the current entry. The prior
- *     version stays accessible at its existing stack position.
+ *  1. Auto-revision on a brand-new generation: when the editor's
+ *     `revision_on_generation` hook rewrote the text, the backend's
+ *     character/narrator payload carries `mutations: string[]` of prior
+ *     versions and `revisionSeed` lays them down ahead of the canonical
+ *     text in the fresh stack.
+ *  2. Editor revision and in-place regenerate: when the backend emits a
+ *     `message_edited` with `reason === "revision"` (manual revision) or
+ *     `reason === "regenerate"` (in-place regenerate), the host calls
+ *     `revisionAppendAfterCurrent` to splice the new entries (plus any
+ *     intermediate mutations) in after the current entry. The prior
+ *     versions stay accessible at their existing stack positions.
  *
  * Requirements on the host component:
  *  - data: `messages: SceneMessage[]`
  *  - injects: `getWebsocket`
  */
 export default {
-    data() {
-        return {
-            pendingRegenSlot: null,
-        };
-    },
     methods: {
-        // Clears in-memory revision state. The host should call this from
-        // its own `clear()` / scene-loading reset paths.
-        revisionReset() {
-            this.pendingRegenSlot = null;
-        },
-
         // Character messages carry their canonical text as "Name: body" but
         // the renderer shows just the body. Strip the prefix for display;
         // other supported types are body-only already.
@@ -78,96 +70,32 @@ export default {
             return -1;
         },
 
-        // Mark the most-recent message slot as awaiting a regen replacement.
-        // Returns true when the slot was successfully marked; false means
-        // the caller should fall through to the normal remove-immediately
-        // path.
-        revisionBeginPendingRegen(messageId) {
-            const idx = this.revisionFindSlotIndex(messageId);
-            if (idx < 0) return false;
-            const slot = this.messages[idx];
-            if (!this.revisionSupportedType(slot.type)) return false;
-            // Flag the slot so the paginator can show a progress indicator
-            // until the replacement message lands and we commit the swap.
-            slot.regenerating = true;
-            this.pendingRegenSlot = {
-                priorId: messageId,
-                priorRevisions: slot.revisions ? [...slot.revisions] : [],
-                priorIndex: slot.revision_index ?? 0,
-            };
-            return true;
-        },
-
-        // Replace a pending-regen slot in place with the just-arrived AI
-        // message, inheriting the prior stack and appending the new text.
-        // When the regenerate's response was also auto-mutated (e.g. by
-        // editor revision), each captured original is inserted between
-        // the prior canonical and the final text. Returns true if a
-        // pending slot was consumed.
-        revisionCommitRegen(messageObj, fullText, mutations = []) {
-            if (!this.pendingRegenSlot) return false;
-            if (!this.revisionSupportedType(messageObj.type)) return false;
-            const slot = this.pendingRegenSlot;
-            // Resolve the slot's current array position at commit time —
-            // other messages may have been removed while we were waiting
-            // for the replacement, so the snapshotted index is unreliable.
-            const idx = this.revisionFindSlotIndex(slot.priorId);
-            if (idx < 0) {
-                this.pendingRegenSlot = null;
-                return false;
-            }
-            const revisions = slot.priorRevisions.length > 0 ? [...slot.priorRevisions] : [];
-            const priorCanonical = revisions[slot.priorIndex];
-            // Push each mutation original, skipping duplicates of the
-            // final text or the prior canonical.
-            const priorMutations = (mutations || []).filter(
-                m => m && m !== fullText && m !== priorCanonical
-            );
-            for (const m of priorMutations) {
-                revisions.push(m);
-            }
-            // Dedupe the final text against the prior canonical: identical
-            // text with no mutations means a no-op regenerate (or a
-            // failure-restore re-emitting the original). With mutations
-            // we still want the new entry so the user can see the result.
-            if (fullText === priorCanonical && priorMutations.length === 0) {
-                messageObj.revision_index = slot.priorIndex;
-            } else {
-                revisions.push(fullText);
-                messageObj.revision_index = revisions.length - 1;
-            }
-            messageObj.revisions = revisions;
-            this.messages.splice(idx, 1, messageObj);
-            this.pendingRegenSlot = null;
-            return true;
-        },
-
-        // Single entry point for the host's new-message branches. Either
-        // replaces a pending regen slot (migrating its stack) or seeds a
+        // Single entry point for the host's new-message branches. Seeds a
         // fresh stack on a brand-new message at the tail. `mutations` is
         // the list of prior versions of the canonical text shipped by the
         // backend when automated mutators (today: editor auto-revision)
         // overwrote the message during generation.
         revisionAddOrCommit(messageObj, fullText, mutations = []) {
-            if (!this.revisionCommitRegen(messageObj, fullText, mutations)) {
-                this.revisionSeed(messageObj, fullText, mutations);
-                this.messages.push(messageObj);
-            }
+            this.revisionSeed(messageObj, fullText, mutations);
+            this.messages.push(messageObj);
         },
 
-        // Editor revision tagged the edit with `reason="revision"`. The
-        // prior version is already in the stack at the active index, so we
-        // just splice the new (revised) text in after it and advance the
-        // pointer onto the new entry.
-        revisionAppendAfterCurrent(messageId, fullText) {
+        // Splice one or more new entries onto the stack after the
+        // currently-active one and advance the pointer to the last of
+        // them. `textOrItems` can be either a single string (manual
+        // revision: one new entry) or an array (in-place regenerate:
+        // intermediate mutations followed by the new canonical text).
+        revisionAppendAfterCurrent(messageId, textOrItems) {
             const idx = this.revisionFindSlotIndex(messageId);
             if (idx < 0) return;
             const msg = this.messages[idx];
             if (!this.revisionSupportedType(msg.type)) return;
             if (!msg.revisions || msg.revisions.length === 0) return;
+            const items = Array.isArray(textOrItems) ? textOrItems : [textOrItems];
+            if (items.length === 0) return;
             const cur = msg.revision_index ?? 0;
-            msg.revisions.splice(cur + 1, 0, fullText);
-            msg.revision_index = cur + 1;
+            msg.revisions.splice(cur + 1, 0, ...items);
+            msg.revision_index = cur + items.length;
         },
 
         // The user manually edited a message body. The edit replaces the

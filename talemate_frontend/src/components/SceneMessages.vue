@@ -620,6 +620,7 @@ export default {
     provide() {
         return {
             requestDeleteMessage: this.requestDeleteMessage,
+            requestRegenerateLastMessage: this.requestRegenerateLastMessage,
             createPin: this.createPin,
             forkSceneInitiate: this.forkSceneInitiate,
             getMessageColor: this.getMessageColor,
@@ -666,7 +667,6 @@ export default {
             this.lastEffectiveAssetIdByScope = {};
             this.assetCache = {};
             this.processingAssetMessageIds.clear();
-            this.revisionReset();
             // Clear any pending debounce timer
             if (this._reapplyDebounceTimer) {
                 clearTimeout(this._reapplyDebounceTimer);
@@ -909,6 +909,29 @@ export default {
 
         requestDeleteMessage(message_id) {
             this.getWebsocket().send(JSON.stringify({ type: 'scene_message', action: 'delete', id: message_id }));
+        },
+
+        // Mark the most recent revision-supporting message as
+        // `regenerating` so its pager spinner kicks in immediately. The
+        // flag is cleared on the matching `message_edited`
+        // (reason=regenerate) or `regenerate_failed` event.
+        //
+        // Heuristic: walks back from the tail and picks the first
+        // revisable type. The backend's `regenerate_target_message` only
+        // skips trailing reinforcement messages; this picks the first
+        // character/narrator/context_investigation. Other message types
+        // (time, system, status, etc.) at the tail would mismatch the
+        // backend's target — in that case the catch-all
+        // `assistant.regenerate_failed` handler clears every flagged
+        // slot, self-correcting the divergence.
+        requestRegenerateLastMessage() {
+            for (let i = this.messages.length - 1; i >= 0; i--) {
+                const m = this.messages[i];
+                if (this.revisionSupportedType(m.type)) {
+                    m.regenerating = true;
+                    return;
+                }
+            }
         },
 
         handleChoiceInput(data) {
@@ -1602,14 +1625,6 @@ export default {
                     this.messages.pop();
                 }
 
-                // For regenerate, defer the actual removal so the incoming
-                // replacement can take this slot and inherit the revision
-                // stack. Plain deletes (no `reason`) fall through to the
-                // normal filter-out path below.
-                if (data.reason === 'regenerate' && this.revisionBeginPendingRegen(data.id)) {
-                    return;
-                }
-
                 // find message where type == "character" and id == data.id
                 // remove that message from the array
                 let newMessages = [];
@@ -1621,6 +1636,34 @@ export default {
                 this.messages = newMessages;
 
                 return
+            }
+
+            if (data.type == "regenerate_failed") {
+                // In-place regenerate failed: clear the per-slot
+                // `regenerating` flag so the pager stops spinning. The
+                // message itself was never mutated, so there is nothing
+                // else to do.
+                const idx = this.revisionFindSlotIndex(data.id);
+                if (idx >= 0) {
+                    this.messages[idx].regenerating = false;
+                }
+                return;
+            }
+
+            // Catch-all for the assistant router's `regenerate_failed`
+            // action: fires for guard-failures (e.g. inactive character)
+            // and any exception that escaped `regenerate()` before its
+            // own top-level `regenerate_failed` emit. We don't know
+            // which slot was targeted at click time, so clear the flag
+            // on every revision-supporting message.
+            if (data.type === 'assistant' && data.action === 'regenerate_failed') {
+                for (let j = 0; j < this.messages.length; j++) {
+                    if (this.messages[j].regenerating) {
+                        this.messages[j].regenerating = false;
+                    }
+                }
+                // Don't return — other components rely on the assistant
+                // event for their own input-busy bookkeeping.
             }
 
             if (data.type == "system" && data.id == "scene.looading") {
@@ -1645,12 +1688,19 @@ export default {
                         } else {
                             this.messages[i].text = data.message;
                         }
-                        // Editor revisions push a new stack entry after the
-                        // current one (the prior text stays browsable).
-                        // Plain edits / revision-swap echoes replace the
-                        // current entry in place.
+                        // Editor revisions and in-place regenerate both
+                        // append new entries after the current one; the
+                        // prior text stays browsable. Plain edits /
+                        // revision-swap echoes replace the current entry
+                        // in place.
                         if (data.reason === 'revision') {
                             this.revisionAppendAfterCurrent(data.id, data.message);
+                        } else if (data.reason === 'regenerate') {
+                            this.revisionAppendAfterCurrent(
+                                data.id,
+                                [...(data.mutations || []), data.message],
+                            );
+                            this.messages[i].regenerating = false;
                         } else {
                             this.revisionUpdateCurrentEntry(data.id, data.message);
                         }

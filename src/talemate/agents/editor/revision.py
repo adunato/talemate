@@ -614,6 +614,27 @@ class RevisionMixin:
         ):
             pre_revision_response.set(info.text)
 
+    def consume_pending_revision_original(self) -> str | None:
+        """
+        Read and clear the ContextVar that `revision_on_generation` sets
+        when auto-revision changed text. Used by flows that mutate a
+        SceneMessage in place (no `push_history` fires), so the original
+        would otherwise leak. Returns None when nothing pending.
+
+        Parallel to `revision_tag_on_push` (which drains the same
+        ContextVar via the push_history hook); both consumers are
+        intentionally separate — push-driven flows go through the hook,
+        in-place flows call this helper directly.
+        """
+        try:
+            original = pre_revision_response.get()
+        except LookupError:
+            return None
+        if original is None:
+            return None
+        pre_revision_response.set(None)
+        return original
+
     async def revision_tag_on_push(self, event):
         """
         After `revision_on_generation` set the ContextVar, the agent code

@@ -124,17 +124,9 @@ class TestRegenerateTargetMessage:
         scene.history = [ReinforcementMessage(message="r1")]
         assert regenerate_target_message(scene) is None
 
-    def test_specific_index_resolution(self, scene):
-        m1 = NarratorMessage(message="first")
-        m2 = NarratorMessage(message="second")
-        m3 = NarratorMessage(message="third")
-        scene.history = [m1, m2, m3]
-        assert regenerate_target_message(scene, idx=0) is m1
-        assert regenerate_target_message(scene, idx=1) is m2
-
-    def test_handles_out_of_bounds_index(self, scene):
-        scene.history = [NarratorMessage(message="x")]
-        assert regenerate_target_message(scene, idx=99) is None
+    def test_returns_none_on_empty_history(self, scene):
+        scene.history = []
+        assert regenerate_target_message(scene) is None
 
 
 # ---------------------------------------------------------------------------
@@ -565,14 +557,79 @@ class TestRegenerate:
         assert any(m.message == new_text for m in result)
 
     @pytest.mark.asyncio
-    async def test_restores_original_when_regeneration_returns_no_messages(
-        self, scene, register_agent
+    async def test_inplace_update_preserves_message_id_and_swaps_text(
+        self, scene, register_agent, _silence_emit_and_signals, monkeypatch
     ):
-        """If regenerate_message returns None, the original is restored."""
+        """Successful in-place regenerate keeps the message id and updates
+        its `.message`; no `remove_message` is emitted and `edit_message`
+        is called with reason='regenerate'."""
+
+        new_text = "regenerated narration"
 
         class _NarratorAgent:
             async def progress_story(self, **kwargs):
-                return None  # triggers restoration path
+                return NarratorMessage(message=new_text)
+
+        register_agent("narrator", _NarratorAgent())
+
+        original = NarratorMessage(message="old narration")
+        original.meta = {
+            "agent": "narrator",
+            "function": "progress_story",
+            "arguments": {},
+        }
+        original_id = original.id
+        scene.history = [original]
+
+        # Capture edit_message calls — they happen on Scene (not via the
+        # regenerate-module emit), so spy on the bound method.
+        edit_calls: list[dict] = []
+        real_edit = scene.edit_message
+
+        def _spy_edit(message_id, message, reason=None, mutations=None):
+            edit_calls.append(
+                {
+                    "message_id": message_id,
+                    "message": message,
+                    "reason": reason,
+                    "mutations": mutations,
+                }
+            )
+            return real_edit(message_id, message, reason=reason, mutations=mutations)
+
+        monkeypatch.setattr(scene, "edit_message", _spy_edit)
+
+        result = await regenerate(scene)
+
+        # Slot kept its id, text bumped in place.
+        assert original in scene.history
+        assert original.id == original_id
+        assert original.message == new_text
+        # Returned the same message object.
+        assert result == [original]
+
+        # No remove_message — the in-place flow no longer pops the slot.
+        names = [e["name"] for e in _silence_emit_and_signals]
+        assert "remove_message" not in names
+
+        # edit_message was called with the in-place regenerate signature.
+        assert len(edit_calls) == 1
+        call = edit_calls[0]
+        assert call["message_id"] == original_id
+        assert call["message"] == new_text
+        assert call["reason"] == "regenerate"
+        assert call["mutations"] == []
+
+    @pytest.mark.asyncio
+    async def test_leaves_original_untouched_when_regeneration_returns_no_messages(
+        self, scene, register_agent, _silence_emit_and_signals
+    ):
+        """In-place regenerate never mutates the slot on failure: text stays
+        as-is and the frontend gets a `regenerate_failed` event."""
+
+        class _NarratorAgent:
+            async def progress_story(self, **kwargs):
+                return None  # triggers failure path
 
         register_agent("narrator", _NarratorAgent())
 
@@ -586,16 +643,25 @@ class TestRegenerate:
 
         result = await regenerate(scene)
 
-        # Original message is restored to history.
+        # Slot is still there, untouched.
         assert original in scene.history
+        assert original.message == "original text"
         # No regenerated messages returned.
         assert result == []
+        # The failure event was emitted (via websocket_passthrough) with
+        # the original message id in the kwargs payload.
+        events_by_name = {e["name"]: e for e in _silence_emit_and_signals}
+        assert "regenerate_failed" in events_by_name
+        failed = events_by_name["regenerate_failed"]["kwargs"]
+        assert failed.get("websocket_passthrough") is True
+        assert failed.get("kwargs", {}).get("id") == original.id
 
     @pytest.mark.asyncio
-    async def test_restores_original_and_reinforcements_on_failure(
+    async def test_leaves_original_and_reinforcements_present_on_failure(
         self, scene, register_agent
     ):
-        """If regen fails, both the primary message AND reinforcements are restored."""
+        """When regen fails, the primary slot is untouched and any popped
+        reinforcements are re-pushed onto history."""
 
         class _NarratorAgent:
             async def progress_story(self, **kwargs):
@@ -619,7 +685,7 @@ class TestRegenerate:
         assert reinforce in scene.history
 
     @pytest.mark.asyncio
-    async def test_handles_exception_during_regeneration_by_restoring(
+    async def test_handles_exception_during_regeneration_without_mutating(
         self, scene, register_agent, _silence_emit_and_signals
     ):
         class _Boom:
@@ -638,9 +704,11 @@ class TestRegenerate:
 
         result = await regenerate(scene)
 
-        # Original is restored despite the exception.
+        # Slot is still there with its original text.
         assert original in scene.history
+        assert original.message == "primary"
         assert result == []
-        # An error status was emitted.
+        # An error status AND a regenerate_failed event were emitted.
         names = [e["name"] for e in _silence_emit_and_signals]
         assert "status" in names
+        assert "regenerate_failed" in names
