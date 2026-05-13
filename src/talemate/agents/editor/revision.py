@@ -1373,4 +1373,3 @@ class RevisionMixin:
         if agent_function_name == "revision_revise":
             if prompt_param.get("extra_stopping_strings") is None:
                 prompt_param["extra_stopping_strings"] = []
-            prompt_param["extra_stopping_strings"] += ["</FIX>"]
