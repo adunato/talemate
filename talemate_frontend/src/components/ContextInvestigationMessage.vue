@@ -29,7 +29,7 @@
         :message_content="message.text"
         :message_id="message.id"
       />
-      <RevisionNav v-if="isLastMessage" :count="revisionsCount" :index="revisionIndex" :disabled="uxLocked" :busy="revisionBusy" @navigate="(dir) => $emit('navigate-revision', dir)" />
+      <RevisionNav v-if="isLastMessage" :count="revisionsCount" :index="revisionIndex" :source="revisionSource" :disabled="uxLocked" :busy="revisionBusy" @navigate="(dir) => $emit('navigate-revision', dir)" />
       <v-textarea
         ref="textarea"
         v-if="editing"
@@ -177,6 +177,10 @@ export default {
     revisionIndex: {
       type: Number,
       default: 0,
+    },
+    revisionSource: {
+      type: String,
+      default: null,
     },
     revisionBusy: {
       type: Boolean,

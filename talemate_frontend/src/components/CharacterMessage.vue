@@ -5,7 +5,7 @@
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </template>
-    <RevisionNav v-if="isLastMessage && (revisionsCount > 1 || revisionBusy)" :count="revisionsCount" :index="revisionIndex" :disabled="uxLocked" :busy="revisionBusy" @navigate="(dir) => $emit('navigate-revision', dir)" />
+    <RevisionNav v-if="isLastMessage && (revisionsCount > 1 || revisionBusy)" :count="revisionsCount" :index="revisionIndex" :source="revisionSource" :disabled="uxLocked" :busy="revisionBusy" @navigate="(dir) => $emit('navigate-revision', dir)" />
     <!-- Scene illustration (big) renders above message -->
     <MessageAssetImage
       v-if="messageAsset && isSceneIllustrationAbove"
@@ -198,6 +198,10 @@ export default {
     revisionIndex: {
       type: Number,
       default: 0,
+    },
+    revisionSource: {
+      type: String,
+      default: null,
     },
     revisionBusy: {
       type: Boolean,

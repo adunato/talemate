@@ -15,11 +15,15 @@ __all__ = [
     "TimePassageMessage",
     "ReinforcementMessage",
     "ContextInvestigationMessage",
+    "MessageMutation",
+    "MutationSource",
     "Flags",
     "MESSAGES",
     "DIRECTOR_INPUT_PREFIX",
     "DIRECTOR_INPUT_PREFIX_YIELD",
 ]
+
+MutationSource = Literal["original", "revision", "regenerate"]
 
 # Prefixes the user can type in the main input box to route a message to the
 # director instead of having the player character speak/act. The yield variant
@@ -48,6 +52,13 @@ class Flags(enum.IntFlag):
 
     NONE = 0x0
     HIDDEN = 0x1
+
+
+class MessageMutation(pydantic.BaseModel):
+    """A prior state of a SceneMessage, tagged with what produced it."""
+
+    message: str
+    source: MutationSource
 
 
 class SceneMessage(pydantic.BaseModel):
@@ -79,7 +90,7 @@ class SceneMessage(pydantic.BaseModel):
     # to overwrite it. Travels with the wire emit so the UI can expose
     # those versions in the revision stack. Not persisted — `to_dict()`
     # doesn't include it, so mutations never land in scene history.
-    mutations: list[str] = pydantic.Field(
+    mutations: list[MessageMutation] = pydantic.Field(
         default_factory=list, exclude=True, repr=False
     )
 

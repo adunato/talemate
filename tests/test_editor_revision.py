@@ -44,6 +44,7 @@ from talemate.exceptions import GenerationCancelled
 from talemate.scene_message import (
     CharacterMessage,
     ContextInvestigationMessage,
+    MessageMutation,
     NarratorMessage,
 )
 from talemate.world_state.templates.content import PhraseDetection, WritingStyle
@@ -931,7 +932,9 @@ class TestRevisionOnPush:
         await editor.revision_on_push(event)
 
         assert msg.message == "REVISED(orig narrator)"
-        assert msg.mutations == ["orig narrator"]
+        assert msg.mutations == [
+            MessageMutation(message="orig narrator", source="original")
+        ]
 
     async def test_character_message_revised_and_mutation_appended(
         self, stub_revise_narrator, alice, monkeypatch
@@ -949,7 +952,9 @@ class TestRevisionOnPush:
         await editor.revision_on_push(event)
 
         assert msg.message == "REVISED(Alice: hello)"
-        assert msg.mutations == ["Alice: hello"]
+        assert msg.mutations == [
+            MessageMutation(message="Alice: hello", source="original")
+        ]
 
     async def test_no_mutation_when_revision_noop(self, editor_scene):
         scene, editor = editor_scene
@@ -1004,7 +1009,9 @@ class TestRevisionOnPush:
         await editor.revision_on_push(event)
 
         assert m1.message == "REVISED(first)"
-        assert m1.mutations == ["first"]
+        assert m1.mutations == [
+            MessageMutation(message="first", source="original")
+        ]
         # Second was left alone.
         assert m2.message == "second"
         assert m2.mutations == []

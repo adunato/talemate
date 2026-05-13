@@ -27,7 +27,12 @@ from talemate.agents.creator.assistant import ContextualGenerateEmission
 from talemate.agents.summarize import SummarizeEmission
 from talemate.agents.summarize.layered_history import LayeredHistoryFinalizeEmission
 from talemate.events import HistoryEvent
-from talemate.scene_message import CharacterMessage, NarratorMessage, SceneMessage
+from talemate.scene_message import (
+    CharacterMessage,
+    MessageMutation,
+    NarratorMessage,
+    SceneMessage,
+)
 from talemate.util.dedupe import (
     SimilarityMatch,
     compile_text_to_sentences,
@@ -261,6 +266,23 @@ def _revision_exceeds_max_length(
         ratio=_format_length_ratio(len(revised_text), len(original_text)),
     )
     return True
+
+
+def revision_stack_payload(message_obj: "SceneMessage | None") -> dict:
+    """
+    Build the revision-stack fields for a character/narrator wire payload.
+
+    Canonical source is derived from ``len(mutations) > 0``: today only
+    ``revision_on_push`` adds to mutations at push time, so a non-empty
+    list means the canonical was just produced by revision. A future
+    push-time mutator from a different agent would need to revisit this.
+    """
+    if not message_obj:
+        return {"mutations": [], "mutation_source": "original"}
+    return {
+        "mutations": [m.model_dump() for m in message_obj.mutations],
+        "mutation_source": "revision" if message_obj.mutations else "original",
+    }
 
 
 ## MIXIN
@@ -663,7 +685,9 @@ class RevisionMixin:
                 continue
             original = await self.maybe_revise_inplace(message)
             if original is not None:
-                message.mutations.append(original)
+                message.mutations.append(
+                    MessageMutation(message=original, source="original")
+                )
             return
 
     # helpers

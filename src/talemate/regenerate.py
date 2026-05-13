@@ -8,6 +8,7 @@ from talemate.context import regeneration_context
 from talemate.scene_message import (
     SceneMessage,
     CharacterMessage,
+    MessageMutation,
     NarratorMessage,
     ReinforcementMessage,
     ContextInvestigationMessage,
@@ -247,21 +248,27 @@ async def regenerate_message(
 
 async def _regenerate_inplace(
     message: SceneMessage, scene: "Scene"
-) -> tuple[str, list[str]] | None:
+) -> tuple[str, list[MessageMutation], str] | None:
     """
-    Run the agent path for ``message`` and return the new canonical text
-    plus any auto-revision intermediate(s) produced while editing the new
-    message in place.
+    Run the agent path for ``message`` and return the new canonical text,
+    any auto-revision intermediate(s) produced, and the mutation-source
+    label for the new canonical.
 
     This does NOT push the new message to history nor emit any
     ``character``/``narrator`` message — the caller is expected to update
     the existing SceneMessage in place via ``scene.edit_message`` so the
     slot keeps its id and revision stack on the frontend.
 
-    Returns ``(new_text, mutations)`` or ``None`` on failure / empty
-    result. ``mutations`` is the editor's pre-revision text(s) only; the
-    pre-regenerate canonical text is NOT included here (it's already in
-    the user's revision stack at the active index).
+    Returns ``(new_text, mutations, canonical_mutation_source)`` or
+    ``None`` on failure / empty result.
+    - ``mutations`` is the editor's pre-revision text(s) only, tagged
+      ``source="regenerate"`` — they're raw regenerate outputs that
+      auto-revision then rewrote. The pre-regenerate canonical text is
+      NOT included here (it's already in the user's revision stack at the
+      active index).
+    - ``canonical_mutation_source`` is ``"revision"`` if auto-revision
+      actually rewrote the regenerate output (the new canonical is a
+      revision of the raw regen), otherwise ``"regenerate"``.
     """
     # Snapshot before _dispatch_agent_regeneration touches anything. The
     # message we're editing in place still holds the pre-regenerate
@@ -283,20 +290,17 @@ async def _regenerate_inplace(
     # Auto-revision normally runs at push_history time, but in-place
     # regenerate skips push_history. Invoke the editor's in-place hook
     # directly so the same gating + behavior applies.
-    mutations: list[str] = []
+    mutations: list[MessageMutation] = []
     editor = get_agent("editor")
     original = await editor.maybe_revise_inplace(new_message)
-    # Skip when the auto-revision intermediate matches either the new
-    # canonical (no-op edit) or the message's *prior* canonical text —
-    # the prior version is already in the frontend stack at the active
-    # index, so re-adding it would just duplicate the user's current
-    # entry.
-    if (
-        original
-        and original != new_message.message
-        and original != prior_canonical
-    ):
-        mutations.append(original)
+    canonical_was_revised = bool(original) and original != new_message.message
+    # Drop the mutation when it equals the prior canonical — that text
+    # is already in the frontend stack at the active index. The
+    # canonical source still reflects what produced the new text.
+    if canonical_was_revised and original != prior_canonical:
+        mutations.append(MessageMutation(message=original, source="regenerate"))
+
+    canonical_mutation_source = "revision" if canonical_was_revised else "regenerate"
 
     new_text = new_message.message
 
@@ -314,7 +318,7 @@ async def _regenerate_inplace(
             )
         )
 
-    return new_text, mutations
+    return new_text, mutations, canonical_mutation_source
 
 
 async def regenerate(scene: "Scene") -> list[SceneMessage]:
@@ -396,18 +400,17 @@ async def regenerate(scene: "Scene") -> list[SceneMessage]:
             await scene.push_history(reinforcement_message)
         return regenerated_messages
 
-    new_text, mutation_delta = outcome
+    new_text, mutation_delta, canonical_mutation_source = outcome
 
-    # Re-append with the same id, then commit the canonical swap via
-    # edit_message — which finds the message by id, sets the new text,
-    # and fires the message_edited wire event with reason="regenerate"
-    # plus any auto-revision intermediates.
+    # Re-append with the same id so the slot keeps its frontend
+    # revision stack; edit_message then swaps the text in place.
     scene.history.append(message)
     scene.edit_message(
         message.id,
         new_text,
         reason="regenerate",
         mutations=mutation_delta,
+        mutation_source=canonical_mutation_source,
     )
 
     regenerated_messages.append(message)

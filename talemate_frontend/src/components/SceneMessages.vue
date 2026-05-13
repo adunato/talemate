@@ -282,7 +282,7 @@
             <div v-if="message.type === 'character' || message.type === 'processing_input'"
                 :class="`message ${message.type}`" :id="`message-${message.id}`" :style="{ borderColor: message.color }">
                 <div class="character-message">
-                    <CharacterMessage :character="message.character" :text="message.text" :color="message.color" :message_id="message.id" :uxLocked="uxLocked" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :rev="message.rev || 0" :scene-rev="scene?.data?.rev || 0" :appearanceConfig="appearanceConfig" :scene="scene" :asset_id="message.asset_id" :asset_type="message.asset_type" :disable_avatar_fallback="message.disable_avatar_fallback || false" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionBusy="message.regenerating || false" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
+                    <CharacterMessage :character="message.character" :text="message.text" :color="message.color" :message_id="message.id" :uxLocked="uxLocked" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :rev="message.rev || 0" :scene-rev="scene?.data?.rev || 0" :appearanceConfig="appearanceConfig" :scene="scene" :asset_id="message.asset_id" :asset_type="message.asset_type" :disable_avatar_fallback="message.disable_avatar_fallback || false" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionSource="revisionCurrentSource(message)" :revisionBusy="message.regenerating || false" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
                 </div>
             </div>
             <div v-else-if="message.type === 'request_input' && message.choices">
@@ -324,7 +324,7 @@
             </div>
             <div v-else-if="message.type === 'narrator'" :class="`message ${message.type}`">
                 <div class="narrator-message"  :id="`message-${message.id}`">
-                    <NarratorMessage :text="message.text" :message_id="message.id" :uxLocked="uxLocked" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :rev="message.rev || 0" :scene-rev="scene?.data?.rev || 0" :appearanceConfig="appearanceConfig" :asset_id="message.asset_id" :asset_type="message.asset_type" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionBusy="message.regenerating || false" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
+                    <NarratorMessage :text="message.text" :message_id="message.id" :uxLocked="uxLocked" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :rev="message.rev || 0" :scene-rev="scene?.data?.rev || 0" :appearanceConfig="appearanceConfig" :asset_id="message.asset_id" :asset_type="message.asset_type" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionSource="revisionCurrentSource(message)" :revisionBusy="message.regenerating || false" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
                 </div>
             </div>
             <div v-else-if="message.type === 'director' && !getMessageTypeHidden(message.type)" :class="`message ${message.type}`">
@@ -349,7 +349,7 @@
             </div>
             <div v-else-if="message.type === 'context_investigation' && !getMessageTypeHidden(message.type)" :class="`message ${message.type}`">
                 <div class="context-investigation-message"  :id="`message-${message.id}`">
-                    <ContextInvestigationMessage :message="message" :uxLocked="uxLocked" :isLastMessage="index === messages.length - 1" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :appearanceConfig="appearanceConfig" :asset_id="message.asset_id" :asset_type="message.asset_type" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionBusy="message.regenerating || false" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
+                    <ContextInvestigationMessage :message="message" :uxLocked="uxLocked" :isLastMessage="index === messages.length - 1" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :appearanceConfig="appearanceConfig" :asset_id="message.asset_id" :asset_type="message.asset_type" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionSource="revisionCurrentSource(message)" :revisionBusy="message.regenerating || false" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
                 </div>
             </div>
 
@@ -1695,13 +1695,16 @@ export default {
                         // is a fresh alternative, not a revision of the
                         // active entry, so prior entries should keep
                         // their positions. Plain edits / revision-swap
-                        // echoes replace the current entry in place.
+                        // echoes replace the current entry's text in
+                        // place (preserving its source tag).
+                        const canonicalSource = data.mutation_source || (data.reason || 'original');
+                        const canonicalEntry = { message: data.message, source: canonicalSource };
                         if (data.reason === 'revision') {
-                            this.revisionAppendAfterCurrent(data.id, data.message);
+                            this.revisionAppendAfterCurrent(data.id, [canonicalEntry]);
                         } else if (data.reason === 'regenerate') {
                             this.revisionAppendAtEnd(
                                 data.id,
-                                [...(data.mutations || []), data.message],
+                                [...(data.mutations || []), canonicalEntry],
                             );
                             this.messages[i].regenerating = false;
                         } else {
@@ -1781,7 +1784,7 @@ export default {
                         disable_avatar_fallback: disableAvatarFallback,
                         rev: data.rev || 0
                     };
-                    this.revisionAddOrCommit(charMsg, data.message, data.mutations || []);
+                    this.revisionAddOrCommit(charMsg, data.message, data.mutations || [], data.mutation_source || 'original');
                 } else if (data.type === 'director') {
                     this.messages.push(
                         {
@@ -1807,7 +1810,7 @@ export default {
                         asset_id: data.asset_id,
                         asset_type: data.asset_type,
                     };
-                    this.revisionAddOrCommit(ctxMsg, data.message, data.mutations || []);
+                    this.revisionAddOrCommit(ctxMsg, data.message, data.mutations || [], data.mutation_source || 'original');
                 } else if (data.type === 'narrator') {
                     const narratorMsg = {
                         id: data.id,
@@ -1819,7 +1822,7 @@ export default {
                         asset_id: data.asset_id || null,
                         asset_type: data.asset_type || null,
                     };
-                    this.revisionAddOrCommit(narratorMsg, data.message, data.mutations || []);
+                    this.revisionAddOrCommit(narratorMsg, data.message, data.mutations || [], data.mutation_source || 'original');
                 } else if (data.type === 'player_choice') {
                     console.log('player_choice', data);
                     this.messages.push({ id: data.id, type: data.type, data: data.data });
@@ -1838,7 +1841,7 @@ export default {
                         asset_id: data.asset_id || null,
                         asset_type: data.asset_type || null,
                     };
-                    this.revisionAddOrCommit(genericMsg, data.message, data.mutations || []);
+                    this.revisionAddOrCommit(genericMsg, data.message, data.mutations || [], data.mutation_source || 'original');
                 } else if (data.type === 'status' && data.data && data.data.as_scene_message === true) {
 
                     // status message can only exist once, remove the most recent one (if within the last 100 messages)

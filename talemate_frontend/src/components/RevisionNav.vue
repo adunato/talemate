@@ -8,6 +8,10 @@
       <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="index >= count - 1 || disabled || busy" @click.stop="$emit('navigate', 1)">
         <v-icon size="small">mdi-chevron-right</v-icon>
       </v-btn>
+      <v-chip v-if="sourceTag" size="small" variant="text" :color="sourceTag.color" class="revision-source-chip">
+        <v-icon size="small" start>{{ sourceTag.icon }}</v-icon>
+        {{ sourceTag.label }}
+      </v-chip>
     </template>
     <v-chip v-if="busy" size="small" variant="text" class="revision-busy-chip" color="primary">
       <v-progress-circular indeterminate size="16" width="2" color="primary" class="mr-2" />
@@ -17,6 +21,12 @@
 </template>
 
 <script>
+const SOURCE_TAGS = {
+  original: { label: 'Original', icon: 'mdi-creation', color: 'muted' },
+  revision: { label: 'Revised', icon: 'mdi-typewriter', color: 'highlight4' },
+  regenerate: { label: 'Regenerated', icon: 'mdi-refresh', color: 'primary' },
+};
+
 export default {
   name: 'RevisionNav',
   props: {
@@ -27,6 +37,10 @@ export default {
     index: {
       type: Number,
       required: true,
+    },
+    source: {
+      type: String,
+      default: null,
     },
     disabled: {
       type: Boolean,
@@ -39,9 +53,13 @@ export default {
   },
   emits: ['navigate'],
   computed: {
+    sourceTag() {
+      return this.source ? SOURCE_TAGS[this.source] || null : null;
+    },
     title() {
       if (this.busy) return 'Regenerating…';
-      return `Revision ${this.index + 1} of ${this.count}`;
+      const base = `Revision ${this.index + 1} of ${this.count}`;
+      return this.sourceTag ? `${base} (${this.sourceTag.label})` : base;
     },
   },
 }
@@ -77,5 +95,14 @@ export default {
 
 .revision-busy-chip {
   margin-left: 4px;
+}
+
+.revision-nav :deep(.revision-source-chip.v-chip) {
+  height: 22px;
+  margin-left: 6px;
+  font-size: 0.75rem;
+  padding: 0 4px;
+  cursor: default;
+  pointer-events: none;
 }
 </style>

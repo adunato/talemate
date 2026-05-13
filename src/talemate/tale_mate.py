@@ -36,6 +36,8 @@ from talemate.scene.episodes import EpisodesManager
 from talemate.scene_message import (
     CharacterMessage,
     DirectorMessage,
+    MessageMutation,
+    MutationSource,
     ReinforcementMessage,
     SceneMessage,
     TimePassageMessage,
@@ -975,7 +977,8 @@ class Scene(Emitter):
         message_id: int,
         message: str,
         reason: Literal["revision", "regenerate"] | None = None,
-        mutations: list[str] | None = None,
+        mutations: list[MessageMutation] | None = None,
+        mutation_source: MutationSource | None = None,
     ):
         """
         Finds the message in `history` by its id and will update its contents.
@@ -989,20 +992,22 @@ class Scene(Emitter):
           its stack.
         Plain user edits omit the reason and ship no metadata.
 
-        ``mutations`` is the list of pre-canonical intermediate texts to
-        attach as additional revision-stack entries before the new
-        canonical text. Only meaningful when ``reason`` is set.
+        ``mutations`` are pre-canonical intermediate texts attached as
+        additional revision-stack entries before the new canonical text.
+        ``mutation_source`` tags the new canonical's stack entry. Both
+        are only meaningful when ``reason`` is set.
         """
 
         for i, _message in enumerate(self.history):
             if _message.id == message_id:
                 self.history[i].message = message
-                if reason is None and mutations is None:
+                if reason is None and mutations is None and mutation_source is None:
                     data = None
                 else:
                     data = {
                         "reason": reason,
-                        "mutations": mutations or [],
+                        "mutations": [m.model_dump() for m in (mutations or [])],
+                        "mutation_source": mutation_source,
                     }
                 emit(
                     "message_edited",

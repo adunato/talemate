@@ -16,6 +16,7 @@ from talemate.emit import Emission, Receiver, abort_wait_for_input, emit
 import talemate.emit.async_signals as async_signals
 from talemate.files import list_scenes_directory
 from talemate.load import load_scene, SceneInitialization
+from talemate.agents.editor.revision import revision_stack_payload
 from talemate.scene_assets import Asset, get_media_type_from_file_path, VIS_TYPE
 from talemate.server import (
     agent_config,
@@ -303,7 +304,7 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
                     int(emission.message_object.flags) if emission.message_object else 0
                 ),
                 "rev": (emission.message_object.rev if emission.message_object else 0),
-                "mutations": message_obj.mutations if message_obj else [],
+                **revision_stack_payload(message_obj),
             }
         )
 
@@ -382,7 +383,7 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
                     int(emission.message_object.flags) if emission.message_object else 0
                 ),
                 "rev": (emission.message_object.rev if emission.message_object else 0),
-                "mutations": message_obj.mutations if message_obj else [],
+                **revision_stack_payload(message_obj),
             }
         )
 
@@ -421,6 +422,7 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
                 "asset_id": asset_id,
                 "asset_type": asset_type,
                 "flags": (int(message_obj.flags) if message_obj else 0),
+                **revision_stack_payload(message_obj),
             }
         )
 
@@ -546,6 +548,8 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
         }
         if reason:
             payload["reason"] = reason
+        if data.get("mutation_source"):
+            payload["mutation_source"] = data["mutation_source"]
         self.queue_put(payload)
 
     def handle_autocomplete_suggestion(self, emission: Emission):

@@ -74,7 +74,9 @@ class EditorWebsocketHandler(Plugin):
         # No-op revisions don't touch the message and surface a status so
         # the user knows the action completed without effect.
         if revised != original:
-            scene.edit_message(message.id, revised, reason="revision")
+            scene.edit_message(
+                message.id, revised, reason="revision", mutation_source="revision"
+            )
         else:
             emit(
                 "status",

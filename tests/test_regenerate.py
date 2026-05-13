@@ -30,6 +30,7 @@ from talemate.regenerate import (
 from talemate.scene_message import (
     CharacterMessage,
     ContextInvestigationMessage,
+    MessageMutation,
     NarratorMessage,
     ReinforcementMessage,
 )
@@ -604,16 +605,23 @@ class TestRegenerate:
         edit_calls: list[dict] = []
         real_edit = scene.edit_message
 
-        def _spy_edit(message_id, message, reason=None, mutations=None):
+        def _spy_edit(message_id, message, reason=None, mutations=None, mutation_source=None):
             edit_calls.append(
                 {
                     "message_id": message_id,
                     "message": message,
                     "reason": reason,
                     "mutations": mutations,
+                    "mutation_source": mutation_source,
                 }
             )
-            return real_edit(message_id, message, reason=reason, mutations=mutations)
+            return real_edit(
+                message_id,
+                message,
+                reason=reason,
+                mutations=mutations,
+                mutation_source=mutation_source,
+            )
 
         monkeypatch.setattr(scene, "edit_message", _spy_edit)
 
@@ -631,12 +639,15 @@ class TestRegenerate:
         assert "remove_message" not in names
 
         # edit_message was called with the in-place regenerate signature.
+        # No editor revision ran (the default _NoopEditor returns None), so
+        # the canonical's mutation source is "regenerate" (raw regen output).
         assert len(edit_calls) == 1
         call = edit_calls[0]
         assert call["message_id"] == original_id
         assert call["message"] == new_text
         assert call["reason"] == "regenerate"
         assert call["mutations"] == []
+        assert call["mutation_source"] == "regenerate"
 
     @pytest.mark.asyncio
     async def test_inplace_auto_revision_appends_mutation_delta(
@@ -676,19 +687,36 @@ class TestRegenerate:
         edit_calls: list[dict] = []
         real_edit = scene.edit_message
 
-        def _spy_edit(message_id, message, reason=None, mutations=None):
+        def _spy_edit(message_id, message, reason=None, mutations=None, mutation_source=None):
             edit_calls.append(
-                {"message": message, "reason": reason, "mutations": mutations}
+                {
+                    "message": message,
+                    "reason": reason,
+                    "mutations": mutations,
+                    "mutation_source": mutation_source,
+                }
             )
-            return real_edit(message_id, message, reason=reason, mutations=mutations)
+            return real_edit(
+                message_id,
+                message,
+                reason=reason,
+                mutations=mutations,
+                mutation_source=mutation_source,
+            )
 
         monkeypatch.setattr(scene, "edit_message", _spy_edit)
 
         await regenerate(scene)
 
+        # Auto-revision rewrote the regen output, so the canonical is
+        # tagged "revision" and the raw regen rides along as a
+        # "regenerate"-sourced mutation.
         assert len(edit_calls) == 1
         assert edit_calls[0]["message"] == revised_text
-        assert edit_calls[0]["mutations"] == [raw_text]
+        assert edit_calls[0]["mutations"] == [
+            MessageMutation(message=raw_text, source="regenerate")
+        ]
+        assert edit_calls[0]["mutation_source"] == "revision"
         # Slot text matches revised canonical.
         assert original.message == revised_text
 
@@ -698,7 +726,10 @@ class TestRegenerate:
     ):
         """If the editor's pre-revision text equals the message's prior
         canonical, the frontend already has it in its revision stack —
-        don't duplicate it."""
+        don't duplicate it. The canonical's source must still reflect
+        that revision actually produced it, independent of whether the
+        pre-revision text survived the dedupe.
+        """
 
         raw_text = "shared text"
         revised_text = "revised text"
@@ -726,9 +757,15 @@ class TestRegenerate:
         edit_calls: list[dict] = []
         real_edit = scene.edit_message
 
-        def _spy_edit(message_id, message, reason=None, mutations=None):
-            edit_calls.append({"mutations": mutations})
-            return real_edit(message_id, message, reason=reason, mutations=mutations)
+        def _spy_edit(message_id, message, reason=None, mutations=None, mutation_source=None):
+            edit_calls.append({"mutations": mutations, "mutation_source": mutation_source})
+            return real_edit(
+                message_id,
+                message,
+                reason=reason,
+                mutations=mutations,
+                mutation_source=mutation_source,
+            )
 
         monkeypatch.setattr(scene, "edit_message", _spy_edit)
 
@@ -736,8 +773,63 @@ class TestRegenerate:
 
         assert len(edit_calls) == 1
         # No mutation — the pre-revision text would just duplicate the
-        # user's current frontend entry.
+        # user's current frontend entry. But revision DID rewrite the
+        # regen output, so the canonical's mutation source must still
+        # be "revision" (the text we ship is the revised text).
         assert edit_calls[0]["mutations"] == []
+        assert edit_calls[0]["mutation_source"] == "revision"
+
+    @pytest.mark.asyncio
+    async def test_inplace_canonical_source_is_regenerate_when_revision_is_noop(
+        self, scene, register_agent, monkeypatch
+    ):
+        """When ``maybe_revise_inplace`` returns ``None`` (revision was a
+        no-op or disabled), no mutation is recorded and the canonical's
+        source is ``"regenerate"`` — the new text is the raw regen
+        output unchanged.
+        """
+
+        raw_text = "regenerated, never revised"
+
+        class _NarratorAgent:
+            async def progress_story(self, **kwargs):
+                return NarratorMessage(message=raw_text)
+
+        class _Editor:
+            async def maybe_revise_inplace(self, message):
+                return None  # revision disabled / no-op
+
+        register_agent("narrator", _NarratorAgent())
+        register_agent("editor", _Editor())
+
+        original = NarratorMessage(message="prior text")
+        original.meta = {
+            "agent": "narrator",
+            "function": "progress_story",
+            "arguments": {},
+        }
+        scene.history = [original]
+
+        edit_calls: list[dict] = []
+        real_edit = scene.edit_message
+
+        def _spy_edit(message_id, message, reason=None, mutations=None, mutation_source=None):
+            edit_calls.append({"mutations": mutations, "mutation_source": mutation_source})
+            return real_edit(
+                message_id,
+                message,
+                reason=reason,
+                mutations=mutations,
+                mutation_source=mutation_source,
+            )
+
+        monkeypatch.setattr(scene, "edit_message", _spy_edit)
+
+        await regenerate(scene)
+
+        assert len(edit_calls) == 1
+        assert edit_calls[0]["mutations"] == []
+        assert edit_calls[0]["mutation_source"] == "regenerate"
 
     @pytest.mark.asyncio
     async def test_leaves_original_untouched_when_regeneration_returns_no_messages(
