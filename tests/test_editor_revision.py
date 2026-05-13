@@ -1031,12 +1031,13 @@ class TestRevisionOnPush:
 
 
 class TestInjectPromptParameters:
-    def test_revision_revise_appends_fix_stop_string(self, editor_scene):
+    def test_revision_revise_initializes_extra_stopping_strings(self, editor_scene):
         _, editor = editor_scene
         params = {}
         editor.inject_prompt_paramters(params, "edit_512", "revision_revise")
         assert "extra_stopping_strings" in params
-        assert "</FIX>" in params["extra_stopping_strings"]
+        # </FIX> is no longer injected — see commit 04a85847.
+        assert "</FIX>" not in params["extra_stopping_strings"]
 
     def test_other_function_does_not_inject_fix_stop_string(self, editor_scene):
         _, editor = editor_scene
