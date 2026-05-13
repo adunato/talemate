@@ -638,6 +638,11 @@ class RevisionMixin:
         else:
             return None
 
+        # Player-authored CharacterMessages must not be auto-revised —
+        # the player's words are theirs, not ours to rewrite.
+        if message.source == "player":
+            return None
+
         if not self._revision_automatic_target_enabled(target):
             return None
 
