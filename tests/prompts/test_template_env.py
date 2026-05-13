@@ -9,8 +9,6 @@ would not be resolvable from runtime ``{% include %}`` calls when the
 active agent_type is anything other than ``"scene"``.
 """
 
-from pathlib import Path
-
 import pytest
 
 from talemate.context import active_scene
@@ -56,9 +54,7 @@ class TestSceneTemplateSearchPath:
 
         assert str(scene_subdir) in searchpath
 
-    def test_scene_subdir_omitted_when_missing(
-        self, tmp_path, scene_with_template_dir
-    ):
+    def test_scene_subdir_omitted_when_missing(self, tmp_path, scene_with_template_dir):
         """Missing ``scene/`` dir is silently skipped (no stray path entries)."""
         # tmp_path exists but has no `scene/` subdirectory
         searchpath = _searchpath_for("narrator")
@@ -75,9 +71,7 @@ class TestSceneTemplateSearchPath:
 
         assert str(agent_subdir) in searchpath
 
-    def test_flat_template_dir_still_included(
-        self, tmp_path, scene_with_template_dir
-    ):
+    def test_flat_template_dir_still_included(self, tmp_path, scene_with_template_dir):
         """The flat ``template_dir`` root is still appended (backward compat)."""
         (tmp_path / "scene").mkdir()
 
