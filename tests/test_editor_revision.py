@@ -925,9 +925,7 @@ class TestRevisionOnPush:
     ):
         scene, editor = stub_revise_narrator
         msg = NarratorMessage(message="orig narrator")
-        event = HistoryEvent(
-            scene=scene, event_type="push_history", messages=[msg]
-        )
+        event = HistoryEvent(scene=scene, event_type="push_history", messages=[msg])
 
         await editor.revision_on_push(event)
 
@@ -945,9 +943,7 @@ class TestRevisionOnPush:
         )
 
         msg = CharacterMessage(message="Alice: hello")
-        event = HistoryEvent(
-            scene=scene, event_type="push_history", messages=[msg]
-        )
+        event = HistoryEvent(scene=scene, event_type="push_history", messages=[msg])
 
         await editor.revision_on_push(event)
 
@@ -969,9 +965,7 @@ class TestRevisionOnPush:
 
         editor.revision_revise = identity
         msg = NarratorMessage(message="unchanged")
-        event = HistoryEvent(
-            scene=scene, event_type="push_history", messages=[msg]
-        )
+        event = HistoryEvent(scene=scene, event_type="push_history", messages=[msg])
 
         await editor.revision_on_push(event)
 
@@ -981,9 +975,7 @@ class TestRevisionOnPush:
     async def test_non_scene_message_is_ignored(self, stub_revise_narrator):
         scene, editor = stub_revise_narrator
         msg = ContextInvestigationMessage(message="ctx")
-        event = HistoryEvent(
-            scene=scene, event_type="push_history", messages=[msg]
-        )
+        event = HistoryEvent(scene=scene, event_type="push_history", messages=[msg])
 
         await editor.revision_on_push(event)
 
@@ -992,9 +984,7 @@ class TestRevisionOnPush:
         # the base SceneMessage class does — verify it stayed empty.
         assert msg.mutations == []
 
-    async def test_only_first_matching_message_is_revised(
-        self, stub_revise_narrator
-    ):
+    async def test_only_first_matching_message_is_revised(self, stub_revise_narrator):
         """``push_history`` rarely batches narrator/character messages,
         but if it does, only the first one is processed (matches the
         single-target nature of revision)."""
@@ -1002,16 +992,12 @@ class TestRevisionOnPush:
 
         m1 = NarratorMessage(message="first")
         m2 = NarratorMessage(message="second")
-        event = HistoryEvent(
-            scene=scene, event_type="push_history", messages=[m1, m2]
-        )
+        event = HistoryEvent(scene=scene, event_type="push_history", messages=[m1, m2])
 
         await editor.revision_on_push(event)
 
         assert m1.message == "REVISED(first)"
-        assert m1.mutations == [
-            MessageMutation(message="first", source="original")
-        ]
+        assert m1.mutations == [MessageMutation(message="first", source="original")]
         # Second was left alone.
         assert m2.message == "second"
         assert m2.mutations == []

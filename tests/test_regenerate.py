@@ -605,7 +605,9 @@ class TestRegenerate:
         edit_calls: list[dict] = []
         real_edit = scene.edit_message
 
-        def _spy_edit(message_id, message, reason=None, mutations=None, mutation_source=None):
+        def _spy_edit(
+            message_id, message, reason=None, mutations=None, mutation_source=None
+        ):
             edit_calls.append(
                 {
                     "message_id": message_id,
@@ -687,7 +689,9 @@ class TestRegenerate:
         edit_calls: list[dict] = []
         real_edit = scene.edit_message
 
-        def _spy_edit(message_id, message, reason=None, mutations=None, mutation_source=None):
+        def _spy_edit(
+            message_id, message, reason=None, mutations=None, mutation_source=None
+        ):
             edit_calls.append(
                 {
                     "message": message,
@@ -757,8 +761,12 @@ class TestRegenerate:
         edit_calls: list[dict] = []
         real_edit = scene.edit_message
 
-        def _spy_edit(message_id, message, reason=None, mutations=None, mutation_source=None):
-            edit_calls.append({"mutations": mutations, "mutation_source": mutation_source})
+        def _spy_edit(
+            message_id, message, reason=None, mutations=None, mutation_source=None
+        ):
+            edit_calls.append(
+                {"mutations": mutations, "mutation_source": mutation_source}
+            )
             return real_edit(
                 message_id,
                 message,
@@ -813,8 +821,12 @@ class TestRegenerate:
         edit_calls: list[dict] = []
         real_edit = scene.edit_message
 
-        def _spy_edit(message_id, message, reason=None, mutations=None, mutation_source=None):
-            edit_calls.append({"mutations": mutations, "mutation_source": mutation_source})
+        def _spy_edit(
+            message_id, message, reason=None, mutations=None, mutation_source=None
+        ):
+            edit_calls.append(
+                {"mutations": mutations, "mutation_source": mutation_source}
+            )
             return real_edit(
                 message_id,
                 message,

@@ -94,9 +94,7 @@ async def _converse_for_character_message(
     """
     character: "Character | None" = scene.get_character(message.character_name)
     if not character:
-        log.error(
-            "regenerate: Could not find character for message", message=message
-        )
+        log.error("regenerate: Could not find character for message", message=message)
         return None
 
     if message.source == "player" and not message.from_choice:
