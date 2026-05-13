@@ -366,6 +366,11 @@ class Prompt(pydantic.BaseModel):
             scene_agent_dir = os.path.join(scene_template_dir, self.agent_type)
             if os.path.exists(scene_agent_dir):
                 template_dirs.append(scene_agent_dir)
+            # Scene-group templates (created via prompt manager with the
+            # "scene" agent prefix; stored under {template_dir}/scene/)
+            scene_group_dir = os.path.join(scene_template_dir, "scene")
+            if os.path.exists(scene_group_dir):
+                template_dirs.append(scene_group_dir)
             # Flat scene templates (backward compatibility)
             template_dirs.append(scene_template_dir)
 
