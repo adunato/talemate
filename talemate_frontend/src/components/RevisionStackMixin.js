@@ -7,18 +7,24 @@
  * canonical text per message, which we update via a `swap_revision` action
  * when the user navigates.
  *
- * Two mechanisms feed the stack:
- *  1. Auto-revision on a brand-new generation: when the editor's
- *     `revision_on_generation` hook rewrote the text, the backend's
- *     character/narrator payload carries `mutations: string[]` of prior
- *     versions and `revisionSeed` lays them down ahead of the canonical
- *     text in the fresh stack.
- *  2. Editor revision and in-place regenerate: when the backend emits a
- *     `message_edited` with `reason === "revision"` (manual revision) or
- *     `reason === "regenerate"` (in-place regenerate), the host calls
- *     `revisionAppendAfterCurrent` to splice the new entries (plus any
- *     intermediate mutations) in after the current entry. The prior
- *     versions stay accessible at their existing stack positions.
+ * Three mechanisms feed the stack:
+ *  1. Auto-revision on a brand-new generation: the editor's push-time
+ *     hook `revision_on_push` rewrites character/narrator messages when
+ *     they're pushed to scene history, and the backend's
+ *     character/narrator wire payload carries `mutations: string[]` of
+ *     prior versions. `revisionSeed` lays them down ahead of the
+ *     canonical text in the fresh stack.
+ *  2. Manual editor revision: when the backend emits a `message_edited`
+ *     with `reason === "revision"`, the host calls
+ *     `revisionAppendAfterCurrent` — the new entry is a revision *of*
+ *     the active entry and slots in directly after it. Prior tail
+ *     entries shift down.
+ *  3. In-place regenerate: when the backend emits a `message_edited`
+ *     with `reason === "regenerate"`, the host calls
+ *     `revisionAppendAtEnd` with `[...mutations, new_canonical]`. The
+ *     result is a fresh alternative for the slot rather than a revision
+ *     of the active entry, so it appends to the end of the stack and
+ *     leaves prior entries at their original positions.
  *
  * Requirements on the host component:
  *  - data: `messages: SceneMessage[]`
@@ -82,9 +88,9 @@ export default {
 
         // Splice one or more new entries onto the stack after the
         // currently-active one and advance the pointer to the last of
-        // them. `textOrItems` can be either a single string (manual
-        // revision: one new entry) or an array (in-place regenerate:
-        // intermediate mutations followed by the new canonical text).
+        // them. Used by manual editor revision: the new entry is a
+        // revision *of* the active entry, so it slots in directly after
+        // it and the prior tail entries shift down.
         revisionAppendAfterCurrent(messageId, textOrItems) {
             const idx = this.revisionFindSlotIndex(messageId);
             if (idx < 0) return;
@@ -96,6 +102,25 @@ export default {
             const cur = msg.revision_index ?? 0;
             msg.revisions.splice(cur + 1, 0, ...items);
             msg.revision_index = cur + items.length;
+        },
+
+        // Append one or more new entries onto the end of the stack and
+        // point at the last of them. Used by in-place regenerate: the
+        // new text is a fresh alternative for the slot, not a revision
+        // of the active entry — putting it at the end keeps prior
+        // entries in their original positions. `textOrItems` is either a
+        // single string or an array (intermediate mutations followed by
+        // the new canonical text).
+        revisionAppendAtEnd(messageId, textOrItems) {
+            const idx = this.revisionFindSlotIndex(messageId);
+            if (idx < 0) return;
+            const msg = this.messages[idx];
+            if (!this.revisionSupportedType(msg.type)) return;
+            if (!msg.revisions || msg.revisions.length === 0) return;
+            const items = Array.isArray(textOrItems) ? textOrItems : [textOrItems];
+            if (items.length === 0) return;
+            msg.revisions.push(...items);
+            msg.revision_index = msg.revisions.length - 1;
         },
 
         // The user manually edited a message body. The edit replaces the

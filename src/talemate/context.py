@@ -12,7 +12,6 @@ __all__ = [
     "regeneration_context",
     "active_scene",
     "interaction",
-    "pre_revision_response",
     "SceneIsLoading",
     "RegenerationContext",
     "ActiveScene",
@@ -35,11 +34,6 @@ scene_is_loading = ContextVar("scene_is_loading", default=None)
 regeneration_context = ContextVar("regeneration_context", default=None)
 active_scene = ContextVar("active_scene", default=None)
 interaction = ContextVar("interaction", default=InteractionState())
-# Set by the editor revision mixin in `revision_on_generation` when the
-# revised text differs from the original. The mixin's `push_history`
-# handler reads and clears it, appending the original onto the eventual
-# SceneMessage's transient `mutations` list.
-pre_revision_response = ContextVar("pre_revision_response", default=None)
 
 
 def handle_generation_cancelled(exc: GenerationCancelled):

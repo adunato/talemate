@@ -23,13 +23,11 @@ from talemate.agents.base import (
 from talemate.instance import get_agent
 from talemate.emit import emit
 import talemate.emit.async_signals as async_signals
-from talemate.agents.conversation import ConversationAgentEmission
-from talemate.agents.narrator import NarratorAgentEmission
 from talemate.agents.creator.assistant import ContextualGenerateEmission
 from talemate.agents.summarize import SummarizeEmission
 from talemate.agents.summarize.layered_history import LayeredHistoryFinalizeEmission
-from talemate.context import pre_revision_response
-from talemate.scene_message import CharacterMessage, NarratorMessage
+from talemate.events import HistoryEvent
+from talemate.scene_message import CharacterMessage, NarratorMessage, SceneMessage
 from talemate.util.dedupe import (
     SimilarityMatch,
     compile_text_to_sentences,
@@ -494,12 +492,6 @@ class RevisionMixin:
     # signal connect
 
     def connect(self, scene):
-        async_signals.get("agent.conversation.generated").connect(
-            self.revision_on_generation
-        )
-        async_signals.get("agent.narrator.generated").connect(
-            self.revision_on_generation
-        )
         async_signals.get("agent.creator.contextual_generate.after").connect(
             self.revision_on_generation
         )
@@ -509,22 +501,37 @@ class RevisionMixin:
         async_signals.get("agent.summarization.layered_history.finalize").connect(
             self.revision_on_generation
         )
-        # Appends to the SceneMessage's `mutations` list so the wire emit
-        # can carry the original alongside the revised canonical text.
-        async_signals.get("push_history").connect(self.revision_tag_on_push)
+        # Character / narrator revision runs at push_history time so the
+        # SceneMessage exists and the pre-revision text can be appended to
+        # `message.mutations` directly — no ContextVar bridge.
+        async_signals.get("push_history").connect(self.revision_on_push)
         # connect to the super class AFTER so these run first.
         super().connect(scene)
 
+    def _revision_automatic_target_enabled(self, target: str) -> bool:
+        if not self.revision_enabled or not self.revision_automatic_enabled:
+            return False
+        return target in self.revision_automatic_targets
+
+    def _revision_disabled_by_context(self) -> bool:
+        try:
+            return bool(revision_disabled_context.get())
+        except LookupError:
+            return False
+
     async def revision_on_generation(
         self,
-        emission: ConversationAgentEmission
-        | NarratorAgentEmission
-        | ContextualGenerateEmission
+        emission: ContextualGenerateEmission
         | SummarizeEmission
         | LayeredHistoryFinalizeEmission,
     ):
         """
-        Called when a conversation or narrator message is generated
+        Auto-revision for non-SceneMessage emissions (contextual generation
+        and summarization). Mutates ``emission.response`` in place because
+        these flows have no SceneMessage to attach a mutation history to.
+
+        Character / narrator emissions are handled separately at
+        ``push_history`` time by ``revision_on_push``.
         """
 
         if not self.revision_enabled or not self.revision_automatic_enabled:
@@ -533,18 +540,6 @@ class RevisionMixin:
         if (
             isinstance(emission, ContextualGenerateEmission)
             and "contextual_generation" not in self.revision_automatic_targets
-        ):
-            return
-
-        if (
-            isinstance(emission, ConversationAgentEmission)
-            and "character" not in self.revision_automatic_targets
-        ):
-            return
-
-        if (
-            isinstance(emission, NarratorAgentEmission)
-            and "narrator" not in self.revision_automatic_targets
         ):
             return
 
@@ -565,15 +560,12 @@ class RevisionMixin:
         ):
             return
 
-        try:
-            if revision_disabled_context.get():
-                log.debug(
-                    "revision_on_generation: revision disabled through context",
-                    emission=emission,
-                )
-                return
-        except LookupError:
-            pass
+        if self._revision_disabled_by_context():
+            log.debug(
+                "revision_on_generation: revision disabled through context",
+                emission=emission,
+            )
+            return
 
         info = RevisionInformation(
             text=emission.response,
@@ -601,65 +593,78 @@ class RevisionMixin:
             original=info.text,
         )
 
-        # Stash the pre-revision text for the eventual SceneMessage. The
-        # `push_history` handler below picks it up and tags the message so
-        # the wire emit can deliver original + revised atomically. Only
-        # conversation/narrator emissions become SceneMessages on the chat
-        # timeline, so we scope by emission type.
-        if (
-            revised_text != info.text
-            and isinstance(
-                emission, (ConversationAgentEmission, NarratorAgentEmission)
+    async def maybe_revise_inplace(self, message: SceneMessage) -> str | None:
+        """
+        Run auto-revision on a SceneMessage in place. If the configured
+        revision method actually rewrote the text, ``message.message`` is
+        updated and the *pre-revision* text is returned. Otherwise returns
+        ``None``.
+
+        Callers decide what to do with the original — the ``push_history``
+        hook appends it to ``message.mutations``; the in-place regenerate
+        flow uses it as a wire-side mutation delta.
+
+        Gating mirrors ``revision_on_generation``: only fires for
+        ``CharacterMessage`` / ``NarratorMessage`` when the corresponding
+        ``automatic_revision_targets`` flag is set and revision is enabled
+        / automatic / not disabled by context.
+        """
+        if isinstance(message, CharacterMessage):
+            target = "character"
+        elif isinstance(message, NarratorMessage):
+            target = "narrator"
+        else:
+            return None
+
+        if not self._revision_automatic_target_enabled(target):
+            return None
+
+        if self._revision_disabled_by_context():
+            log.debug(
+                "maybe_revise_inplace: revision disabled through context",
+                message_id=message.id,
             )
-        ):
-            pre_revision_response.set(info.text)
-
-    def consume_pending_revision_original(self) -> str | None:
-        """
-        Read and clear the ContextVar that `revision_on_generation` sets
-        when auto-revision changed text. Used by flows that mutate a
-        SceneMessage in place (no `push_history` fires), so the original
-        would otherwise leak. Returns None when nothing pending.
-
-        Parallel to `revision_tag_on_push` (which drains the same
-        ContextVar via the push_history hook); both consumers are
-        intentionally separate — push-driven flows go through the hook,
-        in-place flows call this helper directly.
-        """
-        try:
-            original = pre_revision_response.get()
-        except LookupError:
             return None
-        if original is None:
+
+        character = None
+        if isinstance(message, CharacterMessage):
+            character = self.scene.get_character(message.character_name)
+
+        original = message.message
+        info = RevisionInformation(text=original, character=character)
+        revised = await self.revision_revise(info)
+
+        if revised == original:
             return None
-        pre_revision_response.set(None)
+
+        log.info(
+            "maybe_revise_inplace: revision applied",
+            type=type(message).__name__,
+            revised=revised,
+            original=original,
+        )
+        message.message = revised
         return original
 
-    async def revision_tag_on_push(self, event):
+    async def revision_on_push(self, event: HistoryEvent):
         """
-        After `revision_on_generation` set the ContextVar, the agent code
-        builds a SceneMessage and pushes it onto scene history. We hook
-        push_history (which fires before the corresponding `emit("character"
-        |"narrator", ...)` at every relevant call site) to append the
-        stashed pre-revision text onto the message's `mutations` list.
+        Run auto-revision on the first CharacterMessage / NarratorMessage
+        being pushed to scene history. The pre-revision text is appended
+        onto ``message.mutations`` so the wire emit can deliver original
+        plus revised atomically and the frontend can splice it into the
+        revision stack.
 
-        Clear the ContextVar unconditionally after reading it, even if no
-        matching message is in the event — narrator flows occasionally
-        revise a response but push it as a different SceneMessage subtype
-        (e.g. ContextInvestigationMessage), and a stale value would bleed
-        into a later same-task push of a character/narrator message.
+        Only the first matching message is processed — push_history events
+        rarely batch character/narrator messages, and revision is a
+        single-target operation.
         """
-        try:
-            original = pre_revision_response.get()
-        except LookupError:
-            original = None
-        if original is None:
-            return
-        pre_revision_response.set(None)
-        for message in getattr(event, "messages", []):
-            if isinstance(message, (CharacterMessage, NarratorMessage)):
+        for message in event.messages:
+            if not isinstance(message, (CharacterMessage, NarratorMessage)):
+                continue
+            original = await self.maybe_revise_inplace(message)
+            if original is not None:
                 message.mutations.append(original)
-                return
+            return
 
     # helpers
 

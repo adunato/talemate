@@ -1688,15 +1688,18 @@ export default {
                         } else {
                             this.messages[i].text = data.message;
                         }
-                        // Editor revisions and in-place regenerate both
-                        // append new entries after the current one; the
-                        // prior text stays browsable. Plain edits /
-                        // revision-swap echoes replace the current entry
-                        // in place.
+                        // Manual editor revision slots the new entry
+                        // immediately after the current one (it's a
+                        // revision *of* that entry). In-place regenerate
+                        // appends to the end of the stack — the new text
+                        // is a fresh alternative, not a revision of the
+                        // active entry, so prior entries should keep
+                        // their positions. Plain edits / revision-swap
+                        // echoes replace the current entry in place.
                         if (data.reason === 'revision') {
                             this.revisionAppendAfterCurrent(data.id, data.message);
                         } else if (data.reason === 'regenerate') {
-                            this.revisionAppendAfterCurrent(
+                            this.revisionAppendAtEnd(
                                 data.id,
                                 [...(data.mutations || []), data.message],
                             );

@@ -10,8 +10,9 @@ Targets:
   ``revision_collect_repetition_range``, ``revision_detect_bad_prose`` (regex
   branch), ``revision_collect_issues`` for the fuzzy path,
   ``revision_dedupe`` (full happy-path and reduction-too-high path),
-  ``revision_revise`` dispatch + GenerationCancelled handling, and the
-  signal hook ``revision_on_generation`` filter logic.
+  ``revision_revise`` dispatch + GenerationCancelled handling, the
+  non-SceneMessage signal hook ``revision_on_generation``, and the
+  push_history-time hooks ``maybe_revise_inplace`` / ``revision_on_push``.
 - Async LLM-driven paths (``revision_rewrite``, ``revision_unslop``) are not
   exhaustively driven through Prompt.request; they rely on too much template
   plumbing. Those are covered indirectly via the dispatch tests.
@@ -19,7 +20,6 @@ Targets:
 
 import pytest
 
-from talemate.agents.conversation import ConversationAgentEmission
 from talemate.agents.creator.assistant import (
     ContentGenerationContext,
     ContextualGenerateEmission,
@@ -37,11 +37,15 @@ from talemate.agents.editor.revision import (
     revision_context,
     revision_disabled_context,
 )
-from talemate.agents.narrator import NarratorAgentEmission
 from talemate.agents.summarize import SummarizeEmission
 from talemate.character import Character
+from talemate.events import HistoryEvent
 from talemate.exceptions import GenerationCancelled
-from talemate.scene_message import CharacterMessage, NarratorMessage
+from talemate.scene_message import (
+    CharacterMessage,
+    ContextInvestigationMessage,
+    NarratorMessage,
+)
 from talemate.world_state.templates.content import PhraseDetection, WritingStyle
 
 from conftest import MockScene, bootstrap_scene
@@ -576,15 +580,17 @@ class TestRevisionReviseDispatch:
 
 
 # ---------------------------------------------------------------------------
-# revision_on_generation — filter logic
+# revision_on_generation — filter logic (non-SceneMessage emissions)
 # ---------------------------------------------------------------------------
 
 
 class TestRevisionOnGeneration:
-    """Verify the filter / branching logic of revision_on_generation.
+    """Verify filter / branching logic of revision_on_generation.
 
-    All tests stub revision_revise to capture whether and with what info it
-    was called, so we test the filter behavior rather than the rewrite logic.
+    Character / narrator emissions are NOT handled here anymore — those run
+    at push_history time via ``maybe_revise_inplace`` / ``revision_on_push``.
+    These tests focus on the remaining emission types: contextual generation
+    and summarization.
     """
 
     @pytest.fixture
@@ -602,8 +608,8 @@ class TestRevisionOnGeneration:
         editor.revision_revise = fake_revise
         return scene, editor, calls
 
-    async def test_skipped_when_disabled(self, editor_scene, alice):
-        scene, editor = editor_scene
+    async def test_skipped_when_disabled(self, editor_scene):
+        _, editor = editor_scene
         editor.actions["revision"].enabled = False
         called = []
 
@@ -613,15 +619,17 @@ class TestRevisionOnGeneration:
 
         editor.revision_revise = revise_spy
 
-        emission = ConversationAgentEmission(
-            agent=editor, response="hi", actor=None, character=alice
+        emission = SummarizeEmission(
+            agent=editor,
+            response="hi",
+            summarization_type="dialogue",
         )
         await editor.revision_on_generation(emission)
         assert called == []
         # The original response is left untouched.
         assert emission.response == "hi"
 
-    async def test_skipped_when_automatic_off(self, editor_scene, alice):
+    async def test_skipped_when_automatic_off(self, editor_scene):
         _, editor = editor_scene
         editor.actions["revision"].enabled = True
         editor.actions["revision"].config["automatic_revision"].value = False
@@ -632,55 +640,13 @@ class TestRevisionOnGeneration:
             return "X"
 
         editor.revision_revise = spy
-        emission = ConversationAgentEmission(
-            agent=editor, response="hi", actor=None, character=alice
+        emission = SummarizeEmission(
+            agent=editor,
+            response="hi",
+            summarization_type="dialogue",
         )
         await editor.revision_on_generation(emission)
         assert called == []
-
-    async def test_filter_character_target_disabled(self, stub_revise, alice):
-        _, editor, calls = stub_revise
-        editor.actions["revision"].config["automatic_revision_targets"].value = [
-            "narrator"
-        ]
-        emission = ConversationAgentEmission(
-            agent=editor, response="hi", actor=None, character=alice
-        )
-        await editor.revision_on_generation(emission)
-        assert calls == []
-
-    async def test_character_target_enabled_runs_revision(self, stub_revise, alice):
-        _, editor, calls = stub_revise
-        editor.actions["revision"].config["automatic_revision_targets"].value = [
-            "character"
-        ]
-        emission = ConversationAgentEmission(
-            agent=editor, response="orig", actor=None, character=alice
-        )
-        await editor.revision_on_generation(emission)
-        assert len(calls) == 1
-        assert calls[0].text == "orig"
-        assert calls[0].character is alice
-        assert emission.response == "REVISED"
-
-    async def test_filter_narrator_target_disabled(self, stub_revise):
-        _, editor, calls = stub_revise
-        editor.actions["revision"].config["automatic_revision_targets"].value = [
-            "character"
-        ]
-        emission = NarratorAgentEmission(agent=editor, response="orig narrator")
-        await editor.revision_on_generation(emission)
-        assert calls == []
-
-    async def test_narrator_target_enabled_runs_revision(self, stub_revise):
-        _, editor, calls = stub_revise
-        editor.actions["revision"].config["automatic_revision_targets"].value = [
-            "narrator"
-        ]
-        emission = NarratorAgentEmission(agent=editor, response="orig narrator")
-        await editor.revision_on_generation(emission)
-        assert len(calls) == 1
-        assert emission.response == "REVISED"
 
     async def test_filter_contextual_generation_target_disabled(self, stub_revise):
         _, editor, calls = stub_revise
@@ -758,18 +724,290 @@ class TestRevisionOnGeneration:
         await editor.revision_on_generation(emission)
         assert calls == []
 
-    async def test_disabled_through_context_manager(self, stub_revise, alice):
+    async def test_disabled_through_context_manager(self, stub_revise):
         _, editor, calls = stub_revise
         editor.actions["revision"].config["automatic_revision_targets"].value = [
-            "character"
+            "summarization"
         ]
-        emission = ConversationAgentEmission(
-            agent=editor, response="orig", actor=None, character=alice
+        emission = SummarizeEmission(
+            agent=editor,
+            response="orig",
+            summarization_type="dialogue",
         )
         with RevisionDisabled():
             await editor.revision_on_generation(emission)
         assert calls == []
         assert emission.response == "orig"
+
+
+# ---------------------------------------------------------------------------
+# maybe_revise_inplace — character / narrator messages at push_history time
+# ---------------------------------------------------------------------------
+
+
+class TestMaybeReviseInplace:
+    """Verify the push-time auto-revision hook for SceneMessages.
+
+    Character/narrator revision happens here (not in revision_on_generation)
+    so the SceneMessage object is in hand and the pre-revision text can be
+    appended to ``message.mutations`` directly.
+    """
+
+    @pytest.fixture
+    def stub_revise(self, editor_scene):
+        scene, editor = editor_scene
+        editor.actions["revision"].enabled = True
+        editor.actions["revision"].config["automatic_revision"].value = True
+
+        calls = []
+
+        async def fake_revise(info):
+            calls.append(info)
+            return "REVISED"
+
+        editor.revision_revise = fake_revise
+        return scene, editor, calls
+
+    async def test_skipped_when_disabled(self, editor_scene):
+        _, editor = editor_scene
+        editor.actions["revision"].enabled = False
+
+        called = []
+
+        async def spy(info):
+            called.append(info)
+            return "X"
+
+        editor.revision_revise = spy
+        msg = NarratorMessage(message="orig narrator", source="ai")
+        result = await editor.maybe_revise_inplace(msg)
+        assert result is None
+        assert called == []
+        assert msg.message == "orig narrator"
+
+    async def test_skipped_when_automatic_off(self, editor_scene):
+        _, editor = editor_scene
+        editor.actions["revision"].enabled = True
+        editor.actions["revision"].config["automatic_revision"].value = False
+
+        called = []
+
+        async def spy(info):
+            called.append(info)
+            return "X"
+
+        editor.revision_revise = spy
+        msg = NarratorMessage(message="orig narrator", source="ai")
+        assert await editor.maybe_revise_inplace(msg) is None
+        assert called == []
+
+    async def test_returns_none_for_non_character_or_narrator(self, stub_revise):
+        _, editor, calls = stub_revise
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "character",
+            "narrator",
+        ]
+        msg = ContextInvestigationMessage(message="ctx")
+        assert await editor.maybe_revise_inplace(msg) is None
+        assert calls == []
+
+    async def test_character_target_disabled_skips_message(self, stub_revise):
+        _, editor, calls = stub_revise
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "narrator"
+        ]
+        msg = CharacterMessage(message="Alice: hi")
+        assert await editor.maybe_revise_inplace(msg) is None
+        assert calls == []
+
+    async def test_narrator_target_disabled_skips_message(self, stub_revise):
+        _, editor, calls = stub_revise
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "character"
+        ]
+        msg = NarratorMessage(message="The wind blows.")
+        assert await editor.maybe_revise_inplace(msg) is None
+        assert calls == []
+
+    async def test_narrator_target_enabled_mutates_and_returns_original(
+        self, stub_revise
+    ):
+        _, editor, calls = stub_revise
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "narrator"
+        ]
+        msg = NarratorMessage(message="orig narrator")
+        original = await editor.maybe_revise_inplace(msg)
+        assert original == "orig narrator"
+        assert msg.message == "REVISED"
+        assert len(calls) == 1
+        assert calls[0].text == "orig narrator"
+        # Narrator messages have no character context.
+        assert calls[0].character is None
+
+    async def test_character_target_enabled_resolves_character_and_mutates(
+        self, stub_revise, alice, monkeypatch
+    ):
+        scene, editor, calls = stub_revise
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "character"
+        ]
+        # Patch get_character — building a full Actor on the scene needs
+        # more wiring than this test cares about.
+        monkeypatch.setattr(
+            scene, "get_character", lambda name: alice if name == "Alice" else None
+        )
+
+        msg = CharacterMessage(message="Alice: orig")
+        original = await editor.maybe_revise_inplace(msg)
+        assert original == "Alice: orig"
+        assert msg.message == "REVISED"
+        assert len(calls) == 1
+        assert calls[0].text == "Alice: orig"
+        assert calls[0].character is alice
+
+    async def test_returns_none_when_revision_is_noop(self, editor_scene):
+        _, editor = editor_scene
+        editor.actions["revision"].enabled = True
+        editor.actions["revision"].config["automatic_revision"].value = True
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "narrator"
+        ]
+
+        async def identity(info):
+            return info.text
+
+        editor.revision_revise = identity
+        msg = NarratorMessage(message="unchanged")
+        assert await editor.maybe_revise_inplace(msg) is None
+        assert msg.message == "unchanged"
+
+    async def test_disabled_through_context_manager(self, stub_revise):
+        _, editor, calls = stub_revise
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "narrator"
+        ]
+        msg = NarratorMessage(message="orig")
+        with RevisionDisabled():
+            result = await editor.maybe_revise_inplace(msg)
+        assert result is None
+        assert calls == []
+        assert msg.message == "orig"
+
+
+# ---------------------------------------------------------------------------
+# revision_on_push — push_history signal handler
+# ---------------------------------------------------------------------------
+
+
+class TestRevisionOnPush:
+    """Verify revision_on_push appends pre-revision text to mutations."""
+
+    @pytest.fixture
+    def stub_revise_narrator(self, editor_scene):
+        scene, editor = editor_scene
+        editor.actions["revision"].enabled = True
+        editor.actions["revision"].config["automatic_revision"].value = True
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "narrator",
+            "character",
+        ]
+
+        async def fake_revise(info):
+            return f"REVISED({info.text})"
+
+        editor.revision_revise = fake_revise
+        return scene, editor
+
+    async def test_narrator_message_revised_and_mutation_appended(
+        self, stub_revise_narrator
+    ):
+        scene, editor = stub_revise_narrator
+        msg = NarratorMessage(message="orig narrator")
+        event = HistoryEvent(
+            scene=scene, event_type="push_history", messages=[msg]
+        )
+
+        await editor.revision_on_push(event)
+
+        assert msg.message == "REVISED(orig narrator)"
+        assert msg.mutations == ["orig narrator"]
+
+    async def test_character_message_revised_and_mutation_appended(
+        self, stub_revise_narrator, alice, monkeypatch
+    ):
+        scene, editor = stub_revise_narrator
+        monkeypatch.setattr(
+            scene, "get_character", lambda name: alice if name == "Alice" else None
+        )
+
+        msg = CharacterMessage(message="Alice: hello")
+        event = HistoryEvent(
+            scene=scene, event_type="push_history", messages=[msg]
+        )
+
+        await editor.revision_on_push(event)
+
+        assert msg.message == "REVISED(Alice: hello)"
+        assert msg.mutations == ["Alice: hello"]
+
+    async def test_no_mutation_when_revision_noop(self, editor_scene):
+        scene, editor = editor_scene
+        editor.actions["revision"].enabled = True
+        editor.actions["revision"].config["automatic_revision"].value = True
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "narrator"
+        ]
+
+        async def identity(info):
+            return info.text
+
+        editor.revision_revise = identity
+        msg = NarratorMessage(message="unchanged")
+        event = HistoryEvent(
+            scene=scene, event_type="push_history", messages=[msg]
+        )
+
+        await editor.revision_on_push(event)
+
+        assert msg.message == "unchanged"
+        assert msg.mutations == []
+
+    async def test_non_scene_message_is_ignored(self, stub_revise_narrator):
+        scene, editor = stub_revise_narrator
+        msg = ContextInvestigationMessage(message="ctx")
+        event = HistoryEvent(
+            scene=scene, event_type="push_history", messages=[msg]
+        )
+
+        await editor.revision_on_push(event)
+
+        assert msg.message == "ctx"
+        # ContextInvestigationMessage has no mutations field on emit, but
+        # the base SceneMessage class does — verify it stayed empty.
+        assert msg.mutations == []
+
+    async def test_only_first_matching_message_is_revised(
+        self, stub_revise_narrator
+    ):
+        """``push_history`` rarely batches narrator/character messages,
+        but if it does, only the first one is processed (matches the
+        single-target nature of revision)."""
+        scene, editor = stub_revise_narrator
+
+        m1 = NarratorMessage(message="first")
+        m2 = NarratorMessage(message="second")
+        event = HistoryEvent(
+            scene=scene, event_type="push_history", messages=[m1, m2]
+        )
+
+        await editor.revision_on_push(event)
+
+        assert m1.message == "REVISED(first)"
+        assert m1.mutations == ["first"]
+        # Second was left alone.
+        assert m2.message == "second"
+        assert m2.mutations == []
 
 
 # ---------------------------------------------------------------------------

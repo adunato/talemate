@@ -138,9 +138,9 @@ async def _dispatch_agent_regeneration(
     For other supported types the meta-driven function may return either a
     new ``SceneMessage`` or a raw string (wrapped into ``message.__class__``).
 
-    Returns the list of new SceneMessage objects (without character/narrator
-    mutations tagged — that's caller's job via push_history or the editor's
-    ``consume_pending_revision_original`` drain).
+    Returns the list of new SceneMessage objects (auto-revision has NOT
+    been applied yet — that's the caller's job via push_history or
+    ``editor.maybe_revise_inplace``).
     """
     if isinstance(message, CharacterMessage):
         result = await _converse_for_character_message(message, scene)
@@ -250,8 +250,8 @@ async def _regenerate_inplace(
 ) -> tuple[str, list[str]] | None:
     """
     Run the agent path for ``message`` and return the new canonical text
-    plus any auto-revision intermediate(s) drained from the editor's
-    pre-revision ContextVar.
+    plus any auto-revision intermediate(s) produced while editing the new
+    message in place.
 
     This does NOT push the new message to history nor emit any
     ``character``/``narrator`` message — the caller is expected to update
@@ -263,6 +263,13 @@ async def _regenerate_inplace(
     pre-regenerate canonical text is NOT included here (it's already in
     the user's revision stack at the active index).
     """
+    # Snapshot before _dispatch_agent_regeneration touches anything. The
+    # message we're editing in place still holds the pre-regenerate
+    # canonical here — keep it around so we can skip the duplicate case
+    # where revision's pre-revision text matches the user's current
+    # frontend entry.
+    prior_canonical = message.message
+
     new_messages = await _dispatch_agent_regeneration(message, scene)
     if not new_messages:
         return None
@@ -270,32 +277,28 @@ async def _regenerate_inplace(
     # Use the first generated message as the new canonical. Multi-message
     # results (rare; conversation can split) collapse to the first.
     new_message = new_messages[0]
-    new_text = new_message.message
-    if not new_text:
+    if not new_message.message:
         return None
 
-    # Drain the editor's pre-revision ContextVar — auto-revision sets it
-    # in ``revision_on_generation`` when it actually rewrote the text.
-    # Normally ``revision_tag_on_push`` would drain it during push, but
-    # in-place regenerate skips push entirely.
+    # Auto-revision normally runs at push_history time, but in-place
+    # regenerate skips push_history. Invoke the editor's in-place hook
+    # directly so the same gating + behavior applies.
     mutations: list[str] = []
-    try:
-        editor = get_agent("editor")
-    except Exception:
-        editor = None
-    if editor is not None and hasattr(editor, "consume_pending_revision_original"):
-        original = editor.consume_pending_revision_original()
-        # Skip when the auto-revision intermediate matches either the new
-        # canonical (no-op edit) or the message's *prior* canonical text —
-        # the prior version is already in the frontend stack at the active
-        # index, so re-adding it would just duplicate the user's current
-        # entry.
-        if (
-            original
-            and original != new_text
-            and original != message.message
-        ):
-            mutations.append(original)
+    editor = get_agent("editor")
+    original = await editor.maybe_revise_inplace(new_message)
+    # Skip when the auto-revision intermediate matches either the new
+    # canonical (no-op edit) or the message's *prior* canonical text —
+    # the prior version is already in the frontend stack at the active
+    # index, so re-adding it would just duplicate the user's current
+    # entry.
+    if (
+        original
+        and original != new_message.message
+        and original != prior_canonical
+    ):
+        mutations.append(original)
+
+    new_text = new_message.message
 
     # Fire the regenerate.msg.* signals for downstream consumers (e.g.
     # avatar/asset hooks) — matches the previous push-emit flow.

@@ -221,10 +221,28 @@ def _conversation_agent_with_canned(messages):
     return agent
 
 
+class _NoopEditor:
+    """No-op editor used when the test doesn't care about auto-revision.
+
+    `_regenerate_inplace` unconditionally calls `editor.maybe_revise_inplace`,
+    so the editor must be present in the registry. Returning None mirrors
+    the "auto-revision was a no-op or disabled" path.
+    """
+
+    async def maybe_revise_inplace(self, message):
+        return None
+
+
 @pytest.fixture
 def register_agent():
-    """Register / restore agents in instance.AGENTS."""
+    """Register / restore agents in instance.AGENTS.
+
+    Pre-registers a no-op editor so `_regenerate_inplace` can always
+    reach `editor.maybe_revise_inplace`. Tests that exercise auto-revision
+    behavior override the editor by re-registering it via `_set("editor", ...)`.
+    """
     original = instance.AGENTS.copy()
+    instance.AGENTS["editor"] = _NoopEditor()
 
     def _set(name, agent):
         instance.AGENTS[name] = agent
@@ -619,6 +637,107 @@ class TestRegenerate:
         assert call["message"] == new_text
         assert call["reason"] == "regenerate"
         assert call["mutations"] == []
+
+    @pytest.mark.asyncio
+    async def test_inplace_auto_revision_appends_mutation_delta(
+        self, scene, register_agent, monkeypatch
+    ):
+        """When ``editor.maybe_revise_inplace`` rewrites the new message,
+        the pre-revision text is emitted as a wire mutation via edit_message.
+        """
+
+        # Agent returns the raw (pre-revision) text. The editor's
+        # maybe_revise_inplace will rewrite it to the revised value.
+        raw_text = "raw narration"
+        revised_text = "revised narration"
+
+        class _NarratorAgent:
+            async def progress_story(self, **kwargs):
+                return NarratorMessage(message=raw_text)
+
+        class _Editor:
+            async def maybe_revise_inplace(self, message):
+                if message.message != raw_text:
+                    return None
+                message.message = revised_text
+                return raw_text
+
+        register_agent("narrator", _NarratorAgent())
+        register_agent("editor", _Editor())
+
+        original = NarratorMessage(message="prior canonical")
+        original.meta = {
+            "agent": "narrator",
+            "function": "progress_story",
+            "arguments": {},
+        }
+        scene.history = [original]
+
+        edit_calls: list[dict] = []
+        real_edit = scene.edit_message
+
+        def _spy_edit(message_id, message, reason=None, mutations=None):
+            edit_calls.append(
+                {"message": message, "reason": reason, "mutations": mutations}
+            )
+            return real_edit(message_id, message, reason=reason, mutations=mutations)
+
+        monkeypatch.setattr(scene, "edit_message", _spy_edit)
+
+        await regenerate(scene)
+
+        assert len(edit_calls) == 1
+        assert edit_calls[0]["message"] == revised_text
+        assert edit_calls[0]["mutations"] == [raw_text]
+        # Slot text matches revised canonical.
+        assert original.message == revised_text
+
+    @pytest.mark.asyncio
+    async def test_inplace_skips_mutation_when_matches_prior_canonical(
+        self, scene, register_agent, monkeypatch
+    ):
+        """If the editor's pre-revision text equals the message's prior
+        canonical, the frontend already has it in its revision stack —
+        don't duplicate it."""
+
+        raw_text = "shared text"
+        revised_text = "revised text"
+
+        class _NarratorAgent:
+            async def progress_story(self, **kwargs):
+                return NarratorMessage(message=raw_text)
+
+        class _Editor:
+            async def maybe_revise_inplace(self, message):
+                message.message = revised_text
+                return raw_text  # matches prior canonical below
+
+        register_agent("narrator", _NarratorAgent())
+        register_agent("editor", _Editor())
+
+        original = NarratorMessage(message=raw_text)  # prior canonical == raw_text
+        original.meta = {
+            "agent": "narrator",
+            "function": "progress_story",
+            "arguments": {},
+        }
+        scene.history = [original]
+
+        edit_calls: list[dict] = []
+        real_edit = scene.edit_message
+
+        def _spy_edit(message_id, message, reason=None, mutations=None):
+            edit_calls.append({"mutations": mutations})
+            return real_edit(message_id, message, reason=reason, mutations=mutations)
+
+        monkeypatch.setattr(scene, "edit_message", _spy_edit)
+
+        await regenerate(scene)
+
+        assert len(edit_calls) == 1
+        # No mutation — the pre-revision text would just duplicate the
+        # user's current frontend entry.
+        assert edit_calls[0]["mutations"] == []
 
     @pytest.mark.asyncio
     async def test_leaves_original_untouched_when_regeneration_returns_no_messages(
