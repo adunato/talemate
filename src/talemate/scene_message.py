@@ -74,6 +74,15 @@ class SceneMessage(pydantic.BaseModel):
 
     rev: int = 0
 
+    # Transient: each entry is a prior state of `message` captured at the
+    # moment an automated mutator (today: editor auto-revision) was about
+    # to overwrite it. Travels with the wire emit so the UI can expose
+    # those versions in the revision stack. Not persisted — `to_dict()`
+    # doesn't include it, so mutations never land in scene history.
+    mutations: list[str] = pydantic.Field(
+        default_factory=list, exclude=True, repr=False
+    )
+
     def __init__(self, message: str | None = None, **data):
         # Preserve the positional `message` construction style from the
         # dataclass era — many call sites pass it as the first positional arg.

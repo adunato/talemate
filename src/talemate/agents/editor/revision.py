@@ -28,7 +28,8 @@ from talemate.agents.narrator import NarratorAgentEmission
 from talemate.agents.creator.assistant import ContextualGenerateEmission
 from talemate.agents.summarize import SummarizeEmission
 from talemate.agents.summarize.layered_history import LayeredHistoryFinalizeEmission
-from talemate.scene_message import CharacterMessage
+from talemate.context import pre_revision_response
+from talemate.scene_message import CharacterMessage, NarratorMessage
 from talemate.util.dedupe import (
     SimilarityMatch,
     compile_text_to_sentences,
@@ -508,6 +509,9 @@ class RevisionMixin:
         async_signals.get("agent.summarization.layered_history.finalize").connect(
             self.revision_on_generation
         )
+        # Appends to the SceneMessage's `mutations` list so the wire emit
+        # can carry the original alongside the revised canonical text.
+        async_signals.get("push_history").connect(self.revision_tag_on_push)
         # connect to the super class AFTER so these run first.
         super().connect(scene)
 
@@ -596,6 +600,45 @@ class RevisionMixin:
             revised=revised_text,
             original=info.text,
         )
+
+        # Stash the pre-revision text for the eventual SceneMessage. The
+        # `push_history` handler below picks it up and tags the message so
+        # the wire emit can deliver original + revised atomically. Only
+        # conversation/narrator emissions become SceneMessages on the chat
+        # timeline, so we scope by emission type.
+        if (
+            revised_text != info.text
+            and isinstance(
+                emission, (ConversationAgentEmission, NarratorAgentEmission)
+            )
+        ):
+            pre_revision_response.set(info.text)
+
+    async def revision_tag_on_push(self, event):
+        """
+        After `revision_on_generation` set the ContextVar, the agent code
+        builds a SceneMessage and pushes it onto scene history. We hook
+        push_history (which fires before the corresponding `emit("character"
+        |"narrator", ...)` at every relevant call site) to append the
+        stashed pre-revision text onto the message's `mutations` list.
+
+        Clear the ContextVar unconditionally after reading it, even if no
+        matching message is in the event — narrator flows occasionally
+        revise a response but push it as a different SceneMessage subtype
+        (e.g. ContextInvestigationMessage), and a stale value would bleed
+        into a later same-task push of a character/narrator message.
+        """
+        try:
+            original = pre_revision_response.get()
+        except LookupError:
+            original = None
+        if original is None:
+            return
+        pre_revision_response.set(None)
+        for message in getattr(event, "messages", []):
+            if isinstance(message, (CharacterMessage, NarratorMessage)):
+                message.mutations.append(original)
+                return
 
     # helpers
 

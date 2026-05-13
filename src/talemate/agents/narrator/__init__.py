@@ -383,8 +383,8 @@ class NarratorAgent(MemoryRAGMixin, AutoNarrationMixin, Agent):
                 },
             },
         )
-        emit("narrator", narrator_message)
         await self.scene.push_history(narrator_message)
+        emit("narrator", narrator_message)
 
     @set_processing
     @store_context_state(

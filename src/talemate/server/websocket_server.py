@@ -303,6 +303,7 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
                     int(emission.message_object.flags) if emission.message_object else 0
                 ),
                 "rev": (emission.message_object.rev if emission.message_object else 0),
+                "mutations": message_obj.mutations if message_obj else [],
             }
         )
 
@@ -381,6 +382,7 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
                     int(emission.message_object.flags) if emission.message_object else 0
                 ),
                 "rev": (emission.message_object.rev if emission.message_object else 0),
+                "mutations": message_obj.mutations if message_obj else [],
             }
         )
 

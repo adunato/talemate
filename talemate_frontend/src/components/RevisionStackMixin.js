@@ -54,11 +54,21 @@ export default {
             return type === 'character' || type === 'narrator' || type === 'context_investigation';
         },
 
-        // Initialize a fresh single-entry stack on a brand-new message.
-        revisionSeed(message, fullText) {
+        // Initialize the stack on a brand-new message. When automated
+        // mutators (today: editor auto-revision) overwrote earlier
+        // versions of the canonical text during generation, the backend
+        // ships each captured original in `mutations`; seed them ahead of
+        // the current text so the user can arrow back through them.
+        revisionSeed(message, fullText, mutations = []) {
             if (!this.revisionSupportedType(message.type)) return;
-            message.revisions = [fullText];
-            message.revision_index = 0;
+            const prior = (mutations || []).filter(m => m && m !== fullText);
+            if (prior.length > 0) {
+                message.revisions = [...prior, fullText];
+                message.revision_index = prior.length;
+            } else {
+                message.revisions = [fullText];
+                message.revision_index = 0;
+            }
         },
 
         revisionFindSlotIndex(slotId) {
@@ -90,8 +100,11 @@ export default {
 
         // Replace a pending-regen slot in place with the just-arrived AI
         // message, inheriting the prior stack and appending the new text.
-        // Returns true if a pending slot was consumed.
-        revisionCommitRegen(messageObj, fullText) {
+        // When the regenerate's response was also auto-mutated (e.g. by
+        // editor revision), each captured original is inserted between
+        // the prior canonical and the final text. Returns true if a
+        // pending slot was consumed.
+        revisionCommitRegen(messageObj, fullText, mutations = []) {
             if (!this.pendingRegenSlot) return false;
             if (!this.revisionSupportedType(messageObj.type)) return false;
             const slot = this.pendingRegenSlot;
@@ -104,12 +117,20 @@ export default {
                 return false;
             }
             const revisions = slot.priorRevisions.length > 0 ? [...slot.priorRevisions] : [];
-            // Dedupe against the version that was canonical before the
-            // regenerate started. Identical text means either a no-op
-            // regenerate or a failure-restore re-emitting the original;
-            // either way there's nothing useful to add to the stack.
             const priorCanonical = revisions[slot.priorIndex];
-            if (fullText === priorCanonical) {
+            // Push each mutation original, skipping duplicates of the
+            // final text or the prior canonical.
+            const priorMutations = (mutations || []).filter(
+                m => m && m !== fullText && m !== priorCanonical
+            );
+            for (const m of priorMutations) {
+                revisions.push(m);
+            }
+            // Dedupe the final text against the prior canonical: identical
+            // text with no mutations means a no-op regenerate (or a
+            // failure-restore re-emitting the original). With mutations
+            // we still want the new entry so the user can see the result.
+            if (fullText === priorCanonical && priorMutations.length === 0) {
                 messageObj.revision_index = slot.priorIndex;
             } else {
                 revisions.push(fullText);
@@ -123,10 +144,13 @@ export default {
 
         // Single entry point for the host's new-message branches. Either
         // replaces a pending regen slot (migrating its stack) or seeds a
-        // fresh stack on a brand-new message at the tail.
-        revisionAddOrCommit(messageObj, fullText) {
-            if (!this.revisionCommitRegen(messageObj, fullText)) {
-                this.revisionSeed(messageObj, fullText);
+        // fresh stack on a brand-new message at the tail. `mutations` is
+        // the list of prior versions of the canonical text shipped by the
+        // backend when automated mutators (today: editor auto-revision)
+        // overwrote the message during generation.
+        revisionAddOrCommit(messageObj, fullText, mutations = []) {
+            if (!this.revisionCommitRegen(messageObj, fullText, mutations)) {
+                this.revisionSeed(messageObj, fullText, mutations);
                 this.messages.push(messageObj);
             }
         },

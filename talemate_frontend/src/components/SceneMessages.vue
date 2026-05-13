@@ -1728,7 +1728,7 @@ export default {
                         disable_avatar_fallback: disableAvatarFallback,
                         rev: data.rev || 0
                     };
-                    this.revisionAddOrCommit(charMsg, data.message);
+                    this.revisionAddOrCommit(charMsg, data.message, data.mutations || []);
                 } else if (data.type === 'director') {
                     this.messages.push(
                         {
@@ -1754,7 +1754,7 @@ export default {
                         asset_id: data.asset_id,
                         asset_type: data.asset_type,
                     };
-                    this.revisionAddOrCommit(ctxMsg, data.message);
+                    this.revisionAddOrCommit(ctxMsg, data.message, data.mutations || []);
                 } else if (data.type === 'narrator') {
                     const narratorMsg = {
                         id: data.id,
@@ -1766,7 +1766,7 @@ export default {
                         asset_id: data.asset_id || null,
                         asset_type: data.asset_type || null,
                     };
-                    this.revisionAddOrCommit(narratorMsg, data.message);
+                    this.revisionAddOrCommit(narratorMsg, data.message, data.mutations || []);
                 } else if (data.type === 'player_choice') {
                     console.log('player_choice', data);
                     this.messages.push({ id: data.id, type: data.type, data: data.data });
@@ -1785,7 +1785,7 @@ export default {
                         asset_id: data.asset_id || null,
                         asset_type: data.asset_type || null,
                     };
-                    this.revisionAddOrCommit(genericMsg, data.message);
+                    this.revisionAddOrCommit(genericMsg, data.message, data.mutations || []);
                 } else if (data.type === 'status' && data.data && data.data.as_scene_message === true) {
 
                     // status message can only exist once, remove the most recent one (if within the last 100 messages)
