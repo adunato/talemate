@@ -1238,9 +1238,9 @@ class RevisionMixin:
         await async_signals.get("agent.editor.revision-analysis.after").send(emission)
 
         revision = extracted["revision"]
-        if revision is None:
+        if not revision:
             log.debug(
-                "revision_rewrite: no <REVISION> found in response, keeping original"
+                "revision_rewrite: no <REVISION> content in response, keeping original"
             )
             return original_text
 
@@ -1342,8 +1342,10 @@ class RevisionMixin:
         )
 
         fix = extracted["fix"]
-        if fix is None:
-            log.debug("revision_unslop: no <FIX> found in response", response=response)
+        if not fix:
+            log.debug(
+                "revision_unslop: no <FIX> content in response", response=response
+            )
             return original_text
 
         # Guard: if the fix is substantially longer than the original,
