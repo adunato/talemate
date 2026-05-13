@@ -297,13 +297,15 @@ class TestAllowRepetitionBreakAndInject:
             conversation.allow_repetition_break("conversation", "build_prompt") is False
         )
 
-    def test_inject_prompt_parameters_appends_hash(self, conversation_scene):
+    def test_inject_prompt_parameters_noop_with_inject_enabled_and_empty(
+        self, conversation_scene
+    ):
         _, conversation, _ = conversation_scene
         params = {}
         conversation.inject_prompt_paramters(params, "conversation", "converse")
-        # When inject_character_names_into_stop is True (default), the
-        # function still wraps with extra_stopping_strings = [], then adds "#".
-        assert params.get("extra_stopping_strings", []) == ["#"]
+        # When inject_character_names_into_stop is True (default) and no
+        # stopping strings are present, the function leaves params untouched.
+        assert "extra_stopping_strings" not in params
 
     def test_inject_prompt_parameters_resets_when_inject_disabled(
         self, conversation_scene
@@ -314,22 +316,23 @@ class TestAllowRepetitionBreakAndInject:
         ].value = False
         params = {"extra_stopping_strings": ["EXISTING"]}
         conversation.inject_prompt_paramters(params, "conversation", "converse")
-        # The function resets to [] when inject_character_names_into_stop is
-        # False, and then appends "#".
-        assert params["extra_stopping_strings"] == ["#"]
+        # When inject_character_names_into_stop is False, any stopping
+        # strings already populated (e.g. character names added by the
+        # client) are wiped.
+        assert params["extra_stopping_strings"] == []
 
     def test_inject_prompt_parameters_preserves_existing_with_inject_enabled(
         self, conversation_scene
     ):
         _, conversation, _ = conversation_scene
         # When inject_character_names_into_stop is True AND extra_stopping_strings
-        # is already a list, it is preserved (existing list + "#").
+        # is already populated, it is left untouched.
         conversation.actions["generation_override"].config[
             "inject_character_names_into_stop"
         ].value = True
         params = {"extra_stopping_strings": ["EXISTING"]}
         conversation.inject_prompt_paramters(params, "conversation", "converse")
-        assert params["extra_stopping_strings"] == ["EXISTING", "#"]
+        assert params["extra_stopping_strings"] == ["EXISTING"]
 
 
 # ---------------------------------------------------------------------------

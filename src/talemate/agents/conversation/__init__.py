@@ -539,9 +539,5 @@ class ConversationAgent(MemoryRAGMixin, Agent):
     def inject_prompt_paramters(
         self, prompt_param: dict, kind: str, agent_function_name: str
     ):
-        if (
-            prompt_param.get("extra_stopping_strings") is None
-            or not self.inject_character_names_into_stop
-        ):
+        if not self.inject_character_names_into_stop:
             prompt_param["extra_stopping_strings"] = []
-        prompt_param["extra_stopping_strings"] += ["#"]

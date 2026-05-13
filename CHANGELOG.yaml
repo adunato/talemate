@@ -5,6 +5,7 @@
   - "Pydantic Migration: Internal data models across the codebase converted to pydantic for stricter validation. No user-visible behavior changes."
   fixes:
   - "Game Loop Event: Fixed an internal scene-loop event being constructed with the wrong scene reference, surfaced by the pydantic migration."
+  - "Conversation Agent: Stopped injecting `#` into the LLM stop-sequence list on every conversation turn. The conversation agent's prompt-parameter hook now only wipes character-name stop sequences when the `inject_character_names_into_stop` setting is disabled, and is a no-op otherwise."
 0.37.0:
   features:
   - "System Prompt Template Variable: Added {{ system_prompt }} template variable for system prompt overrides. Use it to include the default system prompt within a custom override, at both the app and client level."
