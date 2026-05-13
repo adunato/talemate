@@ -78,7 +78,6 @@ export default {
             // until the replacement message lands and we commit the swap.
             slot.regenerating = true;
             this.pendingRegenSlot = {
-                index: idx,
                 priorId: messageId,
                 priorRevisions: slot.revisions ? [...slot.revisions] : [],
                 priorIndex: slot.revision_index ?? 0,
@@ -93,11 +92,28 @@ export default {
             if (!this.pendingRegenSlot) return false;
             if (!this.revisionSupportedType(messageObj.type)) return false;
             const slot = this.pendingRegenSlot;
+            // Resolve the slot's current array position at commit time —
+            // other messages may have been removed while we were waiting
+            // for the replacement, so the snapshotted index is unreliable.
+            const idx = this.revisionFindSlotIndex(slot.priorId);
+            if (idx < 0) {
+                this.pendingRegenSlot = null;
+                return false;
+            }
             const revisions = slot.priorRevisions.length > 0 ? [...slot.priorRevisions] : [];
-            revisions.push(fullText);
+            // Dedupe against the version that was canonical before the
+            // regenerate started. Identical text means either a no-op
+            // regenerate or a failure-restore re-emitting the original;
+            // either way there's nothing useful to add to the stack.
+            const priorCanonical = revisions[slot.priorIndex];
+            if (fullText === priorCanonical) {
+                messageObj.revision_index = slot.priorIndex;
+            } else {
+                revisions.push(fullText);
+                messageObj.revision_index = revisions.length - 1;
+            }
             messageObj.revisions = revisions;
-            messageObj.revision_index = revisions.length - 1;
-            this.messages.splice(slot.index, 1, messageObj);
+            this.messages.splice(idx, 1, messageObj);
             this.pendingRegenSlot = null;
             return true;
         },

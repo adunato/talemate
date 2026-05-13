@@ -678,7 +678,6 @@ export default {
             }
         },
 
-        
         /**
          * Centralized handler for asset-related WebSocket messages.
          * Handles scene_asset (asset data) and message_asset_update (dynamic avatar changes).
@@ -1751,6 +1750,18 @@ export default {
                         asset_type: data.asset_type,
                     };
                     this.revisionAddOrCommit(ctxMsg, data.message);
+                } else if (data.type === 'narrator') {
+                    const narratorMsg = {
+                        id: data.id,
+                        type: data.type,
+                        text: data.message,
+                        character: data.character,
+                        meta: data.meta,
+                        rev: data.rev || 0,
+                        asset_id: data.asset_id || null,
+                        asset_type: data.asset_type || null,
+                    };
+                    this.revisionAddOrCommit(narratorMsg, data.message);
                 } else if (data.type === 'player_choice') {
                     console.log('player_choice', data);
                     this.messages.push({ id: data.id, type: data.type, data: data.data });
