@@ -79,9 +79,7 @@ class TestMessagesRegistry:
     def test_typ_attr_matches_registry_key(self):
         for key, cls in MESSAGES.items():
             default_typ = cls.model_fields["typ"].default
-            assert default_typ == key, (
-                f"{cls.__name__}.typ != registry key {key!r}"
-            )
+            assert default_typ == key, f"{cls.__name__}.typ != registry key {key!r}"
 
 
 # ---------------------------------------------------------------------------

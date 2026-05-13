@@ -52,10 +52,6 @@ from talemate.game.engine.nodes.packaging import initialize_packages
 from talemate.scene.intent import SceneIntent
 from talemate.history import emit_archive_add, ArchiveEntry
 from talemate.character import Character
-from talemate.game.engine.context_id.character import (
-    CharacterContext,
-    CharacterContextItem,
-)
 from talemate.agents.tts.schema import VoiceLibrary
 from talemate.instance import get_agent
 from talemate.changelog import InMemoryChangelog
@@ -2040,5 +2036,3 @@ class Scene(Emitter):
         if self.cancel_requested:
             self.cancel_requested = False
             raise GenerationCancelled("action cancelled")
-
-

@@ -51,9 +51,7 @@ class SceneMessagePlugin(Plugin):
         payload = EditPayload(**data)
         message = self.scene.get_message(payload.id)
         if message is None:
-            await self.signal_operation_failed(
-                f"Message {payload.id} not found"
-            )
+            await self.signal_operation_failed(f"Message {payload.id} not found")
             return
 
         new_text = payload.text
@@ -82,8 +80,6 @@ class SceneMessagePlugin(Plugin):
         """
         payload = SwapRevisionPayload(**data)
         if self.scene.get_message(payload.id) is None:
-            await self.signal_operation_failed(
-                f"Message {payload.id} not found"
-            )
+            await self.signal_operation_failed(f"Message {payload.id} not found")
             return
         self.scene.edit_message(payload.id, payload.text)
