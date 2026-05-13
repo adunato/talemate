@@ -878,6 +878,17 @@ class TestMaybeReviseInplace:
         assert calls == []
         assert msg.message == "Alice: hi"
 
+    async def test_player_authored_narrator_message_is_skipped(self, stub_revise):
+        """Player-authored narration must not be auto-revised either."""
+        _, editor, calls = stub_revise
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "narrator"
+        ]
+        msg = NarratorMessage(message="The wind blows.", source="player")
+        assert await editor.maybe_revise_inplace(msg) is None
+        assert calls == []
+        assert msg.message == "The wind blows."
+
     async def test_returns_none_when_revision_is_noop(self, editor_scene):
         _, editor = editor_scene
         editor.actions["revision"].enabled = True
