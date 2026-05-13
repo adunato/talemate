@@ -2,6 +2,7 @@ import pydantic
 import structlog
 from typing import TYPE_CHECKING
 
+from talemate.emit import emit
 from talemate.instance import get_agent
 from talemate.server.websocket_plugin import Plugin
 from talemate.scene_message import CharacterMessage
@@ -56,9 +57,11 @@ class EditorWebsocketHandler(Plugin):
         if not message:
             raise Exception("Message not found")
 
+        original = message.message
+
         with RevisionContext(message.id):
             info = RevisionInformation(
-                text=message.message,
+                text=original,
                 character=character,
             )
             revised = await editor.revision_revise(info)
@@ -66,4 +69,15 @@ class EditorWebsocketHandler(Plugin):
                 if not revised.startswith(character.name + ":"):
                     revised = f"{character.name}: {revised}"
 
-        scene.edit_message(message.id, revised)
+        # Tag the edit so the frontend appends a new entry to the message's
+        # revision stack instead of replacing the current entry in place.
+        # No-op revisions don't touch the message and surface a status so
+        # the user knows the action completed without effect.
+        if revised != original:
+            scene.edit_message(message.id, revised, reason="revision")
+        else:
+            emit(
+                "status",
+                message="Editor revision produced no changes",
+                status="info",
+            )

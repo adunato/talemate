@@ -4,7 +4,7 @@ import os
 import re
 import traceback
 import uuid
-from typing import Generator, Callable
+from typing import Generator, Callable, Literal
 
 import isodate
 import structlog
@@ -970,15 +970,30 @@ class Scene(Emitter):
             },
         )
 
-    def edit_message(self, message_id: int, message: str):
+    def edit_message(
+        self,
+        message_id: int,
+        message: str,
+        reason: Literal["revision"] | None = None,
+    ):
         """
-        Finds the message in `history` by its id and will update its contents
+        Finds the message in `history` by its id and will update its contents.
+
+        `reason` is an optional tag forwarded on the wire so the UI can
+        distinguish *why* an edit happened (e.g. `revision` so the frontend
+        can append a new entry to its revision stack instead of replacing
+        the current one). Plain user edits omit it.
         """
 
         for i, _message in enumerate(self.history):
             if _message.id == message_id:
                 self.history[i].message = message
-                emit("message_edited", self.history[i], id=message_id)
+                emit(
+                    "message_edited",
+                    self.history[i],
+                    id=message_id,
+                    data={"reason": reason} if reason else None,
+                )
                 self.log.info("Message edited", message=message, id=message_id)
                 return
 

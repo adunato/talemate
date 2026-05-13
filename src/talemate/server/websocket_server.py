@@ -533,14 +533,16 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
         )
 
     def handle_message_edited(self, emission: Emission):
-        self.queue_put(
-            {
-                "type": "message_edited",
-                "message": emission.message,
-                "id": emission.id,
-                "character": emission.character.name if emission.character else "",
-            }
-        )
+        reason = (emission.data or {}).get("reason")
+        payload = {
+            "type": "message_edited",
+            "message": emission.message,
+            "id": emission.id,
+            "character": emission.character.name if emission.character else "",
+        }
+        if reason:
+            payload["reason"] = reason
+        self.queue_put(payload)
 
     def handle_autocomplete_suggestion(self, emission: Emission):
         self.queue_put(

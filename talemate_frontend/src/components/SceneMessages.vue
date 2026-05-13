@@ -1645,10 +1645,15 @@ export default {
                         } else {
                             this.messages[i].text = data.message;
                         }
-                        // Keep the active stack entry in sync with the
-                        // canonical text so arrow nav stays consistent. The
-                        // revision-swap action also echoes back through here.
-                        this.revisionUpdateCurrentEntry(data.id, data.message);
+                        // Editor revisions push a new stack entry after the
+                        // current one (the prior text stays browsable).
+                        // Plain edits / revision-swap echoes replace the
+                        // current entry in place.
+                        if (data.reason === 'revision') {
+                            this.revisionAppendAfterCurrent(data.id, data.message);
+                        } else {
+                            this.revisionUpdateCurrentEntry(data.id, data.message);
+                        }
                         break;
                     }
                 }

@@ -12,7 +12,10 @@
  *     `reason === "regenerate"`, the host calls `revisionBeginPendingRegen`
  *     to defer the removal. The next AI message that arrives consumes the
  *     pending slot via `revisionAddOrCommit`, inheriting the prior stack.
- *  2. Editor revision pairing (not implemented in this iteration).
+ *  2. Editor revision: when the backend emits a `message_edited` with
+ *     `reason === "revision"`, the host calls `revisionAppendAfterCurrent`
+ *     to splice the new revised text in after the current entry. The prior
+ *     version stays accessible at its existing stack position.
  *
  * Requirements on the host component:
  *  - data: `messages: SceneMessage[]`
@@ -126,6 +129,21 @@ export default {
                 this.revisionSeed(messageObj, fullText);
                 this.messages.push(messageObj);
             }
+        },
+
+        // Editor revision tagged the edit with `reason="revision"`. The
+        // prior version is already in the stack at the active index, so we
+        // just splice the new (revised) text in after it and advance the
+        // pointer onto the new entry.
+        revisionAppendAfterCurrent(messageId, fullText) {
+            const idx = this.revisionFindSlotIndex(messageId);
+            if (idx < 0) return;
+            const msg = this.messages[idx];
+            if (!this.revisionSupportedType(msg.type)) return;
+            if (!msg.revisions || msg.revisions.length === 0) return;
+            const cur = msg.revision_index ?? 0;
+            msg.revisions.splice(cur + 1, 0, fullText);
+            msg.revision_index = cur + 1;
         },
 
         // The user manually edited a message body. The edit replaces the
