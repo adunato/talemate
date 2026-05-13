@@ -246,7 +246,10 @@ async def regenerate(scene: "Scene", idx: int = -1) -> list[SceneMessage]:
         return regenerated_messages
 
     scene.history.pop()
-    emit("remove_message", "", id=message.id)
+    # Mark this removal as part of a regenerate so the frontend keeps the
+    # slot in place and waits for the replacement to land, inheriting any
+    # existing revision stack. Plain deletes omit this and remove immediately.
+    emit("remove_message", "", id=message.id, data={"reason": "regenerate"})
 
     try:
         new_messages = await regenerate_message(message, scene)

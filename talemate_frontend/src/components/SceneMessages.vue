@@ -282,7 +282,7 @@
             <div v-if="message.type === 'character' || message.type === 'processing_input'"
                 :class="`message ${message.type}`" :id="`message-${message.id}`" :style="{ borderColor: message.color }">
                 <div class="character-message">
-                    <CharacterMessage :character="message.character" :text="message.text" :color="message.color" :message_id="message.id" :uxLocked="uxLocked" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :rev="message.rev || 0" :scene-rev="scene?.data?.rev || 0" :appearanceConfig="appearanceConfig" :scene="scene" :asset_id="message.asset_id" :asset_type="message.asset_type" :disable_avatar_fallback="message.disable_avatar_fallback || false" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
+                    <CharacterMessage :character="message.character" :text="message.text" :color="message.color" :message_id="message.id" :uxLocked="uxLocked" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :rev="message.rev || 0" :scene-rev="scene?.data?.rev || 0" :appearanceConfig="appearanceConfig" :scene="scene" :asset_id="message.asset_id" :asset_type="message.asset_type" :disable_avatar_fallback="message.disable_avatar_fallback || false" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionBusy="message.regenerating || false" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
                 </div>
             </div>
             <div v-else-if="message.type === 'request_input' && message.choices">
@@ -324,7 +324,7 @@
             </div>
             <div v-else-if="message.type === 'narrator'" :class="`message ${message.type}`">
                 <div class="narrator-message"  :id="`message-${message.id}`">
-                    <NarratorMessage :text="message.text" :message_id="message.id" :uxLocked="uxLocked" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :rev="message.rev || 0" :scene-rev="scene?.data?.rev || 0" :appearanceConfig="appearanceConfig" :asset_id="message.asset_id" :asset_type="message.asset_type" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
+                    <NarratorMessage :text="message.text" :message_id="message.id" :uxLocked="uxLocked" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :rev="message.rev || 0" :scene-rev="scene?.data?.rev || 0" :appearanceConfig="appearanceConfig" :asset_id="message.asset_id" :asset_type="message.asset_type" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionBusy="message.regenerating || false" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
                 </div>
             </div>
             <div v-else-if="message.type === 'director' && !getMessageTypeHidden(message.type)" :class="`message ${message.type}`">
@@ -349,7 +349,7 @@
             </div>
             <div v-else-if="message.type === 'context_investigation' && !getMessageTypeHidden(message.type)" :class="`message ${message.type}`">
                 <div class="context-investigation-message"  :id="`message-${message.id}`">
-                    <ContextInvestigationMessage :message="message" :uxLocked="uxLocked" :isLastMessage="index === messages.length - 1" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :appearanceConfig="appearanceConfig" :asset_id="message.asset_id" :asset_type="message.asset_type" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
+                    <ContextInvestigationMessage :message="message" :uxLocked="uxLocked" :isLastMessage="index === messages.length - 1" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :appearanceConfig="appearanceConfig" :asset_id="message.asset_id" :asset_type="message.asset_type" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionBusy="message.regenerating || false" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
                 </div>
             </div>
 
@@ -374,6 +374,7 @@ import SystemMessage from './SystemMessage.vue';
 import VisualReferenceCarousel from './VisualReferenceCarousel.vue';
 import ConfirmActionPrompt from './ConfirmActionPrompt.vue';
 import VisualAssetsMixin from './VisualAssetsMixin.js';
+import RevisionStackMixin from './RevisionStackMixin.js';
 import { isVisualAgentReady } from '../constants/visual.js';
 import { primaryModifierLabel } from '@/utils/keyboardModifiers';
 import {
@@ -472,7 +473,7 @@ const ASSET_SELECT_DIALOG_KEYS = Object.values(ASSET_SELECT_TYPES).map(t => t.di
 
 export default {
     name: 'SceneMessages',
-    mixins: [VisualAssetsMixin],
+    mixins: [VisualAssetsMixin, RevisionStackMixin],
     props: {
         appearanceConfig: {
             type: Object,
@@ -565,16 +566,6 @@ export default {
             insertTimePassageAmount: 1,
             insertTimePassageUnit: 'hours',
             insertTimePassageUnits: ['minutes', 'hours', 'days', 'weeks', 'months', 'years'],
-            // Revision stack state. When the user regenerates (or the editor
-            // revises) the last AI message, the previous version(s) stay
-            // available in-memory so they can arrow-page back to them. The
-            // stack lives only in client state.
-            //
-            // pendingRegenSlot: when a `remove_message` arrives for what
-            // looks like a regenerate, we keep the message in place at the
-            // recorded array index and wait for the replacement AI message
-            // to land in `handleRegeneratedSlot()`.
-            pendingRegenSlot: null,
         }
     },
     computed: {
@@ -675,7 +666,7 @@ export default {
             this.lastEffectiveAssetIdByScope = {};
             this.assetCache = {};
             this.processingAssetMessageIds.clear();
-            this.pendingRegenSlot = null;
+            this.revisionReset();
             // Clear any pending debounce timer
             if (this._reapplyDebounceTimer) {
                 clearTimeout(this._reapplyDebounceTimer);
@@ -687,159 +678,6 @@ export default {
             }
         },
 
-        // -- revision stack helpers ------------------------------------------
-
-        // Some message types only carry the displayable text body and don't
-        // need a prefix re-applied (narrator, context_investigation). For
-        // character messages the canonical text is "Name: body" but the
-        // component renders just the body.
-        revisionStripForDisplay(type, character, fullText) {
-            if (type === 'character' && character) {
-                const parts = (fullText || '').split(':');
-                if (parts.length > 1) {
-                    parts.shift();
-                    return parts.join(':').trim();
-                }
-            }
-            return (fullText || '').trim();
-        },
-
-        // Type guard - only messages that can actually be regenerated or
-        // revised should carry a stack. Everything else stays unchanged.
-        revisionSupportedType(type) {
-            return type === 'character' || type === 'narrator' || type === 'context_investigation';
-        },
-
-        // Initialize the stack on a freshly-pushed message. Stack always
-        // starts with the current canonical text at index 0.
-        revisionSeed(message, fullText) {
-            if (!this.revisionSupportedType(message.type)) return;
-            message.revisions = [fullText];
-            message.revision_index = 0;
-        },
-
-        // Find the last message that supports revisions and matches the
-        // pending slot, then return its index. Used when stitching a
-        // regenerate replacement into the array.
-        revisionFindSlotIndex(slotId) {
-            for (let i = this.messages.length - 1; i >= 0; i--) {
-                if (this.messages[i].id === slotId) return i;
-            }
-            return -1;
-        },
-
-        // When a `remove_message` arrives, if it targets the last AI message
-        // we treat it as the start of a regenerate and *defer* the actual
-        // removal until the replacement message arrives. This preserves the
-        // position in the array and lets us inherit the existing stack.
-        revisionBeginPendingRegen(messageId) {
-            const idx = this.revisionFindSlotIndex(messageId);
-            if (idx < 0) return false;
-            if (!this.revisionSupportedType(this.messages[idx].type)) return false;
-            this.pendingRegenSlot = {
-                index: idx,
-                priorId: messageId,
-                priorRevisions: this.messages[idx].revisions ? [...this.messages[idx].revisions] : [],
-                priorIndex: this.messages[idx].revision_index ?? 0,
-            };
-            return true;
-        },
-
-        // Called from the new-message branch of handleMessage when a regen
-        // replacement lands. Returns true if it consumed the pending slot.
-        revisionCommitRegen(messageObj, fullText) {
-            if (!this.pendingRegenSlot) return false;
-            if (!this.revisionSupportedType(messageObj.type)) return false;
-            const slot = this.pendingRegenSlot;
-            // Inherit the prior revisions and append the new text.
-            const revisions = slot.priorRevisions.length > 0 ? [...slot.priorRevisions] : [];
-            revisions.push(fullText);
-            messageObj.revisions = revisions;
-            messageObj.revision_index = revisions.length - 1;
-            this.messages.splice(slot.index, 1, messageObj);
-            this.pendingRegenSlot = null;
-            return true;
-        },
-
-        // Single entry point for adding an incoming AI scene message to
-        // the list. Either replaces a pending regen slot (migrating its
-        // prior revision stack and appending the new text) or seeds a
-        // fresh stack on a brand-new message.
-        revisionAddOrCommit(messageObj, fullText) {
-            if (!this.revisionCommitRegen(messageObj, fullText)) {
-                this.revisionSeed(messageObj, fullText);
-                this.messages.push(messageObj);
-            }
-        },
-
-        // Switch the active revision for a message and tell the backend to
-        // canonicalize the chosen text. Triggered by the inline arrows on
-        // the message itself and by global ←/→ shortcuts.
-        navigateRevision(messageId, direction) {
-            const idx = this.revisionFindSlotIndex(messageId);
-            if (idx < 0) return;
-            const msg = this.messages[idx];
-            if (!msg.revisions || msg.revisions.length < 2) return;
-            const newIndex = (msg.revision_index ?? 0) + direction;
-            if (newIndex < 0 || newIndex >= msg.revisions.length) return;
-            msg.revision_index = newIndex;
-            const fullText = msg.revisions[newIndex];
-            msg.text = this.revisionStripForDisplay(msg.type, msg.character, fullText);
-            this.getWebsocket().send(JSON.stringify({
-                type: 'scene_message',
-                action: 'swap_revision',
-                id: messageId,
-                text: fullText,
-            }));
-        },
-
-        // Update the active stack entry when the user manually edits the
-        // message body. The edit replaces the current entry in place rather
-        // than pushing a new revision.
-        revisionUpdateCurrentEntry(messageId, fullText) {
-            const idx = this.revisionFindSlotIndex(messageId);
-            if (idx < 0) return;
-            const msg = this.messages[idx];
-            if (!msg.revisions || msg.revisions.length === 0) return;
-            const cur = msg.revision_index ?? 0;
-            msg.revisions.splice(cur, 1, fullText);
-        },
-
-        // Find the last message in the list that supports revisions. We
-        // only let ←/→ navigate the *latest* message — older messages
-        // freeze their stacks once a new turn lands.
-        revisionLastNavigableMessage() {
-            for (let i = this.messages.length - 1; i >= 0; i--) {
-                const m = this.messages[i];
-                if (this.revisionSupportedType(m.type) && m.revisions && m.revisions.length > 1) {
-                    return m;
-                }
-                // Stop scanning past the most recent revisable message slot
-                // to avoid surprising users by jumping into older history.
-                if (this.revisionSupportedType(m.type)) {
-                    return null;
-                }
-            }
-            return null;
-        },
-
-        // Window-level ←/→ handler. Skips when the user is typing into an
-        // input or a contenteditable element so we don't hijack editing.
-        onRevisionKeydown(ev) {
-            if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
-            if (ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
-            const t = ev.target;
-            if (t) {
-                const tag = (t.tagName || '').toLowerCase();
-                if (tag === 'input' || tag === 'textarea' || tag === 'select' || t.isContentEditable) {
-                    return;
-                }
-            }
-            const msg = this.revisionLastNavigableMessage();
-            if (!msg) return;
-            ev.preventDefault();
-            this.navigateRevision(msg.id, ev.key === 'ArrowLeft' ? -1 : 1);
-        },
         
         /**
          * Centralized handler for asset-related WebSocket messages.
@@ -1071,7 +909,7 @@ export default {
         },
 
         requestDeleteMessage(message_id) {
-            this.getWebsocket().send(JSON.stringify({ type: 'delete_message', id: message_id }));
+            this.getWebsocket().send(JSON.stringify({ type: 'scene_message', action: 'delete', id: message_id }));
         },
 
         handleChoiceInput(data) {
@@ -1765,12 +1603,11 @@ export default {
                     this.messages.pop();
                 }
 
-                // If this looks like the front-half of a regenerate (last AI
-                // message being removed), defer the actual removal so the
-                // incoming replacement can take its slot and inherit the
-                // revision stack. Anything else falls through to the normal
-                // filter-out behavior.
-                if (this.revisionBeginPendingRegen(data.id)) {
+                // For regenerate, defer the actual removal so the incoming
+                // replacement can take this slot and inherit the revision
+                // stack. Plain deletes (no `reason`) fall through to the
+                // normal filter-out path below.
+                if (data.reason === 'regenerate' && this.revisionBeginPendingRegen(data.id)) {
                     return;
                 }
 
@@ -1986,20 +1823,12 @@ export default {
     },
     created() {
         this.registerMessageHandler(this.handleMessage);
-        this._revisionKeydownHandler = this.onRevisionKeydown.bind(this);
-        if (typeof window !== 'undefined') {
-            window.addEventListener('keydown', this._revisionKeydownHandler);
-        }
     },
     beforeUnmount() {
         // Clean up debounce timer if component is destroyed
         if (this._reapplyDebounceTimer) {
             clearTimeout(this._reapplyDebounceTimer);
             this._reapplyDebounceTimer = null;
-        }
-        if (this._revisionKeydownHandler && typeof window !== 'undefined') {
-            window.removeEventListener('keydown', this._revisionKeydownHandler);
-            this._revisionKeydownHandler = null;
         }
     },
 }

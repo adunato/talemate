@@ -199,8 +199,6 @@ async def websocket_endpoint(websocket):
                     await instance.configure_agents()
                 elif action_type == "request_client_status":
                     await handler.request_client_status()
-                elif action_type == "delete_message":
-                    handler.delete_message(data.get("id"))
                 elif action_type == "request_scene_assets":
                     log.debug("request_scene_assets", data=data)
                     handler.request_scene_assets(data.get("asset_ids"))

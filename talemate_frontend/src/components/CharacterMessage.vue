@@ -5,8 +5,9 @@
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </template>
+    <RevisionNav v-if="isLastMessage && (revisionsCount > 1 || revisionBusy)" :count="revisionsCount" :index="revisionIndex" :disabled="uxLocked" :busy="revisionBusy" @navigate="(dir) => $emit('navigate-revision', dir)" />
     <!-- Scene illustration (big) renders above message -->
-    <MessageAssetImage 
+    <MessageAssetImage
       v-if="messageAsset && isSceneIllustrationAbove"
       :asset_id="messageAsset"
       :asset_type="asset_type || 'avatar'"
@@ -17,7 +18,7 @@
     />
     <div class="character-message">
       <!-- Avatar/card/scene_illustration (small/medium) renders inline -->
-      <MessageAssetImage 
+      <MessageAssetImage
         v-if="messageAsset && !isSceneIllustrationAbove"
         :asset_id="messageAsset"
         :asset_type="asset_type || 'avatar'"
@@ -29,18 +30,9 @@
       <span class="character-name-chip" :style="{ color: color }">
         {{ character }}
       </span>
-      <span v-if="revisionsCount > 1 && isLastMessage" class="revision-nav" :title="revisionNavTitle">
-        <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="revisionIndex <= 0 || uxLocked" @click="$emit('navigate-revision', -1)">
-          <v-icon size="small">mdi-chevron-left</v-icon>
-        </v-btn>
-        <span class="revision-counter">{{ revisionIndex + 1 }}/{{ revisionsCount }}</span>
-        <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="revisionIndex >= revisionsCount - 1 || uxLocked" @click="$emit('navigate-revision', 1)">
-          <v-icon size="small">mdi-chevron-right</v-icon>
-        </v-btn>
-      </span>
       <div class="character-content">
-        <v-textarea 
-          ref="textarea" 
+        <v-textarea
+          ref="textarea"
           v-if="editing"
           v-model="editing_text"
           variant="outlined"
@@ -53,7 +45,7 @@
           :loading="autocompleting"
           :disabled="autocompleting"
 
-          @keydown.enter.prevent="handleEnter" 
+          @keydown.enter.prevent="handleEnter"
           @blur="autocompleting ? null : cancelEdit()"
           @keydown.escape.prevent="cancelEdit()"
           >
@@ -126,9 +118,11 @@ import { insertNewlineAtCursor } from '@/utils/textAreaUtils';
 import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 import MessageAssetImage from './MessageAssetImage.vue';
 import MessageAssetMixin from './MessageAssetMixin.js';
+import RevisionNav from './RevisionNav.vue';
 export default {
   components: {
     MessageAssetImage,
+    RevisionNav,
   },
   mixins: [MessageAssetMixin],
   //props: ['character', 'text', 'color', 'message_id', 'uxLocked', 'isLastMessage'],
@@ -204,6 +198,10 @@ export default {
     revisionIndex: {
       type: Number,
       default: 0,
+    },
+    revisionBusy: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ['navigate-revision'],
@@ -284,9 +282,6 @@ export default {
       }
 
       return null;
-    },
-    revisionNavTitle() {
-      return `Revision ${this.revisionIndex + 1} of ${this.revisionsCount}. Use ← / → to switch.`;
     },
   },
   data() {
@@ -412,30 +407,6 @@ export default {
   margin-top: 0;
   font-weight: bold;
 }
-
-.revision-nav {
-  float: left;
-  display: inline-flex;
-  align-items: center;
-  margin-right: 10px;
-  margin-top: -2px;
-  color: rgb(var(--v-theme-muted));
-  font-size: 0.75rem;
-  opacity: 0.7;
-  user-select: none;
-}
-
-.revision-nav .revision-counter {
-  margin: 0 2px;
-  min-width: 28px;
-  text-align: center;
-}
-
-.revision-nav .revision-arrow {
-  width: 18px;
-  height: 18px;
-}
-
 
 .character-text-wrapper {
   display: block;

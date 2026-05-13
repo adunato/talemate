@@ -29,9 +29,10 @@
         :message_content="message.text"
         :message_id="message.id"
       />
-      <v-textarea 
-        ref="textarea" 
-        v-if="editing" 
+      <RevisionNav v-if="isLastMessage" :count="revisionsCount" :index="revisionIndex" :disabled="uxLocked" :busy="revisionBusy" @navigate="(dir) => $emit('navigate-revision', dir)" />
+      <v-textarea
+        ref="textarea"
+        v-if="editing"
         v-model="editing_text"
         color="indigo-lighten-4"
         bg-color="black"
@@ -39,21 +40,12 @@
         :hint="autocompleteInfoMessage(autocompleting) + ', Shift+Enter for newline'"
         :loading="autocompleting"
         :disabled="autocompleting"
-        @keydown.enter.prevent="handleEnter" 
+        @keydown.enter.prevent="handleEnter"
         @blur="autocompleting ? null : cancelEdit()"
         @keydown.escape.prevent="cancelEdit()">
       </v-textarea>
       <div v-else @dblclick="startEdit()" v-html="renderedText">
       </div>
-      <span v-if="revisionsCount > 1 && isLastMessage" class="revision-nav" :title="revisionNavTitle">
-        <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="revisionIndex <= 0 || uxLocked" @click.stop="$emit('navigate-revision', -1)">
-          <v-icon size="small">mdi-chevron-left</v-icon>
-        </v-btn>
-        <span class="revision-counter">{{ revisionIndex + 1 }}/{{ revisionsCount }}</span>
-        <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="revisionIndex >= revisionsCount - 1 || uxLocked" @click.stop="$emit('navigate-revision', 1)">
-          <v-icon size="small">mdi-chevron-right</v-icon>
-        </v-btn>
-      </span>
     </div>
 
     <v-sheet v-if="hovered" rounded="sm" color="transparent">
@@ -84,11 +76,13 @@ import { insertNewlineAtCursor } from '@/utils/textAreaUtils';
 import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 import MessageAssetImage from './MessageAssetImage.vue';
 import MessageAssetMixin from './MessageAssetMixin.js';
+import RevisionNav from './RevisionNav.vue';
 
 export default {
   name: 'ContextInvestigationMessage',
   components: {
     MessageAssetImage,
+    RevisionNav,
   },
   mixins: [MessageAssetMixin],
   data() {
@@ -151,9 +145,6 @@ export default {
     messageAsset() {
       return (this.asset_id && this.asset_type) ? this.asset_id : null;
     },
-    revisionNavTitle() {
-      return `Revision ${this.revisionIndex + 1} of ${this.revisionsCount}. Use ← / → to switch.`;
-    },
   },
   props: {
     message: Object,
@@ -186,6 +177,10 @@ export default {
     revisionIndex: {
       type: Number,
       default: 0,
+    },
+    revisionBusy: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ['navigate-revision'],
@@ -257,27 +252,6 @@ export default {
 
 .context-message {
   display: block;
-}
-
-.revision-nav {
-  display: inline-flex;
-  align-items: center;
-  margin-top: 2px;
-  color: rgb(var(--v-theme-muted));
-  font-size: 0.75rem;
-  opacity: 0.7;
-  user-select: none;
-}
-
-.revision-nav .revision-counter {
-  margin: 0 2px;
-  min-width: 28px;
-  text-align: center;
-}
-
-.revision-nav .revision-arrow {
-  width: 18px;
-  height: 18px;
 }
 
 :deep(.scene-paragraph) {

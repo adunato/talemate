@@ -28,8 +28,19 @@ class SwapRevisionPayload(pydantic.BaseModel):
     text: str
 
 
+class DeletePayload(pydantic.BaseModel):
+    id: int
+
+
 class SceneMessagePlugin(Plugin):
     router = "scene_message"
+
+    async def handle_delete(self, data: dict):
+        """
+        Remove a scene message from history.
+        """
+        payload = DeletePayload(**data)
+        self.scene.delete_message(payload.id)
 
     async def handle_edit(self, data: dict):
         """

@@ -438,12 +438,14 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
         )
 
     def handle_remove_message(self, emission: Emission):
-        self.queue_put(
-            {
-                "type": "remove_message",
-                "id": emission.id,
-            }
-        )
+        reason = (emission.data or {}).get("reason")
+        payload = {
+            "type": "remove_message",
+            "id": emission.id,
+        }
+        if reason:
+            payload["reason"] = reason
+        self.queue_put(payload)
 
     def handle_scene_status(self, emission: Emission):
         self.queue_put(
@@ -775,10 +777,6 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
                     "character": character.name,
                 }
             )
-
-    def delete_message(self, message_id):
-        self.scene.delete_message(message_id)
-
 
     def handle_character_card_upload(self, image_data_url: str, filename: str) -> str:
         image_data = base64.b64decode(image_data_url.split(",")[1])
