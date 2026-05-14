@@ -6,6 +6,7 @@ import talemate.events as events
 import talemate.emit.async_signals as async_signals
 from talemate.agents.editor.revision import RevisionContext
 from talemate.context import regeneration_context
+from talemate.exceptions import GenerationCancelled
 from talemate.scene_message import (
     SceneMessage,
     CharacterMessage,
@@ -365,6 +366,27 @@ async def _regenerate_inplace(
     return new_text, mutations, canonical_mutation_source
 
 
+async def _restore_history_after_failed_regenerate(
+    scene: "Scene",
+    message: SceneMessage,
+    popped_reinforcement_messages: list[ReinforcementMessage],
+) -> None:
+    """
+    Put history back the way it was before the regenerate attempt and tell
+    the frontend to drop the spinner on the message's slot. Shared by the
+    failure and the user-cancellation paths of ``regenerate``.
+    """
+    scene.history.append(message)
+    emit(
+        "regenerate_failed",
+        "",
+        websocket_passthrough=True,
+        kwargs={"id": message.id},
+    )
+    for reinforcement_message in reversed(popped_reinforcement_messages):
+        await scene.push_history(reinforcement_message)
+
+
 async def regenerate(scene: "Scene") -> list[SceneMessage]:
     """
     In-place regenerate the most recent AI response (the tail of
@@ -414,27 +436,31 @@ async def regenerate(scene: "Scene") -> list[SceneMessage]:
 
     try:
         outcome = await _regenerate_inplace(message, scene)
+    except GenerationCancelled:
+        # User-initiated interrupt — not a failure. Restore history, report
+        # the cancellation as a normal (non-error) status, then re-raise so
+        # the task done-callback posts the regenerate_failed envelope and
+        # the scene's cancel flag is cleared.
+        log.warning("regenerate: Generation cancelled by user", message=message)
+        await _restore_history_after_failed_regenerate(
+            scene, message, popped_reinforcement_messages
+        )
+        emit("status", message="Regeneration cancelled.", status="idle")
+        raise
     except Exception as e:
         log.error("regenerate: Exception during regeneration", message=message, error=e)
         outcome = None
 
     if not outcome:
         log.error("No new message generated", message=message)
-        # Put the message back where it was; nothing changed.
-        scene.history.append(message)
-        emit(
-            "regenerate_failed",
-            "",
-            websocket_passthrough=True,
-            kwargs={"id": message.id},
+        await _restore_history_after_failed_regenerate(
+            scene, message, popped_reinforcement_messages
         )
         emit(
             "status",
             message="Could not regenerate message.",
             status="error",
         )
-        for reinforcement_message in reversed(popped_reinforcement_messages):
-            await scene.push_history(reinforcement_message)
         return regenerated_messages
 
     new_text, mutation_delta, canonical_mutation_source = outcome

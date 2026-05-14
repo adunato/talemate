@@ -21,6 +21,7 @@ import pytest
 import talemate.instance as instance
 import talemate.regenerate as regenerate_mod
 from talemate.agents.conversation import ConversationAgent
+from talemate.exceptions import GenerationCancelled
 from talemate.regenerate import (
     can_regenerate,
     ensure_regenerate_allowed,
@@ -1021,3 +1022,41 @@ class TestRegenerate:
         names = [e["name"] for e in _silence_emit_and_signals]
         assert "status" in names
         assert "regenerate_failed" in names
+
+    @pytest.mark.asyncio
+    async def test_generation_cancelled_reraises_without_error_status(
+        self, scene, register_agent, _silence_emit_and_signals
+    ):
+        """A user interrupt (GenerationCancelled) is not a failure: history is
+        restored, the cancellation is reported as a non-error status, and the
+        exception propagates so the task done-callback can handle it."""
+
+        class _Cancelled:
+            async def progress_story(self, **kwargs):
+                raise GenerationCancelled("Generation cancelled")
+
+        register_agent("narrator", _Cancelled())
+
+        original = NarratorMessage(message="primary")
+        original.meta = {
+            "agent": "narrator",
+            "function": "progress_story",
+            "arguments": {},
+        }
+        reinforce = ReinforcementMessage(message="reinforce")
+        scene.history = [original, reinforce]
+
+        with pytest.raises(GenerationCancelled):
+            await regenerate(scene)
+
+        # History is restored: primary slot untouched, reinforcement re-pushed.
+        assert original in scene.history
+        assert original.message == "primary"
+        assert reinforce in scene.history
+        # The frontend gets a regenerate_failed event so the spinner clears.
+        events_by_name = {e["name"]: e for e in _silence_emit_and_signals}
+        assert "regenerate_failed" in events_by_name
+        # The status is a non-error cancellation notice, not "error".
+        status = events_by_name["status"]
+        assert status["kwargs"].get("status") != "error"
+        assert "cancel" in status["kwargs"].get("message", "").lower()
