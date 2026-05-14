@@ -45,7 +45,7 @@
                     <v-expansion-panel-text class="text-body-2">
                         {{ character.snapshot }}
 
-                        <!-- ACTIONS: LOOK AT, CHARACTER SHEET, PERSIST -->
+                        <!-- ACTIONS: LOOK AT, PERSIST, MANAGE -->
 
                         <div class="text-center mt-1">
                             <v-tooltip :text="'Look at '+name">
@@ -54,19 +54,13 @@
 
                                 </template>
                             </v-tooltip>
-                            <v-tooltip v-if="characterSheet().characterExists(name)" text="Character sheet">
-                                <template v-slot:activator="{ props }">
-                                    <v-btn size="x-small" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="openCharacterSheet(name)" icon="mdi-account-details"></v-btn>
-
-                                </template>
-                            </v-tooltip>
-                            <v-tooltip v-else text="Make this character real, adding it to the scene as an actor.">
+                            <v-tooltip v-if="!characterExists(name)" text="Make this character real, adding it to the scene as an actor.">
                                 <template v-slot:activator="{ props }">
                                     <v-btn size="x-small" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="persistCharacter(name)" icon="mdi-human-greeting"></v-btn>
 
                                 </template>
                             </v-tooltip>
-                            <v-tooltip v-if="characterSheet().characterExists(name)" text="Manage character">
+                            <v-tooltip v-if="characterExists(name)" text="Manage character">
                                 <template v-slot:activator="{ props }">
                                     <v-btn size="x-small" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="openWorldStateManager('characters', name, 'description')" icon="mdi-book-open-page-variant"></v-btn>
 
@@ -238,11 +232,9 @@ export default {
     },
 
     inject: [
-        'getWebsocket', 
-        'registerMessageHandler', 
+        'getWebsocket',
+        'registerMessageHandler',
         'setWaitingForInput',
-        'openCharacterSheet',
-        'characterSheet',
         'isInputDisabled',
         'formatWorldStateTemplateString',
         'scene',
@@ -295,7 +287,7 @@ export default {
         passiveCharacters() {
             let characters = [];
             for(let character in this.characters) {
-                if(!this.characterSheet().characterExists(character)) {
+                if(!this.characterExists(character)) {
                     characters.push(character);
                 }
             }
@@ -392,6 +384,17 @@ export default {
             }
             return false;
         },
+        characterExists(name) {
+            if (!this.sceneData || !this.sceneData.data || !this.sceneData.data.characters) {
+                return false;
+            }
+            for (let character of this.sceneData.data.characters) {
+                if (name.toLowerCase().indexOf(character.name.toLowerCase()) !== -1 || character.name.toLowerCase().indexOf(name.toLowerCase()) !== -1) {
+                    return true;
+                }
+            }
+            return false;
+        },
         getCharacterData(name) {
             if (!this.sceneData || !this.sceneData.data || !this.sceneData.data.characters) {
                 return null;
@@ -409,7 +412,7 @@ export default {
         },
         getCharacterAvatar(name) {
             // Only show avatar if character exists in scene
-            if (!this.characterSheet().characterExists(name)) {
+            if (!this.characterExists(name)) {
                 return null;
             }
             const characterData = this.getCharacterData(name);

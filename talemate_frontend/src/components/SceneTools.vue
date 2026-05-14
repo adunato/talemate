@@ -316,7 +316,6 @@ export default {
         'getTrackedWorldState',
         'getPlayerCharacterName',
         'formatWorldStateTemplateString',
-        'characterSheet',
         'openAppConfig',
         // Provided by SceneMessages; flags the last regen-eligible
         // message as `regenerating` so its pager spinner shows up

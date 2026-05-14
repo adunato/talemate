@@ -345,8 +345,6 @@ export default {
         'registerMessageHandler',
         'unregisterMessageHandler',
         'setWaitingForInput',
-        'openCharacterSheet',
-        'characterSheet',
         'isInputDisabled',
         'autocompleteRequest',
         'autocompleteInfoMessage',

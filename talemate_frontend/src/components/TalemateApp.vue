@@ -284,7 +284,6 @@
                         :activeCharacters="activeCharacters"
                         :visual-agent-ready="visualAgentReady"
                         :audioPlayedForMessageId="audioPlayedForMessageId" />
-                      <CharacterSheet ref="characterSheet" />
                       <SceneMessageInput
                         ref="sceneMessageInput"
                         v-model="messageInput"
@@ -385,7 +384,6 @@ import SceneMessages from './SceneMessages.vue';
 import SceneMessageInput from './SceneMessageInput.vue';
 import WorldState from './WorldState.vue';
 import CoverImage from './CoverImage.vue';
-import CharacterSheet from './CharacterSheet.vue';
 import AppConfig from './AppConfig.vue';
 import DebugTools from './DebugTools.vue';
 import AudioQueue from './AudioQueue.vue';
@@ -425,7 +423,6 @@ export default {
     SceneMessageInput,
     WorldState,
     CoverImage,
-    CharacterSheet,
     AppConfig,
     DebugTools,
     AudioQueue,
@@ -814,8 +811,6 @@ export default {
       openAgentSettings: this.openAgentSettings,
       requestSceneAssets: (asset_ids) => this.requestSceneAssets(asset_ids),
       requestAssets: (assets) => this.requestAssets(assets),
-      openCharacterSheet: (characterName) => this.openCharacterSheet(characterName),
-      characterSheet: () => this.$refs.characterSheet,
       creativeEditor: () => this.$refs.creativeEditor,
       setEnvCreative: () => this.setEnvCreative(),
       setEnvScene: () => this.setEnvScene(),
@@ -1507,9 +1502,6 @@ export default {
         return false;
       }
       return this.$refs.aiAgent.configurationRequired();
-    },
-    openCharacterSheet(characterName) {
-      this.$refs.characterSheet.openForCharacterName(characterName);
     },
     onOpenWorldStateManager(tab, sub1, sub2, sub3) {
       // If trying to open templates, redirect to templates tab instead
