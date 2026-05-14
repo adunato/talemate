@@ -22,10 +22,12 @@ import talemate.instance as instance
 import talemate.regenerate as regenerate_mod
 from talemate.agents.conversation import ConversationAgent
 from talemate.regenerate import (
+    can_regenerate,
     ensure_regenerate_allowed,
     regenerate,
     regenerate_message,
     regenerate_target_message,
+    regeneration_status,
 )
 from talemate.scene_message import (
     CharacterMessage,
@@ -194,6 +196,89 @@ class TestEnsureRegenerateAllowed:
         allowed, reason = ensure_regenerate_allowed(scene)
         assert allowed is True
         assert reason is None
+
+
+# ---------------------------------------------------------------------------
+# regeneration_status / can_regenerate
+# ---------------------------------------------------------------------------
+
+
+class TestRegenerationStatus:
+    """`regeneration_status` is the shared predicate behind both the
+    regenerate buttons (via scene_status) and `regenerate()`'s own guard,
+    so it must mirror every early-return condition of `regenerate()`."""
+
+    def test_blocks_when_history_is_empty(self, scene):
+        allowed, reason = regeneration_status(scene)
+        assert allowed is False
+        assert reason == "Nothing to regenerate yet."
+
+    def test_blocks_static_player_message(self, scene):
+        msg = _make_character_message("Alice", "hello")
+        msg.source = "player"  # static player msg, no from_choice
+        scene.history = [msg]
+
+        allowed, reason = regeneration_status(scene)
+        assert allowed is False
+        assert "static player message" in reason.lower()
+
+    def test_blocks_unsupported_message_type(self, scene):
+        from talemate.scene_message import TimePassageMessage
+
+        scene.history = [TimePassageMessage(message="some time later")]
+
+        allowed, reason = regeneration_status(scene)
+        assert allowed is False
+        assert "cannot be regenerated" in reason.lower()
+
+    def test_allows_narrator_message(self, scene):
+        scene.history = [NarratorMessage(message="the room is quiet")]
+
+        allowed, reason = regeneration_status(scene)
+        assert allowed is True
+        assert reason is None
+
+    def test_player_sourced_non_character_message_does_not_raise(self, scene):
+        # `from_choice` is a CharacterMessage-only field; a NarratorMessage
+        # whose `source` is "player" must not raise AttributeError on the
+        # static-player guard (this runs on the hot scene_status path).
+        msg = NarratorMessage(message="the room is quiet")
+        msg.source = "player"
+        scene.history = [msg]
+
+        allowed, reason = regeneration_status(scene)
+        assert allowed is False
+        assert reason is not None
+
+    def test_skips_trailing_reinforcements_to_find_target(self, scene):
+        # A regeneratable narrator buried under trailing reinforcements is
+        # still the target — same walk-back as `regenerate_target_message`.
+        scene.history = [
+            NarratorMessage(message="real target"),
+            ReinforcementMessage(message="r1"),
+        ]
+
+        allowed, reason = regeneration_status(scene)
+        assert allowed is True
+        assert reason is None
+
+    def test_delegates_inactive_character_guard(self, scene):
+        # Character message whose character is inactive → blocked with the
+        # reason produced by `ensure_regenerate_allowed`.
+        from talemate.character import Character
+
+        scene.character_data["Bob"] = Character(name="Bob")
+        # scene.active_characters left empty → Bob is inactive
+        scene.history = [_make_character_message("Bob")]
+
+        allowed, reason = regeneration_status(scene)
+        assert allowed is False
+        assert "inactive" in reason.lower()
+
+    def test_can_regenerate_is_boolean_projection(self, scene):
+        assert can_regenerate(scene) is False
+        scene.history = [NarratorMessage(message="now there is something")]
+        assert can_regenerate(scene) is True
 
 
 # ---------------------------------------------------------------------------
@@ -494,10 +579,11 @@ class TestRegenerateCharacterMessage:
 
 class TestRegenerate:
     @pytest.mark.asyncio
-    async def test_returns_none_when_history_empty(self, scene):
-        # Empty history → IndexError caught → returns None
+    async def test_returns_empty_list_when_history_empty(self, scene):
+        # Empty history → regeneration_status blocks it → clean no-op,
+        # returns the empty regenerated-messages list.
         result = await regenerate(scene)
-        assert result is None
+        assert result == []
 
     @pytest.mark.asyncio
     async def test_returns_empty_list_for_static_player_message(

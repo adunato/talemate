@@ -23,6 +23,8 @@ __all__ = [
     "regenerate_character_message",
     "regenerate_target_message",
     "ensure_regenerate_allowed",
+    "regeneration_status",
+    "can_regenerate",
 ]
 
 log = structlog.get_logger("talemate.regenerate")
@@ -80,6 +82,46 @@ def ensure_regenerate_allowed(scene: "Scene") -> tuple[bool, str | None]:
         )
 
     return True, None
+
+
+def regeneration_status(scene: "Scene") -> tuple[bool, str | None]:
+    """
+    Single source of truth for whether the tail of ``scene.history`` can
+    be regenerated right now. Returns ``(can_regenerate, reason)`` where
+    ``reason`` is a user-facing explanation when regeneration is blocked
+    (``None`` when it's allowed).
+
+    Mirrors the guard conditions inside ``regenerate()`` without mutating
+    history, so the UI's button state and the actual regenerate flow
+    never disagree.
+    """
+    message = regenerate_target_message(scene)
+    if message is None:
+        return False, "Nothing to regenerate yet."
+
+    # `from_choice` is a CharacterMessage-only field; `source` lives on the
+    # base SceneMessage, so guard the access — this runs on the hot
+    # scene_status path and an AttributeError here would break every emit.
+    if message.source == "player" and not getattr(message, "from_choice", False):
+        return False, "Cannot regenerate a static player message."
+
+    if not isinstance(
+        message, (CharacterMessage, NarratorMessage, ContextInvestigationMessage)
+    ):
+        return False, "The most recent message cannot be regenerated."
+
+    # folds in the inactive-character guard
+    return ensure_regenerate_allowed(scene)
+
+
+def can_regenerate(scene: "Scene") -> bool:
+    """
+    Whether the tail of ``scene.history`` can be regenerated right now.
+
+    Drops the blocked-reason from :func:`regeneration_status`; call that
+    directly when the reason is needed (e.g. to surface it in the UI).
+    """
+    return regeneration_status(scene)[0]
 
 
 async def _converse_for_character_message(
@@ -327,12 +369,15 @@ async def regenerate(scene: "Scene") -> list[SceneMessage]:
     auto-revision intermediates as mutations so the frontend can splice
     them onto the existing revision stack.
     """
-    try:
-        message = scene.history[-1]
-    except IndexError:
-        return
-
     regenerated_messages: list[SceneMessage] = []
+
+    # Guard via the shared predicate so the UI's button state and this
+    # flow can't drift apart. Checked before any history mutation, so a
+    # blocked regenerate is a clean no-op.
+    can_regen, reason = regeneration_status(scene)
+    if not can_regen:
+        log.warning("Cannot regenerate", reason=reason)
+        return regenerated_messages
 
     # while message type is ReinforcementMessage, keep going back in history
     # until we find a message that is not a ReinforcementMessage
@@ -342,28 +387,18 @@ async def regenerate(scene: "Scene") -> list[SceneMessage]:
     # for the reinforcement message
     popped_reinforcement_messages: list[ReinforcementMessage] = []
 
+    message = scene.history[-1]
     while isinstance(message, (ReinforcementMessage,)):
         popped_reinforcement_messages.append(scene.history.pop())
         message = scene.history[-1]
 
+    # `regeneration_status` already validated this target (non-static,
+    # regeneratable type, active character).
     log.debug(f"Regenerating message: {message} [{message.id}]")
-
-    if message.source == "player" and not message.from_choice:
-        log.warning("Cannot regenerate player's message", message=message)
-        # re-add the reinforcement messages
-        for popped in reversed(popped_reinforcement_messages):
-            await scene.push_history(popped)
-        return regenerated_messages
 
     current_regeneration_context = regeneration_context.get()
     if current_regeneration_context:
         current_regeneration_context.message = message.message
-
-    if not isinstance(
-        message, (CharacterMessage, NarratorMessage, ContextInvestigationMessage)
-    ):
-        log.warning("Cannot regenerate message", message=message)
-        return regenerated_messages
 
     # Pop the target from history before invoking the agent — otherwise
     # the LLM sees its own prior output in context and just rephrases it.

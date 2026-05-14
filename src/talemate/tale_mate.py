@@ -56,6 +56,7 @@ from talemate.history import emit_archive_add, ArchiveEntry
 from talemate.character import Character
 from talemate.agents.tts.schema import VoiceLibrary
 from talemate.instance import get_agent
+from talemate.regenerate import regeneration_status
 from talemate.changelog import InMemoryChangelog
 from talemate.shared_context import SharedContext
 
@@ -637,6 +638,11 @@ class Scene(Emitter):
 
         await self.signals["push_history.after"].send(event)
 
+        # History changed — refresh scene status so UI affordances that
+        # depend on the tail (e.g. the regenerate buttons) stay in sync.
+        # emit_status is debounced, so bursts of pushes coalesce.
+        self.emit_status()
+
     def pop_message(self, message: SceneMessage | int) -> bool:
         """
         Removes the last message from the history that matches the given message
@@ -646,11 +652,13 @@ class Scene(Emitter):
                 self.history.remove(message)
             except ValueError:
                 return False
+            self.emit_status()
             return True
         elif isinstance(message, int):
             message = self.find_message(message)
             if message:
                 self.history.remove(message)
+                self.emit_status()
                 return True
             return False
         else:
@@ -711,6 +719,11 @@ class Scene(Emitter):
 
         for message in to_remove:
             self.history.remove(message)
+
+        # History changed — keep tail-dependent UI affordances (e.g. the
+        # regenerate buttons) in sync. emit_status is debounced.
+        if to_remove:
+            self.emit_status()
 
     def find_message(self, typ: str, max_iterations: int = 100, **filters):
         """
@@ -1282,6 +1295,7 @@ class Scene(Emitter):
             return
 
         player_character = self.get_player_character()
+        can_regenerate, can_regenerate_reason = regeneration_status(self)
         emit(
             "scene_status",
             self.name,
@@ -1319,6 +1333,8 @@ class Scene(Emitter):
                 "auto_save": self.auto_save,
                 "auto_progress": self.auto_progress,
                 "can_auto_save": self.can_auto_save(),
+                "can_regenerate": can_regenerate,
+                "can_regenerate_reason": can_regenerate_reason,
                 "game_state": self.game_state.model_dump(),
                 "agent_state": self.agent_state,
                 "active_pins": [pin.model_dump() for pin in self.active_pins],

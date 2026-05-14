@@ -11,7 +11,7 @@ from talemate.emit import emit
 from talemate.exceptions import GenerationCancelled
 from talemate.instance import get_agent
 from talemate.load.character_card import analyze_character_card
-from talemate.regenerate import ensure_regenerate_allowed, regenerate
+from talemate.regenerate import regenerate, regeneration_status
 from talemate.server.websocket_plugin import Plugin
 from talemate.status import set_loading
 
@@ -175,7 +175,7 @@ class AssistantPlugin(Plugin):
         Intended for UX-triggered regeneration (e.g., hotbuttons).
         """
         payload = RegeneratePayload(**data)
-        allowed, err = ensure_regenerate_allowed(self.scene)
+        allowed, err = regeneration_status(self.scene)
         if not allowed:
             emit("status", message=err, status="error")
             self.websocket_handler.queue_put(
@@ -208,7 +208,7 @@ class AssistantPlugin(Plugin):
         `!regenerate_directed` (and without prompting via wait_for_input).
         """
         payload = RegenerateDirectedPayload(**data)
-        allowed, err = ensure_regenerate_allowed(self.scene)
+        allowed, err = regeneration_status(self.scene)
         if not allowed:
             emit("status", message=err, status="error")
             self.websocket_handler.queue_put(
