@@ -49,20 +49,17 @@
     </div>
 
     <v-sheet v-if="hovered" rounded="sm" color="transparent">
-      <v-chip size="x-small" color="indigo-lighten-4" v-if="editing">
-        <v-icon class="mr-1">mdi-pencil</v-icon>
-        Editing - Press `enter` to submit. Click anywhere to cancel.</v-chip>
-      <v-chip size="x-small" color="grey-lighten-1" v-else-if="!editing && hovered" variant="text" class="mr-1">
-        <v-icon>mdi-pencil</v-icon>
-        Double-click to edit.</v-chip>
-        
-        <!-- generate tts -->
-        <v-chip size="x-small" class="ml-2" label color="secondary" v-if="!editing && hovered && ttsAvailable" variant="outlined" @click="generateTTS(message.id)" :disabled="uxLocked || ttsBusy">
-          <v-icon class="mr-1">mdi-account-voice</v-icon>
-          TTS
-          <v-progress-circular v-if="ttsBusy" class="ml-2" size="14" indeterminate="disable-shrink"
-        color="secondary"></v-progress-circular>
-        </v-chip>
+      <MessageToolbar
+        :message-id="message.id"
+        :editing="editing"
+        :ux-locked="uxLocked"
+        :tts-available="ttsAvailable"
+        :tts-busy="ttsBusy"
+        :show-pin="false"
+        :show-revision="false"
+        :show-fork="false"
+        :show-time-passage="false"
+      />
     </v-sheet>
     <div v-else style="height:24px">
 
@@ -77,12 +74,14 @@ import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 import MessageAssetImage from './MessageAssetImage.vue';
 import MessageAssetMixin from './MessageAssetMixin.js';
 import RevisionNav from './RevisionNav.vue';
+import MessageToolbar from './MessageToolbar.vue';
 
 export default {
   name: 'ContextInvestigationMessage',
   components: {
     MessageAssetImage,
     RevisionNav,
+    MessageToolbar,
   },
   mixins: [MessageAssetMixin],
   data() {
@@ -188,7 +187,7 @@ export default {
     },
   },
   emits: ['navigate-revision'],
-  inject: ['requestDeleteMessage', 'getWebsocket', 'createPin', 'autocompleteRequest', 'autocompleteInfoMessage', 'getMessageStyle', 'getMessageColor', 'generateTTS'],
+  inject: ['requestDeleteMessage', 'getWebsocket', 'autocompleteRequest', 'autocompleteInfoMessage', 'getMessageStyle', 'getMessageColor'],
   methods: {
     toggle() {
       if (!this.editing) {

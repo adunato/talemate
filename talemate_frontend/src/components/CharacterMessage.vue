@@ -56,55 +56,29 @@
       </div>
     </div>
     <v-sheet v-if="hovered" rounded="sm" color="transparent">
-      <v-chip size="x-small" color="indigo-lighten-4" v-if="editing">
-        <v-icon class="mr-1">mdi-pencil</v-icon>
-        Editing - Press `enter` to submit. Click anywhere to cancel.</v-chip>
-      <v-chip size="x-small" color="grey-lighten-1" v-else-if="!editing && hovered" variant="text" class="mr-1">
-        <v-icon>mdi-pencil</v-icon>
-        Double-click to edit.</v-chip>
-        
-        <!-- create pin -->
-        <v-chip size="x-small" label color="success" v-if="!editing && hovered" variant="outlined" @click="createPin(message_id)" :disabled="uxLocked">
-          <v-icon class="mr-1">mdi-pin</v-icon>
-          Create Pin
-        </v-chip>
-
-        <!-- revision -->
-        <v-chip size="x-small" class="ml-2" label color="dirty" v-if="!editing && hovered && editorRevisionsEnabled && isLastMessage" variant="outlined" @click="reviseMessage(message_id)" :disabled="uxLocked">
-          <v-icon class="mr-1">mdi-typewriter</v-icon>
-          Editor Revision
-        </v-chip>
-
-        <!-- fork scene -->
-        <v-chip size="x-small" class="ml-2" label :color="rev > 0 ? 'highlight1' : 'muted'" v-if="!editing && hovered && forkable" variant="outlined" @click="forkSceneInitiate(message_id)" :disabled="uxLocked">
-          <v-icon class="mr-1">mdi-source-fork</v-icon>
-          Fork
-        </v-chip>
-
-        <!-- generate continuation -->
-        <v-chip size="x-small" class="ml-2" label color="primary" v-if="!editing && hovered && !continuing && isLastMessage" variant="outlined" @click="continueConversation" :disabled="uxLocked">
-          <v-icon class="mr-1">mdi-fast-forward</v-icon>
-          Continue
-        </v-chip>
-        <v-chip size="x-small" class="ml-2" label color="primary" v-if="!editing && hovered && continuing && isLastMessage" variant="outlined" disabled>
-          <v-progress-circular class="mr-1" size="14" indeterminate="disable-shrink" color="primary"></v-progress-circular>
-          Continuing...
-        </v-chip>
-
-        <!-- generate tts -->
-        <v-chip size="x-small" class="ml-2" label color="secondary" v-if="!editing && hovered && ttsAvailable" variant="outlined" @click="generateTTS(message_id)" :disabled="uxLocked || ttsBusy">
-          <v-icon class="mr-1">mdi-account-voice</v-icon>
-          TTS
-          <v-progress-circular v-if="ttsBusy" class="ml-2" size="14" indeterminate="disable-shrink"
-        color="secondary"></v-progress-circular>
-        </v-chip>
-
-        <!-- insert time passage -->
-        <v-chip size="x-small" class="ml-2" label color="time" v-if="!editing && hovered" variant="outlined" @click="insertTimePassage(message_id)" :disabled="uxLocked">
-          <v-icon class="mr-1">mdi-clock-plus-outline</v-icon>
-          Time Passage
-        </v-chip>
-
+      <MessageToolbar
+        :message-id="message_id"
+        :editing="editing"
+        :ux-locked="uxLocked"
+        :is-last-message="isLastMessage"
+        :editor-revisions-enabled="editorRevisionsEnabled"
+        :tts-available="ttsAvailable"
+        :tts-busy="ttsBusy"
+        :rev="rev"
+        :scene-rev="sceneRev"
+      >
+        <template #extra-actions>
+          <!-- generate continuation -->
+          <v-chip size="x-small" class="ml-2" label color="primary" v-if="!continuing && isLastMessage" variant="outlined" @click="continueConversation" :disabled="uxLocked">
+            <v-icon class="mr-1">mdi-fast-forward</v-icon>
+            Continue
+          </v-chip>
+          <v-chip size="x-small" class="ml-2" label color="primary" v-if="continuing && isLastMessage" variant="outlined" disabled>
+            <v-progress-circular class="mr-1" size="14" indeterminate="disable-shrink" color="primary"></v-progress-circular>
+            Continuing...
+          </v-chip>
+        </template>
+      </MessageToolbar>
     </v-sheet>
     <div v-else style="height:24px">
 
@@ -119,13 +93,14 @@ import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 import MessageAssetImage from './MessageAssetImage.vue';
 import MessageAssetMixin from './MessageAssetMixin.js';
 import RevisionNav from './RevisionNav.vue';
+import MessageToolbar from './MessageToolbar.vue';
 export default {
   components: {
     MessageAssetImage,
     RevisionNav,
+    MessageToolbar,
   },
   mixins: [MessageAssetMixin],
-  //props: ['character', 'text', 'color', 'message_id', 'uxLocked', 'isLastMessage'],
   props: {
     character: {
       type: String,
@@ -211,15 +186,10 @@ export default {
   emits: ['navigate-revision'],
   inject: [
     'requestDeleteMessage',
-    'getWebsocket', 
-    'createPin', 
-    'forkSceneInitiate', 
-    'autocompleteRequest', 
-    'autocompleteInfoMessage', 
-    'getMessageStyle', 
-    'reviseMessage',
-    'generateTTS',
-    'insertTimePassage',
+    'getWebsocket',
+    'autocompleteRequest',
+    'autocompleteInfoMessage',
+    'getMessageStyle',
   ],
   computed: {
     parser() {
@@ -243,9 +213,6 @@ export default {
     },
     renderedText() {
       return this.parser.parse(this.text);
-    },
-    forkable() {
-      return this.rev <= this.sceneRev;
     },
     characterData() {
       if (!this.scene || !this.scene.data || !this.scene.data.characters) {

@@ -49,45 +49,17 @@
     </div>
     <v-sheet v-if="hovered" rounded="sm" color="transparent">
       <div v-if="message_id">
-        <v-chip size="x-small" color="indigo-lighten-4" v-if="editing">
-          <v-icon class="mr-1">mdi-pencil</v-icon>
-          Editing - Press `enter` to submit. Click anywhere to cancel.</v-chip>
-        <v-chip size="x-small" color="grey-lighten-1" v-else-if="!editing && hovered" variant="text" class="mr-1">
-          <v-icon>mdi-pencil</v-icon>
-          Double-click to edit.</v-chip>
-        <v-chip size="x-small" label color="success" v-if="!editing && hovered" variant="outlined"
-          @click="createPin(message_id)">
-          <v-icon class="mr-1">mdi-pin</v-icon>
-          Create Pin
-        </v-chip>
-
-        <!-- revision -->
-        <v-chip size="x-small" class="ml-2" label color="dirty" v-if="!editing && hovered && editorRevisionsEnabled && isLastMessage" variant="outlined" @click="reviseMessage(message_id)" :disabled="uxLocked">
-          <v-icon class="mr-1">mdi-typewriter</v-icon>
-          Editor Revision
-        </v-chip>
-
-        <!-- fork scene -->
-        <v-chip size="x-small" class="ml-2" label :color="rev > 0 ? 'highlight1' : 'muted'" v-if="!editing && hovered && forkable" variant="outlined"
-          @click="forkSceneInitiate(message_id)" :disabled="uxLocked">
-          <v-icon class="mr-1">mdi-source-fork</v-icon>
-          Fork
-        </v-chip>
-
-        <!-- generate tts -->
-        <v-chip size="x-small" class="ml-2" label color="secondary" v-if="!editing && hovered && ttsAvailable" variant="outlined" @click="generateTTS(message_id)" :disabled="uxLocked || ttsBusy">
-          <v-icon class="mr-1">mdi-account-voice</v-icon>
-          TTS
-          <v-progress-circular v-if="ttsBusy" class="ml-2" size="14" indeterminate="disable-shrink"
-        color="secondary"></v-progress-circular>
-        </v-chip>
-
-        <!-- insert time passage -->
-        <v-chip size="x-small" class="ml-2" label color="time" v-if="!editing && hovered" variant="outlined" @click="insertTimePassage(message_id)" :disabled="uxLocked">
-          <v-icon class="mr-1">mdi-clock-plus-outline</v-icon>
-          Time Passage
-        </v-chip>
-
+        <MessageToolbar
+          :message-id="message_id"
+          :editing="editing"
+          :ux-locked="uxLocked"
+          :is-last-message="isLastMessage"
+          :editor-revisions-enabled="editorRevisionsEnabled"
+          :tts-available="ttsAvailable"
+          :tts-busy="ttsBusy"
+          :rev="rev"
+          :scene-rev="sceneRev"
+        />
       </div>
       <div v-else>
         <span class="text-muted text-caption">To edit the intro message open the <v-btn size="x-small" variant="text" color="primary" @click="openWorldStateManager('scene')"><v-icon>mdi-script</v-icon>Scene Editor</v-btn></span>
@@ -113,13 +85,14 @@ import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 import MessageAssetImage from './MessageAssetImage.vue';
 import MessageAssetMixin from './MessageAssetMixin.js';
 import RevisionNav from './RevisionNav.vue';
+import MessageToolbar from './MessageToolbar.vue';
 export default {
   components: {
     MessageAssetImage,
     RevisionNav,
+    MessageToolbar,
   },
   mixins: [MessageAssetMixin],
-  // props: ['text', 'message_id', 'uxLocked', 'isLastMessage'],
 
   props: {
     text: {
@@ -188,17 +161,13 @@ export default {
   },
   emits: ['navigate-revision'],
   inject: [
-    'requestDeleteMessage', 
-    'getWebsocket', 
-    'createPin', 
-    'forkSceneInitiate', 
-    'autocompleteRequest', 
-    'autocompleteInfoMessage', 
-    'getMessageStyle', 
+    'requestDeleteMessage',
+    'getWebsocket',
+    'autocompleteRequest',
+    'autocompleteInfoMessage',
+    'getMessageStyle',
     'openWorldStateManager',
-    'reviseMessage',
     'generateTTS',
-    'insertTimePassage',
   ],
   computed: {
     parser() {
@@ -216,9 +185,6 @@ export default {
     },
     renderedText() {
       return this.parser.parse(this.text);
-    },
-    forkable() {
-      return this.rev <= this.sceneRev;
     },
     // Asset mixin expects these
     assetId() {
