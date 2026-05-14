@@ -346,6 +346,7 @@ export default {
       this.editing = false;
     },
     startEdit() {
+      if (this.uxLocked || this.appBusy) return;
       this.editing_text = this.text;
       this.editing = true;
       this.$nextTick(() => {

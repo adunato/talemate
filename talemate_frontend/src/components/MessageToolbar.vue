@@ -9,7 +9,7 @@
     <!-- edit hint -->
     <v-chip size="x-small" color="grey-lighten-1" variant="text" class="mr-1">
       <v-icon>mdi-pencil</v-icon>
-      Double-click to edit.
+      {{ uxLocked || appBusy ? 'Editing locked' : 'Double-click to edit.' }}
     </v-chip>
 
     <!-- create pin -->

@@ -334,7 +334,7 @@
             </div>
             <div v-else-if="message.type === 'time'" :class="`message ${message.type}`">
                 <div class="time-message"  :id="`message-${message.id}`">
-                    <TimePassageMessage :text="message.text" :message_id="message.id" :ts="message.ts" :uxLocked="uxLocked" :isLastMessage="index === messages.length - 1" />
+                    <TimePassageMessage :text="message.text" :message_id="message.id" :ts="message.ts" :uxLocked="uxLocked" :appBusy="appBusy" :isLastMessage="index === messages.length - 1" />
                 </div>
             </div>
             <div v-else-if="message.type === 'player_choice'" :class="`message ${message.type}`">

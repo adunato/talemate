@@ -232,8 +232,8 @@ export default {
       this.editing = false;
     },
     startEdit() {
-      if (this.uxLocked) return;
-      
+      if (this.uxLocked || this.appBusy) return;
+
       this.editing_text = this.message.text;
       this.editing = true;
       this.$nextTick(() => {

@@ -250,8 +250,8 @@ export default {
     },
     startEdit() {
 
-      // if message id is null, don't edit
-      if(!this.message_id) {
+      // no editing the intro message (no id), or while the app is busy
+      if(!this.message_id || this.uxLocked || this.appBusy) {
         return;
       }
 
