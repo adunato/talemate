@@ -4,11 +4,13 @@
   improvements:
   - "Pydantic Migration: Internal data models across the codebase converted to pydantic for stricter validation. No user-visible behavior changes."
   - "Character Sheet: Removed the read-only Character Sheet dialog and its button from the World State panel. The Manage character button (World State Manager) already covers viewing and editing character details."
+  - "Message Toolbar: Consolidated the hover toolbar shared by character, narrator, and context-investigation messages into a single component. Action chips now use a filled (tonal) style for better visibility, and the revision chip is labeled with the editor agent's configured revision method — 'Dedupe', 'Unslop', or 'Targeted Rewrite' — instead of the generic 'Editor Revision' label."
   fixes:
   - "Game Loop Event: Fixed an internal scene-loop event being constructed with the wrong scene reference, surfaced by the pydantic migration."
   - "Conversation Agent: Stopped injecting `#` into the LLM stop-sequence list on every conversation turn. The conversation agent's prompt-parameter hook now only wipes character-name stop sequences when the `inject_character_names_into_stop` setting is disabled, and is a no-op otherwise."
   - "Scene-Group Templates: Templates created via the prompt manager under the `scene` agent prefix (stored at `{scene}/templates/scene/`) are now resolvable from Jinja `{% include %}` calls regardless of the active agent type."
   - "Intro Message TTS: Fixed the scene tools audio control not activating when TTS was manually triggered for the intro message. The intro isn't a real scene message and has no id, so audio playback was emitted without a message id; the `intro` id is now forwarded through generation."
+  - "Create Pin: Fixed the Create Pin action on narrator messages staying clickable while the UI was locked during generation; it now respects the lock, matching the character message toolbar."
 0.37.0:
   features:
   - "System Prompt Template Variable: Added {{ system_prompt }} template variable for system prompt overrides. Use it to include the default system prompt within a custom override, at both the app and client level."

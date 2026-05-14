@@ -1,6 +1,6 @@
 <template>
   <!-- editing indicator -->
-  <v-chip size="x-small" color="indigo-lighten-4" v-if="editing">
+  <v-chip size="x-small" label color="indigo-lighten-4" variant="tonal" v-if="editing">
     <v-icon class="mr-1">mdi-pencil</v-icon>
     Editing - Press `enter` to submit. Click anywhere to cancel.
   </v-chip>
@@ -13,19 +13,19 @@
     </v-chip>
 
     <!-- create pin -->
-    <v-chip v-if="showPin" size="x-small" class="ml-2" label color="success" variant="outlined" @click="createPin(messageId)" :disabled="uxLocked">
+    <v-chip v-if="showPin" size="x-small" class="ml-2" label color="success" variant="tonal" @click="createPin(messageId)" :disabled="uxLocked">
       <v-icon class="mr-1">mdi-pin</v-icon>
       Create Pin
     </v-chip>
 
     <!-- revision -->
-    <v-chip v-if="showRevision && editorRevisionsEnabled && isLastMessage" size="x-small" class="ml-2" label color="dirty" variant="outlined" @click="reviseMessage(messageId)" :disabled="uxLocked">
+    <v-chip v-if="showRevision && editorRevisionsEnabled && isLastMessage" size="x-small" class="ml-2" label color="dirty" variant="tonal" @click="reviseMessage(messageId)" :disabled="uxLocked">
       <v-icon class="mr-1">mdi-typewriter</v-icon>
-      Editor Revision
+      {{ revisionLabel }}
     </v-chip>
 
     <!-- fork scene -->
-    <v-chip v-if="showFork && forkable" size="x-small" class="ml-2" label :color="rev > 0 ? 'highlight1' : 'muted'" variant="outlined" @click="forkSceneInitiate(messageId)" :disabled="uxLocked">
+    <v-chip v-if="showFork && forkable" size="x-small" class="ml-2" label :color="rev > 0 ? 'highlight1' : 'muted'" variant="tonal" @click="forkSceneInitiate(messageId)" :disabled="uxLocked">
       <v-icon class="mr-1">mdi-source-fork</v-icon>
       Fork
     </v-chip>
@@ -34,14 +34,14 @@
     <slot name="extra-actions" />
 
     <!-- generate tts -->
-    <v-chip v-if="showTts && ttsAvailable" size="x-small" class="ml-2" label color="secondary" variant="outlined" @click="generateTTS(messageId)" :disabled="uxLocked || ttsBusy">
+    <v-chip v-if="showTts && ttsAvailable" size="x-small" class="ml-2" label color="secondary" variant="tonal" @click="generateTTS(messageId)" :disabled="uxLocked || ttsBusy">
       <v-icon class="mr-1">mdi-account-voice</v-icon>
       TTS
       <v-progress-circular v-if="ttsBusy" class="ml-2" size="14" indeterminate="disable-shrink" color="secondary"></v-progress-circular>
     </v-chip>
 
     <!-- insert time passage -->
-    <v-chip v-if="showTimePassage" size="x-small" class="ml-2" label color="time" variant="outlined" @click="insertTimePassage(messageId)" :disabled="uxLocked">
+    <v-chip v-if="showTimePassage" size="x-small" class="ml-2" label color="time" variant="tonal" @click="insertTimePassage(messageId)" :disabled="uxLocked">
       <v-icon class="mr-1">mdi-clock-plus-outline</v-icon>
       Time Passage
     </v-chip>
@@ -49,6 +49,14 @@
 </template>
 
 <script>
+// Short chip labels for the editor agent's revision methods. Values mirror
+// `revision_method` choices in src/talemate/agents/editor/revision.py.
+const REVISION_METHOD_LABELS = {
+  dedupe: 'Dedupe',
+  unslop: 'Unslop',
+  rewrite: 'Targeted Rewrite',
+};
+
 // Shared hover toolbar for scene message components (CharacterMessage,
 // NarratorMessage, ContextInvestigationMessage, ...). Action handlers are
 // pulled from the provide/inject tree exposed by SceneMessages.vue, so the
@@ -79,6 +87,11 @@ export default {
     editorRevisionsEnabled: {
       type: Boolean,
       default: false,
+    },
+    // editor agent revision method: 'dedupe' | 'unslop' | 'rewrite'
+    editorRevisionMethod: {
+      type: String,
+      default: null,
     },
     ttsAvailable: {
       type: Boolean,
@@ -128,6 +141,9 @@ export default {
   computed: {
     forkable() {
       return this.rev <= this.sceneRev;
+    },
+    revisionLabel() {
+      return REVISION_METHOD_LABELS[this.editorRevisionMethod] || 'Revise';
     },
   },
 }

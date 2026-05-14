@@ -62,6 +62,7 @@
         :ux-locked="uxLocked"
         :is-last-message="isLastMessage"
         :editor-revisions-enabled="editorRevisionsEnabled"
+        :editor-revision-method="editorRevisionMethod"
         :tts-available="ttsAvailable"
         :tts-busy="ttsBusy"
         :rev="rev"
@@ -69,11 +70,11 @@
       >
         <template #extra-actions>
           <!-- generate continuation -->
-          <v-chip size="x-small" class="ml-2" label color="primary" v-if="!continuing && isLastMessage" variant="outlined" @click="continueConversation" :disabled="uxLocked">
+          <v-chip size="x-small" class="ml-2" label color="primary" v-if="!continuing && isLastMessage" variant="tonal" @click="continueConversation" :disabled="uxLocked">
             <v-icon class="mr-1">mdi-fast-forward</v-icon>
             Continue
           </v-chip>
-          <v-chip size="x-small" class="ml-2" label color="primary" v-if="continuing && isLastMessage" variant="outlined" disabled>
+          <v-chip size="x-small" class="ml-2" label color="primary" v-if="continuing && isLastMessage" variant="tonal" disabled>
             <v-progress-circular class="mr-1" size="14" indeterminate="disable-shrink" color="primary"></v-progress-circular>
             Continuing...
           </v-chip>
@@ -129,6 +130,10 @@ export default {
     editorRevisionsEnabled: {
       type: Boolean,
       default: false,
+    },
+    editorRevisionMethod: {
+      type: String,
+      default: null,
     },
     ttsAvailable: {
       type: Boolean,
