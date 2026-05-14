@@ -688,7 +688,12 @@ class RevisionMixin:
         for message in event.messages:
             if not isinstance(message, (CharacterMessage, NarratorMessage)):
                 continue
-            original = await self.maybe_revise_inplace(message)
+            # The message is already in scene history by the time the
+            # push_history signal fires, so scope the revision context to
+            # it — otherwise the repetition range collects the message
+            # itself and every sentence matches itself at 100%.
+            with RevisionContext(message.id):
+                original = await self.maybe_revise_inplace(message)
             if original is not None:
                 message.mutations.append(
                     MessageMutation(message=original, source="original")

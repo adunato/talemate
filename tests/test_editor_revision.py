@@ -345,6 +345,25 @@ class TestCollectRepetitionRange:
         result = await editor.revision_collect_repetition_range()
         assert result == []
 
+    async def test_excludes_context_message_and_anything_after(self, editor_scene):
+        """A ``RevisionContext`` excludes the message under revision (and
+        anything after it) from the comparison range."""
+        scene, editor = editor_scene
+        target = NarratorMessage(message="the target message", source="ai")
+        scene.history = [
+            NarratorMessage(message="earlier one", source="ai"),
+            target,
+            NarratorMessage(message="later one", source="ai"),
+        ]
+        editor.actions["revision"].config["repetition_range"].value = 10
+
+        with RevisionContext(message_id=target.id):
+            result = await editor.revision_collect_repetition_range()
+
+        assert any("earlier one" in r for r in result)
+        assert all("the target message" not in r for r in result)
+        assert all("later one" not in r for r in result)
+
 
 # ---------------------------------------------------------------------------
 # revision_detect_bad_prose (regex branch)
@@ -1023,6 +1042,30 @@ class TestRevisionOnPush:
         # Second was left alone.
         assert m2.message == "second"
         assert m2.mutations == []
+
+    async def test_revision_context_scoped_to_pushed_message(
+        self, stub_revise_narrator
+    ):
+        """``revision_on_push`` scopes a ``RevisionContext`` to the pushed
+        message so the repetition range can exclude it."""
+        scene, editor = stub_revise_narrator
+
+        seen_message_id = None
+
+        async def capture_context(info):
+            nonlocal seen_message_id
+            seen_message_id = revision_context.get().message_id
+            return info.text
+
+        editor.revision_revise = capture_context
+
+        msg = NarratorMessage(message="pushed narration")
+        scene.history = [msg]
+        event = HistoryEvent(scene=scene, event_type="push_history", messages=[msg])
+
+        await editor.revision_on_push(event)
+
+        assert seen_message_id == msg.id
 
 
 # ---------------------------------------------------------------------------

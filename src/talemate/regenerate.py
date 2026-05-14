@@ -4,6 +4,7 @@ from talemate.instance import get_agent
 from talemate.emit import emit
 import talemate.events as events
 import talemate.emit.async_signals as async_signals
+from talemate.agents.editor.revision import RevisionContext
 from talemate.context import regeneration_context
 from talemate.scene_message import (
     SceneMessage,
@@ -329,10 +330,13 @@ async def _regenerate_inplace(
 
     # Auto-revision normally runs at push_history time, but in-place
     # regenerate skips push_history. Invoke the editor's in-place hook
-    # directly so the same gating + behavior applies.
+    # directly so the same gating + behavior applies. Scope the revision
+    # context to the original message slot (still in history) so the
+    # repetition range excludes it — new_message isn't in history yet.
     mutations: list[MessageMutation] = []
     editor = get_agent("editor")
-    original = await editor.maybe_revise_inplace(new_message)
+    with RevisionContext(message.id):
+        original = await editor.maybe_revise_inplace(new_message)
     canonical_was_revised = bool(original) and original != new_message.message
     # Drop the mutation when it equals the prior canonical — that text
     # is already in the frontend stack at the active index. The
