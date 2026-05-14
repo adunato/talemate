@@ -566,6 +566,9 @@ export default {
             insertTimePassageAmount: 1,
             insertTimePassageUnit: 'hours',
             insertTimePassageUnits: ['minutes', 'hours', 'days', 'weeks', 'months', 'years'],
+            // id of the message awaiting an editor revision (its spinner is
+            // cleared on the editor `operation_done` envelope, which has no id)
+            revisionPendingId: null,
         }
     },
     computed: {
@@ -1094,11 +1097,31 @@ export default {
         },
 
         reviseMessage(message_id) {
+            // `regenerating` is overloaded boolean|string: a string doubles
+            // as the spinner verb ('Revising' vs the default 'Regenerating').
+            // Cleared on the `message_edited` (reason=revision) echo and, for
+            // the no-op/failure/cancel paths, on the editor `operation_done`
+            // envelope — which carries no id, so track the pending slot here.
+            const idx = this.revisionFindSlotIndex(message_id);
+            if (idx >= 0) {
+                this.messages[idx].regenerating = 'Revising';
+                this.revisionPendingId = message_id;
+            }
             this.getWebsocket().send(JSON.stringify({
                 type: 'editor',
                 action: 'request_revision',
                 message_id: message_id,
             }));
+        },
+
+        // Stop the revision spinner on the slot reviseMessage() flagged.
+        clearRevisionPending() {
+            if (this.revisionPendingId == null) return;
+            const idx = this.revisionFindSlotIndex(this.revisionPendingId);
+            if (idx >= 0) {
+                this.messages[idx].regenerating = false;
+            }
+            this.revisionPendingId = null;
         },
 
         generateTTS(message_id) {
@@ -1676,6 +1699,17 @@ export default {
                 // event for their own input-busy bookkeeping.
             }
 
+            // The editor router posts an `operation_done` envelope when a
+            // revision finishes via the no-op, failure, or cancel path (the
+            // happy path clears below via `message_edited` reason='revision').
+            // The envelope carries no id, so clear only the tracked pending
+            // slot — clearing all flagged slots would stop a concurrent
+            // in-place regenerate's spinner. Don't return — other components
+            // consume the envelope for their own busy bookkeeping.
+            if (data.type === 'editor' && data.action === 'operation_done') {
+                this.clearRevisionPending();
+            }
+
             if (data.type == "system" && data.id == "scene.looading") {
                 // scene started loaded, clear messages
                 this.messages = [];
@@ -1711,6 +1745,7 @@ export default {
                         const canonicalEntry = { message: data.message, source: canonicalSource };
                         if (data.reason === 'revision') {
                             this.revisionAppendAfterCurrent(data.id, [canonicalEntry]);
+                            this.clearRevisionPending();
                         } else if (data.reason === 'regenerate') {
                             this.revisionAppendAtEnd(
                                 data.id,

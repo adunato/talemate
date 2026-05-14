@@ -15,7 +15,7 @@
     </template>
     <v-chip v-if="busy" size="small" variant="text" class="revision-busy-chip" color="primary">
       <v-progress-circular indeterminate size="16" width="2" color="primary" class="mr-2" />
-      Regenerating
+      {{ busyLabel }}
     </v-chip>
   </span>
 </template>
@@ -46,18 +46,23 @@ export default {
       type: Boolean,
       default: false,
     },
+    // false / '' = not busy; true = busy with the default label;
+    // a string = busy with that label as the verb (e.g. 'Revising').
     busy: {
-      type: Boolean,
+      type: [Boolean, String],
       default: false,
     },
   },
   emits: ['navigate'],
   computed: {
+    busyLabel() {
+      return typeof this.busy === 'string' ? this.busy : 'Regenerating';
+    },
     sourceTag() {
       return this.source ? SOURCE_TAGS[this.source] || null : null;
     },
     title() {
-      if (this.busy) return 'Regenerating…';
+      if (this.busy) return `${this.busyLabel}…`;
       const base = `Revision ${this.index + 1} of ${this.count}`;
       return this.sourceTag ? `${base} (${this.sourceTag.label})` : base;
     },

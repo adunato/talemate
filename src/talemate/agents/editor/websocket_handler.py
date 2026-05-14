@@ -2,7 +2,6 @@ import pydantic
 import structlog
 from typing import TYPE_CHECKING
 
-from talemate.emit import emit
 from talemate.instance import get_agent
 from talemate.server.websocket_plugin import Plugin
 from talemate.scene_message import CharacterMessage
@@ -73,13 +72,21 @@ class EditorWebsocketHandler(Plugin):
         # revision stack instead of replacing the current entry in place.
         # No-op revisions don't touch the message and surface a status so
         # the user knows the action completed without effect.
+        #
+        # Either way, post an `operation_done` envelope so the frontend can
+        # clear the per-message "regenerating" spinner — the happy path also
+        # clears on the `message_edited` echo, but the no-op path has no
+        # other completion signal.
         if revised != original:
             scene.edit_message(
                 message.id, revised, reason="revision", mutation_source="revision"
             )
+            await self.signal_operation_done(signal_only=True)
         else:
-            emit(
-                "status",
-                message="Editor revision produced no changes",
-                status="info",
+            await self.signal_operation_done(
+                signal_only=True,
+                emit_status_message={
+                    "message": "Editor revision produced no changes",
+                    "status": "info",
+                },
             )

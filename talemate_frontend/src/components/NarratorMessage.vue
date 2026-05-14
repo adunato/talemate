@@ -160,7 +160,7 @@ export default {
       default: null,
     },
     revisionBusy: {
-      type: Boolean,
+      type: [Boolean, String],
       default: false,
     },
   },
