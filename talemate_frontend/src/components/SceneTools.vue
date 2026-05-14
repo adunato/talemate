@@ -362,8 +362,11 @@ export default {
             const { nuke_repetition, method } = this.pendingDirectedRegen;
             this.pendingDirectedRegen = null;
 
+            // Nothing regenerable (e.g. only the scene intro is shown) —
+            // skip the no-op backend round-trip and the input lock.
+            if (!this.requestRegenerateLastMessage()) return;
+
             this.setInputDisabled(true);
-            this.requestRegenerateLastMessage();
             this.getWebsocket().send(JSON.stringify({
                 type: 'assistant',
                 action: 'regenerate_directed',
@@ -387,8 +390,11 @@ export default {
 
             if (this.appBusy) return;
 
+            // Nothing regenerable (e.g. only the scene intro is shown) —
+            // skip the no-op backend round-trip and the input lock.
+            if (!this.requestRegenerateLastMessage()) return;
+
             this.setInputDisabled(true);
-            this.requestRegenerateLastMessage();
             this.getWebsocket().send(JSON.stringify({
                 type: 'assistant',
                 action: 'regenerate',
@@ -410,8 +416,11 @@ export default {
 
             if (this.appBusy) return;
 
+            // Nothing regenerable (e.g. only the scene intro is shown) —
+            // skip the no-op backend round-trip and the input lock.
+            if (!this.requestRegenerateLastMessage()) return;
+
             this.setInputDisabled(true);
-            this.requestRegenerateLastMessage();
             this.getWebsocket().send(JSON.stringify({
                 type: 'assistant',
                 action: 'regenerate',

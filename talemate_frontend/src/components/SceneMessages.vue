@@ -914,7 +914,9 @@ export default {
         // Mark the most recent revision-supporting message as
         // `regenerating` so its pager spinner kicks in immediately. The
         // flag is cleared on the matching `message_edited`
-        // (reason=regenerate) or `regenerate_failed` event.
+        // (reason=regenerate) or `regenerate_failed` event. Returns true
+        // when a slot was flagged, false when there is nothing to
+        // regenerate so callers can skip the backend round-trip.
         //
         // Heuristic: walks back from the tail and picks the first
         // revisable type. The backend's `regenerate_target_message` only
@@ -924,14 +926,19 @@ export default {
         // backend's target — in that case the catch-all
         // `assistant.regenerate_failed` handler clears every flagged
         // slot, self-correcting the divergence.
+        //
+        // The scene intro renders through NarratorMessage.vue but is not
+        // a real scene message (it carries no id and isn't in scene
+        // history), so it's never a regen target — skip id-less slots.
         requestRegenerateLastMessage() {
             for (let i = this.messages.length - 1; i >= 0; i--) {
                 const m = this.messages[i];
-                if (this.revisionSupportedType(m.type)) {
+                if (this.revisionSupportedType(m.type) && m.id) {
                     m.regenerating = true;
-                    return;
+                    return true;
                 }
             }
+            return false;
         },
 
         handleChoiceInput(data) {
