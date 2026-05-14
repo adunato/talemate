@@ -53,6 +53,7 @@
           :message-id="message_id"
           :editing="editing"
           :ux-locked="uxLocked"
+          :app-busy="appBusy"
           :is-last-message="isLastMessage"
           :editor-revisions-enabled="editorRevisionsEnabled"
           :editor-revision-method="editorRevisionMethod"
@@ -65,7 +66,7 @@
       <div v-else>
         <span class="text-muted text-caption">To edit the intro message open the <v-btn size="x-small" variant="text" color="primary" @click="openWorldStateManager('scene')"><v-icon>mdi-script</v-icon>Scene Editor</v-btn></span>
         <!-- generate tts -->
-        <v-chip size="x-small" class="ml-2" label color="secondary" v-if="!editing && hovered && ttsAvailable" variant="tonal" @click="generateTTS('intro')" :disabled="uxLocked || ttsBusy">
+        <v-chip size="x-small" class="ml-2" label color="secondary" v-if="!editing && hovered && ttsAvailable" variant="tonal" @click="generateTTS('intro')" :disabled="uxLocked || appBusy || ttsBusy">
           <v-icon class="mr-1">mdi-account-voice</v-icon>
           TTS
           <v-progress-circular v-if="ttsBusy" class="ml-2" size="14" indeterminate="disable-shrink"
@@ -106,6 +107,10 @@ export default {
     uxLocked: {
       type: Boolean,
       required: true
+    },
+    appBusy: {
+      type: Boolean,
+      default: false,
     },
     isLastMessage: {
       type: Boolean,

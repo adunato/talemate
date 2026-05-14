@@ -13,19 +13,19 @@
     </v-chip>
 
     <!-- create pin -->
-    <v-chip v-if="showPin" size="x-small" class="ml-2" label color="success" variant="tonal" @click="createPin(messageId)" :disabled="uxLocked">
+    <v-chip v-if="showPin" size="x-small" class="ml-2" label color="success" variant="tonal" @click="createPin(messageId)" :disabled="uxLocked || appBusy">
       <v-icon class="mr-1">mdi-pin</v-icon>
       Create Pin
     </v-chip>
 
     <!-- revision -->
-    <v-chip v-if="showRevision && editorRevisionsEnabled && isLastMessage" size="x-small" class="ml-2" label color="dirty" variant="tonal" @click="reviseMessage(messageId)" :disabled="uxLocked">
+    <v-chip v-if="showRevision && editorRevisionsEnabled && isLastMessage" size="x-small" class="ml-2" label color="dirty" variant="tonal" @click="reviseMessage(messageId)" :disabled="uxLocked || appBusy">
       <v-icon class="mr-1">mdi-typewriter</v-icon>
       {{ revisionLabel }}
     </v-chip>
 
     <!-- fork scene -->
-    <v-chip v-if="showFork && forkable" size="x-small" class="ml-2" label :color="rev > 0 ? 'highlight1' : 'muted'" variant="tonal" @click="forkSceneInitiate(messageId)" :disabled="uxLocked">
+    <v-chip v-if="showFork && forkable" size="x-small" class="ml-2" label :color="rev > 0 ? 'highlight1' : 'muted'" variant="tonal" @click="forkSceneInitiate(messageId)" :disabled="uxLocked || appBusy">
       <v-icon class="mr-1">mdi-source-fork</v-icon>
       Fork
     </v-chip>
@@ -34,14 +34,14 @@
     <slot name="extra-actions" />
 
     <!-- generate tts -->
-    <v-chip v-if="showTts && ttsAvailable" size="x-small" class="ml-2" label color="secondary" variant="tonal" @click="generateTTS(messageId)" :disabled="uxLocked || ttsBusy">
+    <v-chip v-if="showTts && ttsAvailable" size="x-small" class="ml-2" label color="secondary" variant="tonal" @click="generateTTS(messageId)" :disabled="uxLocked || appBusy || ttsBusy">
       <v-icon class="mr-1">mdi-account-voice</v-icon>
       TTS
       <v-progress-circular v-if="ttsBusy" class="ml-2" size="14" indeterminate="disable-shrink" color="secondary"></v-progress-circular>
     </v-chip>
 
     <!-- insert time passage -->
-    <v-chip v-if="showTimePassage" size="x-small" class="ml-2" label color="time" variant="tonal" @click="insertTimePassage(messageId)" :disabled="uxLocked">
+    <v-chip v-if="showTimePassage" size="x-small" class="ml-2" label color="time" variant="tonal" @click="insertTimePassage(messageId)" :disabled="uxLocked || appBusy">
       <v-icon class="mr-1">mdi-clock-plus-outline</v-icon>
       Time Passage
     </v-chip>
@@ -77,6 +77,10 @@ export default {
       default: false,
     },
     uxLocked: {
+      type: Boolean,
+      default: false,
+    },
+    appBusy: {
       type: Boolean,
       default: false,
     },

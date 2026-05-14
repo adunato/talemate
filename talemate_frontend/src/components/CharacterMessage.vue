@@ -60,6 +60,7 @@
         :message-id="message_id"
         :editing="editing"
         :ux-locked="uxLocked"
+        :app-busy="appBusy"
         :is-last-message="isLastMessage"
         :editor-revisions-enabled="editorRevisionsEnabled"
         :editor-revision-method="editorRevisionMethod"
@@ -70,7 +71,7 @@
       >
         <template #extra-actions>
           <!-- generate continuation -->
-          <v-chip size="x-small" class="ml-2" label color="primary" v-if="!continuing && isLastMessage" variant="tonal" @click="continueConversation" :disabled="uxLocked">
+          <v-chip size="x-small" class="ml-2" label color="primary" v-if="!continuing && isLastMessage" variant="tonal" @click="continueConversation" :disabled="uxLocked || appBusy">
             <v-icon class="mr-1">mdi-fast-forward</v-icon>
             Continue
           </v-chip>
@@ -122,6 +123,10 @@ export default {
     uxLocked: {
       type: Boolean,
       required: true,
+    },
+    appBusy: {
+      type: Boolean,
+      default: false,
     },
     isLastMessage: {
       type: Boolean,

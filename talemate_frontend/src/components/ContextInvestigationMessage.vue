@@ -53,6 +53,7 @@
         :message-id="message.id"
         :editing="editing"
         :ux-locked="uxLocked"
+        :app-busy="appBusy"
         :tts-available="ttsAvailable"
         :tts-busy="ttsBusy"
         :show-pin="false"
@@ -148,6 +149,10 @@ export default {
   props: {
     message: Object,
     uxLocked: Boolean,
+    appBusy: {
+      type: Boolean,
+      default: false,
+    },
     isLastMessage: Boolean,
     ttsAvailable: {
       type: Boolean,

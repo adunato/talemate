@@ -259,6 +259,7 @@
                         ref="sceneMessages"
                         :appearance-config="effectiveAppearanceConfig"
                         :ux-locked="uxLocked"
+                        :app-busy="busy"
                         :agent-status="agentStatus"
                         :audio-played-for-message-id="audioPlayedForMessageId"
                         :scene="scene"
