@@ -1,5 +1,5 @@
 <template>
-  <v-alert variant="text" color="narrator" elevation="0" density="compact"  @mouseover="hovered=true" @mouseleave="hovered=false">
+  <v-alert variant="text" color="narrator" elevation="0" density="compact" :style="{ opacity: revisionBusy ? 0.65 : 1, transition: 'opacity 0.2s ease' }" @mouseover="hovered=true" @mouseleave="hovered=false">
     <template v-slot:close>
       <v-btn size="small" icon variant="text" class="close-button" @click="deleteMessage" :disabled="uxLocked">
         <v-icon>mdi-close</v-icon>
