@@ -24,7 +24,12 @@ from talemate.world_state.templates import (
 from talemate.changelog import write_reconstructed_scene
 from talemate.save import SceneEncoder
 import os
-from talemate.agents.base import AgentAction, AgentActionConfig, AgentTemplateEmission
+from talemate.agents.base import (
+    AgentAction,
+    AgentActionConfig,
+    AgentActionNote,
+    AgentTemplateEmission,
+)
 from talemate.agents.creator.response_specs import COMPLETION_SPEC
 import talemate.emit.async_signals as async_signals
 
@@ -202,6 +207,24 @@ class AssistantMixin:
                     max=256,
                     step=16,
                 ),
+                "hints_enabled": AgentActionConfig(
+                    type="bool",
+                    label="Enable Hints",
+                    description="Allow guiding autocomplete with a trailing `{...}` hint block. When off, any trailing `{...}` is treated as part of the input.",
+                    value=True,
+                    note_on_value={
+                        True: AgentActionNote(
+                            icon="mdi-information-outline",
+                            color="primary",
+                            text=(
+                                "End your input with `{...}` to nudge the completion. "
+                                'Example: `"Kaira!?" he yelled {dark corridor, no '
+                                "response}` cues the model on tone and beats without "
+                                "leaving the braces in the scene."
+                            ),
+                        ),
+                    },
+                ),
             },
         )
 
@@ -214,6 +237,10 @@ class AssistantMixin:
     @property
     def autocomplete_narrative_suggestion_length(self):
         return self.actions["autocomplete"].config["narrative_suggestion_length"].value
+
+    @property
+    def autocomplete_hints_enabled(self):
+        return self.actions["autocomplete"].config["hints_enabled"].value
 
     # actions
 
@@ -497,11 +524,21 @@ class AssistantMixin:
         if not response_length:
             response_length = self.autocomplete_dialogue_suggestion_length
 
+        input, hint = (
+            util.extract_autocomplete_hint(input)
+            if self.autocomplete_hints_enabled
+            else (input, None)
+        )
+
         # continuing recent character message
         non_anchor, anchor = util.split_anchor_text(input, 10)
 
         self.scene.log.debug(
-            "autocomplete_anchor", anchor=anchor, non_anchor=non_anchor, input=input
+            "autocomplete_anchor",
+            anchor=anchor,
+            non_anchor=non_anchor,
+            input=input,
+            hint=hint,
         )
 
         continuing_message = False
@@ -528,6 +565,7 @@ class AssistantMixin:
             "message": message,
             "anchor": anchor,
             "non_anchor": non_anchor,
+            "hint": hint,
         }
 
         emission = AutocompleteEmission(
@@ -603,6 +641,12 @@ class AssistantMixin:
         if not response_length:
             response_length = self.autocomplete_narrative_suggestion_length
 
+        input, hint = (
+            util.extract_autocomplete_hint(input)
+            if self.autocomplete_hints_enabled
+            else (input, None)
+        )
+
         # Split the input text into non-anchor and anchor parts
         non_anchor, anchor = util.split_anchor_text(input, 10)
 
@@ -611,6 +655,7 @@ class AssistantMixin:
             anchor=anchor,
             non_anchor=non_anchor,
             input=input,
+            hint=hint,
         )
 
         template_vars = {
@@ -621,6 +666,7 @@ class AssistantMixin:
             "response_length": response_length,
             "anchor": anchor,
             "non_anchor": non_anchor,
+            "hint": hint,
         }
 
         emission = AutocompleteEmission(

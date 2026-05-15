@@ -68,6 +68,7 @@ Override example:
 {% if volatile_placement == "after_history" %}{{ volatile_context_text }}{% endif %}
 
 {{ character_guidance_content }}
+{% include "autocomplete-hint.jinja2" %}
 <|SECTION:TASK|>
 You are assisting a script editor in writing the next line of dialogue or action for {{ character.name.upper() }} in the current scene.
 

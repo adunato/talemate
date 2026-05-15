@@ -413,6 +413,10 @@ import { debounce } from 'lodash';
 import { isVisualAgentReady, isImageEditAvailable, isImageCreateAvailable } from '@/constants/visual';
 import { createSceneAssetsRequester } from './VisualAssetsMixin.js';
 
+// Mirror of AUTOCOMPLETE_HINT_RE in src/talemate/util/dialogue.py.
+// Used only for cosmetic textbox cleanup; the backend is the semantic source of truth.
+const AUTOCOMPLETE_HINT_RE = /\s*\{[^{}]+\}\s*$/;
+
 export default {
   components: {
     AIClient,
@@ -554,6 +558,7 @@ export default {
       autocompletePartialInput: "",
       autocompleteCallback: null,
       autocompleteFocusElement: null,
+      autocompleteHintsEnabledAtSend: true,
       worldStateTemplates: {},
       // busy status of agents
       agentStatus: {},
@@ -1288,7 +1293,20 @@ export default {
     onAutocompleteEnd(completion) {
       this.inputDisabled = false;
       this.autocompleting = false;
+      // Use the toggle value captured at send time, so toggling mid-flight
+      // doesn't desync from what the backend already decided.
+      if (this.autocompleteHintsEnabledAtSend) {
+        this.messageInput = this.messageInput.replace(AUTOCOMPLETE_HINT_RE, '');
+      }
       this.messageInput += completion;
+    },
+
+    autocompleteHintsEnabled() {
+      // `!== false` mirrors the Python `value=True` default during the
+      // brief pre-sync window before agent state has been received.
+      const creator = this.getAgents().find(a => a.name === 'creator');
+      const value = creator?.actions?.autocomplete?.config?.hints_enabled?.value;
+      return value !== false;
     },
 
     scrollInputIntoView() {
@@ -1336,6 +1354,7 @@ export default {
       };
       this.autocompleteFocusElement = focus_element;
       this.autocompletePartialInput = param.partial;
+      this.autocompleteHintsEnabledAtSend = this.autocompleteHintsEnabled();
 
       const param_copy = JSON.parse(JSON.stringify(param));
       param_copy.type = "assistant";
