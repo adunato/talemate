@@ -55,9 +55,7 @@ def _add_active_player(scene, name: str) -> Character:
     return character
 
 
-def _add_inactive_character(
-    scene, name: str, is_player: bool = False
-) -> Character:
+def _add_inactive_character(scene, name: str, is_player: bool = False) -> Character:
     """Inactive character — present in ``character_data`` but without an
     actor and not in ``active_characters``.
     """
