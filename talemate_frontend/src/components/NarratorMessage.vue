@@ -61,7 +61,18 @@
           :tts-busy="ttsBusy"
           :rev="rev"
           :scene-rev="sceneRev"
-        />
+        >
+          <template #extra-actions>
+            <v-chip size="x-small" class="ml-2" label color="narrator" v-if="!continuing && isLastMessage" variant="tonal" @click="continueNarration" :disabled="uxLocked || appBusy">
+              <v-icon class="mr-1">mdi-fast-forward</v-icon>
+              Continue
+            </v-chip>
+            <v-chip size="x-small" class="ml-2" label color="narrator" v-if="continuing && isLastMessage" variant="tonal" disabled>
+              <v-progress-circular class="mr-1" size="14" indeterminate="disable-shrink" color="narrator"></v-progress-circular>
+              Continuing...
+            </v-chip>
+          </template>
+        </MessageToolbar>
       </div>
       <div v-else>
         <span class="text-muted text-caption">To edit the intro message open the <v-btn size="x-small" variant="text" color="primary" @click="openWorldStateManager('scene')"><v-icon>mdi-script</v-icon>Scene Editor</v-btn></span>
@@ -84,6 +95,7 @@
 import { SceneTextParser } from '@/utils/sceneMessageRenderer';
 import { insertNewlineAtCursor } from '@/utils/textAreaUtils';
 import { isPrimaryModifier } from '@/utils/keyboardModifiers';
+import { spliceContinuation } from '@/utils/messageContinuation';
 import MessageAssetImage from './MessageAssetImage.vue';
 import MessageAssetMixin from './MessageAssetMixin.js';
 import RevisionNav from './RevisionNav.vue';
@@ -211,6 +223,7 @@ export default {
     return {
       editing: false,
       autocompleting: false,
+      continuing: false,
       editing_text: "",
       hovered: false,
     }
@@ -245,6 +258,31 @@ export default {
       )
     },
 
+    continueNarration() {
+      this.continuing = true;
+      this.autocompleteRequest(
+        {
+          partial: this.text,
+          context: "narrative:continue",
+        },
+        (completion) => {
+          this.continuing = false;
+
+          if (completion.trim() === "") {
+            return;
+          }
+
+          this.editing_text = spliceContinuation(this.text, completion);
+
+          this.submitEdit({
+            reason: 'continue',
+            mutation_source: 'continue',
+          });
+        },
+        this.$refs.textarea
+      )
+    },
+
     cancelEdit() {
       this.editing = false;
     },
@@ -261,8 +299,15 @@ export default {
         this.$refs.textarea.focus();
       });
     },
-    submitEdit() {
-      this.getWebsocket().send(JSON.stringify({ type: 'scene_message', action: 'edit', id: this.message_id, text: this.editing_text }));
+    submitEdit(meta = null) {
+      const payload = {
+        ...(meta || {}),
+        type: 'scene_message',
+        action: 'edit',
+        id: this.message_id,
+        text: this.editing_text,
+      };
+      this.getWebsocket().send(JSON.stringify(payload));
       this.editing = false;
     },
     deleteMessage() {

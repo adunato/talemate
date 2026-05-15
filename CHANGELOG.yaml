@@ -2,7 +2,7 @@
   features:
   - "Message Revision History: Regenerated AI messages now show a paginator above the message body. Click the arrows to browse previous regenerations; the version you're viewing becomes the canonical one the AI continues from. Lives in the browser session only."
   improvements:
-  - "Message Revision History: Continuing a character message now creates a navigable revision entry tagged 'Continued', alongside the existing regenerate entries. The pre-continuation text is reachable via the paginator arrows."
+  - "Message Revision History: Continuing a character or narrator message now creates a navigable revision entry tagged 'Continued', alongside the existing regenerate entries. The pre-continuation text is reachable via the paginator arrows. Narrator messages also gain the Continue action on the hover toolbar to match the character-message flow."
   - "Pydantic Migration: Internal data models across the codebase converted to pydantic for stricter validation. No user-visible behavior changes."
   - "Character Sheet: Removed the read-only Character Sheet dialog and its button from the World State panel. The Manage character button (World State Manager) already covers viewing and editing character details."
   - "Message Toolbar: Consolidated the hover toolbar shared by character, narrator, and context-investigation messages into a single component. Action chips now use a filled (tonal) style for better visibility, and the revision chip is labeled with the editor agent's configured revision method — 'Dedupe', 'Unslop', or 'Targeted Rewrite' — instead of the generic 'Editor Revision' label."

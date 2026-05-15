@@ -70,7 +70,6 @@
         :scene-rev="sceneRev"
       >
         <template #extra-actions>
-          <!-- generate continuation -->
           <v-chip size="x-small" class="ml-2" label color="primary" v-if="!continuing && isLastMessage" variant="tonal" @click="continueConversation" :disabled="uxLocked || appBusy">
             <v-icon class="mr-1">mdi-fast-forward</v-icon>
             Continue
@@ -92,6 +91,7 @@
 import { SceneTextParser } from '@/utils/sceneMessageRenderer';
 import { insertNewlineAtCursor } from '@/utils/textAreaUtils';
 import { isPrimaryModifier } from '@/utils/keyboardModifiers';
+import { spliceContinuation } from '@/utils/messageContinuation';
 import MessageAssetImage from './MessageAssetImage.vue';
 import MessageAssetMixin from './MessageAssetMixin.js';
 import RevisionNav from './RevisionNav.vue';
@@ -305,24 +305,8 @@ export default {
             return;
           }
 
-          // if text ends with a quote and completion starts with a quote, remove the quotes
-          // and insert a period at the end of the current text
-          if (this.text.endsWith('"') && completion.startsWith('"')) {
-            completion = completion.slice(1);
-            let text = this.text.slice(0, -1);
+          this.editing_text = spliceContinuation(this.text, completion);
 
-            // if text does not end with a period, add one
-            if (!text.endsWith('.')) {
-              text += '.';
-            }
-
-            this.editing_text = text + " " + completion;
-          } else {
-            this.editing_text = this.text + completion;
-          }
-
-          // Tag the commit so the echo lands as a new entry on the
-          // slot's revision stack instead of replacing the active one.
           this.submitEdit({
             reason: 'continue',
             mutation_source: 'continue',
