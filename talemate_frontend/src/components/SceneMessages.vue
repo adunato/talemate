@@ -278,7 +278,7 @@
     </v-dialog>
 
     <div class="message-container mb-8" ref="messageContainer" style="flex-grow: 1; overflow-y: auto;">
-        <div v-for="(message, index) in messages" :key="index" class="message-wrapper">
+        <div v-for="(message, index) in messages" :key="message.id != null ? `${message.type}-${message.id}` : `idx-${index}`" class="message-wrapper">
             <div v-if="message.type === 'character' || message.type === 'processing_input'"
                 :class="`message ${message.type}`" :id="`message-${message.id}`" :style="{ borderColor: message.color }">
                 <div class="character-message">
