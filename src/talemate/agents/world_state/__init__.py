@@ -864,6 +864,7 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
             summary,
             {
                 "ts": ts,
+                "pin_only": True,
             },
         )
 

@@ -14,6 +14,7 @@
   - "Intro Message TTS: Fixed the scene tools audio control not activating when TTS was manually triggered for the intro message. The intro isn't a real scene message and has no id, so audio playback was emitted without a message id; the `intro` id is now forwarded through generation."
   - "Create Pin: Fixed the Create Pin action on narrator messages staying clickable while the UI was locked during generation; it now respects the lock, matching the character message toolbar."
   - "Message Toolbar: Fixed the message hover-toolbar actions (Create Pin, Revise, Fork, Continue, TTS, Time Passage) and double-click message editing staying available while a background agent operation was running. They now disable for the duration, matching the rest of the scene controls, and the hover hint reads 'Editing locked' while editing is unavailable."
+  - "Create Pin: World entries created via the Create Pin message action are now marked Include only when pinned. They surface in context exclusively through the pin and are skipped by automatic relevancy matching, preventing the auto-generated summary from being retrieved as ambient memory."
 0.37.0:
   features:
   - "System Prompt Template Variable: Added {{ system_prompt }} template variable for system prompt overrides. Use it to include the default system prompt within a custom override, at both the app and client level."
