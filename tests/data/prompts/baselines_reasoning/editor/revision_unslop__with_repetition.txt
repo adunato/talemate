@@ -1,11 +1,3 @@
-{#-
-Extractors:
-  - fix: AnchorExtractor("<FIX>", "</FIX>")
-
-Override example:
-  {{ set_anchor_extractor("fix", "<MY_TAG>", "</MY_TAG>") }}
-  {{ set_as_is_extractor("fix") }}
--#}
 ## Examples
 
 <REVIEW>
@@ -86,33 +78,7 @@ Mark grabbed his chipped coffee mug and took a long sip, then rubbed his temples
 "Need more caffeine," he muttered.
 </FIX>
 
-{% if decensor %}---
-
-<REVIEW>
-"This goddamn contraption is malfunctioning again," she exclaimed with considerable frustration, her delicate fingers trembling like autumn leaves as she gestured toward the temperamental machinery. 
-"Perhaps we should attempt to recalibrate the technical parameters," suggested Marcus, adjusting his wire-rimmed spectacles.
-"Screw the parameters, Marcus. This piece of shit never works properly," she retorted.
-</REVIEW>
-
-<ANALYSIS>
-- Thought process: The frustration comes through in the cursing, which is good, but it's buried under purple prose about trembling fingers and autumn leaves. Also, one character talks like they're angry while the other sounds like a technical manual. Marcus's name is used way too much.
-- Purple prose: YES - "delicate fingers trembling like autumn leaves," "temperamental machinery"
-- Unnatural dialogue: MIXED - some parts natural ("This goddamn contraption"), others stiff ("recalibrate the technical parameters")
-- Over-description: YES - hand descriptions, spectacle adjusting
-- Length: TOO LONG
-- Tense: PAST - "she exclaimed"
-- Mature content: PRESERVE - keep "goddamn," "screw," "piece of shit" as is
-- Name overuse: YES - "Marcus" used twice unnecessarily
-- Talking vs Showing: NO - frustration shown through cursing, not explicitly stated
-</ANALYSIS>
-
-<FIX>
-"This goddamn thing is broken again," she said, pointing at the machine.
-"Maybe we should try recalibrating it?" 
-"Screw that. This piece of shit never works."
-</FIX>
-
-{% endif %}---
+---
 
 <REVIEW>
 "Oh no, I appear to have misplaced my keys again," Jennifer announced to the empty room, her voice echoing off the pristine walls. "I must search for them systematically. First, I shall check the kitchen counter, then proceed to examine my jacket pockets."
@@ -223,36 +189,8 @@ He leaned over her shoulder. "That started after the firmware update. Want me to
 "Not yet. Let me check the secondary loop first."
 </FIX>
 
-{% if repetition %}---
+---
 
-{% if repetition_handling == "rewrite" %}
-<REVIEW>
-The plaza was a sea of bodies, no space between strangers, every breath someone else's. People shouted over each other, and the heat off so many bodies turned the air heavy.
-A vendor pushed past with a tray of skewers. The crowd surged forward as the speaker took the stage, jammed elbow to elbow with no room to move.
-</REVIEW>
-
-<REPETITION ISSUES>
-- MATCH: `jammed elbow to elbow with no room to move`
-</REPETITION ISSUES>
-
-<ANALYSIS>
-- Thought process: The flagged tail shares no words with paragraph 1, but it semantically repeats "no space between strangers, every breath someone else's" — the press-of-bodies idea is already on the page. Trust the flag. The closer needs to stay (the surge needs a beat after it), so REWRITE with a different observable detail at that moment, not another note about how packed in everyone is. Simply rephrasing "the press of bodies" or "shoulder against shoulder" would still be the same beat — paraphrase isn't enough.
-- Purple prose: NO
-- Unnatural dialogue: N/A
-- Over-description: NO
-- Length: OK
-- Tense: PAST
-- Mature content: N/A
-- Name overuse: N/A
-- Talking vs Showing: OK
-- Repetition: YES - flagged tail semantically echoes the earlier "no space between strangers"; replaced with a different observable detail at the moment of the surge
-</ANALYSIS>
-
-<FIX>
-The plaza was a sea of bodies, no space between strangers, every breath someone else's. People shouted over each other, and the heat off so many bodies turned the air heavy.
-A vendor pushed past with a tray of skewers. The crowd surged forward as the speaker took the stage, the roar rolling up off the rooftops.
-</FIX>
-{% else %}
 <REVIEW>
 Marcus entered the room, his boots clicking against the marble floor. The chandelier cast dancing shadows across the walls as he surveyed the scene.
 "What happened here?" he demanded, his voice echoing in the vast space.
@@ -283,9 +221,8 @@ Marcus entered the room, his boots clicking against the marble floor. The chande
 Sarah looked up from where she knelt beside the broken vase. "I don't know. I just got here myself."
 He needed answers, and he needed them now.
 </FIX>
-{% endif %}
 
-{% endif %}---
+---
 
 <REVIEW>
 "Hi David, how are you today?" asked Emily.
@@ -341,75 +278,48 @@ I have identified no issues, i will mark with: <NO_FIX_REQUIRED/>
 
 ---
 
-{# SCENE CONTEXT #}
-{% set scene_context_text %}
-{% set history = scene.context_history(
-    budget=1024, 
-    min_dialogue=20, 
-    sections=False) 
-%}
-<|SECTION:SCENE|>
-{% for scene_context in history -%}
-{{ scene_context }}
-{% endfor %}
-<|CLOSE_SECTION|>
-{% endset %}
-{# END SCENE CONTEXT #}
+## Scene
+Elena: Hello there, traveler.
+The sun filters through the leaves above.
+Marcus: What brings you to these woods?
 
-{# SCENE ANALYSIS #}
-{% set scene_analysis_text %}
-{% if scene_analysis %}
-<|SECTION:SCENE ANALYSIS|>
-{{ scene_analysis }}
-<|CLOSE_SECTION|>
-{% endif %}
-{% endset %}
-{# END SCENE ANALYSIS #}
+## Character direction
+Elena: Hello there, traveler.
 
-{{ scene_context_text }}
+## Intention of this story
+The overarching intention of this story. Use it to guide your decisions in the scene.
 
-{% with _text=scene_context_text %}{% include "internal-note-help.jinja2" %}{% endwith %}
+A fantasy adventure story.
 
-{{ scene_analysis_text }}
+## Classification
+Content Classification: Fantasy adventure story
 
-{% include "character-guidance.jinja2" %}
+Narrative Perspective: Third person limited, past tense.
 
-{% with exclude_phase_intent=True %}{% include "scene-intent.jinja2" %}{% endwith %}
-
-{% include "content-classification.jinja2" %}
-
-{% include "writing-style-instructions.jinja2" %}
-
-{% include "dynamic-instructions.jinja2" %}
-<|SECTION:TASK|>
+## Task
 Fix bad AI writing by making it simpler, shorter, and more natural. 
 
 **Rules:**
-{{ li() }}. REDUCE purple prose - Replace flowery language with simple words
-{{ li() }}. PRESERVE KEY DETAILS - Keep ALL concrete facts that matter to the scene:
+1. REDUCE purple prose - Replace flowery language with simple words
+2. PRESERVE KEY DETAILS - Keep ALL concrete facts that matter to the scene:
    - Plot-relevant information (who, what, when, where, why)
    - Character-revealing details (speech patterns, meaningful actions, emotional states)
    - Unique objects, settings, or sensory details that create atmosphere
    - Any detail that would change the meaning if removed
    Only cut pure embellishment that adds no information
-{{ li() }}. MAKE dialogue natural - Use contractions, casual speech, how people actually talk. Important: character defining speaking patterns should be preserved.
-{{ li() }}. CUT excessive description - Remove unnecessary details, measurements, and over-explanation
-{{ li() }}. BE CONCISE - Remove only redundant or purple prose. Length reduction is a side effect, not the goal
-{{ li() }}. MATCH THE ORIGINAL TENSE - If the REVIEW passage is in present tense, keep the FIX in present tense. If it's in past tense, keep it in past tense. Only change tense when the original is inconsistent and you're clearly standardising it. 
-{{ li() }}. PRESERVE mature content - Keep swear words, slang, and raw language exactly as written
-{{ li() }}. AVOID name overuse - NEVER use names when talking TO someone. When removing names:
+3. MAKE dialogue natural - Use contractions, casual speech, how people actually talk. Important: character defining speaking patterns should be preserved.
+4. CUT excessive description - Remove unnecessary details, measurements, and over-explanation
+5. BE CONCISE - Remove only redundant or purple prose. Length reduction is a side effect, not the goal
+6. MATCH THE ORIGINAL TENSE - If the REVIEW passage is in present tense, keep the FIX in present tense. If it's in past tense, keep it in past tense. Only change tense when the original is inconsistent and you're clearly standardising it. 
+7. PRESERVE mature content - Keep swear words, slang, and raw language exactly as written
+8. AVOID name overuse - NEVER use names when talking TO someone. When removing names:
    - For romantic partners/spouses: Can use "hun," "babe," "sweetie"
    - For children/family: Can use "sweetie," "buddy," "Mom," "Dad," "sis"
    - For friends: Can use "man," "dude," "buddy" (if casual relationship)
    - For colleagues/acquaintances/unclear relationships: Just remove the name, don't add anything
    ONLY use actual names when talking ABOUT someone who isn't there.
-{{ li() }}. SHOW don't tell - Use actions and natural dialogue instead of having characters announce their feelings or narrate their actions
-{%- if repetition %}
-{{ li() }}. {% if repetition_handling == "rewrite" %}REWRITE REPETITION - Sentences listed in <REPETITION> have been flagged as repeating earlier content. Repetition here is detected by similarity threshold - it may be verbatim, but it also includes semantic repetition (the same idea, action, or beat expressed in different words). Trust the flag: if a sentence appears in <REPETITION>, treat it as repetition regardless of how different the wording looks. Rewrite each flagged sentence with genuinely different content - substitute a different observation, action, or detail that advances the scene without re-conveying what was already on the page. Because the match is SEMANTIC, simply rephrasing the same idea in different words is NOT enough; the underlying meaning must change. Drop a flagged sentence outright only as a fallback when no meaningful rewrite is possible.{% else %}REMOVE REPETITION - Sentences listed in <REPETITION> have been flagged as repeating earlier content. Repetition here is detected by similarity threshold - it may be verbatim, but it also includes semantic repetition (the same idea, action, or beat expressed in different words). Trust the flag: if a sentence appears in <REPETITION>, treat it as repetition regardless of how different the wording looks. Delete the flagged sentences entirely from the FIX. Do NOT rewrite, paraphrase, or substitute new content in their place - just remove them and let the surrounding text flow on without them.{% endif %}
-{%- endif %}
-{% if bad_prose %}
-{{ li() }}. REMOVE UNWANTED PROSE - Address the unwanted prose issues. These phrases have been identified by the director as bad, and MUST be changed accordingly.
-{% endif %}
+9. SHOW don't tell - Use actions and natural dialogue instead of having characters announce their feelings or narrate their actions
+10. REMOVE REPETITION - Sentences listed in <REPETITION> have been flagged as repeating earlier content. Repetition here is detected by similarity threshold - it may be verbatim, but it also includes semantic repetition (the same idea, action, or beat expressed in different words). Trust the flag: if a sentence appears in <REPETITION>, treat it as repetition regardless of how different the wording looks. Delete the flagged sentences entirely from the FIX. Do NOT rewrite, paraphrase, or substitute new content in their place - just remove them and let the surrounding text flow on without them.
 
 **Common dialogue fixes:**
 - "Hello, John" → "Hey"
@@ -449,19 +359,14 @@ If there are no changes needed use a <NO_FIX_REQUIRED/> tag.
 
 If there are changes needed, provide the fix in the <FIX>...</FIX> block.
 
-<REVIEW>{{ text }}</REVIEW>
-{% if repetition %}
-<REPETITION>
-{% for repeat in repetition %}`{{ repeat["text_a"].strip() }}`
-{% endfor -%}
-</REPETITION>
-{% endif %}
-{% if bad_prose %}<UNWANTED_PROSE>
-{% for phrase in bad_prose %}- MATCH: `{{ phrase.phrase }}`
-  - INSTRUCTIONS: {{ phrase.instructions }}
-{% endfor -%}
-</UNWANTED_PROSE>
-{% endif %}
+<REVIEW>The forest was dark and mysterious.</REVIEW>
 
-<|CLOSE_SECTION|>
-{{ set_prepared_response("<ANALYSIS>\n- Thought process") }}
+<REPETITION>
+`The forest was dark and mysterious.`
+</REPETITION>
+
+
+The length of your final answer must fit within 4 paragraphs.
+
+After thinking about it, start your answer with: <ANALYSIS>
+- Thought process

@@ -1,12 +1,4 @@
-{#-
-Extractors:
-  - fix: AnchorExtractor("<FIX>", "</FIX>")
-
-Override example:
-  {{ set_anchor_extractor("fix", "<MY_TAG>", "</MY_TAG>") }}
-  {{ set_as_is_extractor("fix") }}
--#}
-<|SECTION:EXAMPLES|>
+## Examples
 
 <REVIEW>
 As the crimson fingers of dawn caressed the slumbering city, our intrepid heroes embarked upon their perilous journey into the unknown. The weight of destiny pressed heavily upon their shoulders as they traversed the treacherous mountain passes, each step bringing them closer to their inevitable confrontation with fate itself. Through trials and tribulations that would break lesser mortals, they persevered with unwavering determination.
@@ -154,40 +146,37 @@ The party traveled east for a week through mountain passes and storms, losing se
 
 Marcus split his forces for the rescue. Half his men created a distraction by burning supply tents while the other half freed the prisoners. However, the enemy discovered them during the escape, and twelve mercenaries died in the ensuing pursuit through the camp. The survivors retreated into the mountains and evaded pursuit for three days before finally reaching friendly territory.
 </FIX>
-<|CLOSE_SECTION|>
 
-<|SECTION:PREVIOUS CHAPTERS|>
-{% for chapter_summary in summarization_history %}
-## Chapter {{ loop.index }}
-{{ chapter_summary }}
+## Previous chapters
 
-{% endfor %}
-<|CLOSE_SECTION|>
+## Chapter 1
+Chapter 1: The journey began.
 
-{% with exclude_phase_intent=True %}{% include "scene-intent.jinja2" %}{% endwith %}
+## Intention of this story
+The overarching intention of this story. Use it to guide your decisions in the scene.
 
-{% include "content-classification.jinja2" %}
+A fantasy adventure story.
 
-{% include "writing-style-instructions.jinja2" %}
+## Classification
+Content Classification: Fantasy adventure story
 
-{% include "dynamic-instructions.jinja2" %}
-<|SECTION:TASK|>
+Narrative Perspective: Third person limited, past tense.
+
+## Task
 
 Fix overwritten narrative summaries by making them clear and direct while preserving key plot information.
 
 **Rules:**
-{{ li() }}. STRIP purple prose - Remove flowery metaphors and dramatic language
-{{ li() }}. KEEP plot essentials - Preserve all important events and outcomes
-{{ li() }}. CUT clichés - Remove overused phrases like "fate itself," "deadly dance"
-{{ li() }}. BE CONCISE - Summaries should efficiently convey what happened
-{{ li() }}. MAINTAIN tone - Keep genre-appropriate language without the excess
-{{ li() }}. PRESERVE mature content - Keep swear words, slang, and raw language exactly as written
-{{ li() }}. REMOVE dialogue - Convert any dialogue into narrative description of what was communicated
-{{ li() }}. CONNECT isolated events - Link disconnected paragraphs using transitional phrases ("then," "after," "while," "when") to create narrative flow
-{{ li() }}. PRESERVE simplicity - When fixing choppy text, don't overcorrect by adding purple prose; keep the clean, direct style
-{%- if repetition %}
-{{ li() }}. {% if repetition_handling == "rewrite" %}REWRITE REPETITION - Sentences listed in <REPETITION> have been flagged as repeating earlier content in the summarization history. Repetition here is detected by similarity threshold - it may be verbatim, but it also includes semantic repetition (the same plot point or development described in different words). Trust the flag: if a sentence appears in <REPETITION>, treat it as repetition regardless of how different the wording looks. Rewrite each flagged sentence so it conveys a genuinely different fact or development - not the same event re-stated. Because the match is SEMANTIC, simply rephrasing the same plot point is NOT enough; the underlying information must change. Drop a flagged sentence outright only as a fallback when no meaningful rewrite is possible without inventing facts.{% else %}REMOVE REPETITION - Sentences listed in <REPETITION> have been flagged as repeating earlier content in the summarization history. Repetition here is detected by similarity threshold - it may be verbatim, but it also includes semantic repetition (the same plot point or development described in different words). Trust the flag: if a sentence appears in <REPETITION>, treat it as repetition regardless of how different the wording looks. Delete the flagged sentences entirely from the FIX. Do NOT rewrite, paraphrase, or substitute new content in their place - the prior summary already covers that ground.{% endif %}
-{%- endif %}
+1. STRIP purple prose - Remove flowery metaphors and dramatic language
+2. KEEP plot essentials - Preserve all important events and outcomes
+3. CUT clichés - Remove overused phrases like "fate itself," "deadly dance"
+4. BE CONCISE - Summaries should efficiently convey what happened
+5. MAINTAIN tone - Keep genre-appropriate language without the excess
+6. PRESERVE mature content - Keep swear words, slang, and raw language exactly as written
+7. REMOVE dialogue - Convert any dialogue into narrative description of what was communicated
+8. CONNECT isolated events - Link disconnected paragraphs using transitional phrases ("then," "after," "while," "when") to create narrative flow
+9. PRESERVE simplicity - When fixing choppy text, don't overcorrect by adding purple prose; keep the clean, direct style
+10. REWRITE REPETITION - Sentences listed in <REPETITION> have been flagged as repeating earlier content in the summarization history. Repetition here is detected by similarity threshold - it may be verbatim, but it also includes semantic repetition (the same plot point or development described in different words). Trust the flag: if a sentence appears in <REPETITION>, treat it as repetition regardless of how different the wording looks. Rewrite each flagged sentence so it conveys a genuinely different fact or development - not the same event re-stated. Because the match is SEMANTIC, simply rephrasing the same plot point is NOT enough; the underlying information must change. Drop a flagged sentence outright only as a fallback when no meaningful rewrite is possible without inventing facts.
 
 **What to keep vs cut:**
 - KEEP: What happened, who was involved, consequences, important details
@@ -213,19 +202,14 @@ If there are no changes needed use a <NO_FIX_REQUIRED/> tag.
 
 If there are changes needed, provide the fix in the <FIX>...</FIX> block.
 
-<REVIEW>{{ text }}</REVIEW>
-{% if repetition %}
-<REPETITION>
-{% for repeat in repetition %}`{{ repeat["text_a"].strip() }}`
-{% endfor -%}
-</REPETITION>
-{% endif %}
-{% if bad_prose %}<UNWANTED_PROSE>
-{% for phrase in bad_prose %}- MATCH: `{{ phrase.phrase }}`
-  - INSTRUCTIONS: {{ phrase.instructions }}
-{% endfor -%}
-</UNWANTED_PROSE>
-{% endif %}
+<REVIEW>The heroes journeyed through the treacherous mountain pass.</REVIEW>
 
-<|CLOSE_SECTION|>
-{{ set_prepared_response("<ANALYSIS>\n- Thought process:") }}
+<REPETITION>
+`The heroes journeyed through the treacherous mountain pass.`
+</REPETITION>
+
+
+The length of your final answer must fit within 4 paragraphs.
+
+After thinking about it, start your answer with: <ANALYSIS>
+- Thought process:

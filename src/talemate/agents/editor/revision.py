@@ -458,6 +458,27 @@ class RevisionMixin:
                     max=100,
                     step=1,
                 ),
+                "repetition_handling": AgentActionConfig(
+                    type="text",
+                    label="Repetition handling",
+                    description="What the AI-assisted revision should do with detected repetitions.",
+                    condition=rewrite_unslop_condition,
+                    value="remove",
+                    choices=[
+                        {"label": "Remove", "value": "remove"},
+                        {"label": "Attempt rewrite", "value": "rewrite"},
+                    ],
+                    note_on_value={
+                        "remove": AgentActionNote(
+                            color="primary",
+                            text="Flagged repetitions are deleted from the text. Safer choice for weaker models, which often struggle to substitute genuinely different content and end up rephrasing the same idea — re-introducing the very repetition the rule is meant to fix.",
+                        ),
+                        "rewrite": AgentActionNote(
+                            color="primary",
+                            text="The agent will attempt to rewrite flagged repetitions with genuinely different content. Because matches are semantic, simply rephrasing the same idea is not enough — the underlying beat must change, which weaker models tend to fail at. Best with stronger models. Falls back to removal only when no meaningful rewrite is possible.",
+                        ),
+                    },
+                ),
             },
         )
 
@@ -494,6 +515,10 @@ class RevisionMixin:
     @property
     def revision_repetition_min_length(self):
         return self.actions["revision"].config["repetition_min_length"].value
+
+    @property
+    def revision_repetition_handling(self):
+        return self.actions["revision"].config["repetition_handling"].value
 
     @property
     def revision_split_on_comma(self):
@@ -1217,6 +1242,7 @@ class RevisionMixin:
             "response_length": response_length,
             "max_tokens": self.client.max_token_length,
             "repetition": issues.repetition,
+            "repetition_handling": self.revision_repetition_handling,
             "bad_prose": issues.bad_prose,
             "dynamic_instructions": emission.dynamic_instructions,
             "context_type": info.context_type,
@@ -1328,6 +1354,7 @@ class RevisionMixin:
             "response_length": response_length,
             "max_tokens": self.client.max_token_length,
             "repetition": issues.repetition,
+            "repetition_handling": self.revision_repetition_handling,
             "bad_prose": issues.bad_prose,
             "dynamic_instructions": emission.dynamic_instructions,
             "context_type": info.context_type,

@@ -267,6 +267,7 @@ class TestRevisionActionRegistration:
             "repetition_threshold",
             "repetition_range",
             "repetition_min_length",
+            "repetition_handling",
         ]:
             assert key in action.config
 
@@ -289,6 +290,7 @@ class TestRevisionActionRegistration:
             "narrator"
         ]
         editor.actions["revision"].config["repetition_detection_method"].value = "fuzzy"
+        editor.actions["revision"].config["repetition_handling"].value = "rewrite"
 
         assert editor.revision_repetition_threshold == 90
         assert editor.revision_repetition_range == 5
@@ -300,6 +302,7 @@ class TestRevisionActionRegistration:
         assert editor.revision_automatic_enabled is False
         assert editor.revision_automatic_targets == ["narrator"]
         assert editor.revision_repetition_detection_method == "fuzzy"
+        assert editor.revision_repetition_handling == "rewrite"
         assert editor.revision_enabled is True
 
 
