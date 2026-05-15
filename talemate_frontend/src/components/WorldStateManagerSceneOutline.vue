@@ -111,7 +111,7 @@
 <script>
 
 import ContextualGenerate from './ContextualGenerate.vue';
-import { MAX_CONTENT_WIDTH } from '@/constants';
+import { MAX_CONTENT_WIDTH } from '@/constants/layout';
 
 export default {
     name: "WorldStateManagerSceneOutline",

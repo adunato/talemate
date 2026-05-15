@@ -349,7 +349,9 @@ import WorldStateManagerCharacterReinforcements from './WorldStateManagerCharact
 import WorldStateManagerCharacterActor from './WorldStateManagerCharacterActor.vue';
 import WorldStateManagerCharacterCreator from './WorldStateManagerCharacterCreator.vue';
 import WorldStateManagerCharacterVisuals from './WorldStateManagerCharacterVisuals.vue';
-import { MAX_CONTENT_WIDTH, FOLDER_NAME_MAX_LENGTH } from '@/constants';
+import { MAX_CONTENT_WIDTH } from '@/constants/layout';
+import { FOLDER_NAME_MAX_LENGTH } from '@/constants/character';
+import { VIS_TYPE } from '@/constants/visual';
 import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 
 export default {
@@ -566,7 +568,7 @@ export default {
             this.getWebsocket().send(JSON.stringify({
                 type: 'visual',
                 action: 'visualize',
-                vis_type: 'CHARACTER_CARD',
+                vis_type: VIS_TYPE.CHARACTER_CARD,
                 character_name: this.character.name,
                 set_cover_image: true,
                 override_character_cover: true,

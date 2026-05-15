@@ -392,7 +392,7 @@ import StatusNotification from './StatusNotification.vue';
 import RateLimitAlert from './RateLimitAlert.vue';
 import GenerationErrorDialog from './GenerationErrorDialog.vue';
 import VersionMismatchAlert from './VersionMismatchAlert.vue';
-import { versionsMatch } from '../constants/version.js';
+import { versionsMatch } from '@/constants/version';
 import VisualLibrary from './VisualLibrary.vue';
 import VoiceLibrary from './VoiceLibrary.vue';
 import WorldStateManager from './WorldStateManager.vue';
@@ -410,7 +410,7 @@ import PromptsView from './prompts/PromptsView.vue';
 import PromptsMenu from './prompts/PromptsMenu.vue';
 // import debounce
 import { debounce } from 'lodash';
-import { isVisualAgentReady, isImageEditAvailable, isImageCreateAvailable } from '../constants/visual.js';
+import { isVisualAgentReady, isImageEditAvailable, isImageCreateAvailable } from '@/constants/visual';
 import { createSceneAssetsRequester } from './VisualAssetsMixin.js';
 
 export default {

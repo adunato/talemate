@@ -375,7 +375,7 @@ import VisualReferenceCarousel from './VisualReferenceCarousel.vue';
 import ConfirmActionPrompt from './ConfirmActionPrompt.vue';
 import VisualAssetsMixin from './VisualAssetsMixin.js';
 import RevisionStackMixin from './RevisionStackMixin.js';
-import { isVisualAgentReady } from '../constants/visual.js';
+import { isVisualAgentReady, VIS_TYPE } from '@/constants/visual';
 import { primaryModifierLabel } from '@/utils/keyboardModifiers';
 import {
     getMessageColor as resolveMessageColor,
@@ -392,7 +392,7 @@ const ASSET_SELECT_TYPES = {
         dialogKey: 'avatarSelectDialog',
         requiresCharacter: true,
         getAssetIds(vm, ctx) {
-            const avatars = vm.getCharacterAssets(ctx.character, 'CHARACTER_PORTRAIT');
+            const avatars = vm.getCharacterAssets(ctx.character, VIS_TYPE.CHARACTER_PORTRAIT);
             return avatars.map(a => a.id);
         },
         buildUpdateMessage(dialog) {
@@ -420,7 +420,7 @@ const ASSET_SELECT_TYPES = {
             return Object.entries(vm.assetsMap)
                 .filter(([, asset]) => {
                     const meta = asset?.meta || {};
-                    return meta.vis_type === 'SCENE_ILLUSTRATION' || meta.vis_type === 'SCENE_BACKGROUND';
+                    return meta.vis_type === VIS_TYPE.SCENE_ILLUSTRATION || meta.vis_type === VIS_TYPE.SCENE_BACKGROUND;
                 })
                 .map(([id]) => id);
         },
@@ -447,7 +447,7 @@ const ASSET_SELECT_TYPES = {
             return Object.entries(vm.assetsMap)
                 .filter(([, asset]) => {
                     const meta = asset?.meta || {};
-                    return meta.vis_type === 'CHARACTER_CARD' || meta.vis_type === 'SCENE_CARD';
+                    return meta.vis_type === VIS_TYPE.CHARACTER_CARD || meta.vis_type === VIS_TYPE.SCENE_CARD;
                 })
                 .map(([id]) => id);
         },
