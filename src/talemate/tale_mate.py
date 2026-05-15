@@ -989,7 +989,7 @@ class Scene(Emitter):
         self,
         message_id: int,
         message: str,
-        reason: Literal["revision", "regenerate"] | None = None,
+        reason: Literal["revision", "regenerate", "continue"] | None = None,
         mutations: list[MessageMutation] | None = None,
         mutation_source: MutationSource | None = None,
     ):
@@ -1003,6 +1003,10 @@ class Scene(Emitter):
         - ``regenerate``: in-place regenerate; frontend appends the prior
           intermediate(s) (``mutations``) and the new canonical text to
           its stack.
+        - ``continue``: user-initiated continuation of a character
+          message; frontend appends the extended text as a new entry at
+          the end of the stack. The prior canonical is already in the
+          stack at the active index, so no mutations travel with it.
         Plain user edits omit the reason and ship no metadata.
 
         ``mutations`` are pre-canonical intermediate texts attached as

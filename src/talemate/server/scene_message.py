@@ -7,10 +7,13 @@ into `Scene.edit_message`, but the manual-edit path additionally runs the
 content through the editor agent's exposition cleanup when configured.
 """
 
+from typing import Literal
+
 import pydantic
 import structlog
 
 import talemate.instance as instance
+from talemate.scene_message import MutationSource
 from talemate.server.websocket_plugin import Plugin
 
 log = structlog.get_logger("talemate.server.scene_message")
@@ -21,6 +24,11 @@ __all__ = ["SceneMessagePlugin"]
 class EditPayload(pydantic.BaseModel):
     id: int
     text: str
+    # When set, forwarded onto the message_edited emit so the frontend
+    # splices the new text onto the message's revision stack instead of
+    # replacing the active entry in place.
+    reason: Literal["revision", "regenerate", "continue"] | None = None
+    mutation_source: MutationSource | None = None
 
 
 class SwapRevisionPayload(pydantic.BaseModel):
@@ -70,7 +78,12 @@ class SceneMessagePlugin(Plugin):
                 strip_partial=not editor.allow_incomplete_sentences,
             )
 
-        self.scene.edit_message(payload.id, new_text)
+        self.scene.edit_message(
+            payload.id,
+            new_text,
+            reason=payload.reason,
+            mutation_source=payload.mutation_source,
+        )
 
     async def handle_swap_revision(self, data: dict):
         """

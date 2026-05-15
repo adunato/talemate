@@ -23,7 +23,7 @@ __all__ = [
     "DIRECTOR_INPUT_PREFIX_YIELD",
 ]
 
-MutationSource = Literal["original", "revision", "regenerate"]
+MutationSource = Literal["original", "revision", "regenerate", "continue"]
 
 # Prefixes the user can type in the main input box to route a message to the
 # director instead of having the player character speak/act. The yield variant

@@ -1739,9 +1739,10 @@ export default {
                         // Manual editor revision slots the new entry
                         // immediately after the current one (it's a
                         // revision *of* that entry). In-place regenerate
-                        // appends to the end of the stack — the new text
-                        // is a fresh alternative, not a revision of the
-                        // active entry, so prior entries should keep
+                        // and Continue both append to the end of the
+                        // stack — the new text is a fresh alternative
+                        // (regenerate) or an extension of the prior
+                        // canonical (continue), so prior entries keep
                         // their positions. Plain edits / revision-swap
                         // echoes replace the current entry's text in
                         // place (preserving its source tag).
@@ -1756,6 +1757,8 @@ export default {
                                 [...(data.mutations || []), canonicalEntry],
                             );
                             this.messages[i].regenerating = false;
+                        } else if (data.reason === 'continue') {
+                            this.revisionAppendAtEnd(data.id, [canonicalEntry]);
                         } else {
                             this.revisionUpdateCurrentEntry(data.id, data.message);
                         }

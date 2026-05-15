@@ -25,6 +25,7 @@ const SOURCE_TAGS = {
   original: { label: 'Original', icon: 'mdi-creation', color: 'muted' },
   revision: { label: 'Revised', icon: 'mdi-typewriter', color: 'highlight4' },
   regenerate: { label: 'Regenerated', icon: 'mdi-refresh', color: 'primary' },
+  continue: { label: 'Continued', icon: 'mdi-fast-forward', color: 'primary' },
 };
 
 export default {

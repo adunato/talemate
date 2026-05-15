@@ -321,7 +321,12 @@ export default {
             this.editing_text = this.text + completion;
           }
 
-          this.submitEdit();
+          // Tag the commit so the echo lands as a new entry on the
+          // slot's revision stack instead of replacing the active one.
+          this.submitEdit({
+            reason: 'continue',
+            mutation_source: 'continue',
+          });
         },
         this.$refs.textarea
       )
@@ -353,8 +358,15 @@ export default {
         this.$refs.textarea.focus();
       });
     },
-    submitEdit() {
-      this.getWebsocket().send(JSON.stringify({ type: 'scene_message', action: 'edit', id: this.message_id, text: this.character+": "+this.editing_text }));
+    submitEdit(meta = null) {
+      const payload = {
+        ...(meta || {}),
+        type: 'scene_message',
+        action: 'edit',
+        id: this.message_id,
+        text: this.character + ": " + this.editing_text,
+      };
+      this.getWebsocket().send(JSON.stringify(payload));
       this.editing = false;
     },
     deleteMessage() {
