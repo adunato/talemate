@@ -31,17 +31,73 @@
                 </v-row>
                 <v-row>
                     <v-col cols="12" md="8" lg="6" xl="6">
-                        <v-text-field
-                            v-model="scene.data.perspective"
+                        <v-combobox
+                            :model-value="perspectives.default"
+                            :items="perspectivePresets"
                             label="Perspective and tense"
-                            hint="The narrative perspective, tense, and point of view for the story. This is included in all narration and dialogue prompts."
-                            :color="dirty['perspective'] ? 'dirty' : ''"
-                            :disabled="busy['perspective']"
-                            :loading="busy['perspective']"
-                            @update:model-value="setFieldDirty('perspective')"
+                            messages="The default narrative perspective, tense, and point of view. Used in all narration and dialogue prompts unless a per-speaker override is set."
+                            :color="dirty['perspectives'] ? 'dirty' : ''"
+                            :disabled="busy['perspectives']"
+                            :loading="busy['perspectives']"
+                            @update:model-value="onPerspectiveSelect('default', $event)"
                             @blur="update(true)"
-                            placeholder="e.g., Third person limited, past tense / Second person, present tense"
-                        ></v-text-field>
+                            placeholder="e.g., Third person limited, past tense"
+                        ></v-combobox>
+                    </v-col>
+                    <v-col cols="12" md="8" lg="6" xl="6">
+                        <v-expansion-panels variant="accordion" class="mb-2">
+                            <v-expansion-panel>
+                                <v-expansion-panel-title>
+                                    <span>Per-speaker perspective overrides</span>
+                                    <v-chip
+                                        v-if="overrideCount > 0"
+                                        size="x-small"
+                                        color="primary"
+                                        class="ml-3"
+                                    >{{ overrideCount }} set</v-chip>
+                                </v-expansion-panel-title>
+                                <v-expansion-panel-text>
+                                    <div class="text-caption text-medium-emphasis mb-3">
+                                        Each override replaces the default perspective for that speaker. Empty fields fall back to the default.
+                                    </div>
+                                    <v-combobox
+                                        :model-value="perspectives.player"
+                                        :items="perspectivePresets"
+                                        label="Perspective (you / player character)"
+                                        messages="Used when the player character is speaking or acting."
+                                        :color="dirty['perspectives'] ? 'dirty' : ''"
+                                        :disabled="busy['perspectives']"
+                                        @update:model-value="onPerspectiveSelect('player', $event)"
+                                        @blur="update(true)"
+                                        density="comfortable"
+                                        class="mb-2"
+                                    ></v-combobox>
+                                    <v-combobox
+                                        :model-value="perspectives.other"
+                                        :items="perspectivePresets"
+                                        label="Perspective (others / NPCs)"
+                                        messages="Used when a non-player character is speaking or acting."
+                                        :color="dirty['perspectives'] ? 'dirty' : ''"
+                                        :disabled="busy['perspectives']"
+                                        @update:model-value="onPerspectiveSelect('other', $event)"
+                                        @blur="update(true)"
+                                        density="comfortable"
+                                        class="mb-2"
+                                    ></v-combobox>
+                                    <v-combobox
+                                        :model-value="perspectives.narrator"
+                                        :items="perspectivePresets"
+                                        label="Perspective (narrator)"
+                                        messages="Used for narration prompts (scene description, progression, character entry, etc.)."
+                                        :color="dirty['perspectives'] ? 'dirty' : ''"
+                                        :disabled="busy['perspectives']"
+                                        @update:model-value="onPerspectiveSelect('narrator', $event)"
+                                        @blur="update(true)"
+                                        density="comfortable"
+                                    ></v-combobox>
+                                </v-expansion-panel-text>
+                            </v-expansion-panel>
+                        </v-expansion-panels>
                     </v-col>
                 </v-row>
                 <v-row>
@@ -68,10 +124,10 @@
                     <v-col cols="12">
                         <div class="d-flex align-center mb-2 intro-controls">
                             <v-spacer></v-spacer>
-                            <ContextualGenerate 
+                            <ContextualGenerate
                                 ref="contextualGenerate"
                                 uid="wsm.scene_intro"
-                                context="scene intro:scene intro" 
+                                context="scene intro:scene intro"
                                 :original="scene.data.intro"
                                 :templates="templates"
                                 :generation-options="generationOptions"
@@ -88,11 +144,11 @@
                             rows="10"
                             auto-grow
                             max-rows="32"
-        
+
                             @update:model-value="setFieldDirty('intro')"
                             @blur="update(true)"
                             :color="dirty['intro'] ? 'dirty' : ''"
-                            
+
                             :disabled="busy['intro']"
                             :loading="busy['intro']"
                             :hint="'The introduction to the scene. The first text the user sees as they load the scene. ' +autocompleteInfoMessage(busy['intro'])"
@@ -112,6 +168,8 @@
 
 import ContextualGenerate from './ContextualGenerate.vue';
 import { MAX_CONTENT_WIDTH } from '@/constants/layout';
+
+const defaultPerspectives = () => ({ default: "", player: "", other: "", narrator: "" });
 
 export default {
     name: "WorldStateManagerSceneOutline",
@@ -144,6 +202,11 @@ export default {
                     this.scene = null;
                 } else {
                     this.scene = { ...value };
+                    this.scene.data = { ...value.data };
+                    this.scene.data.perspectives = {
+                        ...defaultPerspectives(),
+                        ...(value.data.perspectives || {}),
+                    };
                 }
             }
         },
@@ -169,6 +232,22 @@ export default {
     emits:[
         'require-scene-save'
     ],
+    computed: {
+        perspectives() {
+            return this.scene && this.scene.data && this.scene.data.perspectives
+                ? this.scene.data.perspectives
+                : defaultPerspectives();
+        },
+        perspectivePresets() {
+            return this.appConfig && this.appConfig.creator && this.appConfig.creator.perspective_presets
+                ? this.appConfig.creator.perspective_presets
+                : [];
+        },
+        overrideCount() {
+            const p = this.perspectives;
+            return ["player", "other", "narrator"].filter(role => (p[role] || "").trim().length > 0).length;
+        },
+    },
     methods: {
         reset() {
             this.selected = null;
@@ -198,6 +277,11 @@ export default {
             this.dirty[name] = true;
         },
 
+        onPerspectiveSelect(role, value) {
+            this.scene.data.perspectives[role] = value || "";
+            this.setFieldDirty('perspectives');
+        },
+
         update(only_if_dirty = false) {
 
             if(only_if_dirty && !Object.values(this.dirty).some(v => v)) {
@@ -209,7 +293,7 @@ export default {
                 action: 'update_scene_outline',
                 title: this.scene.data.title,
                 context: this.scene.data.context,
-                perspective: this.scene.data.perspective,
+                perspectives: { ...this.perspectives },
                 intro: this.scene.data.intro,
                 description: this.scene.data.description,
             }));

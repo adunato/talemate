@@ -230,6 +230,18 @@ class CreatorConfig(pydantic.BaseModel):
     content_context: list[str] = [
         "a fun and engaging slice of life story aimed at an adult audience."
     ]
+    perspective_presets: list[str] = [
+        "Third person limited, past tense.",
+        "Third person limited, past tense, focused on {player_name}'s POV.",
+        "Third person limited, present tense.",
+        "Third person limited, present tense, focused on {player_name}'s POV.",
+        "Third person omniscient, past tense.",
+        "Third person omniscient, present tense.",
+        "First person, past tense, from {player_name}'s POV.",
+        "First person, present tense, from {player_name}'s POV.",
+        "Second person, present tense.",
+        "Second person, present tense. Talking to {player_name}.",
+    ]
 
 
 class OpenAIConfig(pydantic.BaseModel):

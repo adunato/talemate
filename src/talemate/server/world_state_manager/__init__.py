@@ -11,6 +11,7 @@ from talemate.game.schema import ConditionGroup
 from talemate.export import ExportOptions, export
 from talemate.instance import get_agent
 from talemate.world_state.manager import WorldStateManager, Suggestion
+from talemate.scene.schema import ScenePerspectives
 from talemate.status import background_task, set_loading
 import talemate.game.focal as focal
 from talemate.config import save_config
@@ -173,7 +174,7 @@ class SceneOutlinePayload(pydantic.BaseModel):
     description: str | None = None
     intro: str | None = None
     context: str | None = None
-    perspective: str | None = None
+    perspectives: ScenePerspectives | None = None
 
 
 class SceneSettingsPayload(pydantic.BaseModel):
@@ -1102,7 +1103,13 @@ class WorldStateManagerPlugin(
     async def handle_update_scene_outline(self, data):
         payload = SceneOutlinePayload(**data)
 
-        await self.world_state_manager.update_scene_outline(**payload.model_dump())
+        await self.world_state_manager.update_scene_outline(
+            title=payload.title,
+            description=payload.description,
+            intro=payload.intro,
+            context=payload.context,
+            perspectives=payload.perspectives,
+        )
 
         self.websocket_handler.queue_put(
             {

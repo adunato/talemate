@@ -23,6 +23,7 @@ from talemate.game.schema import ConditionGroup, condition_groups_match
 from talemate.game.engine.context_id.base import ContextIDItem
 from talemate.agents.tts.schema import Voice
 from talemate.game.engine.context_id import ContextID
+from talemate.scene.schema import ScenePerspectives
 
 if TYPE_CHECKING:
     from talemate.tale_mate import Character, Scene
@@ -1110,14 +1111,18 @@ class WorldStateManager:
         description: str | None = None,
         intro: str | None = None,
         context: str | None = None,
-        perspective: str | None = None,
+        perspectives: ScenePerspectives | None = None,
     ) -> "Scene":
         scene = self.scene
         scene.title = title
         scene.description = description
         scene.intro = intro
         scene.context = context
-        scene.perspective = perspective or ""
+        # `perspectives=None` preserves the existing nested object; clearing the
+        # four perspective fields is rarely what a partial outline update wants,
+        # and the frontend always sends a complete `ScenePerspectives` payload.
+        if perspectives is not None:
+            scene.perspectives = perspectives
 
         return scene
 

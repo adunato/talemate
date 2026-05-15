@@ -30,6 +30,7 @@ from talemate.status import LoadingStatus, set_loading
 from talemate.world_state import WorldState
 from talemate.game.engine.nodes.registry import import_scene_node_definitions
 from talemate.scene.intent import SceneIntent
+from talemate.scene.schema import ScenePerspectives
 from talemate.history import validate_history
 import talemate.agents.tts.voice_library as voice_library
 from talemate.path import SCENES_DIR
@@ -65,6 +66,19 @@ log = structlog.get_logger("talemate.load")
 def to_project_name(name: str) -> str:
     """Convert a scene name to a project directory name."""
     return name.replace(" ", "-").replace("'", "").lower()
+
+
+def load_scene_perspectives(scene_data: dict) -> ScenePerspectives:
+    """
+    Resolve the scene's narrative perspectives from saved scene data.
+
+    Prefers the nested `perspectives` object when present; otherwise migrates
+    the legacy flat `perspective` string into `perspectives.default`.
+    """
+    perspectives_data = scene_data.get("perspectives")
+    if perspectives_data:
+        return ScenePerspectives(**perspectives_data)
+    return ScenePerspectives(default=scene_data.get("perspective", "") or "")
 
 
 class SceneInitialization(pydantic.BaseModel):
@@ -294,7 +308,7 @@ async def load_scene_from_data(
     }
     scene.active_characters = scene_data.get("active_characters", [])
     scene.context = scene_data.get("context", "")
-    scene.perspective = scene_data.get("perspective", "")
+    scene.perspectives = load_scene_perspectives(scene_data)
     scene.project_name = scene_data.get("project_name")
     scene.intent_state = SceneIntent(**scene_data.get("intent_state", {}))
     scene.history = _load_history(scene_data["history"])

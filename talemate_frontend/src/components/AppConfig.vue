@@ -367,11 +367,10 @@
                                 </v-col>
                                 <v-col cols="8">
                                     <div v-if="creatorPageSelected === 'content_context'">
-                                        <!-- Content for Content context will go here -->
                                         <v-alert color="white" variant="text" icon="mdi-cube-scan" density="compact">
-                                            <v-alert-title>Content context</v-alert-title>
+                                            <v-alert-title>Content Classification</v-alert-title>
                                             <div class="text-grey">
-                                                Available content-context choices when generating characters or scenarios. This can strongly influence the content that is generated.
+                                                Available content classification choices when generating characters or scenarios. This can strongly influence the content that is generated.
                                             </div>
                                         </v-alert>
                                         <v-divider class="mb-2"></v-divider>
@@ -383,12 +382,31 @@
                                                     </v-list-item>
                                                 </v-list>
                                                 <v-divider></v-divider>
-                                                <v-text-field v-model="content_context_input" label="Add content context (Press enter to add)"
+                                                <v-text-field v-model="content_context_input" label="Add content classification (Press enter to add)"
                                                     @keyup.enter="app_config.creator.content_context.push(content_context_input); content_context_input = ''"></v-text-field>
                                             </v-col>
                                         </v-row>
-
-                                        
+                                    </div>
+                                    <div v-if="creatorPageSelected === 'perspective_presets'">
+                                        <v-alert color="white" variant="text" icon="mdi-eye-outline" density="compact">
+                                            <v-alert-title>Perspective Presets</v-alert-title>
+                                            <div class="text-grey">
+                                                Reusable narrative perspective / tense strings offered in the scene outline. Use <code>{player_name}</code> as a placeholder for the player character — it will be substituted at prompt render time.
+                                            </div>
+                                        </v-alert>
+                                        <v-divider class="mb-2"></v-divider>
+                                        <v-row>
+                                            <v-col cols="12">
+                                                <v-list density="compact">
+                                                    <v-list-item v-for="(value, index) in app_config.creator.perspective_presets" :key="index">
+                                                        <v-list-item-title><v-icon color="red-darken-1" class="mr-2" @click="perspectivePresetRemove(index)">mdi-close-box-outline</v-icon>{{ value }}</v-list-item-title>
+                                                    </v-list-item>
+                                                </v-list>
+                                                <v-divider></v-divider>
+                                                <v-text-field v-model="perspective_preset_input" label="Add perspective preset (Press enter to add)"
+                                                    @keyup.enter="perspectivePresetAdd()"></v-text-field>
+                                            </v-col>
+                                        </v-row>
                                     </div>
                                 </v-col>
                             </v-row>
@@ -438,6 +456,7 @@ export default {
             dialog: false,
             app_config: null,
             content_context_input: '',
+            perspective_preset_input: '',
             navigation: {
                 game: [
                     {title: 'General', icon: 'mdi-cog', value: 'general'},
@@ -458,7 +477,8 @@ export default {
                     {title: 'OpenRouter', icon: 'mdi-api', value: 'openrouter_api'},
                 ],
                 creator: [
-                    {title: 'Content Context', icon: 'mdi-cube-scan', value: 'content_context'},
+                    {title: 'Content Classification', icon: 'mdi-cube-scan', value: 'content_context'},
+                    {title: 'Perspective Presets', icon: 'mdi-eye-outline', value: 'perspective_presets'},
                 ]
             },
             gamePageSelected: 'general',
@@ -550,6 +570,20 @@ export default {
 
         contentContextRemove(index) {
             this.app_config.creator.content_context.splice(index, 1);
+        },
+
+        perspectivePresetRemove(index) {
+            this.app_config.creator.perspective_presets.splice(index, 1);
+        },
+
+        perspectivePresetAdd() {
+            const value = (this.perspective_preset_input || '').trim();
+            if (!value) return;
+            if (!Array.isArray(this.app_config.creator.perspective_presets)) {
+                this.app_config.creator.perspective_presets = [];
+            }
+            this.app_config.creator.perspective_presets.push(value);
+            this.perspective_preset_input = '';
         },
 
         handleMessage(message) {

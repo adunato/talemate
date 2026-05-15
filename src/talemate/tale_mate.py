@@ -52,6 +52,7 @@ from talemate.game.engine.nodes.core import GraphState
 from talemate.game.engine.nodes.layout import load_graph
 from talemate.game.engine.nodes.packaging import initialize_packages
 from talemate.scene.intent import SceneIntent
+from talemate.scene.schema import ScenePerspectives
 from talemate.history import emit_archive_add, ArchiveEntry
 from talemate.character import Character
 from talemate.agents.tts.schema import VoiceLibrary
@@ -175,7 +176,7 @@ class Scene(Emitter):
         self.immutable_save = False
 
         self.context = ""
-        self.perspective = ""
+        self.perspectives = ScenePerspectives()
         self.commands = commands.Manager(self)
         self.environment = "scene"
         self.world_state = WorldState()
@@ -1214,6 +1215,26 @@ class Scene(Emitter):
         """
         self.description = description
 
+    def perspective_for_role(self, role: str | None = None) -> str:
+        """
+        Resolve the narrative perspective for a speaker role and substitute
+        the `{player_name}` placeholder against the current scene state.
+
+        Returns "" when no perspective is configured for the role (after
+        falling back to the default) OR when the resolved value references
+        `{player_name}` but the scene has no explicit player character — a
+        perspective that depends on a missing anchor would render as broken
+        prose, so we suppress it instead. Used by content-classification and
+        dialogue templates.
+        """
+        value = self.perspectives.for_role(role)
+        if not value or "{player_name}" not in value:
+            return value
+        character = self.get_explicit_player_character()
+        if character is None:
+            return ""
+        return value.replace("{player_name}", character.name)
+
     def get_intro(self, intro: str = None) -> str:
         """
         Returns the intro text of the scene
@@ -1321,7 +1342,7 @@ class Scene(Emitter):
                 "explicit_player_character": self.player_character_exists,
                 "inactive_characters": list(self.inactive_characters.keys()),
                 "context": self.context,
-                "perspective": self.perspective,
+                "perspectives": self.perspectives.model_dump(),
                 "assets": self.assets.dict(),
                 "characters": [actor.character.model_dump() for actor in self.actors],
                 "character_colors": {

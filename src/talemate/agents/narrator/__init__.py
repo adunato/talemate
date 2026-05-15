@@ -70,24 +70,39 @@ def set_processing(fn):
     @wraps(fn)
     async def narration_wrapper(self, *args, **kwargs):
         agent_context = active_agent.get()
-        emission: NarratorAgentEmission = NarratorAgentEmission(agent=self)
+        # ActiveAgent.__enter__ shares state by reference with the parent context,
+        # so we save/restore the prior value rather than mutating in place.
+        _UNSET = object()
+        previous_speaker_role = agent_context.state.get("speaker_role", _UNSET)
+        agent_context.state["speaker_role"] = "narrator"
+        try:
+            emission: NarratorAgentEmission = NarratorAgentEmission(agent=self)
 
-        if self.content_use_writing_style:
-            self.set_context_states(writing_style=self.scene.writing_style)
+            if self.content_use_writing_style:
+                self.set_context_states(writing_style=self.scene.writing_style)
 
-        await talemate.emit.async_signals.get("agent.narrator.before_generate").send(
-            emission
-        )
-        await talemate.emit.async_signals.get(
-            "agent.narrator.inject_instructions"
-        ).send(emission)
+            await talemate.emit.async_signals.get(
+                "agent.narrator.before_generate"
+            ).send(emission)
+            await talemate.emit.async_signals.get(
+                "agent.narrator.inject_instructions"
+            ).send(emission)
 
-        agent_context.state["dynamic_instructions"] = emission.dynamic_instructions
+            agent_context.state["dynamic_instructions"] = (
+                emission.dynamic_instructions
+            )
 
-        response = await fn(self, *args, **kwargs)
-        emission.response = response
-        await talemate.emit.async_signals.get("agent.narrator.generated").send(emission)
-        return emission.response
+            response = await fn(self, *args, **kwargs)
+            emission.response = response
+            await talemate.emit.async_signals.get("agent.narrator.generated").send(
+                emission
+            )
+            return emission.response
+        finally:
+            if previous_speaker_role is _UNSET:
+                agent_context.state.pop("speaker_role", None)
+            else:
+                agent_context.state["speaker_role"] = previous_speaker_role
 
     return narration_wrapper
 

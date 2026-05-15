@@ -85,10 +85,10 @@ def create_mock_scene(
     scene.title = title
     scene.ts = "PT2H30M"
     scene.environment = "scene"
-    # Default narrative perspective so templates gated on ``scene.perspective``
-    # (e.g. common/content-classification.jinja2) render their branches. Tests
-    # that want the section suppressed can set ``scene.perspective = ""``.
-    scene.perspective = "Third person limited, past tense."
+    # Default narrative perspective so templates gated on
+    # ``scene.perspectives.default`` render their branches. Tests that want the
+    # section suppressed can set ``scene.perspectives.default = ""``.
+    scene.perspectives.default = "Third person limited, past tense."
     if history:
         scene.history = list(history)
 
