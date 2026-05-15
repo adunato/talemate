@@ -88,9 +88,7 @@ def set_processing(fn):
                 "agent.narrator.inject_instructions"
             ).send(emission)
 
-            agent_context.state["dynamic_instructions"] = (
-                emission.dynamic_instructions
-            )
+            agent_context.state["dynamic_instructions"] = emission.dynamic_instructions
 
             response = await fn(self, *args, **kwargs)
             emission.response = response

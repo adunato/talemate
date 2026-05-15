@@ -3,7 +3,7 @@ Tests for the ScenePerspectives schema, the legacy migration path, and the
 role-aware behavior of the perspective context ID family.
 """
 
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
@@ -72,9 +72,7 @@ class TestScenePerspectivesSchema:
         assert p.for_role("player") == "First person"
 
     def test_model_dump_serializes_all_four_fields(self):
-        p = ScenePerspectives(
-            default="A", player="B", other="C", narrator="D"
-        )
+        p = ScenePerspectives(default="A", player="B", other="C", narrator="D")
         assert p.model_dump() == {
             "default": "A",
             "player": "B",
@@ -155,9 +153,7 @@ def scene_with_perspectives():
 
 
 class TestPerspectiveContextIDPaths:
-    def test_default_alias_resolves_to_default_role(
-        self, scene_with_perspectives
-    ):
+    def test_default_alias_resolves_to_default_role(self, scene_with_perspectives):
         cid = ScenePerspectiveContextID.make()
         assert cid.path == ["perspective"]
         assert cid.role == "default"
@@ -176,12 +172,13 @@ class TestPerspectiveContextIDPaths:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "role,expected", [
+        "role,expected",
+        [
             ("default", "DEF"),
             ("player", "PLY"),
             ("other", "OTH"),
             ("narrator", "NAR"),
-        ]
+        ],
     )
     async def test_get_each_role_via_context_id(
         self, scene_with_perspectives, role, expected
@@ -204,9 +201,7 @@ class TestPerspectiveContextIDPaths:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("role", PERSPECTIVE_ROLES)
-    async def test_set_each_role_via_context_id(
-        self, scene_with_perspectives, role
-    ):
+    async def test_set_each_role_via_context_id(self, scene_with_perspectives, role):
         path = ["perspective"] if role == "default" else ["perspective", role]
         path_str = (
             "story_configuration:perspective"
@@ -284,9 +279,7 @@ class TestScenePerspectiveForRole:
 
     def test_substitution_survives_rename(self):
         scene = self._make_scene_with_player("Vincent")
-        scene.perspectives = ScenePerspectives(
-            default="Talking to {player_name}."
-        )
+        scene.perspectives = ScenePerspectives(default="Talking to {player_name}.")
         # Rename the player character; perspective_for_role should reflect it.
         scene.get_player_character().name = "Alice"
         assert scene.perspective_for_role("default") == "Talking to Alice."
@@ -340,9 +333,7 @@ class TestScenePerspectiveForRole:
         is injected at all.
         """
         scene = MockScene()
-        scene.perspectives = ScenePerspectives(
-            default="Talking to {player_name}."
-        )
+        scene.perspectives = ScenePerspectives(default="Talking to {player_name}.")
         assert scene.perspective_for_role("default") == ""
 
     def test_npcs_but_no_player_still_suppresses_placeholder_perspective(self):
@@ -358,18 +349,14 @@ class TestScenePerspectiveForRole:
         scene = MockScene()
         npc = Character(name="Villainous Vince", is_player=False, description="x")
         scene.actors.append(Actor(character=npc, agent=None))
-        scene.perspectives = ScenePerspectives(
-            default="Talking to {player_name}."
-        )
+        scene.perspectives = ScenePerspectives(default="Talking to {player_name}.")
         assert scene.perspective_for_role("default") == ""
 
     def test_no_player_keeps_perspective_without_placeholder(self):
         """A perspective with no placeholder is returned as-is even with no player."""
         scene = MockScene()
         scene.perspectives = ScenePerspectives(default="Third person limited.")
-        assert (
-            scene.perspective_for_role("default") == "Third person limited."
-        )
+        assert scene.perspective_for_role("default") == "Third person limited."
 
 
 class TestStoryConfigurationContextItemRole:
@@ -391,10 +378,7 @@ class TestStoryConfigurationContextItemRole:
             value="x",
         )
         assert item.context_id.path == ["perspective", "player"]
-        assert (
-            item.context_id.path_to_str
-            == "story_configuration:perspective.player"
-        )
+        assert item.context_id.path_to_str == "story_configuration:perspective.player"
 
 
 # ---------------------------------------------------------------------------
@@ -411,11 +395,7 @@ class TestDialogueSpeakerRoleResolution:
     """
 
     SNIPPET = (
-        "{%- if talking_character.is_player -%}"
-        "player"
-        "{%- else -%}"
-        "other"
-        "{%- endif -%}"
+        "{%- if talking_character.is_player -%}player{%- else -%}other{%- endif -%}"
     )
 
     @pytest.mark.parametrize(

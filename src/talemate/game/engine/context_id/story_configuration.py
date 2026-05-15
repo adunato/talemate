@@ -206,9 +206,7 @@ class ScenePerspectiveContextID(StoryConfigurationContextID):
     key: ClassVar[str] = "perspective"
 
     @classmethod
-    def make(
-        cls, role: str | None = None, **kwargs
-    ) -> "ScenePerspectiveContextID":
+    def make(cls, role: str | None = None, **kwargs) -> "ScenePerspectiveContextID":
         path = ["perspective"]
         if role and role != "default":
             path.append(role)
