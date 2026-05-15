@@ -131,6 +131,27 @@
 
                                 <v-divider></v-divider>
 
+                                <!-- TOGGLE PLAYER CHARACTER -->
+                                <div>
+                                    <v-list-item v-if="!character.is_player">
+                                        <v-tooltip max-width="300" :text="`Mark ${character.name} as the player character. The current player character (if any) will be demoted to an AI actor.`">
+                                            <template v-slot:activator="{ props }">
+                                                <v-btn @click.stop="setIsPlayer(true)" v-bind="props" variant="tonal" block color="info" prepend-icon="mdi-account-star">Make Player Character</v-btn>
+                                            </template>
+                                        </v-tooltip>
+                                    </v-list-item>
+
+                                    <v-list-item v-else>
+                                        <v-tooltip max-width="300" :text="`Unmark ${character.name} as the player character. They will become an AI actor and remain in the scene.`">
+                                            <template v-slot:activator="{ props }">
+                                                <v-btn @click.stop="setIsPlayer(false)" v-bind="props" variant="tonal" block color="info" prepend-icon="mdi-account-off-outline">Unmark as Player</v-btn>
+                                            </template>
+                                        </v-tooltip>
+                                    </v-list-item>
+                                </div>
+
+                                <v-divider></v-divider>
+
                                 <!-- DEACTIVATE CHARACTER -->
                                 <div>
                                     <v-list-item v-if="character.active">
@@ -561,6 +582,14 @@ export default {
                 type: 'world_state_manager',
                 action: 'activate_character',
                 name: this.character.name,
+            }));
+        },
+        setIsPlayer(isPlayer) {
+            this.getWebsocket().send(JSON.stringify({
+                type: 'world_state_manager',
+                action: 'set_character_is_player',
+                name: this.character.name,
+                is_player: isPlayer,
             }));
         },
         visualizeCharacter() {

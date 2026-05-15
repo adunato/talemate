@@ -5,7 +5,12 @@ import structlog
 
 import talemate.world_state.templates as world_state_templates
 from talemate.agents.tts.util import get_voice
-from talemate.character import activate_character, deactivate_character, set_voice
+from talemate.character import (
+    activate_character,
+    deactivate_character,
+    set_character_is_player,
+    set_voice,
+)
 from talemate.instance import get_agent
 from talemate.emit import emit
 from talemate.world_state import (
@@ -990,6 +995,15 @@ class WorldStateManager:
             character_name: The name of the character to deactivate.
         """
         await deactivate_character(self.scene, character_name)
+
+    async def set_character_is_player(self, character_name: str, is_player: bool):
+        """
+        Sets or clears a character's player status.
+
+        See :func:`talemate.character.set_character_is_player` for the full
+        contract.
+        """
+        await set_character_is_player(self.scene, character_name, is_player)
 
     async def create_character(
         self,

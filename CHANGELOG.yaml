@@ -1,5 +1,6 @@
 0.38.0.dev:
   features:
+  - "Player Character Toggle: Added a Make Player Character / Unmark as Player action to the World Editor character editor. Promoting a non-player character makes them the player and automatically demotes the previous player (if any) to an AI actor — the previous player stays active in the scene. Unmarking the current player flips them to AI without requiring a replacement, leaving the scene with no explicit player. Promoting an inactive character also activates them."
   - "Message Revision History: Regenerated AI messages now show a paginator above the message body. Click the arrows to browse previous regenerations; the version you're viewing becomes the canonical one the AI continues from. Lives in the browser session only."
   improvements:
   - "Message Revision History: Continuing a character or narrator message now creates a navigable revision entry tagged 'Continued', alongside the existing regenerate entries. The pre-continuation text is reachable via the paginator arrows. Narrator messages also gain the Continue action on the hover toolbar to match the character-message flow."
