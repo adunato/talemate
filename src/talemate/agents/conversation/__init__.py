@@ -93,7 +93,7 @@ class ConversationAgent(MemoryRAGMixin, Agent):
                             {"label": "Screenplay", "value": "movie_script"},
                             {"label": "Chat (legacy)", "value": "chat"},
                             {
-                                "label": "Narrative (NEW, experimental)",
+                                "label": "Narrative",
                                 "value": "narrative",
                             },
                             {
