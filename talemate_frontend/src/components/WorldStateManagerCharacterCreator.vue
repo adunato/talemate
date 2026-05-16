@@ -83,6 +83,7 @@
 
 import ConfirmActionInline from './ConfirmActionInline.vue';
 import WorldStateManagerTemplateApplicator from './WorldStateManagerTemplateApplicator.vue';
+import { applyCompletion as applyAutocompleteCompletion } from '@/utils/autocompleteHint';
 
 export default {
     name: "WorldStateManagerCharacterCreator",
@@ -171,8 +172,8 @@ export default {
                 context: `character detail:description`,
                 instructions: this.character.generation_context.instructions,
                 character: this.character.name
-            }, (completion) => {
-                this.character.description += completion;
+            }, (completion, { hintsEnabled }) => {
+                this.character.description = applyAutocompleteCompletion(this.character.description, completion, hintsEnabled);
                 this.descriptionBusy = false;
             }, this.$refs.description);
 

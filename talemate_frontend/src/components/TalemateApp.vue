@@ -412,10 +412,7 @@ import PromptsMenu from './prompts/PromptsMenu.vue';
 import { debounce } from 'lodash';
 import { isVisualAgentReady, isImageEditAvailable, isImageCreateAvailable } from '@/constants/visual';
 import { createSceneAssetsRequester } from './VisualAssetsMixin.js';
-
-// Mirror of AUTOCOMPLETE_HINT_RE in src/talemate/util/dialogue.py.
-// Used only for cosmetic textbox cleanup; the backend is the semantic source of truth.
-const AUTOCOMPLETE_HINT_RE = /\s*\{[^{}]+\}\s*$/;
+import { applyCompletion as applyAutocompleteCompletion } from '@/utils/autocompleteHint';
 
 export default {
   components: {
@@ -1295,10 +1292,9 @@ export default {
       this.autocompleting = false;
       // Use the toggle value captured at send time, so toggling mid-flight
       // doesn't desync from what the backend already decided.
-      if (this.autocompleteHintsEnabledAtSend) {
-        this.messageInput = this.messageInput.replace(AUTOCOMPLETE_HINT_RE, '');
-      }
-      this.messageInput += completion;
+      this.messageInput = applyAutocompleteCompletion(
+        this.messageInput, completion, this.autocompleteHintsEnabledAtSend
+      );
     },
 
     autocompleteHintsEnabled() {
@@ -1347,14 +1343,15 @@ export default {
 
     autocompleteRequest(param, callback, focus_element, delay=500) {
 
+      const hintsEnabled = this.autocompleteHintsEnabled();
       this.autocompleteCallback = (completion) => {
         setTimeout(() => {
-          callback(completion);
+          callback(completion, { hintsEnabled });
         }, delay);
       };
       this.autocompleteFocusElement = focus_element;
       this.autocompletePartialInput = param.partial;
-      this.autocompleteHintsEnabledAtSend = this.autocompleteHintsEnabled();
+      this.autocompleteHintsEnabledAtSend = hintsEnabled;
 
       const param_copy = JSON.parse(JSON.stringify(param));
       param_copy.type = "assistant";

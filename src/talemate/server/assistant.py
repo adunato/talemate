@@ -145,8 +145,7 @@ class AssistantPlugin(Plugin):
                 await creator.autocomplete_narrative(data.partial, emit_signal=True)
                 return
 
-            # force length to 35
-            data.length = 35
+            data.length = creator.autocomplete_contextual_length_for(context_type)
             log.info("Running autocomplete for contextual generation", args=data)
             completion = await creator.contextual_generate(data)
             log.info(

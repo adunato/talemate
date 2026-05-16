@@ -20,7 +20,7 @@
         @keyup.ctrl.enter.stop="sendAutocompleteRequest"
 
         @update:model-value="dirty = true"
-        @blur="update(true)"
+        @blur="onBlurSave"
         label="Description"
         :hint="'A short description of the character. '+autocompleteInfoMessage(busy)">
     </v-textarea>
@@ -32,6 +32,7 @@
 
 import ContextualGenerate from './ContextualGenerate.vue';
 import SpiceAppliedNotification from './SpiceAppliedNotification.vue';
+import { applyCompletion as applyAutocompleteCompletion } from '@/utils/autocompleteHint';
 
 export default {
     name: 'WorldStateManagerCharacterDescription',
@@ -97,14 +98,20 @@ export default {
             this.update();
         },
 
+        onBlurSave() {
+            // Guard: blur during autocomplete would save the un-stripped {hint}.
+            if (this.busy) return;
+            this.update(true);
+        },
+
         sendAutocompleteRequest() {
             this.busy = true;
             this.autocompleteRequest({
                 partial: this.character.description,
                 context: `character detail:description`,
                 character: this.character.name
-            }, (completion) => {
-                this.character.description += completion;
+            }, (completion, { hintsEnabled }) => {
+                this.character.description = applyAutocompleteCompletion(this.character.description, completion, hintsEnabled);
                 this.busy = false;
             }, this.$refs.description);
         },

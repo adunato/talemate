@@ -146,7 +146,7 @@
                             max-rows="32"
 
                             @update:model-value="setFieldDirty('intro')"
-                            @blur="update(true)"
+                            @blur="onIntroBlurSave"
                             :color="dirty['intro'] ? 'dirty' : ''"
 
                             :disabled="busy['intro']"
@@ -168,6 +168,7 @@
 
 import ContextualGenerate from './ContextualGenerate.vue';
 import { MAX_CONTENT_WIDTH } from '@/constants/layout';
+import { applyCompletion as applyAutocompleteCompletion } from '@/utils/autocompleteHint';
 
 const defaultPerspectives = () => ({ default: "", player: "", other: "", narrator: "" });
 
@@ -299,13 +300,19 @@ export default {
             }));
         },
 
+        onIntroBlurSave() {
+            // Guard: blur during autocomplete would save the un-stripped {hint}.
+            if (this.busy['intro']) return;
+            this.update(true);
+        },
+
         sendAutocompleteRequestForIntro() {
             this.busy['intro'] = true;
             this.autocompleteRequest({
                 partial: this.scene.data.intro,
                 context: "scene intro:scene intro",
-            }, (completion) => {
-                this.scene.data.intro += completion;
+            }, (completion, { hintsEnabled }) => {
+                this.scene.data.intro = applyAutocompleteCompletion(this.scene.data.intro, completion, hintsEnabled);
                 this.busy['intro'] = false;
             }, this.$refs.intro);
 

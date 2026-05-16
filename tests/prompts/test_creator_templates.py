@@ -595,6 +595,57 @@ class TestCreatorContextualGenerateMethod:
         creator.client.send_prompt.assert_called_once()
 
     @pytest.mark.asyncio
+    async def test_contextual_generate_extracts_hint_from_partial(
+        self, active_context
+    ):
+        """Trailing `{...}` is stripped from partial and rendered as EDITOR HINTS."""
+        creator = active_context
+        creator.client.send_prompt.return_value = "<CONTENT>extended text</CONTENT>"
+
+        generation_context = ContentGenerationContext(
+            context="character detail:background",
+            character="Elena",
+            partial="She grew up in the forest {haunted, lost sister}",
+            length=100,
+        )
+
+        await creator.contextual_generate(generation_context)
+
+        prompt_text = str(creator.client.send_prompt.call_args[0][0])
+        # Partial mutated in place: clean version visible to renderer
+        assert generation_context.partial == "She grew up in the forest"
+        # Hint surfaced in the EDITOR HINTS section
+        assert "editor hints" in prompt_text.lower()
+        assert "haunted, lost sister" in prompt_text
+        # Brace block does not leak into the DRAFT context
+        assert "{haunted, lost sister}" not in prompt_text
+
+    @pytest.mark.asyncio
+    async def test_contextual_generate_hint_disabled_leaves_partial_intact(
+        self, active_context
+    ):
+        """When hints_enabled toggle is off, trailing `{...}` stays in partial."""
+        creator = active_context
+        creator.actions["autocomplete"].config["hints_enabled"].value = False
+        creator.client.send_prompt.return_value = "<CONTENT>extended text</CONTENT>"
+
+        original_partial = "She grew up in the forest {haunted, lost sister}"
+        generation_context = ContentGenerationContext(
+            context="character detail:background",
+            character="Elena",
+            partial=original_partial,
+            length=100,
+        )
+
+        await creator.contextual_generate(generation_context)
+
+        prompt_text = str(creator.client.send_prompt.call_args[0][0])
+        # Partial untouched
+        assert generation_context.partial == original_partial
+        # No hints section rendered
+        assert "EDITOR HINTS" not in prompt_text
+
+    @pytest.mark.asyncio
     async def test_generate_character_attribute_wrapper(
         self, active_context, mock_scene
     ):
@@ -805,3 +856,31 @@ class TestCreatorAgentProperties:
         length = creator_agent.autocomplete_narrative_suggestion_length
         assert isinstance(length, int)
         assert length > 0
+
+    @pytest.mark.parametrize(
+        "context_type, expected_property",
+        [
+            ("character attribute", "autocomplete_character_attribute_suggestion_length"),
+            ("character detail", "autocomplete_character_detail_suggestion_length"),
+            ("scene intro", "autocomplete_scene_intro_suggestion_length"),
+            (
+                "context_investigation",
+                "autocomplete_context_investigation_suggestion_length",
+            ),
+        ],
+    )
+    def test_autocomplete_contextual_length_for_known_types(
+        self, creator_agent, context_type, expected_property
+    ):
+        """Each known context_type dispatches to its dedicated length config."""
+        expected = getattr(creator_agent, expected_property)
+        assert creator_agent.autocomplete_contextual_length_for(context_type) == expected
+
+    def test_autocomplete_contextual_length_for_unknown_falls_back_to_detail(
+        self, creator_agent
+    ):
+        """Unmapped context_types fall back to character_detail's length."""
+        fallback = creator_agent.autocomplete_character_detail_suggestion_length
+        assert (
+            creator_agent.autocomplete_contextual_length_for("scene title") == fallback
+        )

@@ -83,7 +83,7 @@
                         @keyup.ctrl.enter.stop="sendAutocompleteRequest"
 
                         @update:modelValue="dirty = true"
-                        @blur="update(selected, true)"
+                        @blur="onBlurSave"
 
                         v-model="character.base_attributes[selected]">
                     </v-textarea>
@@ -115,6 +115,7 @@
 import ConfirmActionInline from './ConfirmActionInline.vue';
 import ContextualGenerate from './ContextualGenerate.vue';
 import WorldStateManagerTemplateApplicator from './WorldStateManagerTemplateApplicator.vue';
+import { applyCompletion as applyAutocompleteCompletion } from '@/utils/autocompleteHint';
 import SpiceAppliedNotification from './SpiceAppliedNotification.vue';
 
 export default {
@@ -272,6 +273,12 @@ export default {
             }));
         },
 
+        onBlurSave() {
+            // Guard: blur during autocomplete would save the un-stripped {hint}.
+            if (this.busy) return;
+            this.update(this.selected, true);
+        },
+
         setShared(name, shared) {
             const payload = {
                 type: 'world_state_manager',
@@ -315,8 +322,8 @@ export default {
                 partial: this.character.base_attributes[this.selected],
                 context: `character attribute:${this.selected}`,
                 character: this.character.name
-            }, (completion) => {
-                this.character.base_attributes[this.selected] += completion;
+            }, (completion, { hintsEnabled }) => {
+                this.character.base_attributes[this.selected] = applyAutocompleteCompletion(this.character.base_attributes[this.selected], completion, hintsEnabled);
                 this.busy = false;
             }, this.$refs.attribute);
 

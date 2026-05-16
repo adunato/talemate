@@ -91,6 +91,7 @@
 import { SceneTextParser } from '@/utils/sceneMessageRenderer';
 import { insertNewlineAtCursor } from '@/utils/textAreaUtils';
 import { isPrimaryModifier } from '@/utils/keyboardModifiers';
+import { applyCompletion as applyAutocompleteCompletion } from '@/utils/autocompleteHint';
 import { spliceContinuation } from '@/utils/messageContinuation';
 import MessageAssetImage from './MessageAssetImage.vue';
 import MessageAssetMixin from './MessageAssetMixin.js';
@@ -324,8 +325,8 @@ export default {
           context: "dialogue:npc",
           character: this.character,
         },
-        (completion) => {
-          this.editing_text += completion;
+        (completion, { hintsEnabled }) => {
+          this.editing_text = applyAutocompleteCompletion(this.editing_text, completion, hintsEnabled);
           this.autocompleting = false;
         },
         this.$refs.textarea

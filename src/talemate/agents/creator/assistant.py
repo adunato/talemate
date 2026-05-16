@@ -57,6 +57,7 @@ class ContextualGenerateEmission(AgentTemplateEmission):
 
     content_generation_context: "ContentGenerationContext | None" = None
     character: "Character | None" = None
+    autocomplete_hint: str | None = None
 
     @property
     def context_type(self) -> str:
@@ -75,6 +76,7 @@ class AutocompleteEmission(AgentTemplateEmission):
     input: str = ""
     type: str = ""
     character: "Character | None" = None
+    autocomplete_hint: str | None = None
 
 
 class ContentGenerationContext(pydantic.BaseModel):
@@ -207,6 +209,42 @@ class AssistantMixin:
                     max=256,
                     step=16,
                 ),
+                "character_attribute_suggestion_length": AgentActionConfig(
+                    type="number",
+                    label="Character Attribute Suggestion Length",
+                    description="Length of the generated suggestion when using autocomplete on a character attribute field.",
+                    value=32,
+                    min=32,
+                    max=256,
+                    step=16,
+                ),
+                "character_detail_suggestion_length": AgentActionConfig(
+                    type="number",
+                    label="Character Detail Suggestion Length",
+                    description="Length of the generated suggestion when using autocomplete on a character detail or description field.",
+                    value=64,
+                    min=32,
+                    max=256,
+                    step=16,
+                ),
+                "scene_intro_suggestion_length": AgentActionConfig(
+                    type="number",
+                    label="Scene Intro Suggestion Length",
+                    description="Length of the generated suggestion when using autocomplete on the scene intro field.",
+                    value=96,
+                    min=32,
+                    max=256,
+                    step=16,
+                ),
+                "context_investigation_suggestion_length": AgentActionConfig(
+                    type="number",
+                    label="Context Investigation Suggestion Length",
+                    description="Length of the generated suggestion when using autocomplete on a context-investigation message.",
+                    value=64,
+                    min=32,
+                    max=256,
+                    step=16,
+                ),
                 "hints_enabled": AgentActionConfig(
                     type="bool",
                     label="Enable Hints",
@@ -237,6 +275,36 @@ class AssistantMixin:
     @property
     def autocomplete_narrative_suggestion_length(self):
         return self.resolve_config("autocomplete", "narrative_suggestion_length")
+
+    @property
+    def autocomplete_character_attribute_suggestion_length(self):
+        return self.resolve_config("autocomplete", "character_attribute_suggestion_length")
+
+    @property
+    def autocomplete_character_detail_suggestion_length(self):
+        return self.resolve_config("autocomplete", "character_detail_suggestion_length")
+
+    @property
+    def autocomplete_scene_intro_suggestion_length(self):
+        return self.resolve_config("autocomplete", "scene_intro_suggestion_length")
+
+    @property
+    def autocomplete_context_investigation_suggestion_length(self):
+        return self.resolve_config("autocomplete", "context_investigation_suggestion_length")
+
+    def autocomplete_contextual_length_for(self, context_type: str) -> int:
+        """Resolve the configured suggestion length for a contextual autocomplete
+        type. Properties follow `autocomplete_<context>_suggestion_length`
+        (spaces → underscores). Unmapped types fall back to character-detail."""
+        attr = f"autocomplete_{context_type.replace(' ', '_')}_suggestion_length"
+        length = getattr(self, attr, None)
+        if length is None:
+            log.debug(
+                "autocomplete length fallback (unmapped context_type)",
+                context_type=context_type,
+            )
+            return self.autocomplete_character_detail_suggestion_length
+        return length
 
     @property
     def autocomplete_hints_enabled(self):
@@ -309,9 +377,16 @@ class AssistantMixin:
 
         kind = f"create_{generation_context.length}"
 
+        hint = None
+        if self.autocomplete_hints_enabled and generation_context.partial:
+            cleaned, hint = util.extract_autocomplete_hint(generation_context.partial)
+            if hint is not None:
+                generation_context.partial = cleaned
+
         log.debug(
             f"Contextual generate: {context_typ} - {context_name}",
             generation_context=generation_context,
+            hint=hint,
         )
 
         character = (
@@ -332,6 +407,7 @@ class AssistantMixin:
             "history_aware": generation_context.history_aware,
             "character": character,
             "template": generation_context.template,
+            "hint": hint,
         }
 
         emission = ContextualGenerateEmission(
@@ -339,6 +415,7 @@ class AssistantMixin:
             content_generation_context=generation_context,
             character=character,
             template_vars=template_vars,
+            autocomplete_hint=hint,
         )
 
         await async_signals.get("agent.creator.contextual_generate.before").send(
@@ -574,6 +651,7 @@ class AssistantMixin:
             type="dialogue",
             character=character,
             template_vars=template_vars,
+            autocomplete_hint=hint,
         )
 
         await async_signals.get("agent.creator.autocomplete.before").send(emission)
@@ -674,6 +752,7 @@ class AssistantMixin:
             input=input,
             type="narrative",
             template_vars=template_vars,
+            autocomplete_hint=hint,
         )
 
         await async_signals.get("agent.creator.autocomplete.before").send(emission)
