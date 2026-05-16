@@ -136,27 +136,27 @@ class SceneAnalyzationMixin:
 
     @property
     def analyze_scene(self) -> bool:
-        return self.actions["analyze_scene"].enabled
+        return self.resolve_enabled("analyze_scene")
 
     @property
     def analysis_length(self) -> int:
-        return int(self.actions["analyze_scene"].config["analysis_length"].value)
+        return int(self.resolve_config("analyze_scene", "analysis_length"))
 
     @property
     def cache_analysis(self) -> bool:
-        return self.actions["analyze_scene"].config["cache_analysis"].value
+        return self.resolve_config("analyze_scene", "cache_analysis")
 
     @property
     def deep_analysis(self) -> bool:
-        return self.actions["analyze_scene"].config["deep_analysis"].value
+        return self.resolve_config("analyze_scene", "deep_analysis")
 
     @property
     def analyze_scene_for_conversation(self) -> bool:
-        return self.actions["analyze_scene"].config["for_conversation"].value
+        return self.resolve_config("analyze_scene", "for_conversation")
 
     @property
     def analyze_scene_for_narration(self) -> bool:
-        return self.actions["analyze_scene"].config["for_narration"].value
+        return self.resolve_config("analyze_scene", "for_narration")
 
     # signal connect
 

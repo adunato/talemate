@@ -208,8 +208,8 @@ class ConversationAgent(MemoryRAGMixin, Agent):
 
     @property
     def conversation_format(self):
-        if self.actions["generation_override"].enabled:
-            return self.actions["generation_override"].config["format"].value
+        if self.resolve_enabled("generation_override"):
+            return self.resolve_config("generation_override", "format")
         return "movie_script"
 
     @property
@@ -243,43 +243,37 @@ class ConversationAgent(MemoryRAGMixin, Agent):
 
     @property
     def generation_settings_task_instructions(self):
-        return self.actions["generation_override"].config["instructions"].value
+        return self.resolve_config("generation_override", "instructions")
 
     @property
     def generation_settings_actor_instructions(self):
-        return self.actions["generation_override"].config["actor_instructions"].value
+        return self.resolve_config("generation_override", "actor_instructions")
 
     @property
     def inject_character_names_into_stop(self) -> bool:
-        return (
-            self.actions["generation_override"]
-            .config["inject_character_names_into_stop"]
-            .value
+        return self.resolve_config(
+            "generation_override", "inject_character_names_into_stop"
         )
 
     @property
     def generation_settings_actor_instructions_offset(self):
-        return (
-            self.actions["generation_override"]
-            .config["actor_instructions_offset"]
-            .value
-        )
+        return self.resolve_config("generation_override", "actor_instructions_offset")
 
     @property
     def generation_settings_response_length(self):
-        return self.actions["generation_override"].config["length"].value
+        return self.resolve_config("generation_override", "length")
 
     @property
     def generation_settings_override_enabled(self):
-        return self.actions["generation_override"].enabled
+        return self.resolve_enabled("generation_override")
 
     @property
     def content_use_scene_intent(self) -> bool:
-        return self.actions["content"].config["use_scene_intent"].value
+        return self.resolve_config("content", "use_scene_intent")
 
     @property
     def content_use_writing_style(self) -> bool:
-        return self.actions["content"].config["use_writing_style"].value
+        return self.resolve_config("content", "use_writing_style")
 
     def connect(self, scene):
         super().connect(scene)
@@ -400,22 +394,20 @@ class ConversationAgent(MemoryRAGMixin, Agent):
         return result
 
     def set_generation_overrides(self):
-        if not self.actions["generation_override"].enabled:
+        if not self.resolve_enabled("generation_override"):
             return
 
         set_conversation_context_attribute(
-            "length", self.actions["generation_override"].config["length"].value
+            "length", self.resolve_config("generation_override", "length")
         )
 
-        if self.actions["generation_override"].config["jiggle"].value > 0.0:
+        jiggle = self.resolve_config("generation_override", "jiggle")
+        if jiggle > 0.0:
             nuke_repetition = client_context_attribute("nuke_repetition")
             if nuke_repetition == 0.0:
                 # we only apply the agent override if some other mechanism isn't already
                 # setting the nuke_repetition value
-                nuke_repetition = (
-                    self.actions["generation_override"].config["jiggle"].value
-                )
-                set_client_context_attribute("nuke_repetition", nuke_repetition)
+                set_client_context_attribute("nuke_repetition", jiggle)
 
     @set_processing
     @store_context_state("instruction")

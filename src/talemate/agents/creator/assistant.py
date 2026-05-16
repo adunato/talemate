@@ -232,15 +232,15 @@ class AssistantMixin:
 
     @property
     def autocomplete_dialogue_suggestion_length(self):
-        return self.actions["autocomplete"].config["dialogue_suggestion_length"].value
+        return self.resolve_config("autocomplete", "dialogue_suggestion_length")
 
     @property
     def autocomplete_narrative_suggestion_length(self):
-        return self.actions["autocomplete"].config["narrative_suggestion_length"].value
+        return self.resolve_config("autocomplete", "narrative_suggestion_length")
 
     @property
     def autocomplete_hints_enabled(self):
-        return self.actions["autocomplete"].config["hints_enabled"].value
+        return self.resolve_config("autocomplete", "hints_enabled")
 
     # actions
 

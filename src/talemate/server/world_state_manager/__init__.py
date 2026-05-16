@@ -184,6 +184,11 @@ class SceneSettingsPayload(pydantic.BaseModel):
     agent_persona_templates: dict[str, str | None] | None = None
     visual_style_template: str | None = None
     restore_from: str | None = None
+    # Presence-aware via `model_fields_set` — see handler. None = opt out;
+    # string = link to that file; unset (caller omits the key) = leave the
+    # link alone.
+    agent_settings_file: str | None = None
+    agent_settings_opted_out: bool | None = None
 
 
 class SaveScenePayload(pydantic.BaseModel):
@@ -1126,7 +1131,21 @@ class WorldStateManagerPlugin(
     async def handle_update_scene_settings(self, data):
         payload = SceneSettingsPayload(**data)
 
-        await self.world_state_manager.update_scene_settings(**payload.model_dump())
+        # `model_fields_set` distinguishes "caller omitted this field" from
+        # "caller explicitly sent None" — needed by the agent-settings link
+        # logic where None means opt-out and absent means "leave it alone".
+        kwargs = payload.model_dump()
+        if "agent_settings_file" not in payload.model_fields_set:
+            kwargs.pop("agent_settings_file", None)
+        if "agent_settings_opted_out" not in payload.model_fields_set:
+            kwargs.pop("agent_settings_opted_out", None)
+
+        try:
+            await self.world_state_manager.update_scene_settings(**kwargs)
+        except ValueError as exc:
+            log.warning("update_scene_settings rejected", error=str(exc))
+            await self.signal_operation_failed(str(exc))
+            return
 
         self.websocket_handler.queue_put(
             {

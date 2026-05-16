@@ -214,6 +214,7 @@ class PocketTTSMixin:
                     ],
                     description="Pocket TTS language/model. Distilled 6-layer for English; 24-layer variants give better quality on other languages.",
                     value_migration=_migrate_variant_to_language,
+                    scene_overridable=False,
                 ),
                 "temp": AgentActionConfig(
                     type="number",
@@ -223,6 +224,7 @@ class PocketTTSMixin:
                     step=0.05,
                     label="Temperature",
                     description="Sampling temperature. Higher values can sound more varied but less stable.",
+                    scene_overridable=False,
                 ),
                 "lsd_decode_steps": AgentActionConfig(
                     type="number",
@@ -232,6 +234,7 @@ class PocketTTSMixin:
                     step=1,
                     label="LSD decode steps",
                     description="Number of decoding steps. Higher can improve quality but is slower.",
+                    scene_overridable=False,
                 ),
                 "noise_clamp": AgentActionConfig(
                     type="number",
@@ -241,6 +244,7 @@ class PocketTTSMixin:
                     step=0.1,
                     label="Noise clamp",
                     description="0 = disabled. If >0, clamps noise sampling to this maximum.",
+                    scene_overridable=False,
                 ),
                 "eos_threshold": AgentActionConfig(
                     type="number",
@@ -250,6 +254,7 @@ class PocketTTSMixin:
                     step=0.1,
                     label="EOS threshold",
                     description="End-of-sequence detection threshold.",
+                    scene_overridable=False,
                 ),
                 "frames_after_eos": AgentActionConfig(
                     type="number",
@@ -259,12 +264,14 @@ class PocketTTSMixin:
                     step=1,
                     label="Frames after EOS",
                     description="0 = auto. If >0, generates additional frames after EOS detection.",
+                    scene_overridable=False,
                 ),
                 "quantize": AgentActionConfig(
                     type="bool",
                     value=False,
                     label="Quantize (int8)",
                     description="Apply dynamic int8 quantization. ~30% faster on most CPUs with minor quality impact.",
+                    scene_overridable=False,
                 ),
                 "chunk_size": AgentActionConfig(
                     type="number",
@@ -274,6 +281,7 @@ class PocketTTSMixin:
                     value=256,
                     label="Chunk size",
                     note=INFO_CHUNK_SIZE,
+                    scene_overridable=False,
                 ),
             },
         )

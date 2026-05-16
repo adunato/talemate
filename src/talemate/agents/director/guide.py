@@ -120,23 +120,23 @@ class GuideSceneMixin:
 
     @property
     def guide_scene(self) -> bool:
-        return self.actions["guide_scene"].enabled
+        return self.resolve_enabled("guide_scene")
 
     @property
     def guide_actors(self) -> bool:
-        return self.actions["guide_scene"].config["guide_actors"].value
+        return self.resolve_config("guide_scene", "guide_actors")
 
     @property
     def guide_narrator(self) -> bool:
-        return self.actions["guide_scene"].config["guide_narrator"].value
+        return self.resolve_config("guide_scene", "guide_narrator")
 
     @property
     def guide_scene_guidance_length(self) -> int:
-        return int(self.actions["guide_scene"].config["guidance_length"].value)
+        return int(self.resolve_config("guide_scene", "guidance_length"))
 
     @property
     def guide_scene_cache_guidance(self) -> bool:
-        return self.actions["guide_scene"].config["cache_guidance"].value
+        return self.resolve_config("guide_scene", "cache_guidance")
 
     # signal connect
 

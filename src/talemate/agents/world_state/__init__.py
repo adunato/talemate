@@ -152,11 +152,27 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
 
     @property
     def initial_update(self):
-        return self.actions["update_world_state"].config["initial"].value
+        return self.resolve_config("update_world_state", "initial")
+
+    @property
+    def update_world_state_enabled(self) -> bool:
+        return self.resolve_enabled("update_world_state")
+
+    @property
+    def update_world_state_turns(self) -> int:
+        return self.resolve_config("update_world_state", "turns")
+
+    @property
+    def update_reinforcements_enabled(self) -> bool:
+        return self.resolve_enabled("update_reinforcements")
+
+    @property
+    def check_pin_conditions_enabled(self) -> bool:
+        return self.resolve_enabled("check_pin_conditions")
 
     @property
     def check_pin_conditions_turns(self):
-        return self.actions["check_pin_conditions"].config["turns"].value
+        return self.resolve_config("check_pin_conditions", "turns")
 
     def connect(self, scene):
         super().connect(scene)
@@ -225,7 +241,7 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
         if not self.enabled:
             return
 
-        if not self.actions["update_reinforcements"].enabled:
+        if not self.update_reinforcements_enabled:
             return
 
         await self.update_reinforcements()
@@ -234,13 +250,11 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
         if not self.enabled:
             return
 
-        if not self.actions["check_pin_conditions"].enabled:
+        if not self.check_pin_conditions_enabled:
             return
 
         if (
-            self.next_pin_check
-            % self.actions["check_pin_conditions"].config["turns"].value
-            != 0
+            self.next_pin_check % self.check_pin_conditions_turns != 0
             or self.next_pin_check == 0
         ):
             self.next_pin_check += 1
@@ -254,20 +268,19 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
         if not self.enabled:
             return
 
-        if not self.actions["update_world_state"].enabled:
+        if not self.update_world_state_enabled:
             return
 
         log.debug(
             "update_world_state",
             next_update=self.next_update,
-            turns=self.actions["update_world_state"].config["turns"].value,
+            turns=self.update_world_state_turns,
         )
 
         scene = self.scene
 
         if (
-            self.next_update % self.actions["update_world_state"].config["turns"].value
-            != 0
+            self.next_update % self.update_world_state_turns != 0
             or self.next_update == 0
         ) and not force:
             self.next_update += 1

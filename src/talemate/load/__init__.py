@@ -36,6 +36,7 @@ import talemate.agents.tts.voice_library as voice_library
 from talemate.path import SCENES_DIR
 from talemate.changelog import _get_overall_latest_revision
 from talemate.shared_context import SharedContext
+from talemate.scene_agent_settings import AGENT_SETTINGS_DIRNAME, resolve_link_on_load
 from talemate.load.character_card import CharacterCardImportOptions
 from talemate.scene_assets import AssetTransfer
 
@@ -334,6 +335,8 @@ async def load_scene_from_data(
     else:
         scene.shared_context = None
 
+    await resolve_link_on_load(scene, scene_data)
+
     import_scene_node_definitions(scene)
 
     if not reset:
@@ -524,6 +527,19 @@ async def load_scene_from_zip(scene, zip_path, reset: bool = False):
                 "Loaded templates directory",
                 source=templates_source,
                 dest=templates_dest,
+            )
+
+        # Restore agent-settings if they exist in ZIP. Mirrors the export
+        # side — without this the importing user's scene loses the per-scene
+        # agent overlay referenced by `agent_settings_file`.
+        agent_settings_source = temp_path / AGENT_SETTINGS_DIRNAME
+        if agent_settings_source.exists():
+            agent_settings_dest = Path(scene.save_dir) / AGENT_SETTINGS_DIRNAME
+            shutil.copytree(agent_settings_source, agent_settings_dest)
+            log.debug(
+                "Loaded agent-settings directory",
+                source=agent_settings_source,
+                dest=agent_settings_dest,
             )
 
         # Restore restore file if it exists in ZIP and is referenced in scene_data

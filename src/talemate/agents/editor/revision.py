@@ -486,55 +486,55 @@ class RevisionMixin:
 
     @property
     def revision_enabled(self):
-        return self.actions["revision"].enabled
+        return self.resolve_enabled("revision")
 
     @property
     def revision_automatic_enabled(self) -> bool:
-        return self.actions["revision"].config["automatic_revision"].value
+        return self.resolve_config("revision", "automatic_revision")
 
     @property
     def revision_automatic_targets(self) -> list[str]:
-        return self.actions["revision"].config["automatic_revision_targets"].value
+        return self.resolve_config("revision", "automatic_revision_targets")
 
     @property
     def revision_method(self):
-        return self.actions["revision"].config["revision_method"].value
+        return self.resolve_config("revision", "revision_method")
 
     @property
     def revision_repetition_detection_method(self):
-        return self.actions["revision"].config["repetition_detection_method"].value
+        return self.resolve_config("revision", "repetition_detection_method")
 
     @property
     def revision_repetition_threshold(self):
-        return self.actions["revision"].config["repetition_threshold"].value
+        return self.resolve_config("revision", "repetition_threshold")
 
     @property
     def revision_repetition_range(self):
-        return self.actions["revision"].config["repetition_range"].value
+        return self.resolve_config("revision", "repetition_range")
 
     @property
     def revision_repetition_min_length(self):
-        return self.actions["revision"].config["repetition_min_length"].value
+        return self.resolve_config("revision", "repetition_min_length")
 
     @property
     def revision_repetition_handling(self):
-        return self.actions["revision"].config["repetition_handling"].value
+        return self.resolve_config("revision", "repetition_handling")
 
     @property
     def revision_split_on_comma(self):
-        return self.actions["revision"].config["split_on_comma"].value
+        return self.resolve_config("revision", "split_on_comma")
 
     @property
     def revision_min_issues(self):
-        return self.actions["revision"].config["min_issues"].value
+        return self.resolve_config("revision", "min_issues")
 
     @property
     def revision_detect_bad_prose_enabled(self):
-        return self.actions["revision"].config["detect_bad_prose"].value
+        return self.resolve_config("revision", "detect_bad_prose")
 
     @property
     def revision_detect_bad_prose_threshold(self):
-        return self.actions["revision"].config["detect_bad_prose_threshold"].value
+        return self.resolve_config("revision", "detect_bad_prose_threshold")
 
     # signal connect
 

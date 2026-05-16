@@ -91,11 +91,8 @@ class StyleMixin:
 
     def style_template_id(self, vis_type: VIS_TYPE) -> str:
         if vis_type == VIS_TYPE.UNSPECIFIED:
-            return self.actions["_styles"].config["art_style"].value
-        else:
-            return (
-                self.actions["_styles"].config[f"{vis_type.value.lower()}_style"].value
-            )
+            return self.resolve_config("_styles", "art_style")
+        return self.resolve_config("_styles", f"{vis_type.value.lower()}_style")
 
     def style_template(self, vis_type: VIS_TYPE) -> VisualStyle | None:
         scene = getattr(self, "scene", None)

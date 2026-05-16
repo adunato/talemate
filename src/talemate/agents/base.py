@@ -28,6 +28,7 @@ import talemate.config.schema as config_schema
 from talemate.client.context import (
     ClientContext,
 )
+from talemate.scene_agent_settings import UNSET
 from talemate.game.engine.nodes.core import GraphState
 from talemate.game.engine.nodes.registry import get_nodes_by_base_type, get_node
 from talemate.game.engine.nodes.run import FunctionWrapper
@@ -97,6 +98,7 @@ class AgentActionConfig(pydantic.BaseModel):
         default_factory=dict
     )
     save_on_change: bool = False
+    scene_overridable: bool = True
 
     wstemplate_type: (
         Literal[
@@ -160,6 +162,21 @@ class AgentAction(pydantic.BaseModel):
     # Only meaningful on actions that are themselves dynamic registries.
     dynamic_registry_component: str | None = None
 
+    enabled_scene_overridable: bool = False
+
+    @pydantic.model_validator(mode="after")
+    def _enabled_scene_overridable_requires_can_be_disabled(self):
+        # An enable-flag override only makes sense when the global enable
+        # flag is itself togglable. Without can_be_disabled the global UI
+        # never exposes an Enable checkbox, so a scene-level override has
+        # nothing to override.
+        if self.enabled_scene_overridable and not self.can_be_disabled:
+            raise ValueError(
+                f"AgentAction {self.label!r}: enabled_scene_overridable=True "
+                "requires can_be_disabled=True"
+            )
+        return self
+
 
 # ---------------------------------------------------------------------------
 # Dynamic action registries
@@ -194,6 +211,7 @@ def optimize_prompt_caching_action() -> AgentAction:
                     {"label": "On", "value": "on"},
                     {"label": "Off", "value": "off"},
                 ],
+                scene_overridable=False,
             ),
         },
     )
@@ -366,6 +384,7 @@ class Agent(ABC):
             "has_toggle": agent.has_toggle if agent else False,
             "experimental": agent.experimental if agent else False,
             "requires_llm_client": cls.requires_llm_client,
+            "scene_overrides": cls._scene_overrides_payload(agent),
         }
         actions = getattr(agent, "actions", None)
 
@@ -375,6 +394,24 @@ class Agent(ABC):
             config_options["actions"] = {}
 
         return config_options
+
+    @classmethod
+    def _scene_overrides_payload(cls, agent) -> dict:
+        """Sparse override dict for THIS agent from the active scene, if any.
+
+        Empty dict means: no scene loaded, or no overrides set for this
+        agent. The frontend uses this to populate the Scene tab in the
+        AgentModal.
+        """
+        if not agent:
+            return {}
+        overrides = agent.scene_overrides()
+        if overrides is None:
+            return {}
+        agent_override = overrides.agents.get(agent.agent_type)
+        if not agent_override:
+            return {}
+        return agent_override.model_dump(exclude_none=True)
 
     @classmethod
     async def init_nodes(cls, scene: "Scene", state: GraphState):
@@ -805,7 +842,82 @@ class Agent(ABC):
             return default
         return functools.partial(fn, slug)
 
+    # ------------------------------------------------------------------
+    # Per-scene config overrides
+    # ------------------------------------------------------------------
+
+    def scene_overrides(self):
+        """Return the scene's agent-overrides overlay, or None if not linked.
+
+        ``scene`` is only present after ``connect()`` runs at scene-load time;
+        callers may invoke this before that (e.g. property getters during agent
+        init), so we tolerate a missing ``scene`` attribute.
+        """
+        scene = getattr(self, "scene", None)
+        return getattr(scene, "agent_overrides", None) if scene else None
+
+    def _resolve(self, getter, fallback):
+        """Consult the scene overlay via ``getter``; fall back if UNSET."""
+        overrides = self.scene_overrides()
+        if overrides is not None:
+            value = getter(overrides)
+            if value is not UNSET:
+                return value
+        return fallback()
+
+    def resolve_config(self, action_key: str, config_key: str):
+        """Return the effective value for an action config field — scene override if any, else global."""
+        return self._resolve(
+            lambda o: o.get_value(self.agent_type, action_key, config_key),
+            lambda: self.actions[action_key].config[config_key].value,
+        )
+
+    def resolve_enabled(self, action_key: str) -> bool:
+        """Return the effective enabled flag for a container action."""
+        return bool(
+            self._resolve(
+                lambda o: o.get_enabled(self.agent_type, action_key),
+                lambda: self.actions[action_key].enabled,
+            )
+        )
+
+    def _route_write(self, has_override, write_override, write_global) -> None:
+        """Route a write to the scene overlay when it's overriding this field, else to the global config."""
+        overrides = self.scene_overrides()
+        if overrides is not None and has_override(overrides):
+            write_override(overrides)
+        else:
+            write_global()
+
+    def write_config(self, action_key: str, config_key: str, value) -> None:
+        """Update an action config field — scene override if one is active for this field, else global.
+
+        Note: this updates an *existing* override; it does not create a new one.
+        New overrides are installed via the AgentModal save flow
+        (see ``server.agent_config.replace_agent_overrides``).
+        """
+        self._route_write(
+            lambda o: o.get_value(self.agent_type, action_key, config_key) is not UNSET,
+            lambda o: o.set_value(self.agent_type, action_key, config_key, value),
+            lambda: setattr(
+                self.actions[action_key].config[config_key], "value", value
+            ),
+        )
+
+    def write_enabled(self, action_key: str, enabled: bool) -> None:
+        """Update an action's enabled flag — scene override if one is active, else global.
+
+        Note: this updates an *existing* override; it does not create a new one.
+        """
+        self._route_write(
+            lambda o: o.get_enabled(self.agent_type, action_key) is not UNSET,
+            lambda o: o.set_enabled(self.agent_type, action_key, enabled),
+            lambda: setattr(self.actions[action_key], "enabled", enabled),
+        )
+
     async def apply_config(self, *args, **kwargs):
+        # Writes global state directly on purpose; runtime edits must go
+        # through `write_config` / `write_enabled` to respect any overlay.
         if self.has_toggle and "enabled" in kwargs:
             self.is_enabled = kwargs.get("enabled", False)
 

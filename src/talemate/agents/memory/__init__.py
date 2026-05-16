@@ -81,6 +81,7 @@ class MemoryAgent(Agent):
                         label="Embeddings",
                         choices=presets,
                         description="Which embeddings to use",
+                        scene_overridable=False,
                     ),
                     "device": AgentActionConfig(
                         type="text",
@@ -92,6 +93,7 @@ class MemoryAgent(Agent):
                             {"value": "cpu", "label": "CPU"},
                             {"value": "cuda", "label": "CUDA"},
                         ],
+                        scene_overridable=False,
                     ),
                 },
             ),

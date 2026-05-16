@@ -1021,7 +1021,7 @@ class Prompt(pydantic.BaseModel):
         try:
             agent_name, action_name, config_name = config_path.split(".")
             agent = instance.get_agent(agent_name)
-            return agent.actions[action_name].config.get(config_name).value
+            return agent.resolve_config(action_name, config_name)
         except Exception as e:
             log.error("agent_config", config_path=config_path, error=e)
             return ""

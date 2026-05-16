@@ -20,6 +20,11 @@
                             <v-icon v-bind="props" color="warning" size="14" class="ml-1">mdi-flask-outline</v-icon>
                         </template>
                     </v-tooltip>
+                    <v-tooltip v-if="sceneOverrideCount(agent) > 0" :text="sceneOverrideTooltip(agent)" density="compact">
+                        <template v-slot:activator="{ props }">
+                            <v-icon v-bind="props" color="primary" size="14" class="ml-1">mdi-movie-open-cog-outline</v-icon>
+                        </template>
+                    </v-tooltip>
                     <AgentMessages :ref="el => setAgentMessageRef(el, agent.name)" v-if="agentHasMessages[agent.name]" :messages="messages[agent.name] || []" :agent="agent.name" :messageReceiveTime="agentHasMessages[agent.name]" />
 
                 </v-list-item-title>
@@ -100,7 +105,7 @@
                 </div>
             </v-list-item>
         </v-list>
-        <AgentModal :dialog="state.dialog" :formTitle="state.formTitle" :templates="templates" :app-config="appConfig" @save="saveAgent" @update:dialog="updateDialog" ref="modal"></AgentModal>
+        <AgentModal :dialog="state.dialog" :formTitle="state.formTitle" :templates="templates" :app-config="appConfig" :scene="scene" @save="saveAgent" @update:dialog="updateDialog" ref="modal"></AgentModal>
     </div>
 </template>
     
@@ -108,6 +113,7 @@
 import AgentModal from './AgentModal.vue';
 import { isPrimaryModifier } from '@/utils/keyboardModifiers';
 import AgentMessages from './AgentMessages.vue';
+import { countSceneOverrides } from '@/constants/sceneAgentSettings';
 
 export default {
     components: {
@@ -143,6 +149,7 @@ export default {
         },
         templates: Object,
         appConfig: Object,
+        scene: Object,
     },
     computed: {
         agentStateNotifications() {
@@ -177,6 +184,15 @@ export default {
         };
     },
     methods: {
+        sceneOverrideCount(agent) {
+            return countSceneOverrides(agent?.data?.scene_overrides);
+        },
+        sceneOverrideTooltip(agent) {
+            const n = this.sceneOverrideCount(agent);
+            const file = this.scene?.data?.agent_settings_file || 'agent-settings.json';
+            return `${n} scene override${n === 1 ? '' : 's'} active (from ${file})`;
+        },
+
         setAgentMessageRef(el, agentName) {
             if (el) {
                 this.agentMessagesRefs[agentName] = el;

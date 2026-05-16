@@ -60,6 +60,7 @@ from talemate.instance import get_agent
 from talemate.regenerate import regeneration_status
 from talemate.changelog import InMemoryChangelog
 from talemate.shared_context import SharedContext
+from talemate.scene_agent_settings import SceneAgentSettings
 
 __all__ = [
     "Character",
@@ -141,6 +142,10 @@ class Scene(Emitter):
         # allowing websocket-triggered environment switches to restart the scene loop.
         self.restart_scene_loop_requested = False
         self.shared_context: SharedContext | None = None
+        # Per-scene agent overrides — see talemate.scene_agent_settings.
+        self.agent_settings_file: str | None = None
+        self._agent_settings_opted_out: bool = False
+        self.agent_overrides: SceneAgentSettings | None = None
         self.assets = SceneAssets(scene=self)
         self.voice_library: VoiceLibrary = VoiceLibrary()
         self.description = ""
@@ -388,6 +393,47 @@ class Scene(Emitter):
     @property
     def shared_context_dir(self):
         return os.path.join(self.save_dir, "shared-context")
+
+    @property
+    def agent_settings_link(self) -> str | None:
+        """Effective linked agent-settings filename, honoring opt-out."""
+        if self._agent_settings_opted_out:
+            return None
+        return self.agent_overrides.filename if self.agent_overrides else None
+
+    @property
+    def agent_settings_files(self) -> list[str]:
+        """Available agent-settings JSON files in this scene's
+        ``agent-settings/`` subdir.
+
+        Cached by directory mtime — ``scene_status`` (which reads this) fires
+        often, and ``list_settings_files`` enumerates every .json in the
+        subdir. Re-reading on every emit is wasteful.
+        """
+        from talemate.scene_agent_settings import (
+            agent_settings_dir,
+            list_settings_files,
+        )
+
+        if not self.filename or not self._project_name:
+            return []
+        save_dir = os.path.join(self.scenes_dir(), self.project_name)
+        settings_dir = agent_settings_dir(save_dir)
+        try:
+            mtime = os.stat(settings_dir).st_mtime_ns
+        except OSError:
+            # Subdir doesn't exist yet — nothing to list, and nothing to cache
+            # under (mtime would be undefined). Return empty without poisoning
+            # the cache so a later first-write is picked up immediately.
+            return []
+
+        cache = getattr(self, "_agent_settings_files_cache", None)
+        if cache is not None and cache[0] == mtime:
+            return cache[1]
+
+        files = list_settings_files(save_dir)
+        self._agent_settings_files_cache = (mtime, files)
+        return files
 
     @property
     def auto_save(self) -> bool:
@@ -1384,6 +1430,9 @@ class Scene(Emitter):
                 "shared_context": self.shared_context.filename
                 if self.shared_context
                 else None,
+                "agent_settings_file": self.agent_settings_link,
+                "agent_settings_opted_out": self._agent_settings_opted_out,
+                "agent_settings_files": self.agent_settings_files,
                 "game_state_watch_paths": self.game_state_watch_paths,
             },
         )
@@ -2099,6 +2148,8 @@ class Scene(Emitter):
             "shared_context": scene.shared_context.filename
             if scene.shared_context
             else None,
+            "agent_settings_file": scene.agent_settings_link,
+            "agent_settings_opted_out": scene._agent_settings_opted_out,
             "game_state_watch_paths": scene.game_state_watch_paths,
         }
 

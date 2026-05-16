@@ -5,6 +5,10 @@ import structlog
 
 import talemate.world_state.templates as world_state_templates
 from talemate.agents.tts.util import get_voice
+from talemate.scene_agent_settings import (
+    UNCHANGED as AGENT_SETTINGS_UNCHANGED,
+    apply_scene_settings_link,
+)
 from talemate.character import (
     activate_character,
     deactivate_character,
@@ -1134,6 +1138,7 @@ class WorldStateManager:
         agent_persona_templates: dict[str, str] | None = None,
         visual_style_template: str | None = None,
         restore_from: str | None = None,
+        **agent_settings_kwargs,
     ) -> "Scene":
         scene = self.scene
         scene.immutable_save = immutable_save
@@ -1149,6 +1154,20 @@ class WorldStateManager:
             )
 
         scene.restore_from = restore_from
+
+        # Caller strips agent_settings_* keys from kwargs when the inbound
+        # payload didn't set them (see handle_update_scene_settings). Their
+        # presence here is what distinguishes "explicitly None" from "left
+        # alone" — the UNCHANGED sentinel substitutes for the latter.
+        link_filename = agent_settings_kwargs.get(
+            "agent_settings_file", AGENT_SETTINGS_UNCHANGED
+        )
+        opted_out_clear = agent_settings_kwargs.get("agent_settings_opted_out") is False
+        await apply_scene_settings_link(
+            scene,
+            filename=link_filename,
+            opted_out_clear=opted_out_clear,
+        )
 
         return scene
 

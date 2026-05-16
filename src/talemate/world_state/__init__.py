@@ -221,7 +221,7 @@ class WorldState(BaseModel):
             return
 
         # if auto is true, we need to check if agent has automatic update enabled
-        if initial_only and not self.agent.actions["update_world_state"].enabled:
+        if initial_only and not self.agent.update_world_state_enabled:
             self.emit()
             return
 

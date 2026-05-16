@@ -126,31 +126,31 @@ class LayeredHistoryMixin:
 
     @property
     def layered_history_enabled(self):
-        return self.actions["layered_history"].enabled
+        return self.resolve_enabled("layered_history")
 
     @property
     def layered_history_threshold(self):
-        return self.actions["layered_history"].config["threshold"].value
+        return self.resolve_config("layered_history", "threshold")
 
     @property
     def layered_history_max_process_tokens(self):
-        return self.actions["layered_history"].config["max_process_tokens"].value
+        return self.resolve_config("layered_history", "max_process_tokens")
 
     @property
     def layered_history_max_layers(self):
-        return self.actions["layered_history"].config["max_layers"].value
+        return self.resolve_config("layered_history", "max_layers")
 
     @property
     def layered_history_chunk_size(self) -> int:
-        return self.actions["layered_history"].config["chunk_size"].value
+        return self.resolve_config("layered_history", "chunk_size")
 
     @property
     def layered_history_analyze_chunks(self) -> bool:
-        return self.actions["layered_history"].config["analyze_chunks"].value
+        return self.resolve_config("layered_history", "analyze_chunks")
 
     @property
     def layered_history_response_length(self) -> int:
-        return int(self.actions["layered_history"].config["response_length"].value)
+        return int(self.resolve_config("layered_history", "response_length"))
 
     @property
     def layered_history_available(self):
