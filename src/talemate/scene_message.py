@@ -332,7 +332,7 @@ class NarratorMessage(SceneMessage):
 
 
 class DirectorMessage(SceneMessage):
-    action: Literal["actor_instruction", "user_direction"] = "actor_instruction"
+    action: str = "actor_instruction"
     source: str = "ai"
     typ: str = "director"
     subtype: Literal["function_call", "user_direction"] | None = None
