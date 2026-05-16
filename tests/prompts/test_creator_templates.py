@@ -595,9 +595,7 @@ class TestCreatorContextualGenerateMethod:
         creator.client.send_prompt.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_contextual_generate_extracts_hint_from_partial(
-        self, active_context
-    ):
+    async def test_contextual_generate_extracts_hint_from_partial(self, active_context):
         """Trailing `{...}` is stripped from partial and rendered as EDITOR HINTS."""
         creator = active_context
         creator.client.send_prompt.return_value = "<CONTENT>extended text</CONTENT>"
@@ -860,7 +858,10 @@ class TestCreatorAgentProperties:
     @pytest.mark.parametrize(
         "context_type, expected_property",
         [
-            ("character attribute", "autocomplete_character_attribute_suggestion_length"),
+            (
+                "character attribute",
+                "autocomplete_character_attribute_suggestion_length",
+            ),
             ("character detail", "autocomplete_character_detail_suggestion_length"),
             ("scene intro", "autocomplete_scene_intro_suggestion_length"),
             (
@@ -874,7 +875,9 @@ class TestCreatorAgentProperties:
     ):
         """Each known context_type dispatches to its dedicated length config."""
         expected = getattr(creator_agent, expected_property)
-        assert creator_agent.autocomplete_contextual_length_for(context_type) == expected
+        assert (
+            creator_agent.autocomplete_contextual_length_for(context_type) == expected
+        )
 
     def test_autocomplete_contextual_length_for_unknown_falls_back_to_detail(
         self, creator_agent

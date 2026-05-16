@@ -278,7 +278,9 @@ class AssistantMixin:
 
     @property
     def autocomplete_character_attribute_suggestion_length(self):
-        return self.resolve_config("autocomplete", "character_attribute_suggestion_length")
+        return self.resolve_config(
+            "autocomplete", "character_attribute_suggestion_length"
+        )
 
     @property
     def autocomplete_character_detail_suggestion_length(self):
@@ -290,7 +292,9 @@ class AssistantMixin:
 
     @property
     def autocomplete_context_investigation_suggestion_length(self):
-        return self.resolve_config("autocomplete", "context_investigation_suggestion_length")
+        return self.resolve_config(
+            "autocomplete", "context_investigation_suggestion_length"
+        )
 
     def autocomplete_contextual_length_for(self, context_type: str) -> int:
         """Resolve the configured suggestion length for a contextual autocomplete
