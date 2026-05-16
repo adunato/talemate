@@ -1,5 +1,13 @@
 <template>
   <v-sheet density="compact" v-if="hasAnyOverridable">
+    <div v-if="actionSchema.description" class="text-muted mt-2">
+      {{ actionSchema.description }}
+      <p v-if="actionSchema.warning" class="text-warning mt-2 text-caption">
+        <v-icon size="x-small">mdi-alert-circle-outline</v-icon>
+        {{ actionSchema.warning }}
+      </p>
+    </div>
+
     <!-- Container-level enabled override — only renders when the action
          opts in via enabled_scene_overridable AND can actually be disabled
          globally (can_be_disabled). Without can_be_disabled there's no
@@ -46,6 +54,13 @@
   </v-sheet>
 
   <v-sheet v-else density="compact">
+    <div v-if="actionSchema.description" class="text-muted mt-2 mb-3">
+      {{ actionSchema.description }}
+      <p v-if="actionSchema.warning" class="text-warning mt-2 text-caption">
+        <v-icon size="x-small">mdi-alert-circle-outline</v-icon>
+        {{ actionSchema.warning }}
+      </p>
+    </div>
     <v-alert density="compact" variant="text" color="muted">
       <span class="text-caption">This section has no scene-overridable fields.</span>
     </v-alert>
