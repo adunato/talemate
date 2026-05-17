@@ -1647,18 +1647,28 @@ class SceneLoop(Loop):
 
         connect_listeners(self, state, disconnect=True)
 
+        # The creative-mode wrapper loop runs the actual scene loop as a
+        # nested module (via RunModule, which sets `nested_scene_loop`);
+        # auto-register belongs to the inner game loop, not the wrapper,
+        # or the event would fire on both and double up.
+        is_game_loop = scene.environment != "creative" or state.shared.get(
+            "nested_scene_loop", False
+        )
+
         if not state.data.get("_scene_loop_init"):
             state.data["_scene_loop_init"] = True
-            # inner state.data is destroyed when Loop.execute returns
-            state.outer.data["_auto_listeners"] = collect_auto_register_listeners()
+            if is_game_loop:
+                # inner state.data is destroyed when Loop.execute returns
+                state.outer.data["_auto_listeners"] = collect_auto_register_listeners()
             await self.register_commands(scene, state)
             await self.init_agent_nodes(scene, state)
             await async_signals.get("scene_loop_init").send(self.scene_loop_event)
             await async_signals.get("scene_loop_init_after").send(self.scene_loop_event)
 
-        connect_auto_register_listeners(
-            state.outer.data.get("_auto_listeners") or [], state, disconnect=True
-        )
+        if is_game_loop:
+            connect_auto_register_listeners(
+                state.outer.data.get("_auto_listeners") or [], state, disconnect=True
+            )
 
         trigger_game_loop = self.get_property("trigger_game_loop")
 
