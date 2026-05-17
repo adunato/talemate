@@ -40,6 +40,7 @@ def versions_payload_for(message_obj: "SceneMessage | None") -> dict:
         return EMPTY_VERSIONS_PAYLOAD
     return message_obj.versions_payload()
 
+
 # Prefixes the user can type in the main input box to route a message to the
 # director instead of having the player character speak/act. The yield variant
 # must be checked first since it shares the single-character prefix.
@@ -150,9 +151,7 @@ class SceneMessage(pydantic.BaseModel):
         canonical text. The only correct way to grow the stack.
         """
         if not self._supports_versions:
-            raise TypeError(
-                f"{type(self).__name__} does not support version history"
-            )
+            raise TypeError(f"{type(self).__name__} does not support version history")
         version = MessageVersion(message=message, source=source, reason=reason)
         self.versions.append(version)
         # Use object.__setattr__ to bypass our own sync-back — we just
@@ -164,9 +163,7 @@ class SceneMessage(pydantic.BaseModel):
     def set_active_version(self, index: int) -> None:
         """Move the active pointer; the canonical text follows."""
         if not self._supports_versions:
-            raise TypeError(
-                f"{type(self).__name__} does not support version history"
-            )
+            raise TypeError(f"{type(self).__name__} does not support version history")
         if not (0 <= index < len(self.versions)):
             raise IndexError(
                 f"active_version index {index} out of range [0, {len(self.versions)})"

@@ -297,9 +297,7 @@ class TestAutoRegisterListeners:
         for inst in instances:
             assert inst.get_property("event_name") != ""
 
-    def test_connect_subscribes_auto_register_listener(
-        self, registered_auto_listen
-    ):
+    def test_connect_subscribes_auto_register_listener(self, registered_auto_listen):
         _cls, signal_name, _registry = registered_auto_listen
         instances = collect_auto_register_listeners()
         ours = [i for i in instances if i.get_property("event_name") == signal_name]
@@ -310,9 +308,7 @@ class TestAutoRegisterListeners:
         connect_auto_register_listeners([instance], GraphState())
         assert instance.execute_from_event in sig.receivers
 
-    def test_disconnect_removes_auto_register_listener(
-        self, registered_auto_listen
-    ):
+    def test_disconnect_removes_auto_register_listener(self, registered_auto_listen):
         _cls, signal_name, _registry = registered_auto_listen
         instances = collect_auto_register_listeners()
         ours = [i for i in instances if i.get_property("event_name") == signal_name]
@@ -324,9 +320,7 @@ class TestAutoRegisterListeners:
         disconnect_auto_register_listeners([instance], GraphState())
         assert instance.execute_from_event not in sig.receivers
 
-    def test_connect_with_disconnect_flag_is_idempotent(
-        self, registered_auto_listen
-    ):
+    def test_connect_with_disconnect_flag_is_idempotent(self, registered_auto_listen):
         # Reconnecting with disconnect=True should NOT double up the
         # listener in the receiver list (same instance, same bound method).
         _cls, signal_name, _registry = registered_auto_listen
@@ -336,9 +330,7 @@ class TestAutoRegisterListeners:
         sig = async_signals.get(signal_name)
 
         connect_auto_register_listeners([instance], GraphState())
-        connect_auto_register_listeners(
-            [instance], GraphState(), disconnect=True
-        )
+        connect_auto_register_listeners([instance], GraphState(), disconnect=True)
         # Listener present exactly once
         matching = [r for r in sig.receivers if r == instance.execute_from_event]
         assert len(matching) == 1
@@ -360,7 +352,8 @@ class TestAutoRegisterListeners:
         try:
             instances = collect_auto_register_listeners()
             ours = [
-                i for i in instances
+                i
+                for i in instances
                 if i.get_property("event_name") == "completely_unregistered_signal_xx"
             ]
             assert len(ours) == 1
@@ -385,17 +378,14 @@ class TestAutoRegisterListeners:
         # Auto-register path collects the registry instance
         registry_instances = collect_auto_register_listeners()
         from_registry = [
-            i for i in registry_instances
-            if i.get_property("event_name") == signal_name
+            i for i in registry_instances if i.get_property("event_name") == signal_name
         ]
         assert len(from_registry) == 1
 
         # Run both wiring paths
         sig = async_signals.get(signal_name)
         connect_listeners(embedded_graph, GraphState(), disconnect=True)
-        connect_auto_register_listeners(
-            from_registry, GraphState(), disconnect=True
-        )
+        connect_auto_register_listeners(from_registry, GraphState(), disconnect=True)
 
         # The embedded instance must NOT be in the receiver list
         assert embedded.execute_from_event not in sig.receivers

@@ -851,9 +851,7 @@ class TestMaybeReviseInplace:
         assert await editor.maybe_revise_inplace(msg) is False
         assert calls == []
 
-    async def test_narrator_target_enabled_appends_revised_version(
-        self, stub_revise
-    ):
+    async def test_narrator_target_enabled_appends_revised_version(self, stub_revise):
         _, editor, calls = stub_revise
         editor.actions["revision"].config["automatic_revision_targets"].value = [
             "narrator"

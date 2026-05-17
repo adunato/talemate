@@ -141,9 +141,7 @@ class TestSceneMessagePluginHandleEdit:
 
 class TestSceneMessagePluginHandleAppendVersion:
     @pytest.mark.asyncio
-    async def test_append_forwards_source_and_reason(
-        self, plugin, scene_with_message
-    ):
+    async def test_append_forwards_source_and_reason(self, plugin, scene_with_message):
         """``handle_append_version`` dispatches to
         ``Scene.append_message_version`` with the wire-supplied
         ``source`` and optional ``reason``."""
@@ -166,9 +164,7 @@ class TestSceneMessagePluginHandleAppendVersion:
         ]
 
     @pytest.mark.asyncio
-    async def test_append_defaults_source_to_custom(
-        self, plugin, scene_with_message
-    ):
+    async def test_append_defaults_source_to_custom(self, plugin, scene_with_message):
         """Omitting ``source`` defaults to ``"custom"`` — the catch-all
         bucket for client-driven mutations that don't fit the closed
         revision/regenerate/continue set."""

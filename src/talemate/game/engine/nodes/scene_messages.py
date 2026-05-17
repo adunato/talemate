@@ -393,12 +393,14 @@ class AddMessageVersion(Node):
                 f"Versions are only supported for character, narrator, and context_investigation messages — got {type(message).__name__}",
             )
 
-
         # Empty / whitespace-only reason → drop to None so the frontend
         # renders just the source badge without a trailing separator.
         reason_value = (reason.strip() or None) if isinstance(reason, str) else None
 
-        if isinstance(message, scene_message.CharacterMessage) and message.character_name:
+        if (
+            isinstance(message, scene_message.CharacterMessage)
+            and message.character_name
+        ):
             new_text = scene_message.CharacterMessage.with_name_prefix(
                 message.character_name, new_text
             )

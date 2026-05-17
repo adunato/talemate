@@ -178,17 +178,13 @@ def connect_auto_register_listeners(
         _apply_listener_signal(listener, event_name, state, action)
 
 
-def disconnect_auto_register_listeners(
-    instances: list["Listen"], state: GraphState
-):
+def disconnect_auto_register_listeners(instances: list["Listen"], state: GraphState):
     """
     Disconnects auto-registered Listen instances from the event bus.
     """
     for listener in instances:
         event_name = listener.get_property("event_name")
-        _apply_listener_signal(
-            listener, event_name, state, ListenerAction.DISCONNECT
-        )
+        _apply_listener_signal(listener, event_name, state, ListenerAction.DISCONNECT)
 
 
 @register("event/Event")

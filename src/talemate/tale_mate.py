@@ -1086,9 +1086,7 @@ class Scene(Emitter):
             return
         target.set_active_version(index)
         emit("message_edited", target, id=message_id, data=None)
-        self.log.info(
-            "Message active version swapped", index=index, id=message_id
-        )
+        self.log.info("Message active version swapped", index=index, id=message_id)
 
     async def add_actor(self, actor: Actor, commit_to_memory: bool = True):
         """
