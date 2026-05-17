@@ -5,7 +5,7 @@
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </template>
-    <RevisionNav v-if="isLastMessage && (revisionsCount > 1 || revisionBusy)" :count="revisionsCount" :index="revisionIndex" :source="revisionSource" :disabled="uxLocked" :busy="revisionBusy" @navigate="(dir) => $emit('navigate-revision', dir)" />
+    <RevisionNav v-if="isLastMessage && (revisionsCount > 1 || revisionBusy)" :count="revisionsCount" :index="revisionIndex" :source="revisionSource" :reason="revisionReason" :disabled="uxLocked" :busy="revisionBusy" @navigate="(dir) => $emit('navigate-revision', dir)" />
     <!-- Scene illustration (big) renders above message -->
     <MessageAssetImage
       v-if="messageAsset && isSceneIllustrationAbove"
@@ -189,6 +189,10 @@ export default {
       type: String,
       default: null,
     },
+    revisionReason: {
+      type: String,
+      default: null,
+    },
     revisionBusy: {
       type: [Boolean, String],
       default: false,
@@ -306,12 +310,20 @@ export default {
             return;
           }
 
-          this.editing_text = spliceContinuation(this.text, completion);
+          const continuedBody = spliceContinuation(this.text, completion);
 
-          this.submitEdit({
-            reason: 'continue',
-            mutation_source: 'continue',
-          });
+          // Continue grows the revision stack — send append_version so
+          // the server pushes a new entry rather than rewriting the
+          // active one in place. The body is prefixed with the
+          // character name to match the canonical "Name: body" format.
+          this.getWebsocket().send(JSON.stringify({
+            type: 'scene_message',
+            action: 'append_version',
+            id: this.message_id,
+            text: this.character + ": " + continuedBody,
+            source: 'continue',
+          }));
+          this.editing = false;
         },
         this.$refs.textarea
       )
@@ -343,15 +355,13 @@ export default {
         this.$refs.textarea.focus();
       });
     },
-    submitEdit(meta = null) {
-      const payload = {
-        ...(meta || {}),
+    submitEdit() {
+      this.getWebsocket().send(JSON.stringify({
         type: 'scene_message',
         action: 'edit',
         id: this.message_id,
         text: this.character + ": " + this.editing_text,
-      };
-      this.getWebsocket().send(JSON.stringify(payload));
+      }));
       this.editing = false;
     },
     deleteMessage() {

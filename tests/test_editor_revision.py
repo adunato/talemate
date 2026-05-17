@@ -44,7 +44,7 @@ from talemate.exceptions import GenerationCancelled
 from talemate.scene_message import (
     CharacterMessage,
     ContextInvestigationMessage,
-    MessageMutation,
+    MessageVersion,
     NarratorMessage,
 )
 from talemate.world_state.templates.content import PhraseDetection, WritingStyle
@@ -772,8 +772,8 @@ class TestMaybeReviseInplace:
     """Verify the push-time auto-revision hook for SceneMessages.
 
     Character/narrator revision happens here (not in revision_on_generation)
-    so the SceneMessage object is in hand and the pre-revision text can be
-    appended to ``message.mutations`` directly.
+    so the SceneMessage object is in hand and the revised text can be
+    appended to ``message.versions`` as a new active entry.
     """
 
     @pytest.fixture
@@ -803,8 +803,7 @@ class TestMaybeReviseInplace:
 
         editor.revision_revise = spy
         msg = NarratorMessage(message="orig narrator", source="ai")
-        result = await editor.maybe_revise_inplace(msg)
-        assert result is None
+        assert await editor.maybe_revise_inplace(msg) is False
         assert called == []
         assert msg.message == "orig narrator"
 
@@ -821,17 +820,17 @@ class TestMaybeReviseInplace:
 
         editor.revision_revise = spy
         msg = NarratorMessage(message="orig narrator", source="ai")
-        assert await editor.maybe_revise_inplace(msg) is None
+        assert await editor.maybe_revise_inplace(msg) is False
         assert called == []
 
-    async def test_returns_none_for_non_character_or_narrator(self, stub_revise):
+    async def test_returns_false_for_non_character_or_narrator(self, stub_revise):
         _, editor, calls = stub_revise
         editor.actions["revision"].config["automatic_revision_targets"].value = [
             "character",
             "narrator",
         ]
         msg = ContextInvestigationMessage(message="ctx")
-        assert await editor.maybe_revise_inplace(msg) is None
+        assert await editor.maybe_revise_inplace(msg) is False
         assert calls == []
 
     async def test_character_target_disabled_skips_message(self, stub_revise):
@@ -840,7 +839,7 @@ class TestMaybeReviseInplace:
             "narrator"
         ]
         msg = CharacterMessage(message="Alice: hi")
-        assert await editor.maybe_revise_inplace(msg) is None
+        assert await editor.maybe_revise_inplace(msg) is False
         assert calls == []
 
     async def test_narrator_target_disabled_skips_message(self, stub_revise):
@@ -849,10 +848,10 @@ class TestMaybeReviseInplace:
             "character"
         ]
         msg = NarratorMessage(message="The wind blows.")
-        assert await editor.maybe_revise_inplace(msg) is None
+        assert await editor.maybe_revise_inplace(msg) is False
         assert calls == []
 
-    async def test_narrator_target_enabled_mutates_and_returns_original(
+    async def test_narrator_target_enabled_appends_revised_version(
         self, stub_revise
     ):
         _, editor, calls = stub_revise
@@ -860,15 +859,21 @@ class TestMaybeReviseInplace:
             "narrator"
         ]
         msg = NarratorMessage(message="orig narrator")
-        original = await editor.maybe_revise_inplace(msg)
-        assert original == "orig narrator"
+        assert await editor.maybe_revise_inplace(msg) is True
         assert msg.message == "REVISED"
+        # Original stays on the stack as the seeded "original" entry;
+        # the revision is appended and becomes active.
+        assert msg.versions == [
+            MessageVersion(message="orig narrator", source="original"),
+            MessageVersion(message="REVISED", source="revision"),
+        ]
+        assert msg.active_version == 1
         assert len(calls) == 1
         assert calls[0].text == "orig narrator"
         # Narrator messages have no character context.
         assert calls[0].character is None
 
-    async def test_character_target_enabled_resolves_character_and_mutates(
+    async def test_character_target_enabled_resolves_character_and_appends(
         self, stub_revise, alice, monkeypatch
     ):
         scene, editor, calls = stub_revise
@@ -882,9 +887,13 @@ class TestMaybeReviseInplace:
         )
 
         msg = CharacterMessage(message="Alice: orig")
-        original = await editor.maybe_revise_inplace(msg)
-        assert original == "Alice: orig"
+        assert await editor.maybe_revise_inplace(msg) is True
         assert msg.message == "REVISED"
+        assert msg.versions == [
+            MessageVersion(message="Alice: orig", source="original"),
+            MessageVersion(message="REVISED", source="revision"),
+        ]
+        assert msg.active_version == 1
         assert len(calls) == 1
         assert calls[0].text == "Alice: orig"
         assert calls[0].character is alice
@@ -896,7 +905,7 @@ class TestMaybeReviseInplace:
             "character"
         ]
         msg = CharacterMessage(message="Alice: hi", source="player")
-        assert await editor.maybe_revise_inplace(msg) is None
+        assert await editor.maybe_revise_inplace(msg) is False
         assert calls == []
         assert msg.message == "Alice: hi"
 
@@ -907,11 +916,11 @@ class TestMaybeReviseInplace:
             "narrator"
         ]
         msg = NarratorMessage(message="The wind blows.", source="player")
-        assert await editor.maybe_revise_inplace(msg) is None
+        assert await editor.maybe_revise_inplace(msg) is False
         assert calls == []
         assert msg.message == "The wind blows."
 
-    async def test_returns_none_when_revision_is_noop(self, editor_scene):
+    async def test_returns_false_when_revision_is_noop(self, editor_scene):
         _, editor = editor_scene
         editor.actions["revision"].enabled = True
         editor.actions["revision"].config["automatic_revision"].value = True
@@ -924,8 +933,10 @@ class TestMaybeReviseInplace:
 
         editor.revision_revise = identity
         msg = NarratorMessage(message="unchanged")
-        assert await editor.maybe_revise_inplace(msg) is None
+        assert await editor.maybe_revise_inplace(msg) is False
         assert msg.message == "unchanged"
+        # No new version appended — only the seeded original remains.
+        assert msg.versions == [MessageVersion(message="unchanged", source="original")]
 
     async def test_disabled_through_context_manager(self, stub_revise):
         _, editor, calls = stub_revise
@@ -934,8 +945,7 @@ class TestMaybeReviseInplace:
         ]
         msg = NarratorMessage(message="orig")
         with RevisionDisabled():
-            result = await editor.maybe_revise_inplace(msg)
-        assert result is None
+            assert await editor.maybe_revise_inplace(msg) is False
         assert calls == []
         assert msg.message == "orig"
 
@@ -946,7 +956,7 @@ class TestMaybeReviseInplace:
 
 
 class TestRevisionOnPush:
-    """Verify revision_on_push appends pre-revision text to mutations."""
+    """Verify revision_on_push appends the revised text as a new version."""
 
     @pytest.fixture
     def stub_revise_narrator(self, editor_scene):
@@ -964,7 +974,7 @@ class TestRevisionOnPush:
         editor.revision_revise = fake_revise
         return scene, editor
 
-    async def test_narrator_message_revised_and_mutation_appended(
+    async def test_narrator_message_revised_and_version_appended(
         self, stub_revise_narrator
     ):
         scene, editor = stub_revise_narrator
@@ -974,11 +984,15 @@ class TestRevisionOnPush:
         await editor.revision_on_push(event)
 
         assert msg.message == "REVISED(orig narrator)"
-        assert msg.mutations == [
-            MessageMutation(message="orig narrator", source="original")
+        # Original stays on the stack as the seeded entry; revised is
+        # appended and becomes the active canonical.
+        assert msg.versions == [
+            MessageVersion(message="orig narrator", source="original"),
+            MessageVersion(message="REVISED(orig narrator)", source="revision"),
         ]
+        assert msg.active_version == 1
 
-    async def test_character_message_revised_and_mutation_appended(
+    async def test_character_message_revised_and_version_appended(
         self, stub_revise_narrator, alice, monkeypatch
     ):
         scene, editor = stub_revise_narrator
@@ -992,11 +1006,13 @@ class TestRevisionOnPush:
         await editor.revision_on_push(event)
 
         assert msg.message == "REVISED(Alice: hello)"
-        assert msg.mutations == [
-            MessageMutation(message="Alice: hello", source="original")
+        assert msg.versions == [
+            MessageVersion(message="Alice: hello", source="original"),
+            MessageVersion(message="REVISED(Alice: hello)", source="revision"),
         ]
+        assert msg.active_version == 1
 
-    async def test_no_mutation_when_revision_noop(self, editor_scene):
+    async def test_no_new_version_when_revision_noop(self, editor_scene):
         scene, editor = editor_scene
         editor.actions["revision"].enabled = True
         editor.actions["revision"].config["automatic_revision"].value = True
@@ -1014,9 +1030,11 @@ class TestRevisionOnPush:
         await editor.revision_on_push(event)
 
         assert msg.message == "unchanged"
-        assert msg.mutations == []
+        # Only the seeded "original" entry remains.
+        assert msg.versions == [MessageVersion(message="unchanged", source="original")]
+        assert msg.active_version == 0
 
-    async def test_non_scene_message_is_ignored(self, stub_revise_narrator):
+    async def test_non_target_message_is_ignored(self, stub_revise_narrator):
         scene, editor = stub_revise_narrator
         msg = ContextInvestigationMessage(message="ctx")
         event = HistoryEvent(scene=scene, event_type="push_history", messages=[msg])
@@ -1024,9 +1042,10 @@ class TestRevisionOnPush:
         await editor.revision_on_push(event)
 
         assert msg.message == "ctx"
-        # ContextInvestigationMessage has no mutations field on emit, but
-        # the base SceneMessage class does — verify it stayed empty.
-        assert msg.mutations == []
+        # CIM opts into versions but revision_on_push only targets
+        # CharacterMessage/NarratorMessage — verify the stack still
+        # holds just the seed.
+        assert msg.versions == [MessageVersion(message="ctx", source="original")]
 
     async def test_only_first_matching_message_is_revised(self, stub_revise_narrator):
         """``push_history`` rarely batches narrator/character messages,
@@ -1041,10 +1060,13 @@ class TestRevisionOnPush:
         await editor.revision_on_push(event)
 
         assert m1.message == "REVISED(first)"
-        assert m1.mutations == [MessageMutation(message="first", source="original")]
-        # Second was left alone.
+        assert m1.versions == [
+            MessageVersion(message="first", source="original"),
+            MessageVersion(message="REVISED(first)", source="revision"),
+        ]
+        # Second was left alone — still has just the seed.
         assert m2.message == "second"
-        assert m2.mutations == []
+        assert m2.versions == [MessageVersion(message="second", source="original")]
 
     async def test_revision_context_scoped_to_pushed_message(
         self, stub_revise_narrator

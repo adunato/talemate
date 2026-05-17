@@ -1,7 +1,7 @@
 import enum
 import re
 import structlog
-from typing import Literal
+from typing import ClassVar, Literal
 
 import pydantic
 
@@ -15,15 +15,30 @@ __all__ = [
     "TimePassageMessage",
     "ReinforcementMessage",
     "ContextInvestigationMessage",
-    "MessageMutation",
-    "MutationSource",
+    "MessageVersion",
+    "VersionSource",
+    "EMPTY_VERSIONS_PAYLOAD",
+    "versions_payload_for",
     "Flags",
     "MESSAGES",
     "DIRECTOR_INPUT_PREFIX",
     "DIRECTOR_INPUT_PREFIX_YIELD",
 ]
 
-MutationSource = Literal["original", "revision", "regenerate", "continue"]
+VersionSource = Literal["original", "revision", "regenerate", "continue", "custom"]
+
+# Default revision-stack shape for messages that don't (yet) have one —
+# either no message_obj at all on a wire payload, or a message type that
+# hasn't opted into versions. Keeps the wire schema homogeneous.
+EMPTY_VERSIONS_PAYLOAD = {"versions": [], "active_version": 0}
+
+
+def versions_payload_for(message_obj: "SceneMessage | None") -> dict:
+    """Wire-emit revision-stack shape for ``message_obj``, falling back
+    to :data:`EMPTY_VERSIONS_PAYLOAD` when no message is provided."""
+    if message_obj is None:
+        return EMPTY_VERSIONS_PAYLOAD
+    return message_obj.versions_payload()
 
 # Prefixes the user can type in the main input box to route a message to the
 # director instead of having the player character speak/act. The yield variant
@@ -54,11 +69,12 @@ class Flags(enum.IntFlag):
     HIDDEN = 0x1
 
 
-class MessageMutation(pydantic.BaseModel):
-    """A prior state of a SceneMessage, tagged with what produced it."""
+class MessageVersion(pydantic.BaseModel):
+    """One self-describing entry in a SceneMessage's version stack."""
 
     message: str
-    source: MutationSource
+    source: VersionSource = "original"
+    reason: str | None = None
 
 
 class SceneMessage(pydantic.BaseModel):
@@ -67,6 +83,9 @@ class SceneMessage(pydantic.BaseModel):
     """
 
     model_config = pydantic.ConfigDict(extra="ignore")
+
+    # Subclasses opt in to revision-stack behavior by setting this to True.
+    _supports_versions: ClassVar[bool] = False
 
     # the mesage itself
     message: str
@@ -85,14 +104,89 @@ class SceneMessage(pydantic.BaseModel):
 
     rev: int = 0
 
-    # Transient: each entry is a prior state of `message` captured at the
-    # moment an automated mutator (today: editor auto-revision) was about
-    # to overwrite it. Travels with the wire emit so the UI can expose
-    # those versions in the revision stack. Not persisted — `to_dict()`
-    # doesn't include it, so mutations never land in scene history.
-    mutations: list[MessageMutation] = pydantic.Field(
+    # Transient revision stack; seeded on opt-in subclasses, excluded
+    # from to_dict / persistence.
+    versions: list[MessageVersion] = pydantic.Field(
         default_factory=list, exclude=True, repr=False
     )
+
+    active_version: int = pydantic.Field(default=0, exclude=True, repr=False)
+
+    @pydantic.model_validator(mode="after")
+    def _seed_initial_version(self):
+        # Only opt-in subclasses get a stack. Skip seeding when an
+        # explicit stack is supplied (model_validate / model_copy
+        # overrides).
+        if self._supports_versions and not self.versions:
+            object.__setattr__(
+                self,
+                "versions",
+                [MessageVersion(message=self.message, source="original")],
+            )
+            object.__setattr__(self, "active_version", 0)
+        return self
+
+    def __setattr__(self, name, value):
+        # Keep `versions[active]` in lockstep with bare writes to
+        # `.message` so streaming / in-flight cleanup don't drift the
+        # canonical away from its stack entry.
+        super().__setattr__(name, value)
+        if (
+            name == "message"
+            and self._supports_versions
+            and self.versions
+            and 0 <= self.active_version < len(self.versions)
+        ):
+            self.versions[self.active_version].message = value
+
+    def append_version(
+        self,
+        message: str,
+        source: VersionSource,
+        reason: str | None = None,
+    ) -> MessageVersion:
+        """
+        Push a new version onto the stack, make it active, and update the
+        canonical text. The only correct way to grow the stack.
+        """
+        if not self._supports_versions:
+            raise TypeError(
+                f"{type(self).__name__} does not support version history"
+            )
+        version = MessageVersion(message=message, source=source, reason=reason)
+        self.versions.append(version)
+        # Use object.__setattr__ to bypass our own sync-back — we just
+        # wrote versions[-1].message and don't want to overwrite it.
+        object.__setattr__(self, "active_version", len(self.versions) - 1)
+        object.__setattr__(self, "message", message)
+        return version
+
+    def set_active_version(self, index: int) -> None:
+        """Move the active pointer; the canonical text follows."""
+        if not self._supports_versions:
+            raise TypeError(
+                f"{type(self).__name__} does not support version history"
+            )
+        if not (0 <= index < len(self.versions)):
+            raise IndexError(
+                f"active_version index {index} out of range [0, {len(self.versions)})"
+            )
+        object.__setattr__(self, "active_version", index)
+        object.__setattr__(self, "message", self.versions[index].message)
+
+    def versions_payload(self) -> dict:
+        """
+        Wire-emit shape for the revision stack. Returns
+        :data:`EMPTY_VERSIONS_PAYLOAD` for message types that don't opt
+        into versions so the wire payload stays homogeneous and the
+        frontend doesn't need conditional handling.
+        """
+        if not self._supports_versions:
+            return EMPTY_VERSIONS_PAYLOAD
+        return {
+            "versions": [v.model_dump() for v in self.versions],
+            "active_version": self.active_version,
+        }
 
     def __init__(self, message: str | None = None, **data):
         # Preserve the positional `message` construction style from the
@@ -209,6 +303,8 @@ class SceneMessage(pydantic.BaseModel):
 
 
 class CharacterMessage(SceneMessage):
+    _supports_versions: ClassVar[bool] = True
+
     typ: str = "character"
     source: str = "ai"
     from_choice: str | None = None
@@ -217,6 +313,18 @@ class CharacterMessage(SceneMessage):
 
     def __str__(self):
         return self.message
+
+    @staticmethod
+    def with_name_prefix(name: str, body: str) -> str:
+        """
+        Return ``body`` formatted in the canonical ``"{name}: body"``
+        shape, idempotently — adds the prefix only if it isn't already
+        present.
+        """
+        prefix = f"{name}: "
+        if body.startswith(prefix):
+            return body
+        return f"{prefix}{body}"
 
     @property
     def character_name(self):
@@ -278,6 +386,8 @@ class CharacterMessage(SceneMessage):
 
 
 class NarratorMessage(SceneMessage):
+    _supports_versions: ClassVar[bool] = True
+
     source: str = "ai"
     typ: str = "narrator"
     asset_id: str | None = None
@@ -482,6 +592,8 @@ class ReinforcementMessage(SceneMessage):
 
 
 class ContextInvestigationMessage(SceneMessage):
+    _supports_versions: ClassVar[bool] = True
+
     typ: str = "context_investigation"
     source: str = "ai"
     sub_type: str | None = None

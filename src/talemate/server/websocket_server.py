@@ -16,8 +16,8 @@ from talemate.emit import Emission, Receiver, abort_wait_for_input, emit
 import talemate.emit.async_signals as async_signals
 from talemate.files import list_scenes_directory
 from talemate.load import load_scene, SceneInitialization
-from talemate.agents.editor.revision import revision_stack_payload
 from talemate.scene_assets import Asset, get_media_type_from_file_path, VIS_TYPE
+from talemate.scene_message import versions_payload_for
 from talemate.server import (
     agent_config,
     assistant,
@@ -304,7 +304,7 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
                     int(emission.message_object.flags) if emission.message_object else 0
                 ),
                 "rev": (emission.message_object.rev if emission.message_object else 0),
-                **revision_stack_payload(message_obj),
+                **versions_payload_for(message_obj),
             }
         )
 
@@ -383,7 +383,7 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
                     int(emission.message_object.flags) if emission.message_object else 0
                 ),
                 "rev": (emission.message_object.rev if emission.message_object else 0),
-                **revision_stack_payload(message_obj),
+                **versions_payload_for(message_obj),
             }
         )
 
@@ -422,7 +422,7 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
                 "asset_id": asset_id,
                 "asset_type": asset_type,
                 "flags": (int(message_obj.flags) if message_obj else 0),
-                **revision_stack_payload(message_obj),
+                **versions_payload_for(message_obj),
             }
         )
 
@@ -537,19 +537,18 @@ class WebsocketHandler(SceneAssetsBatchingMixin, Receiver):
         )
 
     def handle_message_edited(self, emission: Emission):
-        data = emission.data or {}
-        reason = data.get("reason")
+        # All edit paths (plain edit, version append, active-version swap)
+        # carry the message's current state — the frontend just mirrors
+        # `versions` + `active_version` onto its local revision stack
+        # rather than reconstructing append/replace semantics from a
+        # per-edit reason.
         payload = {
             "type": "message_edited",
             "message": emission.message,
             "id": emission.id,
             "character": emission.character.name if emission.character else "",
-            "mutations": data.get("mutations") or [],
+            **versions_payload_for(emission.message_object),
         }
-        if reason:
-            payload["reason"] = reason
-        if data.get("mutation_source"):
-            payload["mutation_source"] = data["mutation_source"]
         self.queue_put(payload)
 
     def handle_autocomplete_suggestion(self, emission: Emission):

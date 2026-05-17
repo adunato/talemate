@@ -1,8 +1,9 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, get_args
 
 from .core import (
     Node,
     GraphState,
+    InputValueError,
     UNRESOLVED,
     PropertyField,
 )
@@ -76,11 +77,11 @@ class CharacterMessage(Node):
             extra["asset_id"] = character.current_avatar
             extra["asset_type"] = "avatar"
 
-        # prefix name: if not already prefixed
-        if not message.startswith(f"{character.name}: "):
-            message = f"{character.name}: {message}"
-
-        message = scene_message.CharacterMessage(message, source=source, **extra)
+        message = scene_message.CharacterMessage(
+            scene_message.CharacterMessage.with_name_prefix(character.name, message),
+            source=source,
+            **extra,
+        )
 
         self.set_output_values({"message": message})
 
@@ -288,6 +289,130 @@ class UnpackMessageMeta(Node):
                 "agent_name": meta["agent"],
                 "function_name": meta["function"],
                 "arguments": meta.get("arguments", {}).copy(),
+            }
+        )
+
+
+@register("scene/message/AddMessageVersion")
+class AddMessageVersion(Node):
+    """
+    Append a new version to a message's revision stack and make it the
+    active canonical.
+
+    Typical use: hook ``game_loop_new_message`` (or ``push_history``),
+    rewrite the message body, and have the prior canonical preserved on
+    the stack so the user can navigate back to it via the revision
+    arrows in chat. The prior version stays at its existing index with
+    its own source/reason intact — this node only appends and shifts
+    the active pointer.
+
+    Only valid for message types the revision UI can walk:
+    ``CharacterMessage``, ``NarratorMessage``,
+    ``ContextInvestigationMessage`` (i.e. anything with
+    ``_supports_versions = True``). Anything else raises
+    ``InputValueError`` — filter the message type before reaching this
+    node.
+
+    For ``CharacterMessage``, ``new_text`` is auto-prefixed with
+    ``"Name: "`` if missing, matching the convention in
+    ``scene/message/CharacterMessage``.
+
+    Inputs:
+
+    - message: The SceneMessage to append a version to (required)
+    - new_text: The new canonical text (required)
+    - source: Version source label (optional, overrides property)
+    - reason: Free-form annotation rendered alongside the source badge (optional)
+
+    Properties:
+
+    - source: Version source label
+    - reason: Default reason if no input is connected
+
+    Outputs:
+
+    - message: The same SceneMessage instance (post-append)
+    - new_text: Passthrough of new_text
+    - source: Passthrough of source actually used
+    - reason: Passthrough of reason actually used
+    - version: The MessageVersion instance that was appended
+    """
+
+    class Fields:
+        source = PropertyField(
+            name="source",
+            description="The source label attached to the new version entry",
+            type="str",
+            default="custom",
+            choices=list(get_args(scene_message.VersionSource)),
+        )
+
+        reason = PropertyField(
+            name="reason",
+            description="Free-form annotation rendered alongside the source badge in the revision navigator",
+            type="str",
+            default="",
+        )
+
+    def __init__(self, title="Add Message Version", **kwargs):
+        super().__init__(title=title, **kwargs)
+
+    def setup(self):
+        self.add_input("state")
+        self.add_input("message", socket_type="message_object")
+        self.add_input("new_text", socket_type="str")
+        self.add_input("source", socket_type="str", optional=True)
+        self.add_input("reason", socket_type="str", optional=True)
+
+        self.set_property("source", "custom")
+        self.set_property("reason", "")
+
+        self.add_output("state")
+        self.add_output("message", socket_type="message_object")
+        self.add_output("new_text", socket_type="str")
+        self.add_output("source", socket_type="str")
+        self.add_output("reason", socket_type="str")
+        self.add_output("version", socket_type="any")
+
+    async def run(self, state: GraphState):
+        state_in = self.get_input_value("state")
+        message = self.require_input("message")
+        new_text = self.require_input("new_text")
+        source = self.normalized_input_value("source")
+        reason = self.normalized_input_value("reason")
+
+        if not isinstance(message, scene_message.SceneMessage):
+            raise InputValueError(
+                self, "message", "Input is not a SceneMessage instance"
+            )
+
+        if not message._supports_versions:
+            raise InputValueError(
+                self,
+                "message",
+                f"Versions are only supported for character, narrator, and context_investigation messages — got {type(message).__name__}",
+            )
+
+
+        # Empty / whitespace-only reason → drop to None so the frontend
+        # renders just the source badge without a trailing separator.
+        reason_value = (reason.strip() or None) if isinstance(reason, str) else None
+
+        if isinstance(message, scene_message.CharacterMessage) and message.character_name:
+            new_text = scene_message.CharacterMessage.with_name_prefix(
+                message.character_name, new_text
+            )
+
+        version = message.append_version(new_text, source=source, reason=reason_value)
+
+        self.set_output_values(
+            {
+                "state": state_in,
+                "message": message,
+                "new_text": new_text,
+                "source": source,
+                "reason": reason_value,
+                "version": version,
             }
         )
 

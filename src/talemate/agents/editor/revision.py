@@ -29,7 +29,6 @@ from talemate.agents.summarize.layered_history import LayeredHistoryFinalizeEmis
 from talemate.events import HistoryEvent
 from talemate.scene_message import (
     CharacterMessage,
-    MessageMutation,
     NarratorMessage,
     SceneMessage,
 )
@@ -266,23 +265,6 @@ def _revision_exceeds_max_length(
         ratio=_format_length_ratio(len(revised_text), len(original_text)),
     )
     return True
-
-
-def revision_stack_payload(message_obj: "SceneMessage | None") -> dict:
-    """
-    Build the revision-stack fields for a character/narrator wire payload.
-
-    Canonical source is derived from ``len(mutations) > 0``: today only
-    ``revision_on_push`` adds to mutations at push time, so a non-empty
-    list means the canonical was just produced by revision. A future
-    push-time mutator from a different agent would need to revisit this.
-    """
-    if not message_obj:
-        return {"mutations": [], "mutation_source": "original"}
-    return {
-        "mutations": [m.model_dump() for m in message_obj.mutations],
-        "mutation_source": "revision" if message_obj.mutations else "original",
-    }
 
 
 ## MIXIN
@@ -549,8 +531,9 @@ class RevisionMixin:
             self.revision_on_generation
         )
         # Character / narrator revision runs at push_history time so the
-        # SceneMessage exists and the pre-revision text can be appended to
-        # `message.mutations` directly — no ContextVar bridge.
+        # SceneMessage exists and the pre-revision text is naturally
+        # preserved as the initial "original" entry of the version stack
+        # when we append the revised version.
         async_signals.get("push_history").connect(self.revision_on_push)
         # connect to the super class AFTER so these run first.
         super().connect(scene)
@@ -640,16 +623,18 @@ class RevisionMixin:
             original=info.text,
         )
 
-    async def maybe_revise_inplace(self, message: SceneMessage) -> str | None:
+    async def maybe_revise_inplace(self, message: SceneMessage) -> bool:
         """
-        Run auto-revision on a SceneMessage in place. If the configured
-        revision method actually rewrote the text, ``message.message`` is
-        updated and the *pre-revision* text is returned. Otherwise returns
-        ``None``.
+        Run auto-revision on a SceneMessage. If the configured revision
+        method actually rewrote the text, a new ``"revision"`` version is
+        appended to ``message.versions`` (which makes it the active
+        canonical) and the call returns ``True``. Otherwise returns
+        ``False`` and the stack is untouched.
 
-        Callers decide what to do with the original — the ``push_history``
-        hook appends it to ``message.mutations``; the in-place regenerate
-        flow uses it as a wire-side mutation delta.
+        The pre-revision text is naturally preserved as whichever stack
+        entry was active before — typically the "original" seeded at
+        construction, but it could be a prior revision/regenerate if this
+        message has already been rewritten.
 
         Gating mirrors ``revision_on_generation``: only fires for
         ``CharacterMessage`` / ``NarratorMessage`` when the corresponding
@@ -661,22 +646,22 @@ class RevisionMixin:
         elif isinstance(message, NarratorMessage):
             target = "narrator"
         else:
-            return None
+            return False
 
         # Player-authored messages (character or narrator) must not be
         # auto-revised — the player's words are theirs, not ours to rewrite.
         if message.source == "player":
-            return None
+            return False
 
         if not self._revision_automatic_target_enabled(target):
-            return None
+            return False
 
         if self._revision_disabled_by_context():
             log.debug(
                 "maybe_revise_inplace: revision disabled through context",
                 message_id=message.id,
             )
-            return None
+            return False
 
         character = None
         if isinstance(message, CharacterMessage):
@@ -687,7 +672,7 @@ class RevisionMixin:
         revised = await self.revision_revise(info)
 
         if revised == original:
-            return None
+            return False
 
         log.info(
             "maybe_revise_inplace: revision applied",
@@ -695,16 +680,16 @@ class RevisionMixin:
             revised=revised,
             original=original,
         )
-        message.message = revised
-        return original
+        message.append_version(revised, source="revision")
+        return True
 
     async def revision_on_push(self, event: HistoryEvent):
         """
         Run auto-revision on the first CharacterMessage / NarratorMessage
-        being pushed to scene history. The pre-revision text is appended
-        onto ``message.mutations`` so the wire emit can deliver original
-        plus revised atomically and the frontend can splice it into the
-        revision stack.
+        being pushed to scene history. When the revision rewrites the
+        text, a new ``"revision"`` version is appended to the message's
+        stack — the original is already at index 0 from construction, so
+        the wire emit picks up both atomically when push_history returns.
 
         Only the first matching message is processed — push_history events
         rarely batch character/narrator messages, and revision is a
@@ -718,11 +703,7 @@ class RevisionMixin:
             # it — otherwise the repetition range collects the message
             # itself and every sentence matches itself at 100%.
             with RevisionContext(message.id):
-                original = await self.maybe_revise_inplace(message)
-            if original is not None:
-                message.mutations.append(
-                    MessageMutation(message=original, source="original")
-                )
+                await self.maybe_revise_inplace(message)
             return
 
     # helpers

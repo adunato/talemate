@@ -26,7 +26,7 @@
         :message_content="text"
         :message_id="message_id"
       />
-      <RevisionNav v-if="isLastMessage" :count="revisionsCount" :index="revisionIndex" :source="revisionSource" :disabled="uxLocked" :busy="revisionBusy" @navigate="(dir) => $emit('navigate-revision', dir)" />
+      <RevisionNav v-if="isLastMessage" :count="revisionsCount" :index="revisionIndex" :source="revisionSource" :reason="revisionReason" :disabled="uxLocked" :busy="revisionBusy" @navigate="(dir) => $emit('navigate-revision', dir)" />
       <v-textarea
         ref="textarea"
         v-if="editing"
@@ -177,6 +177,10 @@ export default {
       type: String,
       default: null,
     },
+    revisionReason: {
+      type: String,
+      default: null,
+    },
     revisionBusy: {
       type: [Boolean, String],
       default: false,
@@ -273,12 +277,19 @@ export default {
             return;
           }
 
-          this.editing_text = spliceContinuation(this.text, completion);
+          const continuedText = spliceContinuation(this.text, completion);
 
-          this.submitEdit({
-            reason: 'continue',
-            mutation_source: 'continue',
-          });
+          // Continue grows the revision stack — send append_version so
+          // the server pushes a new entry rather than rewriting the
+          // active one in place.
+          this.getWebsocket().send(JSON.stringify({
+            type: 'scene_message',
+            action: 'append_version',
+            id: this.message_id,
+            text: continuedText,
+            source: 'continue',
+          }));
+          this.editing = false;
         },
         this.$refs.textarea
       )
@@ -300,15 +311,13 @@ export default {
         this.$refs.textarea.focus();
       });
     },
-    submitEdit(meta = null) {
-      const payload = {
-        ...(meta || {}),
+    submitEdit() {
+      this.getWebsocket().send(JSON.stringify({
         type: 'scene_message',
         action: 'edit',
         id: this.message_id,
         text: this.editing_text,
-      };
-      this.getWebsocket().send(JSON.stringify(payload));
+      }));
       this.editing = false;
     },
     deleteMessage() {

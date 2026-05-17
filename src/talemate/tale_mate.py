@@ -4,7 +4,7 @@ import os
 import re
 import traceback
 import uuid
-from typing import Generator, Callable, Literal
+from typing import Generator, Callable
 
 import isodate
 import structlog
@@ -36,8 +36,7 @@ from talemate.scene.episodes import EpisodesManager
 from talemate.scene_message import (
     CharacterMessage,
     DirectorMessage,
-    MessageMutation,
-    MutationSource,
+    VersionSource,
     ReinforcementMessage,
     SceneMessage,
     TimePassageMessage,
@@ -802,13 +801,15 @@ class Scene(Emitter):
                 return idx
         return -1
 
-    def get_message(self, message_id: int) -> SceneMessage:
+    def get_message(self, message_id: int) -> SceneMessage | None:
         """
-        Returns the message in the history with the given id
+        Returns the message in the history with the given id, or ``None``
+        if no message in history matches.
         """
         for idx in range(len(self.history) - 1, -1, -1):
             if self.history[idx].id == message_id:
                 return self.history[idx]
+        return None
 
     def last_player_message(self) -> str:
         """
@@ -1032,55 +1033,62 @@ class Scene(Emitter):
             },
         )
 
-    def edit_message(
+    def edit_message(self, message_id: int, message: str) -> None:
+        """
+        Replace a message's canonical text in place. Used for plain user
+        edits and any other in-place rewrite that should NOT grow a new
+        revision-stack entry. The active version's text is updated to
+        match.
+
+        For appending a new version (continue, manual revision,
+        regenerate, custom mutators), use ``append_message_version``.
+        For moving the active pointer, use ``set_message_active_version``.
+        """
+        target = self.get_message(message_id)
+        if target is None:
+            return
+        target.message = message
+        emit("message_edited", target, id=message_id, data=None)
+        self.log.info("Message edited", message=message, id=message_id)
+
+    def append_message_version(
         self,
         message_id: int,
-        message: str,
-        reason: Literal["revision", "regenerate", "continue"] | None = None,
-        mutations: list[MessageMutation] | None = None,
-        mutation_source: MutationSource | None = None,
-    ):
+        text: str,
+        source: VersionSource,
+        reason: str | None = None,
+    ) -> None:
         """
-        Finds the message in `history` by its id and will update its contents.
-
-        `reason` is an optional tag forwarded on the wire so the UI can
-        distinguish *why* an edit happened:
-        - ``revision``: editor-driven manual revision; frontend appends a
-          new entry to its revision stack after the current one.
-        - ``regenerate``: in-place regenerate; frontend appends the prior
-          intermediate(s) (``mutations``) and the new canonical text to
-          its stack.
-        - ``continue``: user-initiated continuation of a character
-          message; frontend appends the extended text as a new entry at
-          the end of the stack. The prior canonical is already in the
-          stack at the active index, so no mutations travel with it.
-        Plain user edits omit the reason and ship no metadata.
-
-        ``mutations`` are pre-canonical intermediate texts attached as
-        additional revision-stack entries before the new canonical text.
-        ``mutation_source`` tags the new canonical's stack entry. Both
-        are only meaningful when ``reason`` is set.
+        Append a new version to a message's revision stack, make it
+        active, and emit ``message_edited`` so the frontend mirrors the
+        new state.
         """
+        target = self.get_message(message_id)
+        if target is None:
+            return
+        target.append_version(text, source=source, reason=reason)
+        emit("message_edited", target, id=message_id, data=None)
+        self.log.info(
+            "Message version appended",
+            text=text,
+            source=source,
+            reason=reason,
+            id=message_id,
+        )
 
-        for i, _message in enumerate(self.history):
-            if _message.id == message_id:
-                self.history[i].message = message
-                if reason is None and mutations is None and mutation_source is None:
-                    data = None
-                else:
-                    data = {
-                        "reason": reason,
-                        "mutations": [m.model_dump() for m in (mutations or [])],
-                        "mutation_source": mutation_source,
-                    }
-                emit(
-                    "message_edited",
-                    self.history[i],
-                    id=message_id,
-                    data=data,
-                )
-                self.log.info("Message edited", message=message, id=message_id)
-                return
+    def set_message_active_version(self, message_id: int, index: int) -> None:
+        """
+        Move the active-version pointer on a message; the canonical text
+        follows. Used by the frontend's revision-navigator arrows.
+        """
+        target = self.get_message(message_id)
+        if target is None:
+            return
+        target.set_active_version(index)
+        emit("message_edited", target, id=message_id, data=None)
+        self.log.info(
+            "Message active version swapped", index=index, id=message_id
+        )
 
     async def add_actor(self, actor: Actor, commit_to_memory: bool = True):
         """

@@ -65,11 +65,10 @@ class EditorWebsocketHandler(Plugin):
             )
             revised = await editor.revision_revise(info)
             if isinstance(message, CharacterMessage):
-                if not revised.startswith(character.name + ":"):
-                    revised = f"{character.name}: {revised}"
+                revised = CharacterMessage.with_name_prefix(character.name, revised)
 
-        # Tag the edit so the frontend appends a new entry to the message's
-        # revision stack instead of replacing the current entry in place.
+        # Append the revised text as a new version so the frontend's
+        # navigator can step between the prior canonical and the revision.
         # No-op revisions don't touch the message and surface a status so
         # the user knows the action completed without effect.
         #
@@ -78,9 +77,7 @@ class EditorWebsocketHandler(Plugin):
         # clears on the `message_edited` echo, but the no-op path has no
         # other completion signal.
         if revised != original:
-            scene.edit_message(
-                message.id, revised, reason="revision", mutation_source="revision"
-            )
+            scene.append_message_version(message.id, revised, source="revision")
             await self.signal_operation_done(signal_only=True)
         else:
             await self.signal_operation_done(

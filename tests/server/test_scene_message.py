@@ -1,14 +1,16 @@
 """
 Unit tests for the scene_message websocket plugin.
 
-Focuses on the wire contract of ``SceneMessagePlugin.handle_edit``: the
-optional ``reason`` / ``mutation_source`` metadata is forwarded to
-``Scene.edit_message`` so the frontend's ``message_edited`` echo can
-splice the new text onto the per-slot revision stack rather than
-replacing the active entry in place. The editor agent's
-``cleanup_character_message`` branch is bypassed by stubbing the agent
-to ``enabled=False``; that branch is exercised in its own agent tests
-and isn't the contract under test here.
+The plugin exposes three actions that map to three distinct scene-level
+operations:
+
+- ``edit`` → ``Scene.edit_message`` (replace active version's text)
+- ``append_version`` → ``Scene.append_message_version`` (grow the stack)
+- ``swap_revision`` → ``Scene.set_message_active_version`` (move pointer)
+
+The editor agent's ``cleanup_character_message`` branch in ``handle_edit``
+is bypassed by stubbing the agent to ``enabled=False``; that branch is
+exercised in its own agent tests and isn't the contract under test here.
 """
 
 import pytest
@@ -59,8 +61,9 @@ def scene_with_message():
 def plugin(scene_with_message, monkeypatch):
     """SceneMessagePlugin wired to a real Scene with editor cleanup disabled.
 
-    ``edit_message`` is replaced by a spy so the test asserts on the
-    plugin's pass-through directly without running the emit bus.
+    Scene method calls are captured via spies so tests can assert which
+    of the three scene-level operations was dispatched and with what
+    arguments — no emit bus runs.
     """
     scene, _ = scene_with_message
     handler = _MockWebsocketHandler(scene=scene)
@@ -71,91 +74,128 @@ def plugin(scene_with_message, monkeypatch):
         lambda name: _DisabledEditor(),
     )
 
-    calls: list[dict] = []
+    calls: dict[str, list[dict]] = {
+        "edit": [],
+        "append_version": [],
+        "swap_revision": [],
+    }
 
-    def _spy(message_id, message, *, reason=None, mutation_source=None):
-        calls.append(
+    def _spy_edit(message_id, text):
+        calls["edit"].append({"message_id": message_id, "text": text})
+
+    def _spy_append(message_id, text, source, reason=None):
+        calls["append_version"].append(
             {
                 "message_id": message_id,
-                "message": message,
+                "text": text,
+                "source": source,
                 "reason": reason,
-                "mutation_source": mutation_source,
             }
         )
 
-    monkeypatch.setattr(scene, "edit_message", _spy)
+    def _spy_swap(message_id, index):
+        calls["swap_revision"].append({"message_id": message_id, "index": index})
+
+    monkeypatch.setattr(scene, "edit_message", _spy_edit)
+    monkeypatch.setattr(scene, "append_message_version", _spy_append)
+    monkeypatch.setattr(scene, "set_message_active_version", _spy_swap)
     plug._spy_calls = calls
     return plug
 
 
 class TestSceneMessagePluginHandleEdit:
     @pytest.mark.asyncio
-    async def test_plain_edit_forwards_no_metadata(self, plugin, scene_with_message):
-        """A bare edit payload must not invent metadata; reason and
-        mutation_source default to None so ``Scene.edit_message`` emits a
-        plain ``message_edited`` envelope (data=None)."""
+    async def test_plain_edit_replaces_active_version(self, plugin, scene_with_message):
+        """``handle_edit`` dispatches to ``Scene.edit_message`` — the
+        active version's text is rewritten in place, no new stack
+        entry is created."""
         _, msg = scene_with_message
         await plugin.handle_edit({"id": msg.id, "text": "Alice: Hi."})
 
-        assert plugin._spy_calls == [
-            {
-                "message_id": msg.id,
-                "message": "Alice: Hi.",
-                "reason": None,
-                "mutation_source": None,
-            }
+        assert plugin._spy_calls["edit"] == [
+            {"message_id": msg.id, "text": "Alice: Hi."}
         ]
+        assert plugin._spy_calls["append_version"] == []
+        assert plugin._spy_calls["swap_revision"] == []
 
     @pytest.mark.asyncio
-    async def test_continue_edit_forwards_revision_metadata(
-        self, plugin, scene_with_message
-    ):
-        """The Continue action ships ``reason='continue'`` and
-        ``mutation_source='continue'``; both must reach
-        ``Scene.edit_message`` so the resulting emit carries them onto
-        the frontend's revision-stack splice."""
-        _, msg = scene_with_message
-        await plugin.handle_edit(
-            {
-                "id": msg.id,
-                "text": "Alice: Hi. How are you?",
-                "reason": "continue",
-                "mutation_source": "continue",
-            }
-        )
-
-        assert plugin._spy_calls == [
-            {
-                "message_id": msg.id,
-                "message": "Alice: Hi. How are you?",
-                "reason": "continue",
-                "mutation_source": "continue",
-            }
-        ]
-
-    @pytest.mark.asyncio
-    async def test_client_supplied_mutations_field_is_dropped(
-        self, plugin, scene_with_message
-    ):
-        """``mutations`` is intentionally NOT part of ``EditPayload``;
-        clients cannot inject prior-state entries into the revision
-        stack via this wire path. Pydantic's default ``extra=ignore``
-        drops the field, and ``Scene.edit_message`` is invoked without
-        ``mutations`` in its kwargs."""
+    async def test_edit_drops_extra_payload_fields(self, plugin, scene_with_message):
+        """``EditPayload`` only declares ``id`` and ``text``; any other
+        fields a client tries to inject (legacy ``reason`` /
+        ``mutation_source``, hypothetical ``source``, etc.) are dropped
+        by pydantic before reaching ``Scene.edit_message``."""
         _, msg = scene_with_message
         await plugin.handle_edit(
             {
                 "id": msg.id,
                 "text": "Alice: Hi.",
-                "reason": "continue",
-                "mutation_source": "continue",
-                "mutations": [{"message": "injected", "source": "original"}],
+                "source": "custom",
+                "reason": "should not propagate",
             }
         )
 
-        # Only the supported metadata was forwarded; the rogue mutations
-        # field never reached Scene.edit_message.
-        call = plugin._spy_calls[0]
-        assert "mutations" not in call or call.get("mutations") is None
-        assert call["reason"] == "continue"
-        assert call["mutation_source"] == "continue"
+        assert plugin._spy_calls["edit"] == [
+            {"message_id": msg.id, "text": "Alice: Hi."}
+        ]
+
+
+class TestSceneMessagePluginHandleAppendVersion:
+    @pytest.mark.asyncio
+    async def test_append_forwards_source_and_reason(
+        self, plugin, scene_with_message
+    ):
+        """``handle_append_version`` dispatches to
+        ``Scene.append_message_version`` with the wire-supplied
+        ``source`` and optional ``reason``."""
+        _, msg = scene_with_message
+        await plugin.handle_append_version(
+            {
+                "id": msg.id,
+                "text": "Alice: Hi. How are you?",
+                "source": "continue",
+            }
+        )
+
+        assert plugin._spy_calls["append_version"] == [
+            {
+                "message_id": msg.id,
+                "text": "Alice: Hi. How are you?",
+                "source": "continue",
+                "reason": None,
+            }
+        ]
+
+    @pytest.mark.asyncio
+    async def test_append_defaults_source_to_custom(
+        self, plugin, scene_with_message
+    ):
+        """Omitting ``source`` defaults to ``"custom"`` — the catch-all
+        bucket for client-driven mutations that don't fit the closed
+        revision/regenerate/continue set."""
+        _, msg = scene_with_message
+        await plugin.handle_append_version(
+            {"id": msg.id, "text": "Alice: rewritten", "reason": "manual override"}
+        )
+
+        assert plugin._spy_calls["append_version"] == [
+            {
+                "message_id": msg.id,
+                "text": "Alice: rewritten",
+                "source": "custom",
+                "reason": "manual override",
+            }
+        ]
+
+
+class TestSceneMessagePluginHandleSwapRevision:
+    @pytest.mark.asyncio
+    async def test_swap_forwards_index(self, plugin, scene_with_message):
+        """``handle_swap_revision`` takes an index and forwards it to
+        ``Scene.set_message_active_version`` — the canonical text follows
+        the pointer rather than being set explicitly by the client."""
+        _, msg = scene_with_message
+        await plugin.handle_swap_revision({"id": msg.id, "index": 2})
+
+        assert plugin._spy_calls["swap_revision"] == [
+            {"message_id": msg.id, "index": 2}
+        ]

@@ -1,16 +1,16 @@
 <template>
   <span v-if="count > 1 || busy" class="revision-nav" :title="title">
     <template v-if="count > 1">
-      <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="index <= 0 || disabled || busy" @click.stop="$emit('navigate', -1)">
+      <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="index <= 0 || disabled || !!busy" @click.stop="$emit('navigate', -1)">
         <v-icon size="small">mdi-chevron-left</v-icon>
       </v-btn>
       <span class="revision-counter">{{ index + 1 }}/{{ count }}</span>
-      <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="index >= count - 1 || disabled || busy" @click.stop="$emit('navigate', 1)">
+      <v-btn size="x-small" icon variant="text" density="compact" class="revision-arrow" :disabled="index >= count - 1 || disabled || !!busy" @click.stop="$emit('navigate', 1)">
         <v-icon size="small">mdi-chevron-right</v-icon>
       </v-btn>
       <v-chip v-if="sourceTag" size="small" variant="text" :color="sourceTag.color" class="revision-source-chip">
         <v-icon size="small" start>{{ sourceTag.icon }}</v-icon>
-        {{ sourceTag.label }}
+        {{ sourceLabel }}
       </v-chip>
     </template>
     <v-chip v-if="busy" size="small" variant="text" class="revision-busy-chip" color="primary">
@@ -26,6 +26,7 @@ const SOURCE_TAGS = {
   revision: { label: 'Revised', icon: 'mdi-typewriter', color: 'highlight4' },
   regenerate: { label: 'Regenerated', icon: 'mdi-refresh', color: 'primary' },
   continue: { label: 'Continued', icon: 'mdi-fast-forward', color: 'primary' },
+  custom: { label: 'Custom', icon: 'mdi-tag-outline', color: 'muted' },
 };
 
 export default {
@@ -40,6 +41,10 @@ export default {
       required: true,
     },
     source: {
+      type: String,
+      default: null,
+    },
+    reason: {
       type: String,
       default: null,
     },
@@ -62,10 +67,17 @@ export default {
     sourceTag() {
       return this.source ? SOURCE_TAGS[this.source] || null : null;
     },
+    // The chip label and tooltip both append the optional reason after
+    // an em-dash so the user can see the graph-supplied annotation
+    // without losing the source's color/icon signal.
+    sourceLabel() {
+      if (!this.sourceTag) return '';
+      return this.reason ? `${this.sourceTag.label} — ${this.reason}` : this.sourceTag.label;
+    },
     title() {
       if (this.busy) return `${this.busyLabel}…`;
       const base = `Revision ${this.index + 1} of ${this.count}`;
-      return this.sourceTag ? `${base} (${this.sourceTag.label})` : base;
+      return this.sourceTag ? `${base} (${this.sourceLabel})` : base;
     },
   },
 }
