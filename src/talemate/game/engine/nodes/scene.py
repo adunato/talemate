@@ -14,7 +14,13 @@ from .core import (
     Trigger,
 )
 from .registry import register, get_nodes_by_base_type, get_node
-from .event import connect_listeners, disconnect_listeners
+from .event import (
+    connect_listeners,
+    disconnect_listeners,
+    collect_auto_register_listeners,
+    connect_auto_register_listeners,
+    disconnect_auto_register_listeners,
+)
 import talemate.events as events
 from talemate.emit import emit, wait_for_input
 from talemate.exceptions import ActedAsCharacter, AbortWaitForInput, GenerationCancelled
@@ -1970,10 +1976,16 @@ class SceneLoop(Loop):
 
         if not state.data.get("_scene_loop_init"):
             state.data["_scene_loop_init"] = True
+            # inner state.data is destroyed when Loop.execute returns
+            state.outer.data["_auto_listeners"] = collect_auto_register_listeners()
             await self.register_commands(scene, state)
             await self.init_agent_nodes(scene, state)
             await async_signals.get("scene_loop_init").send(self.scene_loop_event)
             await async_signals.get("scene_loop_init_after").send(self.scene_loop_event)
+
+        connect_auto_register_listeners(
+            state.outer.data.get("_auto_listeners") or [], state, disconnect=True
+        )
 
         trigger_game_loop = self.get_property("trigger_game_loop")
 
@@ -2028,6 +2040,9 @@ class SceneLoop(Loop):
             await super().execute(outer_state)
         finally:
             disconnect_listeners(self, outer_state)
+            disconnect_auto_register_listeners(
+                outer_state.data.get("_auto_listeners") or [], outer_state
+            )
 
     async def on_loop_error(self, state: GraphState, exc: Exception):
         scene: "Scene" = state.outer.data["scene"]
