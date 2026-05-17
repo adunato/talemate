@@ -26,6 +26,7 @@
   - "Message Toolbar: Fixed the message hover-toolbar actions (Create Pin, Revise, Fork, Continue, TTS, Time Passage) and double-click message editing staying available while a background agent operation was running. They now disable for the duration, matching the rest of the scene controls, and the hover hint reads 'Editing locked' while editing is unavailable."
   - "Create Pin: World entries created via the Create Pin message action are now marked Include only when pinned. They surface in context exclusively through the pin and are skipped by automatic relevancy matching, preventing the auto-generated summary from being retrieved as ambient memory."
   - "Status Snackbar: Fixed an empty grey toast flashing after operations that completed without a visible change (e.g. an editor revision that produced no edits). Cancellation toasts (e.g. \"Regeneration cancelled.\") that were previously swallowed now display."
+  - "Node Editor Module Properties: Fixed boolean property checkboxes appearing unresponsive — clicks updated the underlying value but the checkbox state didn't repaint until focus moved elsewhere. The property inputs now bind directly to the reactive properties store, and the checkbox commits on change instead of on blur."
 0.37.0:
   features:
   - "System Prompt Template Variable: Added {{ system_prompt }} template variable for system prompt overrides. Use it to include the default system prompt within a custom override, at both the app and client level."
