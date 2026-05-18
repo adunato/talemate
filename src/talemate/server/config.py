@@ -499,16 +499,12 @@ class ConfigPlugin(Plugin):
         )
 
     async def handle_set_agent_action_override(self, data):
-        """Set or update an override. Empty overrides are dropped so the config stays sparse."""
         payload = SetAgentActionOverridePayload(**data["data"])
 
         config: Config = get_config()
-        override = AgentActionOverride(disable_reasoning=payload.disable_reasoning)
-
-        if override == AgentActionOverride():
-            config.agent_actions.overrides.pop(payload.key, None)
-        else:
-            config.agent_actions.overrides[payload.key] = override
+        config.agent_actions.overrides[payload.key] = AgentActionOverride(
+            disable_reasoning=payload.disable_reasoning
+        )
 
         await config.set_dirty()
 

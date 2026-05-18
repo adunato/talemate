@@ -31,6 +31,19 @@
                 density="compact"
                 color="primary"
               />
+              <v-tooltip location="start" text="Remove this override entirely">
+                <template #activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    icon="mdi-close"
+                    variant="text"
+                    size="small"
+                    color="delete"
+                    class="ml-2"
+                    @click="clearOverride(row.key)"
+                  />
+                </template>
+              </v-tooltip>
             </template>
           </v-list-item>
         </v-list>
@@ -92,6 +105,15 @@ export default {
         type: 'config',
         action: 'set_agent_action_override',
         data: { key, disable_reasoning: !!value }
+      }));
+    },
+    clearOverride(key) {
+      const ws = this.getWebsocket();
+      if (!ws) return;
+      ws.send(JSON.stringify({
+        type: 'config',
+        action: 'clear_agent_action_override',
+        data: { key }
       }));
     }
   }
