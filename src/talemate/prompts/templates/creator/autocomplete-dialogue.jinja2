@@ -6,9 +6,14 @@ Override example:
   {{ set_anchor_extractor("response", "<MY_TAG>", "</MY_TAG>") }}
   {{ set_as_is_extractor("response") }}
 -#}
+{%- if character.is_player -%}
+  {%- set speaker_role = "player" -%}
+{%- else -%}
+  {%- set speaker_role = "other" -%}
+{%- endif -%}
 {# EXTRA CONTEXT CONTENT #}
 {% set rendered_context_content -%}
-{% with include_scenario_premise=True %}
+{% with include_scenario_premise=True, speaker_role=speaker_role %}
 {% include "extra-context-static.jinja2" %}
 {% endwith %}
 {% endset %}

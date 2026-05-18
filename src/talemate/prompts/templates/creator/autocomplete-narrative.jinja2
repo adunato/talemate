@@ -8,7 +8,7 @@ Override example:
 -#}
 {# EXTRA CONTEXT CONTENT #}
 {% set rendered_context_content -%}
-{% with include_scenario_premise=True %}
+{% with include_scenario_premise=True, speaker_role="narrator" %}
 {% include "extra-context-static.jinja2" %}
 {% endwith %}
 {% endset %}
