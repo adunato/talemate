@@ -111,12 +111,11 @@ class GoogleClient(
         return self.client_config.disable_safety_settings
 
     @property
-    def reason_enabled(self) -> bool:
+    def reason_enabled_configured(self) -> bool:
         if self.reason_locked:
             # Always enable reasoning for Gemini 3 and Gemini 2.5
             return True
-
-        return self.client_config.reason_enabled
+        return super().reason_enabled_configured
 
     @property
     def min_reason_tokens(self) -> int:

@@ -82,6 +82,8 @@ class PromptData(pydantic.BaseModel):
     client_type: str
     time: Union[float, int]
     agent_stack: list[str] = pydantic.Field(default_factory=list)
+    agent_type: str | None = None
+    agent_action: str | None = None
     generation_parameters: dict = pydantic.Field(default_factory=dict)
     inference_preset: str = None
     preset_group: str | None = None
@@ -391,8 +393,17 @@ class ClientBase:
         return self.client_config.preset_group
 
     @property
-    def reason_enabled(self) -> bool:
+    def reason_enabled_configured(self) -> bool:
+        """Stable configured value. Subclasses override for client-specific
+        forcing (Gemini 2.5+, OpenAI o-series). `reason_enabled` is the
+        runtime value after per-action context overrides."""
         return self.client_config.reason_enabled
+
+    @property
+    def reason_enabled(self) -> bool:
+        if client_context_attribute("disable_reasoning") and not self.reason_locked:
+            return False
+        return self.reason_enabled_configured
 
     @property
     def reason_tokens(self) -> int:
@@ -567,9 +578,10 @@ class ClientBase:
         """Returns reasoning display config based on what's actually used at runtime.
 
         Override in subclasses for custom behavior (e.g., adaptive thinking).
-        Returns None if reasoning is not enabled.
+        Returns None if reasoning is not enabled. Uses the configured value so
+        per-action overrides don't flicker the persistent UI indicator.
         """
-        if not self.reason_enabled:
+        if not self.reason_enabled_configured:
             return None
         return ReasoningDisplay(
             indicator_value=str(self.validated_reason_tokens),
@@ -975,7 +987,7 @@ class ClientBase:
             "embeddings_model_name": self.embeddings_model_name,
             "can_support_concurrent_inference": self.can_support_concurrent_inference,
             "supports_concurrent_inference": self.supports_concurrent_inference,
-            "reason_enabled": self.reason_enabled,
+            "reason_enabled": self.reason_enabled_configured,
             "reason_tokens": self.reason_tokens,
             "min_reason_tokens": self.min_reason_tokens,
             "reason_response_pattern": self.client_config.reason_response_pattern,
@@ -1639,6 +1651,10 @@ class ClientBase:
                 response_tokens=self._returned_response_tokens
                 or self.count_tokens(response),
                 agent_stack=agent_context.agent_stack if agent_context else [],
+                agent_type=agent_context.agent.agent_type
+                if agent_context
+                else None,
+                agent_action=agent_context.action if agent_context else None,
                 client_name=self.name,
                 client_type=self.client_type,
                 time=time_end - time_start,

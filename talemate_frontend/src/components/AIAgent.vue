@@ -1,4 +1,21 @@
 <template>
+    <v-list-subheader class="text-uppercase">
+        <v-icon>mdi-transit-connection-variant</v-icon>
+        Agents
+        <v-tooltip v-if="overrideCount > 0" location="top" :text="`${overrideCount} per-action override${overrideCount === 1 ? '' : 's'} active — manage`">
+            <template #activator="{ props }">
+                <v-btn
+                    v-bind="props"
+                    @click="openAgentActionOverrides()"
+                    size="x-small"
+                    variant="tonal"
+                    color="primary"
+                    prepend-icon="mdi-tune"
+                    class="ml-2"
+                >{{ overrideCount }}</v-btn>
+            </template>
+        </v-tooltip>
+    </v-list-subheader>
     <div v-if="isConnected()">
         <v-list density="compact">
             <!-- Ctrl + click toggles agent enable/disable when allowed -->
@@ -152,6 +169,9 @@ export default {
         scene: Object,
     },
     computed: {
+        overrideCount() {
+            return Object.keys(this.appConfig?.agent_actions?.overrides || {}).length;
+        },
         agentStateNotifications() {
             // if key begins with 'notify__' and value is a string, return the key and value
             // return the notify__(.+) part as the key, and the value as the value
@@ -177,6 +197,7 @@ export default {
         'registerMessageHandler',
         'isConnected',
         'getClients',
+        'openAgentActionOverrides',
     ],
     provide() {
         return {

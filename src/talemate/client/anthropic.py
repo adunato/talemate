@@ -201,7 +201,7 @@ class AnthropicClient(ConcurrentInferenceMixin, EndpointOverrideMixin, ClientBas
     @property
     def reasoning_display(self) -> ReasoningDisplay | None:
         """Returns reasoning display config based on what's actually used at runtime."""
-        if not self.reason_enabled:
+        if not self.reason_enabled_configured:
             return None
 
         # Only show effort display if adaptive will ACTUALLY be used.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import functools
 import json
 from inspect import signature
@@ -289,6 +290,19 @@ class store_context_state:
         return fn
 
 
+def _agent_action_override_kwargs(agent_type: str, action_name: str) -> dict:
+    """ClientContext kwargs for any per-action override on ``{agent_type}.{action_name}``; empty when none applies."""
+    config = get_config()
+    override = config.agent_actions.overrides.get(f"{agent_type}.{action_name}")
+    if override is None:
+        return {}
+
+    kwargs: dict = {}
+    if override.disable_reasoning:
+        kwargs["disable_reasoning"] = True
+    return kwargs
+
+
 def set_processing(fn):
     """
     decorator that emits the agent status as processing while the function
@@ -334,7 +348,16 @@ def set_processing(fn):
 
                         self.set_context_states(**all_args)
 
-                    return await fn(self, *args, **kwargs)
+                    override_kwargs = _agent_action_override_kwargs(
+                        self.agent_type, action_name
+                    )
+                    override_ctx = (
+                        ClientContext(**override_kwargs)
+                        if override_kwargs
+                        else contextlib.nullcontext()
+                    )
+                    with override_ctx:
+                        return await fn(self, *args, **kwargs)
                 finally:
                     try:
                         self._current_action = None

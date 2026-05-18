@@ -189,7 +189,6 @@
         <v-list>
           <AIClient ref="aiClient" @save="saveClients" @error="uxErrorHandler" @clients-updated="saveClients" @client-assigned="saveAgents" @open-app-config="openAppConfig" :immutable-config="appConfig" :app-config="appConfig"></AIClient>
           <v-divider></v-divider>
-          <v-list-subheader class="text-uppercase"><v-icon>mdi-transit-connection-variant</v-icon> Agents</v-list-subheader>
           <AIAgent ref="aiAgent" @save="saveAgents" @agents-updated="saveAgents" :agentState="agentState" :templates="worldStateTemplates" :app-config="appConfig" :scene="scene"></AIAgent>
           <!-- More sections can be added here -->
         </v-list>
@@ -204,7 +203,7 @@
       <v-navigation-drawer v-model="debugDrawer" app location="right" width="400" disable-resize-watcher>
         <v-list>
           <v-list-subheader class="text-uppercase"><v-icon>mdi-bug</v-icon> Debug Tools</v-list-subheader>
-          <DebugTools ref="debugTools" :scene="scene" :prompts="promptsViewPrompts" @clear-prompts="clearPrompts"></DebugTools>
+          <DebugTools ref="debugTools" :scene="scene" :prompts="promptsViewPrompts" :app-config="appConfig" @clear-prompts="clearPrompts"></DebugTools>
         </v-list>
       </v-navigation-drawer>
 
@@ -349,7 +348,7 @@
           </v-tabs-window-item>
           <!-- PROMPTS -->
           <v-tabs-window-item :transition="false" :reverse-transition="false" value="prompts">
-            <PromptsView :visible="tab === 'prompts'" :prompts="prompts" :agent-status="agentStatus" ref="promptsView" v-model:main-tab="promptsMainTab" @clear-prompts="onClearPrompts" />
+            <PromptsView :visible="tab === 'prompts'" :prompts="prompts" :agent-status="agentStatus" :app-config="appConfig" ref="promptsView" v-model:main-tab="promptsMainTab" @clear-prompts="onClearPrompts" />
           </v-tabs-window-item>
 
         </v-tabs-window>
@@ -358,6 +357,7 @@
     </v-main>
 
     <AppConfig ref="appConfig" :agentStatus="agentStatus" :sceneActive="sceneActive" :clientStatus="clientStatus" @appearance-preview="onAppearancePreview" @appearance-preview-clear="onAppearancePreviewClear" />
+    <AgentActionOverrides ref="agentActionOverrides" :app-config="appConfig" :agent-status="agentStatus" />
     <v-snackbar v-model="errorNotification" color="red-darken-1" :timeout="3000">
         {{ errorMessage }}
     </v-snackbar>
@@ -379,6 +379,7 @@ import AIClient from './AIClient.vue';
 import { primaryModifierLabel } from '@/utils/keyboardModifiers';
 import AIAgent from './AIAgent.vue';
 import AgentActivityBar from './AgentActivityBar.vue';
+import AgentActionOverrides from './AgentActionOverrides.vue';
 import LoadScene from './LoadScene.vue';
 import SceneTools from './SceneTools.vue';
 import SceneMessages from './SceneMessages.vue';
@@ -419,6 +420,7 @@ export default {
     AIClient,
     AIAgent,
     AgentActivityBar,
+    AgentActionOverrides,
     LoadScene,
     SceneTools,
     SceneMessages,
@@ -820,6 +822,7 @@ export default {
       requestAppConfig: () => this.requestAppConfig(),
       appConfig: () => this.appConfig,
       openAppConfig: this.openAppConfig,
+      openAgentActionOverrides: () => this.$refs.agentActionOverrides?.open(),
       configurationRequired: () => this.configurationRequired(),
       getTrackedCharacterState: (name, question) => this.$refs.worldState.trackedCharacterState(name, question),
       getTrackedCharacterStates: (name) => this.$refs.worldState.trackedCharacterStates(name),
@@ -1699,16 +1702,15 @@ export default {
 
     // Handle prompt_sent messages (capture prompts for PromptsMenu)
     handlePromptSent(data) {
-      // Get active agent (last in agent_stack if not empty)
+      // agent_name here is the verbose display name (from agent_stack); the
+      // canonical type+action come straight from the server now.
       let agent = null;
       let agentName = null;
-      let agentAction = null;
+      let agentAction = data.agent_action || null;
 
       if (data.agent_stack && data.agent_stack.length > 0) {
         agent = data.agent_stack[data.agent_stack.length - 1];
-        const agentParts = agent.split('.');
-        agentName = agentParts[0];
-        agentAction = agentParts[1];
+        agentName = agent.split('.')[0];
       }
 
       // Compute prefix cache ratio against previous prompt with same template_uid + client_name
@@ -1731,6 +1733,7 @@ export default {
         agent_stack: data.agent_stack,
         agent: agent,
         agent_name: agentName,
+        agent_type: data.agent_type || null,
         agent_action: agentAction,
         client_name: data.client_name,
         client_type: data.client_type,

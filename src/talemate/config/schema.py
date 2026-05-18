@@ -619,6 +619,14 @@ class PromptsConfig(pydantic.BaseModel):
     template_sources: Dict[str, str] = pydantic.Field(default_factory=dict)
 
 
+class AgentActionOverride(pydantic.BaseModel):
+    disable_reasoning: bool = False
+
+
+class AgentActionsConfig(pydantic.BaseModel):
+    overrides: Dict[str, AgentActionOverride] = pydantic.Field(default_factory=dict)
+
+
 class Config(pydantic.BaseModel):
     clients: Dict[str, AnnotatedClient] = {}
 
@@ -657,6 +665,8 @@ class Config(pydantic.BaseModel):
     system_prompts: SystemPrompts = SystemPrompts()
 
     prompts: PromptsConfig = PromptsConfig()
+
+    agent_actions: AgentActionsConfig = AgentActionsConfig()
 
     dirty: bool = pydantic.Field(default=False, exclude=True)
 
