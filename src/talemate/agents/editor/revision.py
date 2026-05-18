@@ -1316,6 +1316,8 @@ class RevisionMixin:
             template = "editor.unslop-contextual-generation"
         elif info.summarization_history is not None:
             template = "editor.unslop-summarization"
+        elif character is None:
+            template = "editor.unslop-narration"
 
         log.debug("revision_unslop: issues", issues=issues, template=template)
 
