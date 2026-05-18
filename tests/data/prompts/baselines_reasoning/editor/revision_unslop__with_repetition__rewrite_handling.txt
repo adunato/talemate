@@ -1,271 +1,59 @@
 ## Examples
 
 <REVIEW>
-"Hello, Mother. I have returned from my educational institution," said Tim.
-"Excellent. Did you successfully complete your mathematical assignments?" she responded.
-"Affirmative. I achieved a score of ninety-two percent on my algebraic examination."
-"That is most satisfactory. Please proceed to consume your afternoon snack in the kitchen area."
+The ancient forest brooded with the weight of a thousand forgotten centuries, its emerald canopy weaving an impenetrable tapestry against the cerulean firmament above. Gnarled roots clawed at the loamy earth like the fingers of some primordial beast, while shafts of golden sunlight pierced the verdant gloom in ethereal cathedral-light columns. A symphony of unseen creatures harmonized in the distance, their melodic voices echoing through the labyrinthine arboreal expanse.
 </REVIEW>
 
 <ANALYSIS>
-- Thought process: This reads like robots trying to imitate human conversation. No real person says "educational institution" instead of "school" or talks without contractions. The mother-son dynamic is completely missing.
-- Purple prose: MINOR - overly formal word choices
-- Unnatural dialogue: MAJOR ISSUES - no contractions, robotic speech, "educational institution" instead of school
-- Over-description: NO
-- Length: OK
-- Tense: PAST - "said Tim"
-- Mature content: N/A
-- Name overuse: "Mother" - kids say "Mom" not "Mother"
-- Talking vs Showing: NO - natural conversation flow, not over-explaining
-</ANALYSIS>
-
-<FIX>
-"Hey Mom, I'm home," Tim called out.
-"Hi sweetie! How'd your math test go?"
-"Pretty good—got a 92."
-"That's great! There's snacks in the kitchen if you're hungry."
-</FIX>
-
----
-
-<REVIEW>
-Beneath the opalescent moon's ethereal glow, Jake's sapphire eyes met hers.
-"Your presence illuminates my existence more brilliantly than a thousand supernovas," he declared.
-"Indeed, our souls appear to be quantum entangled across the cosmic void," she replied, her voice like honeyed ambrosia.
-</REVIEW>
-
-<ANALYSIS>
-- Thought process: This sounds like someone fed a physics textbook and a bad romance novel into a blender. Real people in love don't speak in astronomical metaphors and quantum physics references. The purple prose is so thick you can barely find the actual emotion underneath.
-- Purple prose: SEVERE - "opalescent ethereal glow," "sapphire eyes," "honeyed ambrosia"
-- Unnatural dialogue: MAJOR ISSUES - nobody talks about supernovas and quantum entanglement romantically
-- Over-description: YES - voice descriptions, eye color unnecessary
-- Length: TOO LONG
-- Tense: PAST - "eyes met hers"
-- Mature content: N/A
-- Name overuse: NO - uses pronouns appropriately
-- Talking vs Showing: MODERATE - explicitly declaring feelings instead of showing through actions
-</ANALYSIS>
-
-<FIX>
-Jake took her hand in the moonlight, his thumb tracing small circles on her palm.
-"I can't imagine doing this with anyone else," he said quietly.
-She squeezed his hand. "Me neither."
-</FIX>
-
----
-
-<REVIEW>
-Mark lifted his ceramic coffee mug—white, 12 ounces, with a small chip on the rim—using his right hand. He raised it exactly 7.5 inches from the table surface.
-"I am currently experiencing caffeine withdrawal symptoms," he announced to his coworker.
-"Perhaps you should ingest the heated caffeinated beverage to alleviate your discomfort," she suggested, adjusting her ergonomic chair to a 95-degree angle.
-</REVIEW>
-
-<ANALYSIS>
-- Thought process: This reads like a medical journal entry about drinking coffee. The clinical language and precise measurements turn a simple morning coffee scene into a scientific experiment. Plus nobody announces their physical state like they're reading symptoms off a chart.
-- Purple prose: MINOR - clinical/scientific language where casual would work
-- Unnatural dialogue: SEVERE - "experiencing caffeine withdrawal symptoms" instead of "need coffee"
-- Over-description: MAJOR - mug details, exact measurements, chair angle
-- Length: TOO LONG
-- Tense: PAST - "raised it exactly 7.5 inches from the table surface"
-- Mature content: N/A
-- Name overuse: NO - avoided names properly
-- Talking vs Showing: SEVERE - announcing physical state instead of showing through actions
-</ANALYSIS>
-
-<FIX>
-Mark grabbed his chipped coffee mug and took a long sip, then rubbed his temples.
-"Rough morning?" his coworker asked, noticing the dark circles under his eyes.
-"Need more caffeine," he muttered.
-</FIX>
-
----
-
-<REVIEW>
-"Oh no, I appear to have misplaced my keys again," Jennifer announced to the empty room, her voice echoing off the pristine walls. "I must search for them systematically. First, I shall check the kitchen counter, then proceed to examine my jacket pockets."
-She walked to the kitchen. "They are not here," she declared. Moving to the coat rack, she proclaimed, "Ah, here they are! I am quite relieved to have located them."
-</REVIEW>
-
-<ANALYSIS>
-- Thought process: Nobody talks out loud when they're alone, especially not narrating their every move like they're in a stage play. This should be internal narrative or just actions, not spoken dialogue. The formal language makes it even worse - who says "I shall check" when looking for keys?
-- Purple prose: MINOR - "pristine walls," overly formal language
-- Unnatural dialogue: SEVERE - nobody narrates their actions aloud when alone
-- Over-description: MINOR - "voice echoing"
-- Length: TOO LONG
-- Tense: PAST - "announced to the empty room"
-- Mature content: N/A
-- Name overuse: N/A
-- Talking vs Showing: SEVERE - character speaking to empty room instead of using narration
-</ANALYSIS>
-
-<FIX>
-Jennifer couldn't find her keys. She checked the kitchen counter first, then her jacket pockets. There they were. She grabbed them and headed out.
-</FIX>
-
----
-
-<REVIEW>
-The morning sun streamed through the window as Emma turned to face her partner.
-"I trust you," she said, her voice barely above a whisper. "You know that, right?"
-Marcus nodded slowly. "I know. And I trust you too, Emma. We've been through so much together."
-She reached for his hand, searching his eyes for reassurance.
-</REVIEW>
-
-<UNWANTED_PROSE>
-- MATCH: `"I trust you,"`
-  - INSTRUCTIONS: Explicit trust declarations in dialogue feel unnatural. Show trust through actions or context instead of stating it directly.
-- MATCH: `"And I trust you too, Emma."`
-  - INSTRUCTIONS: Explicit trust declarations in dialogue feel unnatural. Show trust through actions or context instead of stating it directly.
-</UNWANTED_PROSE>
-
-<ANALYSIS>
-- Thought process: This scene has characters explicitly saying "I trust you" which the UNWANTED_PROSE flags identify as unnatural dialogue. Real people rarely make such direct declarations - trust is demonstrated through actions, vulnerability, or implied through context. The scene also has some name overuse with Emma being addressed directly.
-- Purple prose: MINOR - "voice barely above a whisper"
-- Unnatural dialogue: MAJOR ISSUES - explicit trust declarations flagged in UNWANTED_PROSE
-- Over-description: NO
-- Length: OK
-- Tense: PAST - "The morning sun streamed"
-- Mature content: N/A
-- Name overuse: YES - "Emma" used when speaking TO her
-- Talking vs Showing: SEVERE - explicitly stating trust instead of showing it
-- Unwanted prose: YES - trust declarations that need to be replaced per instructions
-</ANALYSIS>
-
-<FIX>
-The morning sun streamed through the window as Emma turned to face her partner.
-"Here," she said quietly, handing him the spare key to her apartment.
-Marcus closed his fingers around it, understanding the weight of the gesture. "We've been through so much together."
-She squeezed his hand, meeting his eyes with a small smile.
-</FIX>
-
----
-
-<REVIEW>
-"I, um, I don't think that's a good idea," Sarah stammered, her emerald eyes glistening with unshed tears as she contemplated the dire ramifications of their proposed course of action.
-"Why ever not?" inquired Thomas, his brow furrowing in consternation.
-"It's just... I mean... um... something feels wrong about it," she whispered softly.
-</REVIEW>
-
-<ANALYSIS>
-- Thought process: Sarah's nervous speech pattern with the stammering and "um"s is actually realistic and should be kept, but it's weighed down by purple prose about emerald eyes and dire ramifications. Thomas sounds like he's from a Victorian novel with "Why ever not?" The contrast between their speech styles is jarring.
-- Purple prose: YES - "emerald eyes glistening with unshed tears," "dire ramifications," "brow furrowing in consternation"
-- Unnatural dialogue: MIXED - Thomas sounds stiff, but Sarah's hesitation is natural
-- Over-description: YES - eye color, tear description unnecessary
-- Length: SLIGHTLY LONG
-- Tense: PAST - "Sarah stammered"
-- Mature content: N/A
-- Name overuse: NO
-- Talking vs Showing: GOOD - nervousness shown through stammering and hesitation
-- Speech patterns: PRESERVE - keep "um," "I mean," and stammering
-</ANALYSIS>
-
-<FIX>
-"I, um, I don't think that's a good idea," Sarah said, shifting uncomfortably.
-"Why not?"
-She bit her lip, looking away. "It's just... I mean... um... something feels wrong about it."
-</FIX>
-
----
-
-<REVIEW>
-"As you know, the dual-phase cooling system requires constant monitoring to prevent a cascade failure in the secondary loop," Dr. Chen explained to her co-engineer, who had been maintaining the reactor for twelve years. "The isothermal regulators must be calibrated every six hours, and the backup condensers need to cycle through their purge sequence before any power increase can be authorized."
-"Indeed, I am well aware of these procedures," he responded. "Perhaps we should also discuss the implications of the recent firmware update on the thermal management subsystem."
-</REVIEW>
-
-<ANALYSIS>
-- Thought process: This is exposition dumped into dialogue. These are two engineers who both know this information — they wouldn't explain it to each other. The dialogue exists purely to inform the reader, not because the characters would actually say it. It needs to be replaced with what they'd actually discuss: the immediate problem, not the textbook explanation.
-- Purple prose: NO
-- Unnatural dialogue: SEVERE - characters explaining things they both already know
-- Over-description: YES - unnecessary technical detail
-- Length: TOO LONG
-- Tense: PAST - "explained"
-- Mature content: N/A
-- Name overuse: NO
-- Talking vs Showing: SEVERE - lecturing the reader through dialogue
-</ANALYSIS>
-
-<FIX>
-"The cooling readings look wrong again." Dr. Chen frowned at her display, tapping one of the fluctuating values.
-He leaned over her shoulder. "That started after the firmware update. Want me to roll it back?"
-"Not yet. Let me check the secondary loop first."
-</FIX>
-
----
-
-<REVIEW>
-The plaza was a sea of bodies, no space between strangers, every breath someone else's. People shouted over each other, and the heat off so many bodies turned the air heavy.
-A vendor pushed past with a tray of skewers. The crowd surged forward as the speaker took the stage, jammed elbow to elbow with no room to move.
-</REVIEW>
-
-<REPETITION ISSUES>
-- MATCH: `jammed elbow to elbow with no room to move`
-</REPETITION ISSUES>
-
-<ANALYSIS>
-- Thought process: The flagged tail shares no words with paragraph 1, but it semantically repeats "no space between strangers, every breath someone else's" — the press-of-bodies idea is already on the page. Trust the flag. The closer needs to stay (the surge needs a beat after it), so REWRITE with a different observable detail at that moment, not another note about how packed in everyone is. Simply rephrasing "the press of bodies" or "shoulder against shoulder" would still be the same beat — paraphrase isn't enough.
-- Purple prose: NO
-- Unnatural dialogue: N/A
-- Over-description: NO
-- Length: OK
+- Thought process: This is atmospheric narration drowning in metaphor. Every concrete detail is wrapped in a flowery comparison. The forest, the canopy, the roots, the light, the animals — each gets multiple ornamental phrases when one clear observation would carry it. Strip the poetry, keep the scene. There is no dialogue in the REVIEW, so the FIX must not invent any.
+- Purple prose: SEVERE - "brooded with the weight," "impenetrable tapestry," "primordial beast," "cathedral-light columns," "labyrinthine arboreal expanse"
+- Over-description: YES - every element gets multiple metaphors
+- Empty metaphor: YES - "fingers of some primordial beast" adds no visual information
+- Dialogue: NONE present - do not introduce any
 - Tense: PAST
 - Mature content: N/A
-- Name overuse: N/A
-- Talking vs Showing: OK
-- Repetition: YES - flagged tail semantically echoes the earlier "no space between strangers"; replaced with a different observable detail at the moment of the surge
+- Length: TOO LONG
 </ANALYSIS>
 
 <FIX>
-The plaza was a sea of bodies, no space between strangers, every breath someone else's. People shouted over each other, and the heat off so many bodies turned the air heavy.
-A vendor pushed past with a tray of skewers. The crowd surged forward as the speaker took the stage, the roar rolling up off the rooftops.
+The forest was old. Roots twisted through the loamy earth, and shafts of sunlight cut down through the canopy in narrow columns. Somewhere in the distance, unseen animals called to each other.
 </FIX>
 
 ---
 
 <REVIEW>
-"Hi David, how are you today?" asked Emily.
-"I'm doing well, Emily. Have you seen Michael?"
-"No, David, I haven't seen Michael. But Sarah said she saw him earlier."
-"Thanks, Emily. I'll check his office."
+Sarah's leather boots, scuffed from years of wear and measuring precisely eight inches in height, made contact with the rain-slicked cobblestones of the alleyway. She moved at a pace of approximately 3.2 miles per hour, her breath visible in the cold November air at a temperature of exactly 41 degrees Fahrenheit. Her left hand, gloved in black wool, rose to brush a strand of auburn hair from her hazel eyes — eyes that had seen too much for someone of her relatively young age of twenty-eight.
 </REVIEW>
 
 <ANALYSIS>
-- Thought process: The constant name-dropping makes this sound like they just met at a networking event. The office reference suggests these are colleagues, not romantic partners, so we should just remove names, not add pet names.
-- Purple prose: NO
-- Unnatural dialogue: MINOR - slightly formal
-- Over-description: NO
-- Length: OK
-- Tense: PAST - "asked Emily"
+- Thought process: This reads like a forensic report. The boot height, the walking speed, the exact temperature, the glove material — none of these matter to the scene. The interesting beat ("eyes that had seen too much for twenty-eight") is buried under measurements. Keep the atmosphere and the character note; cut the spec sheet.
+- Purple prose: MINOR
+- Over-description: SEVERE - measurements, pace, exact temperature, clothing material
+- Empty metaphor: NO
+- Dialogue: NONE present - do not introduce any
+- Tense: PAST
 - Mature content: N/A
-- Name overuse: YES - "David" and "Emily" used when talking TO each other (remove - no pet names for colleagues), but "Michael" and "Sarah" correctly used when talking ABOUT them (keep)
-- Talking vs Showing: OK
+- Length: TOO LONG
 </ANALYSIS>
 
 <FIX>
-"Hi, how are you today?" Emily asked.
-"Good. Have you seen Michael?"
-"No, I haven't. But Sarah said she saw him earlier."
-"Thanks. I'll check his office."
+Sarah's boots scuffed the rain-slicked cobblestones as she moved down the alley. Her breath fogged in the cold November air. She brushed a strand of hair from her eyes — eyes that had seen too much for twenty-eight.
 </FIX>
 
 ---
 
 <REVIEW>
-"Hey, you okay?" Sarah asked, noticing the dark circles under his eyes.
-Marcus shrugged. "Just tired. Been working late on the Morrison case."
-"That bad?"
-"Yeah." He rubbed his face. "The witness testimonies don't add up. Something's off."
-Sarah poured him a coffee. "Want to talk through it?"
+Rain tapped against the kitchen window. Marcus poured coffee into a chipped mug, the steam curling up into the cool morning air. Outside, a dog barked somewhere down the street.
 </REVIEW>
 
 <ANALYSIS>
-- Thought process: This dialogue is natural and flows well. Characters use contractions, speak in fragments, and show emotion through actions rather than stating feelings. No purple prose or name overuse.
+- Thought process: This is clean, grounded narration. Concrete details, no purple prose, no empty metaphors. The dog bark adds atmosphere without overreaching. Nothing to fix.
 - Purple prose: NONE
-- Unnatural dialogue: NO - speaks like real people
-- Over-description: NO - just enough action to support dialogue
+- Over-description: NO
+- Empty metaphor: NO
+- Dialogue: NONE present - do not introduce any
+- Tense: PAST
 - Length: OK
-- Tense: PAST - "Sarah asked"
-- Mature content: N/A
-- Name overuse: NO - names used appropriately
-- Talking vs Showing: GOOD - shows tiredness through appearance and actions
 
 I have identified no issues, i will mark with: <NO_FIX_REQUIRED/>
 </ANALYSIS>
@@ -274,13 +62,36 @@ I have identified no issues, i will mark with: <NO_FIX_REQUIRED/>
 
 ---
 
+<REVIEW>
+Snow drifted across the courtyard, soft and steady, settling on the cracked flagstones and the iron benches. The lamps along the cloister glowed dim through the white.
+A figure crossed the far side, hood drawn, footprints filling almost as fast as they formed. The snow kept coming down, soft and steady, blanketing everything in the same pale hush.
+</REVIEW>
+
+<REPETITION ISSUES>
+- MATCH: `The snow kept coming down, soft and steady, blanketing everything in the same pale hush.`
+</REPETITION ISSUES>
+
+<ANALYSIS>
+- Thought process: The flagged closer repeats the opening idea — "snow drifted across the courtyard, soft and steady" was already the first beat, and the closer restates it with synonyms. The scene needs a different observable detail at that moment, not another note about how soft and steady the snow is. Replace with something the figure or the courtyard does at that point that hasn't been on the page yet.
+- Purple prose: NO
+- Over-description: NO
+- Empty metaphor: NO
+- Dialogue: NONE present - do not introduce any
+- Tense: PAST
+- Repetition: YES - flagged tail semantically echoes the opening; replaced with a new observable detail
+</ANALYSIS>
+
+<FIX>
+Snow drifted across the courtyard, soft and steady, settling on the cracked flagstones and the iron benches. The lamps along the cloister glowed dim through the white.
+A figure crossed the far side, hood drawn, footprints filling almost as fast as they formed. A bell tolled once from the chapel tower, muffled and far off.
+</FIX>
+
+---
+
 ## Scene
 Elena: Hello there, traveler.
 The sun filters through the leaves above.
 Marcus: What brings you to these woods?
-
-## Character direction
-Elena: Hello there, traveler.
 
 ## Intention of this story
 The overarching intention of this story. Use it to guide your decisions in the scene.
@@ -293,59 +104,37 @@ Content Classification: Fantasy adventure story
 Narrative Perspective: Third person limited, past tense.
 
 ## Task
-Fix bad AI writing by making it simpler, shorter, and more natural. 
+Fix bad AI narration by making it simpler, clearer, and more grounded. The REVIEW is a passage of narration — exposition, environment, observed action, atmosphere. It may or may not contain a small amount of dialogue.
 
 **Rules:**
-1. REDUCE purple prose - Replace flowery language with simple words
+1. REDUCE purple prose - Replace flowery language and ornamental metaphors with simple, concrete words
 2. PRESERVE KEY DETAILS - Keep ALL concrete facts that matter to the scene:
    - Plot-relevant information (who, what, when, where, why)
-   - Character-revealing details (speech patterns, meaningful actions, emotional states)
-   - Unique objects, settings, or sensory details that create atmosphere
-   - Any detail that would change the meaning if removed
+   - Sensory details that build the visual picture (light, sound, smell, texture)
+   - Unique objects, settings, weather, or staging that anchor the scene
+   - Any detail that would change the meaning or atmosphere if removed
    Only cut pure embellishment that adds no information
-3. MAKE dialogue natural - Use contractions, casual speech, how people actually talk. Important: character defining speaking patterns should be preserved.
-4. CUT excessive description - Remove unnecessary details, measurements, and over-explanation
-5. BE CONCISE - Remove only redundant or purple prose. Length reduction is a side effect, not the goal
-6. MATCH THE ORIGINAL TENSE - If the REVIEW passage is in present tense, keep the FIX in present tense. If it's in past tense, keep it in past tense. Only change tense when the original is inconsistent and you're clearly standardising it. 
-7. PRESERVE mature content - Keep swear words, slang, and raw language exactly as written
-8. AVOID name overuse - NEVER use names when talking TO someone. When removing names:
-   - For romantic partners/spouses: Can use "hun," "babe," "sweetie"
-   - For children/family: Can use "sweetie," "buddy," "Mom," "Dad," "sis"
-   - For friends: Can use "man," "dude," "buddy" (if casual relationship)
-   - For colleagues/acquaintances/unclear relationships: Just remove the name, don't add anything
-   ONLY use actual names when talking ABOUT someone who isn't there.
-9. SHOW don't tell - Use actions and natural dialogue instead of having characters announce their feelings or narrate their actions
-10. REWRITE REPETITION - Sentences listed in <REPETITION> have been flagged as repeating earlier content. Repetition here is detected by similarity threshold - it may be verbatim, but it also includes semantic repetition (the same idea, action, or beat expressed in different words). Trust the flag: if a sentence appears in <REPETITION>, treat it as repetition regardless of how different the wording looks. Rewrite each flagged sentence with genuinely different content - substitute a different observation, action, or detail that advances the scene without re-conveying what was already on the page. Because the match is SEMANTIC, simply rephrasing the same idea in different words is NOT enough; the underlying meaning must change. Drop a flagged sentence outright only as a fallback when no meaningful rewrite is possible.
+3. CUT excessive description - Remove unnecessary measurements, exact figures, redundant adjectives, and over-explanation
+4. BE CONCISE - Remove only redundant or purple prose. Length reduction is a side effect, not the goal
+5. MATCH THE ORIGINAL TENSE - If the REVIEW passage is in present tense, keep the FIX in present tense. If it's in past tense, keep it in past tense. Only change tense when the original is inconsistent and you're clearly standardising it.
+6. PRESERVE mature content - Keep violence, swear words, dark themes, and raw language exactly as written
+7. AVOID EMPTY METAPHORS - Comparisons must add specific visual information. Do not describe something as "like" or "as if" unless the comparison communicates something concrete that plain language cannot. "Roots like the fingers of some primordial beast" is decoration; "twisted roots breaking through the loamy earth" is observation.
+8. DO NOT INTRODUCE DIALOGUE - This is the most important rule for narration unslop. If the REVIEW contains no dialogue, the FIX MUST contain no dialogue. Do not invent spoken lines, do not turn narration into "she said" beats, do not add quoted thoughts. If the REVIEW does contain dialogue, preserve the spoken lines verbatim and only clean the prose around them — never rewrite, expand, or add to the dialogue itself.
+9. SHOW don't tell - Prefer observable detail over stated emotion. "He was anxious" → describe what anxious looks like in this moment (a glance, a fidget, a held breath). Do not over-narrate internal states.
+10. REWRITE REPETITION - Sentences listed in <REPETITION> have been flagged as repeating earlier content. Repetition here is detected by similarity threshold - it may be verbatim, but it also includes semantic repetition (the same beat, observation, or atmospheric note expressed in different words). Trust the flag: if a sentence appears in <REPETITION>, treat it as repetition regardless of how different the wording looks. Rewrite each flagged sentence with genuinely different content - substitute a different observable detail that advances the scene without re-conveying what was already on the page. Because the match is SEMANTIC, simply rephrasing the same idea in different words is NOT enough; the underlying meaning must change. Drop a flagged sentence outright only as a fallback when no meaningful rewrite is possible.
 
-**Common dialogue fixes:**
-- "Hello, John" → "Hey"
-- "You are doing great, Jessica" → "You're doing great"
-- "Thank you, Michael" → "Thanks"
-- "I am feeling sad" → [character wipes eyes, voice cracks]
-- "I am angry at you" → [character slams door, clenches fists]
-- Using "hun," "babe," "sweetie," "man," "dude" etc. when appropriate
-
-**Common name overuse fixes**
-TO someone (remove/replace based on relationship):
-- "Hi David" → "Hi" (colleague) or "Hey babe" (romantic partner)
-- "Thanks, Sarah" → "Thanks" (colleague) or "Thanks, hun" (close relationship)
-- "Good morning, Mr. Johnson" → "Good morning" (formal/work setting)
-- "Excuse me, Rebecca" → "Excuse me" (stranger/acquaintance)
-
-ABOUT someone (keep):
-- "Have you seen David?" → "Have you seen David?"
-- "Sarah told me" → "Sarah told me"
-- "I need to call Jennifer" → "I need to call Jennifer"
-- "Mike's running late" → "Mike's running late"
-
-Mixed examples:
-- "John, did you see Mary?" → "Did you see Mary?" (remove John, keep Mary)
-- "Thanks for helping, Anna. Tom really appreciated it" → "Thanks for helping. Tom really appreciated it"
-- "Mom, where's Dad?" → "Mom, where's Dad?" (family terms stay)
+**Common narration fixes:**
+- "Brooded with the weight of a thousand forgotten centuries" → "was old"
+- "Cerulean firmament" → "sky"
+- "Bathed in amber luminescence" → "lit by the fire" / "lit by the lamp"
+- "Symphony of unseen creatures" → "unseen animals calling"
+- "Eyes that had seen too much for someone of her relatively young age of twenty-eight" → "eyes that had seen too much for twenty-eight"
+- "At a temperature of exactly 41 degrees Fahrenheit" → [cut entirely, or "in the cold air"]
+- "Like the fingers of some primordial beast" → [cut the comparison, describe the roots plainly]
 
 **What to keep vs cut:**
-KEEP: Actions that reveal character, sensory details that set mood, specific objects that matter, emotional indicators
-CUT: Redundant adjectives, exact measurements, clinical language, overwrought metaphors
+KEEP: Concrete sensory details (specific light, weather, sound, texture), staging that orients the reader, unique objects or features, atmospheric notes that genuinely build the picture
+CUT: Ornamental metaphors, exact measurements, repeated adjectives ("ancient," "primordial," "ethereal"), forensic detail, abstract mood-as-noun phrases ("the weight of," "the soul of")
 
 Use the examples for a deeper understanding of the task and provide your analysis and fix, with the fix being the final output.
 
