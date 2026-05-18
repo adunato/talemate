@@ -1651,9 +1651,7 @@ class ClientBase:
                 response_tokens=self._returned_response_tokens
                 or self.count_tokens(response),
                 agent_stack=agent_context.agent_stack if agent_context else [],
-                agent_type=agent_context.agent.agent_type
-                if agent_context
-                else None,
+                agent_type=agent_context.agent.agent_type if agent_context else None,
                 agent_action=agent_context.action if agent_context else None,
                 client_name=self.name,
                 client_type=self.client_type,
