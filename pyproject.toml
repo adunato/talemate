@@ -124,6 +124,7 @@ ensure_newline_before_comments = true
 line_length = 88
 
 [tool.uv]
+exclude-newer = "1 week"
 override-dependencies = [
   # chatterbox wants torch 2.6.0, but is confirmed working with 2.7.1
   "torchaudio>=2.7.1",
