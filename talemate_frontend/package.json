@@ -1,6 +1,6 @@
 {
   "name": "talemate_frontend",
-  "version": "0.38.0.dev3",
+  "version": "0.38.0.dev4",
   "private": true,
   "packageManager": "pnpm@11.1.2",
   "type": "module",
