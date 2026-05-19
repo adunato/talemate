@@ -694,6 +694,16 @@ class RevisionMixin:
         Only the first matching message is processed — push_history events
         rarely batch character/narrator messages, and revision is a
         single-target operation.
+
+        Cancellation: the message is already committed to ``scene.history``
+        by the time this fires, and callers emit the wire message *after*
+        ``push_history`` returns. If a cancel escapes here, the trailing
+        ``push_history.after`` listeners (e.g. the summarizer's
+        ``build_archive``) would also re-raise off the still-set
+        ``scene.cancel_requested`` flag, stripping the wire emit and
+        leaving the message stranded in history but invisible in the UX.
+        Contain the cancel here so the original message still reaches the
+        UX — equivalent to "revision aborted, keep the original".
         """
         for message in event.messages:
             if not isinstance(message, (CharacterMessage, NarratorMessage)):
@@ -702,8 +712,20 @@ class RevisionMixin:
             # push_history signal fires, so scope the revision context to
             # it — otherwise the repetition range collects the message
             # itself and every sentence matches itself at 100%.
-            with RevisionContext(message.id):
-                await self.maybe_revise_inplace(message)
+            try:
+                with RevisionContext(message.id):
+                    await self.maybe_revise_inplace(message)
+            except GenerationCancelled:
+                log.warning(
+                    "revision_on_push: revision cancelled — keeping original",
+                    message_id=message.id,
+                )
+            # revision_revise catches GenerationCancelled internally and
+            # returns the original text, but the scene-level cancel flag
+            # stays set (client's poll_interrupt doesn't reset it). Clear
+            # it so push_history.after agent actions don't re-raise.
+            if self.scene.cancel_requested:
+                self.scene.cancel_requested = False
             return
 
     # helpers
