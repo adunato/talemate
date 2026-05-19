@@ -376,7 +376,6 @@
   
 <script>
 import AIClient from './AIClient.vue';
-import { primaryModifierLabel } from '@/utils/keyboardModifiers';
 import AIAgent from './AIAgent.vue';
 import AgentActivityBar from './AgentActivityBar.vue';
 import AgentActionOverrides from './AgentActionOverrides.vue';
@@ -413,7 +412,7 @@ import PromptsMenu from './prompts/PromptsMenu.vue';
 import { debounce } from 'lodash';
 import { isVisualAgentReady, isImageEditAvailable, isImageCreateAvailable } from '@/constants/visual';
 import { createSceneAssetsRequester } from './VisualAssetsMixin.js';
-import { applyCompletion as applyAutocompleteCompletion } from '@/utils/autocompleteHint';
+import AutocompleteMixin from './AutocompleteMixin.js';
 
 export default {
   components: {
@@ -451,6 +450,7 @@ export default {
     PromptsMenu,
   },
   name: 'TalemateApp',
+  mixins: [AutocompleteMixin],
   data() {
     return {
       appearancePreview: null, // Preview config while editing settings (null = use saved config)
@@ -553,11 +553,6 @@ export default {
       scene: {},
       actAs: null,
       appConfig: {},
-      autocompleting: false,
-      autocompletePartialInput: "",
-      autocompleteCallback: null,
-      autocompleteFocusElement: null,
-      autocompleteHintsEnabledAtSend: true,
       worldStateTemplates: {},
       // busy status of agents
       agentStatus: {},
@@ -1117,24 +1112,7 @@ export default {
         return;
       }
 
-      if (data.type === 'autocomplete_suggestion') {
-
-        if(!this.autocompleteCallback)
-          return;
-
-        const completion = data.message;
-        this.autocompleteCallback(completion);
-
-        if (this.autocompleteFocusElement) {
-          let focus_element = this.autocompleteFocusElement;
-          setTimeout(() => {
-            focus_element.focus();
-          }, 1000);
-          this.autocompleteFocusElement = null;
-        }
-
-        this.autocompleteCallback = null;
-        this.autocompletePartialInput = "";
+      if (this.handleAutocompleteMessage(data)) {
         return;
       }
 
@@ -1285,29 +1263,6 @@ export default {
       this.waitingForInput = false;
     },
 
-    onAutocompleteStart() {
-      this.autocompleting = true;
-      this.inputDisabled = true;
-    },
-
-    onAutocompleteEnd(completion) {
-      this.inputDisabled = false;
-      this.autocompleting = false;
-      // Use the toggle value captured at send time, so toggling mid-flight
-      // doesn't desync from what the backend already decided.
-      this.messageInput = applyAutocompleteCompletion(
-        this.messageInput, completion, this.autocompleteHintsEnabledAtSend
-      );
-    },
-
-    autocompleteHintsEnabled() {
-      // `!== false` mirrors the Python `value=True` default during the
-      // brief pre-sync window before agent state has been received.
-      const creator = this.getAgents().find(a => a.name === 'creator');
-      const value = creator?.actions?.autocomplete?.config?.hints_enabled?.value;
-      return value !== false;
-    },
-
     scrollInputIntoView() {
       const scroll = () => this.$refs.sceneMessageInput?.scrollIntoView(false);
       this.$nextTick(scroll);
@@ -1344,25 +1299,6 @@ export default {
       }));
     },
 
-    autocompleteRequest(param, callback, focus_element, delay=500) {
-
-      const hintsEnabled = this.autocompleteHintsEnabled();
-      this.autocompleteCallback = (completion) => {
-        setTimeout(() => {
-          callback(completion, { hintsEnabled });
-        }, delay);
-      };
-      this.autocompleteFocusElement = focus_element;
-      this.autocompletePartialInput = param.partial;
-      this.autocompleteHintsEnabledAtSend = hintsEnabled;
-
-      const param_copy = JSON.parse(JSON.stringify(param));
-      param_copy.type = "assistant";
-      param_copy.action = "autocomplete";
-
-      this.websocket.send(JSON.stringify(param_copy));
-    },
-
     syncActAs() {
       // sets the appropriate actAs
 
@@ -1383,10 +1319,6 @@ export default {
 
       // at this point we need a change of actAs so cycle to next option
       this.$refs.sceneMessageInput?.cycleActAs();
-    },
-
-    autocompleteInfoMessage(active) {
-      return active ? 'Generating ...' : `${primaryModifierLabel}+Enter to autocomplete`;
     },
 
     requestAppConfig() {
