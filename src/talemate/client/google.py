@@ -41,15 +41,17 @@ SUPPORTED_MODELS = [
     "gemini-3-pro-preview",
     "gemini-3.1-pro-preview",
     "gemini-3-flash-preview",
+    "gemini-3.5-flash",
 ]
 
 ALWAYS_REASONING_MODELS = [
     "gemini-3",
     "gemini-3.1",
     "gemini-2.5",
+    "gemini-3.5",
 ]
 
-DEFAULT_MODEL = "gemini-3-flash-preview"
+DEFAULT_MODEL = "gemini-3.5-flash"
 
 
 class Defaults(EndpointOverride, CommonDefaults, pydantic.BaseModel):
