@@ -1,26 +1,32 @@
 /**
- * Mixin that owns the SceneMessageInput autocompletion flow.
+ * Session-layer mixin for the autocompletion flow.
+ *
+ * Owns the websocket round-trip and the app-wide input-disabled lifecycle.
+ * Per-field chip state (applied / Redo / Undo / preCompletion) lives at the
+ * call site via `createAutocompleteField` from utils/autocompleteField.js.
  *
  * Host component requirements:
- * - `messageInput` data property (v-model on SceneMessageInput)
- * - `inputDisabled` data property (disabled while a suggestion is in flight)
- * - `websocket` data property (used to send the autocomplete request)
- * - `getAgents()` method (used to read the creator agent's hints toggle)
+ * - `inputDisabled` data property — flipped while an autocomplete is in flight
+ *   so other interactions are blocked.
+ * - `websocket` data property — used to send the autocomplete request.
+ * - `getAgents()` method — used to read the creator agent's hints toggle.
  *
  * The host must also forward `autocomplete_suggestion` websocket messages to
  * `handleAutocompleteMessage(data)`, which returns `true` when consumed.
+ *
+ * Provide entries:
+ * - `autocompleteRequest(param, callback, focus_element, delay)` — what each
+ *   call site (and AutocompleteField) calls to start a request.
+ * - `autocompleteInfoMessage(active)` — used by hint text in input components.
  */
 
 import { primaryModifierLabel } from '@/utils/keyboardModifiers';
-import { applyCompletion as applyAutocompleteCompletion } from '@/utils/autocompleteHint';
 
 export default {
     data() {
         return {
-            autocompleting: false,
             autocompleteCallback: null,
             autocompleteFocusElement: null,
-            autocompleteHintsEnabledAtSend: true,
         }
     },
     methods: {
@@ -49,18 +55,11 @@ export default {
         },
 
         onAutocompleteStart() {
-            this.autocompleting = true;
             this.inputDisabled = true;
         },
 
-        onAutocompleteEnd(completion) {
+        onAutocompleteEnd() {
             this.inputDisabled = false;
-            this.autocompleting = false;
-            // Use the toggle value captured at send time, so toggling mid-flight
-            // doesn't desync from what the backend already decided.
-            this.messageInput = applyAutocompleteCompletion(
-                this.messageInput, completion, this.autocompleteHintsEnabledAtSend
-            );
         },
 
         autocompleteHintsEnabled() {
@@ -79,7 +78,6 @@ export default {
                 }, delay);
             };
             this.autocompleteFocusElement = focus_element;
-            this.autocompleteHintsEnabledAtSend = hintsEnabled;
 
             const param_copy = JSON.parse(JSON.stringify(param));
             param_copy.type = "assistant";

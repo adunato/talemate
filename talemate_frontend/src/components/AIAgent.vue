@@ -137,6 +137,7 @@ export default {
         AgentModal,
         AgentMessages
     },
+    emits: ['agents-updated'],
 
     data() {
         return {

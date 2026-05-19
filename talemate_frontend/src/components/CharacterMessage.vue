@@ -30,7 +30,7 @@
       <span class="character-name-chip" :style="{ color: color }">
         {{ character }}
       </span>
-      <div class="character-content">
+      <div class="character-content" :class="{ 'position-relative': editing, 'character-content--editing': editing }">
         <v-textarea
           ref="textarea"
           v-if="editing"
@@ -50,7 +50,13 @@
           @keydown.escape.prevent="cancelEdit()"
           >
         </v-textarea>
-        <div v-else class="character-text-wrapper" @dblclick="startEdit()">
+        <AutocompleteRedoChip
+          v-if="editing"
+          :applied="autocompleteField?.state.applied || false"
+          :disabled="autocompleting"
+          @redo="autocompleteField.redo()"
+          @undo="autocompleteField.undo()" />
+        <div v-if="!editing" class="character-text-wrapper" @dblclick="startEdit()">
           <div class="character-text" v-html="renderedText"></div>
         </div>
       </div>
@@ -91,17 +97,19 @@
 import { SceneTextParser } from '@/utils/sceneMessageRenderer';
 import { insertNewlineAtCursor } from '@/utils/textAreaUtils';
 import { isPrimaryModifier } from '@/utils/keyboardModifiers';
-import { applyCompletion as applyAutocompleteCompletion } from '@/utils/autocompleteHint';
 import { spliceContinuation } from '@/utils/messageContinuation';
+import { createAutocompleteField } from '@/utils/autocompleteField';
 import MessageAssetImage from './MessageAssetImage.vue';
 import MessageAssetMixin from './MessageAssetMixin.js';
 import RevisionNav from './RevisionNav.vue';
 import MessageToolbar from './MessageToolbar.vue';
+import AutocompleteRedoChip from './AutocompleteRedoChip.vue';
 export default {
   components: {
     MessageAssetImage,
     RevisionNav,
     MessageToolbar,
+    AutocompleteRedoChip,
   },
   mixins: [MessageAssetMixin],
   props: {
@@ -269,15 +277,35 @@ export default {
 
       return null;
     },
+    autocompleting() {
+      return this.autocompleteField?.state.autocompleting || false;
+    },
   },
   data() {
     return {
       editing: false,
-      autocompleting: false,
       continuing: false,
       editing_text: "",
       hovered: false,
+      autocompleteField: null,
     }
+  },
+  created() {
+    this.autocompleteField = createAutocompleteField({
+      autocompleteRequest: this.autocompleteRequest,
+      getValue: () => this.editing_text,
+      setValue: (v) => { this.editing_text = v; },
+      buildParams: () => ({
+        partial: this.editing_text,
+        context: "dialogue:npc",
+        character: this.character,
+      }),
+    });
+  },
+  watch: {
+    editing_text() {
+      this.autocompleteField?.onValueChange();
+    },
   },
   methods: {
     handleEnter(event) {
@@ -330,19 +358,7 @@ export default {
     },
 
     autocompleteEdit() {
-      this.autocompleting = true;
-      this.autocompleteRequest(
-        {
-          partial: this.editing_text,
-          context: "dialogue:npc",
-          character: this.character,
-        },
-        (completion, { hintsEnabled }) => {
-          this.editing_text = applyAutocompleteCompletion(this.editing_text, completion, hintsEnabled);
-          this.autocompleting = false;
-        },
-        this.$refs.textarea
-      )
+      this.autocompleteField.request(this.$refs.textarea);
     },
     cancelEdit() {
       this.editing = false;
@@ -407,6 +423,13 @@ export default {
 
 .character-text :deep(.scene-paragraph) {
   margin-bottom: 1em;
+}
+
+/* Override the chip's `top` to sit inside the textarea — the v-alert wrapper
+   clips overhanging content. Applied only while editing (alongside the
+   position-relative utility) so the non-editing layout stays unchanged. */
+.character-content--editing {
+  --autocomplete-redo-chip-top: 4px;
 }
 
 .character-text :deep(.scene-paragraph:last-child) {

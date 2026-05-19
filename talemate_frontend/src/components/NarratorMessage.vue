@@ -27,24 +27,30 @@
         :message_id="message_id"
       />
       <RevisionNav v-if="isLastMessage" :count="revisionsCount" :index="revisionIndex" :source="revisionSource" :reason="revisionReason" :disabled="uxLocked" :busy="revisionBusy" @navigate="(dir) => $emit('navigate-revision', dir)" />
-      <v-textarea
-        ref="textarea"
-        v-if="editing"
-        v-model="editing_text"
-        color="narrator"
-        bg-color="black"
+      <div v-if="editing" class="position-relative narrator-editor">
+        <v-textarea
+          ref="textarea"
+          v-model="editing_text"
+          color="narrator"
+          bg-color="black"
 
-        auto-grow
+          auto-grow
 
-        :hint="autocompleteInfoMessage(autocompleting) + ', Shift+Enter for newline'"
-        :loading="autocompleting"
-        :disabled="autocompleting"
+          :hint="autocompleteInfoMessage(autocompleting) + ', Shift+Enter for newline'"
+          :loading="autocompleting"
+          :disabled="autocompleting"
 
-        @keydown.enter.prevent="handleEnter"
-        @blur="autocompleting ? null : cancelEdit()"
-        @keydown.escape.prevent="cancelEdit()">
-      </v-textarea>
-      <div v-else class="narrator-text" @dblclick="startEdit()" v-html="renderedText">
+          @keydown.enter.prevent="handleEnter"
+          @blur="autocompleting ? null : cancelEdit()"
+          @keydown.escape.prevent="cancelEdit()">
+        </v-textarea>
+        <AutocompleteRedoChip
+          :applied="autocompleteField?.state.applied || false"
+          :disabled="autocompleting"
+          @redo="autocompleteField.redo()"
+          @undo="autocompleteField.undo()" />
+      </div>
+      <div v-if="!editing" class="narrator-text" @dblclick="startEdit()" v-html="renderedText">
       </div>
     </div>
     <v-sheet v-if="hovered" rounded="sm" color="transparent">
@@ -95,17 +101,19 @@
 import { SceneTextParser } from '@/utils/sceneMessageRenderer';
 import { insertNewlineAtCursor } from '@/utils/textAreaUtils';
 import { isPrimaryModifier } from '@/utils/keyboardModifiers';
-import { applyCompletion as applyAutocompleteCompletion } from '@/utils/autocompleteHint';
 import { spliceContinuation } from '@/utils/messageContinuation';
+import { createAutocompleteField } from '@/utils/autocompleteField';
 import MessageAssetImage from './MessageAssetImage.vue';
 import MessageAssetMixin from './MessageAssetMixin.js';
 import RevisionNav from './RevisionNav.vue';
 import MessageToolbar from './MessageToolbar.vue';
+import AutocompleteRedoChip from './AutocompleteRedoChip.vue';
 export default {
   components: {
     MessageAssetImage,
     RevisionNav,
     MessageToolbar,
+    AutocompleteRedoChip,
   },
   mixins: [MessageAssetMixin],
 
@@ -223,15 +231,34 @@ export default {
     messageAsset() {
       return (this.asset_id && this.asset_type) ? this.asset_id : null;
     },
+    autocompleting() {
+      return this.autocompleteField?.state.autocompleting || false;
+    },
   },
   data() {
     return {
       editing: false,
-      autocompleting: false,
       continuing: false,
       editing_text: "",
       hovered: false,
+      autocompleteField: null,
     }
+  },
+  created() {
+    this.autocompleteField = createAutocompleteField({
+      autocompleteRequest: this.autocompleteRequest,
+      getValue: () => this.editing_text,
+      setValue: (v) => { this.editing_text = v; },
+      buildParams: () => ({
+        partial: this.editing_text,
+        context: "narrative:continue",
+      }),
+    });
+  },
+  watch: {
+    editing_text() {
+      this.autocompleteField?.onValueChange();
+    },
   },
   methods: {
     handleEnter(event) {
@@ -249,18 +276,7 @@ export default {
     },
 
     autocompleteEdit() {
-      this.autocompleting = true;
-      this.autocompleteRequest(
-        {
-          partial: this.editing_text,
-          context: "narrative:continue",
-        },
-        (completion, { hintsEnabled }) => {
-          this.editing_text = applyAutocompleteCompletion(this.editing_text, completion, hintsEnabled);
-          this.autocompleting = false;
-        },
-        this.$refs.textarea
-      )
+      this.autocompleteField.request(this.$refs.textarea);
     },
 
     continueNarration() {
@@ -352,6 +368,12 @@ export default {
 
 .narrator-text :deep(.scene-paragraph:last-child) {
   margin-bottom: 0;
+}
+
+/* Override the chip's `top` to sit inside the textarea — the v-alert wrapper
+   clips overhanging content. */
+.narrator-editor {
+  --autocomplete-redo-chip-top: 4px;
 }
 
 .narrator-message {

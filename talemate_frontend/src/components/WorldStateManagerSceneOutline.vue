@@ -136,24 +136,31 @@
                                 @generate="content => setIntroAndQueueUpdate(content)"
                             />
                         </div>
-                        <v-textarea
-                            class="mt-1"
-                            ref="intro"
-                            v-model="scene.data.intro"
-                            label="Introduction text"
-                            rows="10"
-                            auto-grow
-                            max-rows="32"
+                        <div class="position-relative">
+                            <v-textarea
+                                class="mt-1"
+                                ref="intro"
+                                v-model="scene.data.intro"
+                                label="Introduction text"
+                                rows="10"
+                                auto-grow
+                                max-rows="32"
 
-                            @update:model-value="setFieldDirty('intro')"
-                            @blur="onIntroBlurSave"
-                            :color="dirty['intro'] ? 'dirty' : ''"
+                                @update:model-value="setFieldDirty('intro')"
+                                @blur="onIntroBlurSave"
+                                :color="dirty['intro'] ? 'dirty' : ''"
 
-                            :disabled="busy['intro']"
-                            :loading="busy['intro']"
-                            :hint="'The introduction to the scene. The first text the user sees as they load the scene. ' +autocompleteInfoMessage(busy['intro'])"
-                            @keyup.ctrl.enter.stop="sendAutocompleteRequestForIntro"
-                        ></v-textarea>
+                                :disabled="busy['intro']"
+                                :loading="busy['intro']"
+                                :hint="'The introduction to the scene. The first text the user sees as they load the scene. ' +autocompleteInfoMessage(busy['intro'])"
+                                @keyup.ctrl.enter.stop="sendAutocompleteRequestForIntro"
+                            ></v-textarea>
+                            <AutocompleteRedoChip
+                                :applied="introAutocompleteField?.state.applied || false"
+                                :disabled="busy['intro']"
+                                @redo="introAutocompleteField.redo()"
+                                @undo="introAutocompleteField.undo()" />
+                        </div>
                     </v-col>
                 </v-row>
             </v-form>
@@ -168,7 +175,8 @@
 
 import ContextualGenerate from './ContextualGenerate.vue';
 import { MAX_CONTENT_WIDTH } from '@/constants/layout';
-import { applyCompletion as applyAutocompleteCompletion } from '@/utils/autocompleteHint';
+import { createAutocompleteField } from '@/utils/autocompleteField';
+import AutocompleteRedoChip from './AutocompleteRedoChip.vue';
 
 const defaultPerspectives = () => ({ default: "", player: "", other: "", narrator: "" });
 
@@ -176,6 +184,7 @@ export default {
     name: "WorldStateManagerSceneOutline",
     components: {
         ContextualGenerate,
+        AutocompleteRedoChip,
     },
     props: {
         immutableScene: Object,
@@ -211,6 +220,9 @@ export default {
                 }
             }
         },
+        'scene.data.intro'() {
+            this.introAutocompleteField?.onValueChange();
+        },
     },
     data() {
         return {
@@ -220,7 +232,21 @@ export default {
             dirty: {},
             busy: {},
             updateTimeout: null,
+            introAutocompleteField: null,
         }
+    },
+    created() {
+        this.introAutocompleteField = createAutocompleteField({
+            autocompleteRequest: this.autocompleteRequest,
+            getValue: () => this.scene?.data?.intro || '',
+            setValue: (v) => { if (this.scene?.data) this.scene.data.intro = v; },
+            buildParams: () => ({
+                partial: this.scene.data.intro,
+                context: "scene intro:scene intro",
+            }),
+            onStart: () => { this.busy['intro'] = true; },
+            onEnd: () => { this.busy['intro'] = false; },
+        });
     },
     inject: [
         'getWebsocket',
@@ -307,14 +333,7 @@ export default {
         },
 
         sendAutocompleteRequestForIntro() {
-            this.busy['intro'] = true;
-            this.autocompleteRequest({
-                partial: this.scene.data.intro,
-                context: "scene intro:scene intro",
-            }, (completion, { hintsEnabled }) => {
-                this.scene.data.intro = applyAutocompleteCompletion(this.scene.data.intro, completion, hintsEnabled);
-                this.busy['intro'] = false;
-            }, this.$refs.intro);
+            this.introAutocompleteField.request(this.$refs.intro);
 
         },
         handleMessage(message) {

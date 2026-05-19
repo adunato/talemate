@@ -189,7 +189,7 @@
         <v-list>
           <AIClient ref="aiClient" @save="saveClients" @error="uxErrorHandler" @clients-updated="saveClients" @client-assigned="saveAgents" @open-app-config="openAppConfig" :immutable-config="appConfig" :app-config="appConfig"></AIClient>
           <v-divider></v-divider>
-          <AIAgent ref="aiAgent" @save="saveAgents" @agents-updated="saveAgents" :agentState="agentState" :templates="worldStateTemplates" :app-config="appConfig" :scene="scene"></AIAgent>
+          <AIAgent ref="aiAgent" @agents-updated="saveAgents" :agentState="agentState" :templates="worldStateTemplates" :app-config="appConfig" :scene="scene"></AIAgent>
           <!-- More sections can be added here -->
         </v-list>
       </v-navigation-drawer>
@@ -294,7 +294,6 @@
                         :input-disabled="isInputDisabled()"
                         :waiting-for-input="waitingForInput"
                         :input-request-info="inputRequestInfo"
-                        :autocompleting="autocompleting"
                         :scene-active="sceneActive"
                         :scene-environment="scene.environment"
                         :character-colors="scene.data?.character_colors"

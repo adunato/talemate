@@ -30,21 +30,27 @@
         :message_id="message.id"
       />
       <RevisionNav v-if="isLastMessage" :count="revisionsCount" :index="revisionIndex" :source="revisionSource" :reason="revisionReason" :disabled="uxLocked" :busy="revisionBusy" @navigate="(dir) => $emit('navigate-revision', dir)" />
-      <v-textarea
-        ref="textarea"
-        v-if="editing"
-        v-model="editing_text"
-        color="indigo-lighten-4"
-        bg-color="black"
-        auto-grow
-        :hint="autocompleteInfoMessage(autocompleting) + ', Shift+Enter for newline'"
-        :loading="autocompleting"
-        :disabled="autocompleting"
-        @keydown.enter.prevent="handleEnter"
-        @blur="autocompleting ? null : cancelEdit()"
-        @keydown.escape.prevent="cancelEdit()">
-      </v-textarea>
-      <div v-else @dblclick="startEdit()" v-html="renderedText">
+      <div v-if="editing" class="position-relative context-investigation-editor">
+        <v-textarea
+          ref="textarea"
+          v-model="editing_text"
+          color="indigo-lighten-4"
+          bg-color="black"
+          auto-grow
+          :hint="autocompleteInfoMessage(autocompleting) + ', Shift+Enter for newline'"
+          :loading="autocompleting"
+          :disabled="autocompleting"
+          @keydown.enter.prevent="handleEnter"
+          @blur="autocompleting ? null : cancelEdit()"
+          @keydown.escape.prevent="cancelEdit()">
+        </v-textarea>
+        <AutocompleteRedoChip
+          :applied="autocompleteField?.state.applied || false"
+          :disabled="autocompleting"
+          @redo="autocompleteField.redo()"
+          @undo="autocompleteField.undo()" />
+      </div>
+      <div v-if="!editing" @dblclick="startEdit()" v-html="renderedText">
       </div>
     </div>
 
@@ -72,11 +78,12 @@
 import { SceneTextParser } from '@/utils/sceneMessageRenderer';
 import { insertNewlineAtCursor } from '@/utils/textAreaUtils';
 import { isPrimaryModifier } from '@/utils/keyboardModifiers';
-import { applyCompletion as applyAutocompleteCompletion } from '@/utils/autocompleteHint';
+import { createAutocompleteField } from '@/utils/autocompleteField';
 import MessageAssetImage from './MessageAssetImage.vue';
 import MessageAssetMixin from './MessageAssetMixin.js';
 import RevisionNav from './RevisionNav.vue';
 import MessageToolbar from './MessageToolbar.vue';
+import AutocompleteRedoChip from './AutocompleteRedoChip.vue';
 
 export default {
   name: 'ContextInvestigationMessage',
@@ -84,6 +91,7 @@ export default {
     MessageAssetImage,
     RevisionNav,
     MessageToolbar,
+    AutocompleteRedoChip,
   },
   mixins: [MessageAssetMixin],
   data() {
@@ -91,10 +99,26 @@ export default {
       show: true,
       editing: false,
       editing_text: "",
-      autocompleting: false,
       hovered: false,
-      minimized: false
+      minimized: false,
+      autocompleteField: null,
     }
+  },
+  created() {
+    this.autocompleteField = createAutocompleteField({
+      autocompleteRequest: this.autocompleteRequest,
+      getValue: () => this.editing_text,
+      setValue: (v) => { this.editing_text = v; },
+      buildParams: () => ({
+        partial: this.editing_text,
+        context: "context_investigation:continue",
+      }),
+    });
+  },
+  watch: {
+    editing_text() {
+      this.autocompleteField?.onValueChange();
+    },
   },
   computed: {
     title() {
@@ -145,6 +169,9 @@ export default {
     },
     messageAsset() {
       return (this.asset_id && this.asset_type) ? this.asset_id : null;
+    },
+    autocompleting() {
+      return this.autocompleteField?.state.autocompleting || false;
     },
   },
   props: {
@@ -220,18 +247,7 @@ export default {
       }
     },
     autocompleteEdit() {
-      this.autocompleting = true;
-      this.autocompleteRequest(
-        {
-          partial: this.editing_text,
-          context: "context_investigation:continue",
-        },
-        (completion, { hintsEnabled }) => {
-          this.editing_text = applyAutocompleteCompletion(this.editing_text, completion, hintsEnabled);
-          this.autocompleting = false;
-        },
-        this.$refs.textarea
-      )
+      this.autocompleteField.request(this.$refs.textarea);
     },
     cancelEdit() {
       this.editing = false;
@@ -265,6 +281,12 @@ export default {
 
 .context-message {
   display: block;
+}
+
+/* Override the chip's `top` to sit inside the textarea — the v-alert wrapper
+   clips overhanging content. */
+.context-investigation-editor {
+  --autocomplete-redo-chip-top: 4px;
 }
 
 :deep(.scene-paragraph) {
