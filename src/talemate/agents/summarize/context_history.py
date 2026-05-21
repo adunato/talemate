@@ -868,13 +868,40 @@ class ContextHistoryMixin:
 
         if has_layered:
             num_layers = len(scene.layered_history)
+
+            # Layer 0's start/end index into the full archived_history, but
+            # the archived level below only contains summary entries. Static
+            # entries (no "end" — pre-established notes) are always contiguous
+            # at the front of archived_history, so a single constant offset
+            # realigns layer-0 indices with the archived level.
+            archived_offset = next(
+                (
+                    idx
+                    for idx, e in enumerate(scene.archived_history)
+                    if e.get("end") is not None
+                ),
+                0,
+            )
+
             for i in range(num_layers - 1, -1, -1):
                 layer = scene.layered_history[i]
                 if not layer:
                     continue
+
+                entries = layer
+                if i == 0 and archived_offset:
+                    entries = [
+                        {
+                            **e,
+                            "start": max(0, e.get("start", 0) - archived_offset),
+                            "end": e.get("end", 0) - archived_offset,
+                        }
+                        for e in layer
+                    ]
+
                 formatted: list[str] = []
                 tokens: list[int] = []
-                for entry in layer:
+                for entry in entries:
                     text, _ = self._context_history_format_layered_entry(
                         entry, scene.ts
                     )
@@ -882,7 +909,7 @@ class ContextHistoryMixin:
                     tokens.append(count_tokens(text))
                 levels.append(
                     _BestFitLevel(
-                        entries=layer,
+                        entries=entries,
                         formatted=formatted,
                         tokens=tokens,
                         type="layer",
