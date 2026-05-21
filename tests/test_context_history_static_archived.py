@@ -40,10 +40,13 @@ def _pad(label: str, n: int) -> str:
 
 @pytest.fixture(autouse=True)
 def mock_count_tokens():
-    with patch(
-        "talemate.agents.summarize.context_history.count_tokens",
-        side_effect=_char_count_tokens,
-    ), patch("talemate.util.count_tokens", side_effect=_char_count_tokens):
+    with (
+        patch(
+            "talemate.agents.summarize.context_history.count_tokens",
+            side_effect=_char_count_tokens,
+        ),
+        patch("talemate.util.count_tokens", side_effect=_char_count_tokens),
+    ):
         yield
 
 
@@ -78,8 +81,7 @@ def _layer0_entry(label, start, end):
 def _make_scene(archived_history, layer0) -> MockScene:
     scene = MockScene()
     scene.history = [
-        CharacterMessage(message=_pad(f"C: M{i} ", 100), source="ai")
-        for i in range(20)
+        CharacterMessage(message=_pad(f"C: M{i} ", 100), source="ai") for i in range(20)
     ]
     scene.archived_history = archived_history
     scene.layered_history = [layer0]
