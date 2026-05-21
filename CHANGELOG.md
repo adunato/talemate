@@ -2,6 +2,14 @@
 
 _Auto-generated. Do not edit by hand._
 
+## 0.37.1
+
+### Bug Fixes
+
+**Scene History**
+
+- Fixed a crash when generating dialogue in long scenes that combine layered history with pre-established history entries. The scene could become unplayable until its layered history was manually edited.
+
 ## 0.37.0
 
 ### Upgrade Notes

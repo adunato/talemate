@@ -1,3 +1,6 @@
+0.37.1:
+  fixes:
+  - "Scene History: Fixed a crash when generating dialogue in long scenes that combine layered history with pre-established (static) history entries. The affected scene could become unplayable until its layered history was manually edited."
 0.37.0:
   features:
   - "System Prompt Template Variable: Added {{ system_prompt }} template variable for system prompt overrides. Use it to include the default system prompt within a custom override, at both the app and client level."
