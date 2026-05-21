@@ -33,6 +33,9 @@
   - "Status Snackbar: Fixed an empty grey toast flashing after operations that completed without a visible change (e.g. an editor revision that produced no edits). Cancellation toasts (e.g. \"Regeneration cancelled.\") that were previously swallowed now display."
   - "Node Editor Module Properties: Fixed boolean property checkboxes appearing unresponsive — clicks updated the underlying value but the checkbox state didn't repaint until focus moved elsewhere. The property inputs now bind directly to the reactive properties store, and the checkbox commits on change instead of on blur."
   - "Onboarding Wizard: Fixed the long-term memory setup step being non-scrollable on shorter viewports, so the 'Apply & finish' button could fall below the fold with no way to reach it without zooming out. The wizard now caps its height and scrolls the step content while keeping the header and footer actions in view."
+0.37.1:
+  fixes:
+  - "Scene History: Fixed a crash when generating dialogue in long scenes that combine layered history with pre-established (static) history entries. The affected scene could become unplayable until its layered history was manually edited."
 0.37.0:
   features:
   - "System Prompt Template Variable: Added {{ system_prompt }} template variable for system prompt overrides. Use it to include the default system prompt within a custom override, at both the app and client level."

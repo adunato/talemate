@@ -95,8 +95,20 @@ export default {
     data() {
         return {
             dialog: false,
-            selected: "0.37.0",
+            selected: "0.37.1",
             whatsNew: [
+                {
+                    version: '0.37.1',
+                    items: [
+                        {
+                            title: "Bugfix release",
+                            description: "Fixes a crash affecting some long scenes that use layered history.",
+                            items: [
+                                "Fixed a crash when generating dialogue in long scenes that combine layered history with pre-established history entries. The scene could become unplayable until its layered history was manually edited."
+                            ]
+                        }
+                    ]
+                },
                 {
                     "version": "0.37.0",
                     "items": [
