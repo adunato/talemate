@@ -54,9 +54,9 @@
 
                                 </template>
                             </v-tooltip>
-                            <v-tooltip v-if="character.snapshot" :text="'Investigate '+name">
+                            <v-tooltip v-if="character.snapshot" :text="'Add detail to '+name">
                                 <template v-slot:activator="{ props }">
-                                    <v-btn size="x-small" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="examineCharacter(name, character.snapshot)" icon="mdi-magnify"></v-btn>
+                                    <v-btn size="x-small" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="examineCharacter(name, character.snapshot)" icon="mdi-plus"></v-btn>
 
                                 </template>
                             </v-tooltip>
@@ -131,9 +131,9 @@
 
                                 </template>
                             </v-tooltip>
-                            <v-tooltip v-if="obj.snapshot" :text="'Investigate '+name">
+                            <v-tooltip v-if="obj.snapshot" :text="'Add detail to '+name">
                                 <template v-slot:activator="{ props }">
-                                    <v-btn size="x-small" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="examineItem(name, obj.snapshot)" icon="mdi-magnify"></v-btn>
+                                    <v-btn size="x-small" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="examineItem(name, obj.snapshot)" icon="mdi-plus"></v-btn>
 
                                 </template>
                             </v-tooltip>

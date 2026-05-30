@@ -61,11 +61,11 @@
                         size="small"
                         variant="tonal"
                         color="primary"
-                        prepend-icon="mdi-magnify"
+                        prepend-icon="mdi-plus"
                         class="entity-tooltip-action-btn"
                         @click="onExamine"
                     >
-                        Investigate
+                        Add Detail
                     </v-btn>
                 </div>
                 <v-spacer />

@@ -129,14 +129,14 @@ class WorldStateAgent(MemoryRAGMixin, CharacterProgressionMixin, AvatarMixin, Ag
                     ),
                     "include_context_investigation": AgentActionConfig(
                         type="bool",
-                        label="Include Look at / Investigate",
-                        description="When on, Look at and Investigate messages also count as part of the current moment and can show inline highlights.",
+                        label="Include Look at / Add Detail",
+                        description="When on, Look at and Add Detail messages also count as part of the current moment and can show inline highlights.",
                         value=False,
                     ),
                     "examine_length": AgentActionConfig(
                         type="number",
-                        label="Investigate length",
-                        description="Token length for the Investigate result when taking a closer look at a highlighted entity. Shorter lengths also tell the model to keep the description briefer.",
+                        label="Add Detail length",
+                        description="How long an Add Detail result can be. Shorter lengths keep the generated description tighter; longer lengths allow more elaboration.",
                         value=256,
                         min=32,
                         max=1024,

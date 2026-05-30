@@ -3,7 +3,7 @@
  * tooltip via EntityHighlightMixin + WorldState.vue sidebar). Keeps the wire
  * shape for the two entity-level verbs in one place:
  *
- *   - "Investigate" (UI label) → world_state_agent.examine_entity
+ *   - "Add Detail" (UI label) → world_state_agent.examine_entity
  *     Expands the snapshot the user is looking at into a
  *     ContextInvestigationMessage. Requires a snapshot to seed from.
  *
