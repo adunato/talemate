@@ -56,22 +56,28 @@ Line 3: Hero: Not since the road to Aldermere.
 ```json
 {
     "characters": {
+        "New character (not yet in CURRENT STATE)": {
+            "emotion": "wary",
+            "snapshot": "What inspecting this character reveals right now.",
+            "mentions": ["verbatim noun phrase from CURRENT FOCUS"]
+        },
         "Existing character (already in CURRENT STATE)": {
             "emotion": "anxious",
+            "snapshot": "A current reading of what this character is doing in this moment — every present character carries one every pass.",
             "mentions": ["verbatim noun phrase from CURRENT FOCUS"]
         }
     },
     "items": {
-        "New item to add": {
+        "New or changed item": {
             "snapshot": "Concrete fact about the item — function, history, condition, peril, hidden mechanism.",
             "mentions": ["verbatim noun phrase from CURRENT FOCUS"]
         },
-        "Existing item to drop": null
+        "Item that has left the scene": null
     }
 }
 ```
 
-The example demonstrates all four operations — a partial update (existing key, only the changed fields), an add (new key, full data), a drop (`null`), and two buckets implicitly omitted (places + location → "no change"). Most refresh passes look like this or smaller. The example is shape, not target — bucket counts and entry counts are decided entirely by what actually changed in the CURRENT FOCUS.
+Every entity in the example carries a `snapshot` — that field is mandatory, never omitted (including for characters already in CURRENT STATE). The example also shows a drop (`null`) and two buckets implicitly omitted (places + location → carried forward unchanged). The example is shape, not target — bucket counts and entry counts are decided entirely by what's in the CURRENT FOCUS.
 </EXAMPLE>
 
 <TASK>
@@ -83,17 +89,15 @@ For every candidate entity, apply this test:
 If yes, include it. If no — if the surface prose already spells out everything there is to know, or if all you have to offer is a metaphor — skip it.
 
 How the response is applied:
-Your response is treated as a Python-style dict merge against the CURRENT STATE block above (entity by entity, field by field).
+Your response is merged onto the CURRENT STATE block above, entity by entity.
 
-- **Add an entity** — include a new key with full data (emotion if character, snapshot, mentions).
-- **Update an entity already in CURRENT STATE** — use its existing key verbatim and include only the fields that change. Omitted fields stay as they are. To refresh how the entity is highlighted, always include `mentions` with the verbatim phrases from the CURRENT FOCUS.
-- **Drop an entity** — set its value to `null`. The entity is removed from the world state. Drop entities whose presence is no longer load-bearing for the active scene (they left, were destroyed, or have stopped being relevant).
-- **Leave an entity unchanged** — omit it entirely. Silence means "no change." Most CURRENT STATE entries should be silently carried forward each pass; only emit them when something actually changes.
-- **`location`** follows the same rules as an entity: emit a new string only when the scene has actually moved to a new place, set to `null` to clear it, otherwise omit it entirely.
+- **`snapshot` is mandatory.** Every entity you include — brand-new or already in CURRENT STATE — carries a `snapshot` (plus `emotion` for characters, and `mentions` copied from the CURRENT FOCUS). Never emit an entity without a snapshot. Don't try to judge whether a change is "interesting enough" to include the field: if nothing notable has shifted, restate a similar snapshot in fresh words rather than leaving it out.
+- **Keep present characters live.** Emit every character in the CURRENT FOCUS on every pass, with a snapshot describing what they are doing in this moment. A character who has been present for many turns still gets a current snapshot each pass — never a frozen, first-appearance one. (For an existing character whose moment changed materially — now wounded, now calm — write a fresh snapshot reflecting it.)
+- **Items and places** are steadier: emit one when it is new or has materially changed (door now broken open), and omit it to carry it forward unchanged. When you do include it, the `snapshot` is still mandatory.
+- **Drop an entity** — set its value to `null`. It is removed from the world state. Drop entities that have left, were destroyed, or have stopped being relevant.
+- **`location`** — emit the new place string when the scene has moved, `null` to clear it, omit to leave it unchanged.
 
-Snapshot evolution: when the CURRENT FOCUS shows an entity's state changing materially (a door now broken open, a character now wounded), emit it with a fresh `snapshot` reflecting the new state. Otherwise leave snapshot alone.
-
-If CURRENT STATE is empty or absent (fresh scene or post-scene-cut), treat every relevant entity as new.
+If CURRENT STATE is empty or absent (fresh scene or post-scene-cut), treat every entity in the CURRENT FOCUS as new.
 
 What to extract:
 Scan the CURRENT FOCUS for noun-phrase candidates and apply the examine test to each.
