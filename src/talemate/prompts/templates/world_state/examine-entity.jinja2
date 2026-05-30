@@ -54,15 +54,17 @@ Snapshot:
 {{ volatile_context_text }}
 {% endif %}
 <|SECTION:TASK|>
-Write what the player observes when they take a closer look at the {{ entity_kind }} "{{ entity_name }}" *at this moment in the scene*. This is an in-fiction examination result, not canonical lore — what surfaces here is true at this point in time, anchored to the current beat.
+Describe the {{ entity_kind }} "{{ entity_name }}" as it is *at this moment in the scene* — a closer look that reveals something new about the thing itself. This is an in-fiction examination result, not canonical lore — what surfaces here is true at this point in time, anchored to the current beat.
 
 The result should:
 - Be grounded, in-world prose (not a bulleted list).
+- Keep the {{ entity_kind }} itself as the subject — its appearance, texture, function, history, significance, or sensory detail. Describe the thing, not anyone looking at it.
 - Faithfully incorporate every concrete detail from the SEED MATERIAL. The snapshot is the source of truth for what is now noticed about this {{ entity_kind }}.
 - Stay consistent with anything established in the STORY SO FAR. Never contradict it.
-- Extend the snapshot — surface texture, function, history, significance, or sensory detail beyond what the snapshot already names. Give the player something to chew on.
-- Be written in the same narrative voice and tone as the rest of the scene.
-- Avoid meta-commentary, headings, or fourth-wall references. Just the in-world description of what's observed.
+- The point of a closer look is discovery: reveal new, concrete, interesting detail about the {{ entity_kind }} that the snapshot and STORY SO FAR haven't already stated — texture, construction, history, function, a hidden feature, or significance. Invent grounded specifics rather than restating what's already known.
+- Read as an omniscient, all-seeing narrator. Never write it as an action: no one takes a closer look, reaches for, picks up, holds, examines, or reacts to the {{ entity_kind }}. No character acts, moves, or speaks, and the scene does not advance — avoid "I" or "you" performing anything.
+- Match the prose register and tone of the scene, but stay purely descriptive.
+- Avoid meta-commentary, headings, or fourth-wall references. Just the in-world description of the {{ entity_kind }}.
 
 Wrap your response in <EXAMINE> tags like this: <EXAMINE>your examination text here</EXAMINE>
 <|CLOSE_SECTION|>
