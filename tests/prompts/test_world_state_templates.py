@@ -733,6 +733,20 @@ class TestWorldStateAgentExamineMethods:
                 entity_name="X", entity_kind="item", snapshot_text="   "
             )
 
+    @pytest.mark.asyncio
+    async def test_examine_entity_uses_configured_length_in_kind(self, active_context):
+        agent = active_context
+        agent.actions["update_world_state"].config["examine_length"].value = 128
+        agent.client.send_prompt = AsyncMock(return_value="A short look.</EXAMINE>")
+
+        await agent.examine_entity(
+            entity_name="The Silver Dagger",
+            entity_kind="item",
+            snapshot_text="A worn silver dagger with an etched pommel sigil.",
+        )
+
+        assert agent.client.send_prompt.call_args.kwargs["kind"] == "create_128"
+
 
 class TestWorldStateAgentReinforcementMethods:
     """Tests for world_state agent reinforcement methods."""

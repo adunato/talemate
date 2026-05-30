@@ -133,6 +133,15 @@ class WorldStateAgent(MemoryRAGMixin, CharacterProgressionMixin, AvatarMixin, Ag
                         description="When on, Look at and Investigate messages also count as part of the current moment and can show inline highlights.",
                         value=False,
                     ),
+                    "examine_length": AgentActionConfig(
+                        type="number",
+                        label="Investigate length",
+                        description="Token length for the Investigate result when taking a closer look at a highlighted entity. Shorter lengths also tell the model to keep the description briefer.",
+                        value=256,
+                        min=32,
+                        max=1024,
+                        step=32,
+                    ),
                     "inject_as_scene_memory": AgentActionConfig(
                         type="bool",
                         label="Pin to context",
@@ -235,6 +244,10 @@ class WorldStateAgent(MemoryRAGMixin, CharacterProgressionMixin, AvatarMixin, Ag
         return self.resolve_config(
             "update_world_state", "include_context_investigation"
         )
+
+    @property
+    def update_world_state_examine_length(self) -> int:
+        return self.resolve_config("update_world_state", "examine_length")
 
     @property
     def update_world_state_durable_snapshot(self) -> bool:
@@ -498,7 +511,8 @@ class WorldStateAgent(MemoryRAGMixin, CharacterProgressionMixin, AvatarMixin, Ag
         entity. Takes the 2-3 sentence snapshot text and expands it into
         grounded prose describing what the player observes about the entity
         at this moment in the scene. Output length is governed by the
-        `create` kind's token budget via response-length.jinja2.
+        `examine_length` config, which both caps the tokens and scales the
+        auto-appended response-length instruction.
 
         Returns the synthesized text. Caller is responsible for surfacing it
         in the UI — typically as a ContextInvestigationMessage anchored to
@@ -509,10 +523,12 @@ class WorldStateAgent(MemoryRAGMixin, CharacterProgressionMixin, AvatarMixin, Ag
         if not snapshot_text or not snapshot_text.strip():
             raise ValueError("examine_entity requires non-empty snapshot_text")
 
+        response_length = self.update_world_state_examine_length
+
         _, extracted = await Prompt.request(
             "world_state.examine-entity",
             self.client,
-            "create",
+            f"create_{response_length}",
             vars={
                 "scene": self.scene,
                 "max_tokens": self.client.max_token_length,
