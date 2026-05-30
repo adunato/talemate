@@ -50,7 +50,7 @@ class TestInitActions:
         actions = WorldStateAgent.init_actions()
         cfg = actions["update_world_state"].config
         assert cfg["initial"].value is True
-        assert cfg["turns"].value == 5
+        assert cfg["turns"].value == 10
 
     def test_check_pin_conditions_action_default_turns(self):
         actions = WorldStateAgent.init_actions()

@@ -10,7 +10,7 @@ import structlog
 import talemate.emit.async_signals
 import talemate.util as util
 from talemate.emit import emit
-from talemate.events import GameLoopEvent
+from talemate.events import GameLoopEvent, GameLoopActorIterEvent
 from talemate.instance import get_agent
 from talemate.client import ClientBase
 from talemate.prompts import Prompt
@@ -101,7 +101,7 @@ class WorldStateAgent(MemoryRAGMixin, CharacterProgressionMixin, AvatarMixin, Ag
                 icon="mdi-earth",
                 label="Update world state",
                 quick_toggle=True,
-                description="Will attempt to update the world state based on the current scene. Runs automatically every N turns.",
+                description="Will attempt to update the world state based on the current scene. Runs automatically every N character turns.",
                 config={
                     "initial": AgentActionConfig(
                         type="bool",
@@ -112,8 +112,8 @@ class WorldStateAgent(MemoryRAGMixin, CharacterProgressionMixin, AvatarMixin, Ag
                     "turns": AgentActionConfig(
                         type="number",
                         label="Turns",
-                        description="Number of turns to wait before updating the world state.",
-                        value=5,
+                        description="Number of character turns (player or AI) to wait before updating the world state.",
+                        value=10,
                         min=1,
                         max=100,
                         step=1,
@@ -259,6 +259,9 @@ class WorldStateAgent(MemoryRAGMixin, CharacterProgressionMixin, AvatarMixin, Ag
     def connect(self, scene):
         super().connect(scene)
         talemate.emit.async_signals.get("game_loop").connect(self.on_game_loop)
+        talemate.emit.async_signals.get("game_loop_actor_iter").connect(
+            self.on_game_loop_actor_iter
+        )
         talemate.emit.async_signals.get("scene_loop_init_after").connect(
             self.on_scene_loop_init_after
         )
@@ -309,15 +312,24 @@ class WorldStateAgent(MemoryRAGMixin, CharacterProgressionMixin, AvatarMixin, Ag
 
     async def on_game_loop(self, emission: GameLoopEvent):
         """
-        Called when a conversation is generated
+        Called once per scene-loop round.
+        """
+
+        if not self.enabled:
+            return
+
+        await self.auto_update_reinforcments()
+        await self.auto_check_pin_conditions()
+
+    async def on_game_loop_actor_iter(self, emission: GameLoopActorIterEvent):
+        """
+        Called after each actor (player or AI) has had a turn.
         """
 
         if not self.enabled:
             return
 
         await self.update_world_state()
-        await self.auto_update_reinforcments()
-        await self.auto_check_pin_conditions()
 
     async def auto_update_reinforcments(self):
         if not self.enabled:
