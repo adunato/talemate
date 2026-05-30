@@ -858,6 +858,14 @@ def _prepare_history(entry):
 
     cls = MESSAGES.get(typ, SceneMessage)
 
+    # Tolerate corrupt history entries (e.g. produced by changelog delta
+    # reconstruction) that have lost their `message` field. Construction
+    # would otherwise raise a pydantic ValidationError and abort the whole
+    # scene load.
+    if "message" not in entry:
+        log.warning("history entry missing message; substituting empty", entry=entry)
+        entry["message"] = ""
+
     msg = cls(**entry)
 
     if isinstance(msg, (NarratorMessage, ReinforcementMessage)):

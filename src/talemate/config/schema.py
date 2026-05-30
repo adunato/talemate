@@ -589,6 +589,7 @@ class SceneAppearance(pydantic.BaseModel):
     parentheses: MarkupMessageStyle = MarkupMessageStyle()
     brackets: MarkupMessageStyle = MarkupMessageStyle()
     emphasis: MarkupMessageStyle = MarkupMessageStyle()
+    entities: MarkupMessageStyle = MarkupMessageStyle()
     message_assets: Dict[str, MessageAssetCadenceConfig] = pydantic.Field(
         default_factory=lambda: {
             "avatar": MessageAssetCadenceConfig(),

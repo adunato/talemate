@@ -19,19 +19,34 @@ from talemate.scene_message import (
     ReinforcementMessage,
     TimePassageMessage,
 )
+
+# Message types skipped while `request_world_state` walks scene.history
+# collecting focus lines. Every focus message ends up in `anchor_message_ids`
+# and can render inline highlights — so anything kept in this list is excluded
+# from the focus span and gets no highlights. `context_investigation` is the
+# soft case: the `include_context_investigation` config knob removes it from
+# the per-call ignore set when enabled.
+WORLD_STATE_SNAPSHOT_IGNORE = [
+    "reinforcement",
+    "director",
+    "context_investigation",
+]
 from talemate.util.response import extract_list
+from talemate.world_state import WorldStateResponse
 
 
 from talemate.agents.base import (
     Agent,
     AgentAction,
     AgentActionConfig,
+    AgentActionConditional,
     AgentEmission,
     DynamicInstruction,
     optimize_prompt_caching_action,
     set_processing,
 )
 from talemate.agents.registry import register
+from talemate.agents.memory.rag import MemoryRAGMixin
 
 
 from .character_progression import CharacterProgressionMixin
@@ -66,7 +81,7 @@ class TimePassageEmission(WorldStateAgentEmission):
 
 
 @register()
-class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
+class WorldStateAgent(MemoryRAGMixin, CharacterProgressionMixin, AvatarMixin, Agent):
     """
     An agent that handles world state related tasks.
     """
@@ -82,7 +97,10 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
             "update_world_state": AgentAction(
                 enabled=True,
                 can_be_disabled=True,
+                container=True,
+                icon="mdi-earth",
                 label="Update world state",
+                quick_toggle=True,
                 description="Will attempt to update the world state based on the current scene. Runs automatically every N turns.",
                 config={
                     "initial": AgentActionConfig(
@@ -100,11 +118,54 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
                         max=100,
                         step=1,
                     ),
+                    "focus_lines": AgentActionConfig(
+                        type="number",
+                        label="Lines in the moment",
+                        description="How many of the most recent messages count as the current moment. These messages can show inline entity highlights.",
+                        value=3,
+                        min=1,
+                        max=10,
+                        step=1,
+                    ),
+                    "include_context_investigation": AgentActionConfig(
+                        type="bool",
+                        label="Include Look at / Investigate",
+                        description="When on, Look at and Investigate messages also count as part of the current moment and can show inline highlights.",
+                        value=False,
+                    ),
+                    "inject_as_scene_memory": AgentActionConfig(
+                        type="bool",
+                        label="Pin to context",
+                        description="Pin the world state snapshot into the conversation and narrator prompts as live scene memory.",
+                        value=False,
+                    ),
+                    "durable_snapshot": AgentActionConfig(
+                        type="bool",
+                        label="Durable snapshot",
+                        quick_toggle=True,
+                        description="Keep entities and their details across refreshes so the world state builds up over time. When off, every refresh starts from scratch.",
+                        value=True,
+                    ),
+                    "eviction_threshold": AgentActionConfig(
+                        type="number",
+                        label="Auto-evict stale entries",
+                        description="Automatically drop a snapshot entry the agent leaves unchanged for this many consecutive world state updates, guarding against stale entries the agent fails to remove on its own. Set to 0 to disable.",
+                        value=3,
+                        min=0,
+                        max=20,
+                        step=1,
+                        condition=AgentActionConditional(
+                            attribute="update_world_state.config.durable_snapshot",
+                            value=True,
+                        ),
+                    ),
                 },
             ),
             "update_reinforcements": AgentAction(
                 enabled=True,
                 can_be_disabled=True,
+                container=True,
+                icon="mdi-image-auto-adjust",
                 label="Update state reinforcements",
                 description="Will attempt to update any due state reinforcements.",
                 config={},
@@ -112,6 +173,8 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
             "check_pin_conditions": AgentAction(
                 enabled=True,
                 can_be_disabled=True,
+                container=True,
+                icon="mdi-pin",
                 label="Update conditional context pins",
                 description="Will evaluate context pins conditions and toggle those pins accordingly. Runs automatically every N turns.",
                 config={
@@ -127,6 +190,7 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
                 },
             ),
         }
+        MemoryRAGMixin.add_actions(actions)
         CharacterProgressionMixin.add_actions(actions)
         AvatarMixin.add_actions(actions)
         return actions
@@ -161,6 +225,24 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
     @property
     def update_world_state_turns(self) -> int:
         return self.resolve_config("update_world_state", "turns")
+
+    @property
+    def update_world_state_focus_lines(self) -> int:
+        return self.resolve_config("update_world_state", "focus_lines")
+
+    @property
+    def update_world_state_include_context_investigation(self) -> bool:
+        return self.resolve_config(
+            "update_world_state", "include_context_investigation"
+        )
+
+    @property
+    def update_world_state_durable_snapshot(self) -> bool:
+        return self.resolve_config("update_world_state", "durable_snapshot")
+
+    @property
+    def update_world_state_eviction_threshold(self) -> int:
+        return self.resolve_config("update_world_state", "eviction_threshold")
 
     @property
     def update_reinforcements_enabled(self) -> bool:
@@ -290,15 +372,78 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
         await scene.world_state.request_update()
 
     @set_processing
-    async def request_world_state(self):
-        if (
-            not any(self.scene.characters)
-            and not self.scene.intro
-            and not self.scene.history
-        ):
-            return None
+    async def request_world_state(self) -> WorldStateResponse:
+        # Walk scene.history backward collecting up to `focus_lines` narrative
+        # messages. TimePassageMessage is a hard boundary — the moment on the
+        # other side is a different scene, not what we're highlighting. Other
+        # ignored types (reinforcement, director, ...) are skipped without
+        # ending the walk. `context_investigation` is conditionally ignored
+        # per the agent config: when off it stays in the ignore set; when on
+        # it becomes a valid focus candidate that can also receive highlights.
+        focus_lines = self.update_world_state_focus_lines
+        ignore_types = set(WORLD_STATE_SNAPSHOT_IGNORE)
+        if self.update_world_state_include_context_investigation:
+            ignore_types.discard("context_investigation")
+
+        focus_messages: list = []
+        for message in reversed(self.scene.history):
+            if isinstance(message, TimePassageMessage):
+                break
+            if message.typ in ignore_types:
+                continue
+            focus_messages.insert(0, message)
+            if len(focus_messages) >= focus_lines:
+                break
+
+        # Fall back to the scene intro only on a fresh scene (no live history).
+        # If the walk turned up empty because of a TimePassageMessage boundary
+        # or director-only noise, the scene has already moved past the intro —
+        # using it as the "current moment" would be wrong.
+        intro_text = (
+            self.scene.get_intro()
+            if not focus_messages and not self.scene.history
+            else ""
+        )
+
+        # Nothing to anchor highlights to AND no intro to fall back on. Silently
+        # return an empty response so the world_state holder re-emits current
+        # state and no LLM call is made.
+        if not focus_messages and not intro_text:
+            return WorldStateResponse()
+
+        # Every focus message is a valid highlight anchor — the frontend
+        # applies the parser's mention pass to all of them, so phrases that
+        # only appear in an earlier focus line still get highlighted there.
+        anchor_message_ids = [m.id for m in focus_messages]
 
         t1 = time.time()
+
+        durable_snapshot = self.update_world_state_durable_snapshot
+
+        # Pre-build a rendered current-state payload for the prompt's CURRENT
+        # STATE section. Only shown in durable mode (legacy mode's prompt
+        # framing is fresh-extract, so prior state would just be noise).
+        # Mentions are excluded because they're focus-window-specific —
+        # forcing the LLM to re-derive them keeps the highlight phrasing
+        # current.
+        current_state_payload = {}
+        if durable_snapshot:
+            ws = self.scene.world_state
+            current_state_payload = {
+                "characters": {
+                    name: char.model_dump(exclude={"mentions", "misses"})
+                    for name, char in ws.characters.items()
+                },
+                "items": {
+                    name: obj.model_dump(exclude={"mentions", "misses"})
+                    for name, obj in ws.items.items()
+                },
+                "places": {
+                    name: place.model_dump(exclude={"mentions", "misses"})
+                    for name, place in ws.places.items()
+                },
+                "location": ws.location,
+            }
 
         _, world_state = await Prompt.request(
             "world_state.request-world-state-v2",
@@ -309,14 +454,74 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
                 "max_tokens": self.client.max_token_length,
                 "object_type": "character",
                 "object_type_plural": "characters",
+                "scene_focus": focus_messages,
+                "intro_text": intro_text,
+                "include_scene_intent": True,
+                "include_scenario_premise": True,
+                "durable_snapshot": durable_snapshot,
+                "current_state_payload": current_state_payload,
             },
         )
 
         self.scene.log.debug(
-            "request_world_state", response=world_state, time=time.time() - t1
+            "request_world_state",
+            response=world_state,
+            anchor_message_ids=anchor_message_ids,
+            time=time.time() - t1,
         )
 
-        return world_state
+        return WorldStateResponse(
+            world_state=world_state, anchor_message_ids=anchor_message_ids
+        )
+
+    @set_processing
+    async def examine_entity(
+        self,
+        entity_name: str,
+        entity_kind: str,
+        snapshot_text: str,
+    ) -> str:
+        """
+        Synthesize an in-fiction "examine" result for a tooltip-highlighted
+        entity. Takes the 2-3 sentence snapshot text and expands it into
+        grounded prose describing what the player observes about the entity
+        at this moment in the scene. Output length is governed by the
+        `create` kind's token budget via response-length.jinja2.
+
+        Returns the synthesized text. Caller is responsible for surfacing it
+        in the UI — typically as a ContextInvestigationMessage anchored to
+        the moment of the examine click. Prior examine results land back in
+        scene history, so repeated examines for the same or related entities
+        accumulate context naturally via `scene.context_history()`.
+        """
+        if not snapshot_text or not snapshot_text.strip():
+            raise ValueError("examine_entity requires non-empty snapshot_text")
+
+        _, extracted = await Prompt.request(
+            "world_state.examine-entity",
+            self.client,
+            "create",
+            vars={
+                "scene": self.scene,
+                "max_tokens": self.client.max_token_length,
+                "entity_name": entity_name,
+                "entity_kind": entity_kind,
+                "snapshot_text": snapshot_text,
+                "include_scene_intent": True,
+                "include_scenario_premise": True,
+            },
+            response_spec=ResponseSpec(
+                extractors={
+                    "response": AnchorExtractor(
+                        left="<EXAMINE>",
+                        right="</EXAMINE>",
+                        fallback_to_full=True,
+                    ),
+                },
+            ),
+        )
+
+        return extracted["response"].strip()
 
     @set_processing
     async def analyze_text_and_extract_context(

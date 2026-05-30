@@ -44,6 +44,7 @@ from talemate.exceptions import GenerationCancelled
 from talemate.scene_message import (
     CharacterMessage,
     ContextInvestigationMessage,
+    DirectorMessage,
     MessageVersion,
     NarratorMessage,
 )
@@ -347,6 +348,23 @@ class TestCollectRepetitionRange:
         scene.history = []
         result = await editor.revision_collect_repetition_range()
         assert result == []
+
+    async def test_includes_context_investigation_messages(self, editor_scene):
+        """CIMs are part of the narrative surface and must contribute to
+        the repetition corpus regardless of the auto-revision target flag."""
+        scene, editor = editor_scene
+        scene.history = [
+            NarratorMessage(message="The wind blows.", source="ai"),
+            ContextInvestigationMessage(message="a closer look at the lantern"),
+            DirectorMessage(message="Direct the scene toward dusk."),
+        ]
+        editor.actions["revision"].config["repetition_range"].value = 10
+
+        result = await editor.revision_collect_repetition_range()
+
+        assert any("The wind blows." in r for r in result)
+        assert any("closer look at the lantern" in r for r in result)
+        assert all("Direct the scene" not in r for r in result)
 
     async def test_excludes_context_message_and_anything_after(self, editor_scene):
         """A ``RevisionContext`` excludes the message under revision (and
@@ -823,13 +841,14 @@ class TestMaybeReviseInplace:
         assert await editor.maybe_revise_inplace(msg) is False
         assert called == []
 
-    async def test_returns_false_for_non_character_or_narrator(self, stub_revise):
+    async def test_returns_false_for_unsupported_message_type(self, stub_revise):
         _, editor, calls = stub_revise
         editor.actions["revision"].config["automatic_revision_targets"].value = [
             "character",
             "narrator",
+            "context_investigation",
         ]
-        msg = ContextInvestigationMessage(message="ctx")
+        msg = DirectorMessage(message="dir")
         assert await editor.maybe_revise_inplace(msg) is False
         assert calls == []
 
@@ -917,6 +936,37 @@ class TestMaybeReviseInplace:
         assert await editor.maybe_revise_inplace(msg) is False
         assert calls == []
         assert msg.message == "The wind blows."
+
+    async def test_context_investigation_target_disabled_skips_message(
+        self, stub_revise
+    ):
+        _, editor, calls = stub_revise
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "character",
+            "narrator",
+        ]
+        msg = ContextInvestigationMessage(message="ctx")
+        assert await editor.maybe_revise_inplace(msg) is False
+        assert calls == []
+
+    async def test_context_investigation_target_enabled_appends_revised_version(
+        self, stub_revise
+    ):
+        _, editor, calls = stub_revise
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "context_investigation"
+        ]
+        msg = ContextInvestigationMessage(message="orig ctx")
+        assert await editor.maybe_revise_inplace(msg) is True
+        assert msg.message == "REVISED"
+        assert msg.versions == [
+            MessageVersion(message="orig ctx", source="original"),
+            MessageVersion(message="REVISED", source="revision"),
+        ]
+        assert msg.active_version == 1
+        assert len(calls) == 1
+        assert calls[0].text == "orig ctx"
+        assert calls[0].character is None
 
     async def test_returns_false_when_revision_is_noop(self, editor_scene):
         _, editor = editor_scene
@@ -1034,16 +1084,43 @@ class TestRevisionOnPush:
 
     async def test_non_target_message_is_ignored(self, stub_revise_narrator):
         scene, editor = stub_revise_narrator
+        msg = DirectorMessage(message="dir")
+        event = HistoryEvent(scene=scene, event_type="push_history", messages=[msg])
+
+        await editor.revision_on_push(event)
+
+        assert msg.message == "dir"
+
+    async def test_context_investigation_target_off_skips_cim(
+        self, stub_revise_narrator
+    ):
+        scene, editor = stub_revise_narrator
         msg = ContextInvestigationMessage(message="ctx")
         event = HistoryEvent(scene=scene, event_type="push_history", messages=[msg])
 
         await editor.revision_on_push(event)
 
         assert msg.message == "ctx"
-        # CIM opts into versions but revision_on_push only targets
-        # CharacterMessage/NarratorMessage — verify the stack still
-        # holds just the seed.
         assert msg.versions == [MessageVersion(message="ctx", source="original")]
+
+    async def test_context_investigation_target_on_revises_cim(
+        self, stub_revise_narrator
+    ):
+        scene, editor = stub_revise_narrator
+        editor.actions["revision"].config["automatic_revision_targets"].value = [
+            "context_investigation"
+        ]
+        msg = ContextInvestigationMessage(message="orig ctx")
+        event = HistoryEvent(scene=scene, event_type="push_history", messages=[msg])
+
+        await editor.revision_on_push(event)
+
+        assert msg.message == "REVISED(orig ctx)"
+        assert msg.versions == [
+            MessageVersion(message="orig ctx", source="original"),
+            MessageVersion(message="REVISED(orig ctx)", source="revision"),
+        ]
+        assert msg.active_version == 1
 
     async def test_only_first_matching_message_is_revised(self, stub_revise_narrator):
         """``push_history`` rarely batches narrator/character messages,

@@ -6,81 +6,287 @@ Override example:
   {{ set_anchor_extractor("response", "<MY_TAG>", "</MY_TAG>") }}
   {{ set_as_is_extractor("response") }}
 -#}
-<|SECTION:EXAMPLE|>
-{% if data_format_type() == "json" %}
-{
-    "characters": {
-        # the character name is the key
-        "Character name": {
-            "emotion": "The current emotional state or mood of the character. (neutral, happy, sad, angry, etc.)",
-            "snapshot": "A brief narrative description of what the character is doing at this moment in the scene."
-        },
-        # ...
-    },
-    "items": {
-        # the item name is the key in natural language (short)
-        "Item name": {
-            "snapshot": "A brief narrative description of the item and the state its currently in."
-        },
-        # ...
-    },
-    "location": "A brief narrative description of the location the scene is taking place in.",
-}
-{% else %}
-```yaml
-characters:
-  # the character name is the key
-  Character name:
-    emotion: The current emotional state or mood of the character. (neutral, happy, sad, angry, etc.)
-    snapshot: A brief narrative description of what the character is doing at this moment in the scene.
-  # ...
-items:
-  # the item name is the key in natural language (short)
-  Item name:
-    snapshot: A brief narrative description of the item and the state its currently in.
-location: A brief narrative description of the location the scene is taking place in.
-```
-{% endif %}
-<|CLOSE_SECTION|>
-<|SECTION:CONTEXT|>
-Player character: {{ scene.get_player_character().name }}
+{# RENDERED CONTEXT (premise, intent, classification, pins, reinforcements, cast) #}
+{% set player_character = scene.get_player_character() %}
+{% set rendered_context -%}
+{% include "extra-context-static.jinja2" %}
+<|SECTION:CAST|>
+{% if player_character -%}
+Player character: {{ player_character.name }}
+{% endif -%}
+{% if scene.npc_character_names -%}
 Other major characters:
 {% for npc_name in scene.npc_character_names -%}
-{{ npc_name }}
+- {{ npc_name }}
 {% endfor -%}
+{% endif -%}
+<|CLOSE_SECTION|>
+{% endset %}
+{# END RENDERED CONTEXT #}
 
-{% set scene_history=scene.snapshot(lines=10, return_as_list=True) %}
-{% set final_line_number=len(scene_history) %}
-{% for scene_context in scene_history -%}
+{# VOLATILE CONTEXT (memory recall + dynamic instructions — placement varies with prompt caching) #}
+{% set volatile_context_text %}
+{% include "memory-context.jinja2" %}
+{% include "extra-context-dynamic.jinja2" %}
+{% endset %}
+{# END VOLATILE CONTEXT #}
+
+{# FOCUSED SNAPSHOT — pre-computed by the agent. Every message in `scene_focus`
+   is a valid highlight anchor (the agent stamps their ids into
+   `anchor_message_ids`). On a fresh scene the agent falls back to the intro
+   text as the sole focus line and no anchors are produced. #}
+{% set final_line_number = len(scene_focus) if scene_focus else 1 %}
+{% set focus_text %}
+<|SECTION:CURRENT FOCUS|>
+{% if scene_focus -%}
+{% for scene_context in scene_focus -%}
 Line {{ loop.index }}: {{ to_str(scene_context)|condensed }}
 ---
 {% endfor -%}
+{%- else -%}
+Line 1: {{ intro_text|condensed }}
+---
+{%- endif %}
 <|CLOSE_SECTION|>
-{% if not scene.history -%}
-<|SECTION:DIALOGUE|>
-No dialogue so far
+{% endset %}
+{# END FOCUSED SNAPSHOT #}
+
+{# CURRENT STATE — durable mode only; the LLM patches its response on top of
+   this. Skipped when the state is empty (fresh scene / post-TimePassage). #}
+{% set has_current_state = durable_snapshot and current_state_payload and (
+    current_state_payload.get("characters")
+    or current_state_payload.get("items")
+    or current_state_payload.get("places")
+    or current_state_payload.get("location")
+) %}
+{% set current_state_text %}
+{% if has_current_state -%}
+<|SECTION:CURRENT STATE|>
+```{{ data_format_type() }}
+{%- if data_format_type() == "yaml" %}
+{{ yaml(current_state_payload) }}
+{%- else %}
+{{ current_state_payload | tojson(indent=4) }}
+{%- endif %}
+```
 <|CLOSE_SECTION|>
-{% endif -%}
+{%- endif %}
+{% endset %}
+{# END CURRENT STATE #}
+
+{# EXAMPLE response block.
+
+   Durable mode: the example is a small delta demonstrating all four
+   operations (partial update, add, drop, omit). Most refresh passes are
+   shaped like this — a handful of entries, not a wholesale dump.
+
+   Legacy mode: the example is a wholesale extraction shape, since every
+   pass replaces the snapshot entirely. #}
+{% set example_text %}
+<|SECTION:EXAMPLE|>
+{% if durable_snapshot %}
+{% if data_format_type() == "json" %}
+```json
+{
+    "characters": {
+        "Existing character (already in CURRENT STATE)": {
+            "emotion": "anxious",
+            "mentions": ["verbatim noun phrase from CURRENT FOCUS"]
+        }
+    },
+    "items": {
+        "New item to add": {
+            "snapshot": "Concrete fact about the item — function, history, condition, peril, hidden mechanism.",
+            "mentions": ["verbatim noun phrase from CURRENT FOCUS"]
+        },
+        "Existing item to drop": null
+    }
+}
+```
+{% else %}
+```yaml
+characters:
+  Existing character (already in CURRENT STATE):
+    emotion: anxious
+    mentions:
+      - verbatim noun phrase from CURRENT FOCUS
+items:
+  New item to add:
+    snapshot: Concrete fact about the item — function, history, condition, peril, hidden mechanism.
+    mentions:
+      - verbatim noun phrase from CURRENT FOCUS
+  Existing item to drop: null
+```
+{% endif %}
+{% else %}
+{% if data_format_type() == "json" %}
+```json
+{
+    "characters": {
+        "First character name": {
+            "emotion": "Single word — their current mood (neutral, defiant, anxious, etc.)",
+            "snapshot": "What inspecting this character reveals beyond the surface prose.",
+            "mentions": ["verbatim noun phrase from the CURRENT FOCUS"]
+        },
+        "Second character name": {
+            "emotion": "Single word",
+            "snapshot": "Different angle on a different character — both go in when both are worth examining.",
+            "mentions": ["verbatim noun phrase"]
+        }
+    },
+    "items": {
+        "First item name": {
+            "snapshot": "What inspecting this item reveals beyond the surface prose.",
+            "mentions": ["verbatim noun phrase from the CURRENT FOCUS"]
+        },
+        "Second item name": {
+            "snapshot": "If two items in the CURRENT FOCUS both deserve a closer look, examine both.",
+            "mentions": ["verbatim noun phrase"]
+        }
+    },
+    "places": {
+        "Place name": {
+            "snapshot": "What inspecting this place reveals beyond the surface prose.",
+            "mentions": ["verbatim noun phrase from the CURRENT FOCUS"]
+        }
+    },
+    "location": "Concrete place where the scene is taking place right now."
+}
+```
+{% else %}
+```yaml
+characters:
+  First character name:
+    emotion: Single word — their current mood (neutral, defiant, anxious, etc.)
+    snapshot: What inspecting this character reveals beyond the surface prose.
+    mentions:
+      - verbatim noun phrase from the CURRENT FOCUS
+  Second character name:
+    emotion: Single word
+    snapshot: Different angle on a different character — both go in when both are worth examining.
+    mentions:
+      - verbatim noun phrase
+items:
+  First item name:
+    snapshot: What inspecting this item reveals beyond the surface prose.
+    mentions:
+      - verbatim noun phrase from the CURRENT FOCUS
+  Second item name:
+    snapshot: If two items in the CURRENT FOCUS both deserve a closer look, examine both.
+    mentions:
+      - verbatim noun phrase
+places:
+  Place name:
+    snapshot: What inspecting this place reveals beyond the surface prose.
+    mentions:
+      - verbatim noun phrase from the CURRENT FOCUS
+location: Concrete place where the scene is taking place right now.
+```
+{% endif %}
+{% endif %}
+{% if durable_snapshot %}
+The example demonstrates all four operations — a partial update (existing key, only the changed fields), an add (new key, full data), a drop (`null`), and two buckets implicitly omitted (places + location → "no change"). Most refresh passes look like this or smaller. The example is shape, not target — bucket counts and entry counts are decided entirely by what actually changed in the CURRENT FOCUS.
+{% else %}
+The number of entries per bucket in the example is NOT a target — it only demonstrates shape. Bucket counts are decided entirely by the examine test below; any count (including zero) is valid for any bucket.
+{% endif %}
+<|CLOSE_SECTION|>
+{% endset %}
+{# END EXAMPLE #}
+
+{# BROAD HISTORY (budget-aware, includes archive summaries) #}
+{% set rendered_context_tokens = count_tokens(rendered_context) %}
+{% set volatile_context_tokens = count_tokens(volatile_context_text) %}
+{% set focus_text_tokens = count_tokens(focus_text) %}
+{% set example_text_tokens = count_tokens(example_text) %}
+{% set current_state_text_tokens = count_tokens(current_state_text) %}
+{% set background_budget = max_tokens - 2500 - rendered_context_tokens - volatile_context_tokens - focus_text_tokens - example_text_tokens - current_state_text_tokens %}
+{% set background_history = scene.context_history(budget=background_budget) %}
+{% set background_text %}
+{% if background_history -%}
+<|SECTION:STORY SO FAR|>
+{% for line in background_history -%}
+{{ line }}
+{% endfor -%}
+<|CLOSE_SECTION|>
+{%- endif %}
+{% endset %}
+{# END BROAD HISTORY #}
+
+{# RENDER PROMPT — each content block carries its own <|SECTION|> handlers
+   (set above), so this is just positioning. Volatile context moves before or
+   after the history depending on the prompt-caching mode. #}
+{% set volatile_placement = volatile_context_placement() %}
+{{ rendered_context }}
+{% if volatile_placement != "after_history" %}
+{{ volatile_context_text }}
+{% endif %}
+{{ background_text }}
+{{ focus_text }}
+{{ current_state_text }}
+{% if volatile_placement == "after_history" %}
+{{ volatile_context_text }}
+{% endif %}
+{{ example_text }}
 <|SECTION:TASK|>
-Create {{ data_format_type() }} data for the world state that reflects the scene progression so far.
+Produce the "examine" data for the CURRENT FOCUS — the kind of short factual flavor a reader gets when they click on a notable thing in the scene to look closer at it. Treat the CURRENT FOCUS as one continuous moment; line {{ final_line_number }} is the most recent beat, the rest is its immediate run-up.
 
-The world state needs to include important concrete and material items present in the scene during line {{ final_line_number }}.
-The world state needs to include persons (characters) interacting during line {{ final_line_number }}.
-What are the present characters doing during line {{ final_line_number }}?
-Be factual and truthful. Don't make up things that are not in the context or dialogue.
-Snapshot text should always be specified. If you don't know what to write, write "You see nothing special."
-Emotion should always be specified. If you don't know what to write, write "neutral".
+For every candidate entity, apply this test:
+**If a reader clicked this in the scene, would the description tell them a *factual* something the surface prose doesn't already make obvious — not a thematic reading?**
 
-Respect the scene progression and answer in the context of line {{ final_line_number }}.
+If yes, include it. If no — if the surface prose already spells out everything there is to know, or if all you have to offer is a metaphor — skip it.
+{% if durable_snapshot %}
 
-Required response: a complete and valid {{ data_format_type() }} response according to the {{ data_format_type() }} example containing items and characters.
+How the response is applied:
+Your response is treated as a Python-style dict merge against the CURRENT STATE block above (entity by entity, field by field).
 
-characters should have the following attributes: `emotion`, `snapshot`
-items should have the following attributes: `snapshot`
-item keys must be reader friendly, so "Item name" instead of "item_name".
+- **Add an entity** — include a new key with full data (emotion if character, snapshot, mentions).
+- **Update an entity already in CURRENT STATE** — use its existing key verbatim and include only the fields that change. Omitted fields stay as they are. To refresh how the entity is highlighted, always include `mentions` with the verbatim phrases from the CURRENT FOCUS.
+- **Drop an entity** — set its value to `null`. The entity is removed from the world state. Drop entities whose presence is no longer load-bearing for the active scene (they left, were destroyed, or have stopped being relevant).
+- **Leave an entity unchanged** — omit it entirely. Silence means "no change." Most CURRENT STATE entries should be silently carried forward each pass; only emit them when something actually changes.
+- **`location`** follows the same rules as an entity: emit a new string only when the scene has actually moved to a new place, set to `null` to clear it, otherwise omit it entirely.
 
-Don't overthink it.
+Snapshot evolution: when the CURRENT FOCUS shows an entity's state changing materially (a door now broken open, a character now wounded), emit it with a fresh `snapshot` reflecting the new state. Otherwise leave snapshot alone.
 
+If CURRENT STATE is empty or absent (fresh scene or post-scene-cut), treat every relevant entity as new.
+{% endif %}
+
+What to extract:
+Scan the CURRENT FOCUS for noun-phrase candidates and apply the examine test to each.
+
+**Worth extracting:**
+- A character whose state in the focus has texture — physical posture, hidden tension, strain, a reaction the prose only hints at. The player character (POV "I"/"me"/"my") qualifies under the same test as anyone else; narrative voice alone doesn't include or exclude them.
+- An object named in the focus with function, history, condition, peril, or sensory detail. A scuffed pair of boots scraping a metal floor, a melted tablet wedged into a door, a panel with exposed wiring — all candidates.
+- A place named in the focus but distinct from the current location — a destination, a referenced room, a region whose atmosphere is worth painting.
+
+**Not worth extracting:**
+- Pure ambient scenery the camera moves past (a generic hum, a faint glow, a corridor wall) unless the focus dwells on it as load-bearing flavor.
+- Sub-components of a larger named entity. A door's pneumatic seal goes inside the door's snapshot, not its own item entry.
+- Entities that appear only in STORY SO FAR. That block is background to understand what entities *are*, not extraction material.
+- Entities the surface prose has already fully painted. If everything interesting is already on the page, there is nothing left to reveal — skip.
+
+**Possessive constructions ("X's Y")** belong to Y, not X. "Elmer's boots" is a candidate for an items entry (boots), not a mention of Elmer. Treat the head noun as the entity.
+
+**No fabricated aggregates.** Bucket keys come from the focus prose. If two distinct items each pass the examine test, give them separate entries — do not invent a parent ("Emergency Tools", "Loose Equipment") that the prose never names.
+
+The STORY SO FAR is background to help you understand what each extracted entity *is*. Do **not** extract entities that only appear there — extract only what is named in the CURRENT FOCUS.
+
+Snapshot quality:
+- Give the reader a **fact** worth discovering — function, history, mechanism, hidden condition, peril, sensory detail, lore that adds texture. The snapshot should describe the *object/character/place itself*, not what it *means* about someone else.
+- Draw from established context where it gives you something to work with; invent freely beyond it — but invent **concrete facts**, not mood or symbolism. "The capacitor inside is on a dying charge" is a reveal. "A beacon that marks the boundary between his obligations and his sanctuary" is not.
+- **Metaphor-only snapshots fail the test.** If the strongest thing you can say about an entity is a thematic interpretation or what it symbolizes for its owner, you have no factual reveal — drop the entity rather than fill the bucket with literary flourish.
+- Never contradict a fact already established in STORY SO FAR or the CURRENT FOCUS. Inventing detail in the gaps is fine; rewriting what's already there is not.
+- One to three sentences.
+
+Building `mentions`:
+Each mention is a **verbatim noun phrase or proper name** copied literally from the CURRENT FOCUS for that entity.
+
+- **No pronouns.** "him", "her", "it", "they", "this one" are never mentions. If the focus only refers to an entity by pronoun, leave its mentions empty.
+- **No possessive bindings.** "Elmer's boots" is a mention of the boots entity, never of Elmer. Only bare "Elmer" (and other verbatim Elmer-naming phrases) belongs in Elmer's mentions.
+- If the same entity appears under multiple verbatim phrasings, list every one ("the auxiliary maintenance locker", "the locker", "the recessed steel vault" all under one entry).
+- A mention must appear literally in the focus. No paraphrasing, recasing, or pluralization.
+- Keys are reader-friendly title case ("Manual override panel", not "manual_override_panel").
+
+Required response: valid {{ data_format_type() }} matching the example shape{% if durable_snapshot %} (delta-merge semantics above){% endif %}.
 <|CLOSE_SECTION|>
 
 ## Updated world state

@@ -2,10 +2,10 @@
 <v-list density="compact">
     <v-list-subheader class="text-uppercase">
         <v-icon class="mr-1">mdi-earth</v-icon>World
-        <v-progress-circular class="ml-1 mr-3" size="14" v-if="requesting" indeterminate="disable-shrink" color="primary"></v-progress-circular>   
-        <v-tooltip v-else  text="Update Worldstate">
+        <v-progress-circular class="ml-1 mr-3" size="14" v-if="requesting" indeterminate="disable-shrink" color="primary"></v-progress-circular>
+        <v-tooltip v-else :text="refreshTooltip">
             <template v-slot:activator="{ props }">
-                <v-btn :disabled="busy"  size="x-small" icon="mdi-refresh" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="refresh()"></v-btn>
+                <v-btn :disabled="busy"  size="x-small" icon="mdi-refresh" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="refresh($event)"></v-btn>
             </template>
         </v-tooltip>
     </v-list-subheader>
@@ -51,6 +51,12 @@
                             <v-tooltip :text="'Look at '+name">
                                 <template v-slot:activator="{ props }">
                                     <v-btn size="x-small" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="lookAtCharacter(name)" icon="mdi-eye"></v-btn>
+
+                                </template>
+                            </v-tooltip>
+                            <v-tooltip v-if="character.snapshot" :text="'Investigate '+name">
+                                <template v-slot:activator="{ props }">
+                                    <v-btn size="x-small" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="examineCharacter(name, character.snapshot)" icon="mdi-magnify"></v-btn>
 
                                 </template>
                             </v-tooltip>
@@ -122,6 +128,12 @@
                             <v-tooltip text="Look at">
                                 <template v-slot:activator="{ props }">
                                     <v-btn size="x-small" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="lookAtItem(name)" icon="mdi-eye"></v-btn>
+
+                                </template>
+                            </v-tooltip>
+                            <v-tooltip v-if="obj.snapshot" :text="'Investigate '+name">
+                                <template v-slot:activator="{ props }">
+                                    <v-btn size="x-small" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="examineItem(name, obj.snapshot)" icon="mdi-magnify"></v-btn>
 
                                 </template>
                             </v-tooltip>
@@ -208,6 +220,12 @@
 <script>
 
 import VisualAssetsMixin from './VisualAssetsMixin.js';
+import {
+    dispatchExamineEntity,
+    dispatchLookAtEntity,
+    isKnownSceneCharacter,
+} from '@/utils/entityActions';
+import { isPrimaryModifier, primaryModifierLabel } from '@/utils/keyboardModifiers';
 
 export default {
     name: 'WorldState',
@@ -253,6 +271,9 @@ export default {
         assetsMap() {
             return (this.sceneData?.data?.assets?.assets) || {};
         },
+        refreshTooltip() {
+            return `Update world snapshot (${primaryModifierLabel}+click to wipe and start fresh)`;
+        },
     },
 
     methods: {
@@ -294,12 +315,14 @@ export default {
             this.$emit('passive-characters', characters);
         },
         lookAtCharacter(name) {
-            this.getWebsocket().send(JSON.stringify({
-                type: 'narrator',
-                action: 'look_at_character',
-                character: name,
-                narrative_direction: "",
-            }));
+            dispatchLookAtEntity(this.getWebsocket(), {
+                name,
+                kind: 'character',
+                isKnownCharacter: isKnownSceneCharacter(
+                    this.sceneData?.data,
+                    name,
+                ),
+            });
         },
         persistCharacter(name) {
             this.getWebsocket().send(JSON.stringify(
@@ -311,16 +334,34 @@ export default {
             ));
         },
         lookAtItem(name) {
-            this.getWebsocket().send(JSON.stringify({
-                type: 'narrator',
-                action: 'query',
-                query: `describe the appearance of ${name}.`,
-            }));
+            // kind !== 'character' falls through to the describe query
+            // regardless of isKnownCharacter.
+            dispatchLookAtEntity(this.getWebsocket(), {
+                name,
+                kind: 'item',
+                isKnownCharacter: false,
+            });
         },
-        refresh() {
+        examineCharacter(name, snapshot) {
+            dispatchExamineEntity(this.getWebsocket(), {
+                name,
+                kind: 'character',
+                snapshot,
+            });
+        },
+        examineItem(name, snapshot) {
+            dispatchExamineEntity(this.getWebsocket(), {
+                name,
+                kind: 'item',
+                snapshot,
+            });
+        },
+        refresh(event) {
+            const reset = !!event && isPrimaryModifier(event);
             this.getWebsocket().send(JSON.stringify({
                 type: 'world_state_agent',
                 action: 'request_update',
+                reset,
             }));
         },
         trackedCharacterState(name, question) {

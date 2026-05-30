@@ -263,6 +263,7 @@
                         :audio-played-for-message-id="audioPlayedForMessageId"
                         :scene="scene"
                         @cancel-audio-queue="onCancelAudioQueue"
+                        @configure-entity-highlights="onConfigureEntityHighlights"
                       />
                     </div>
 
@@ -1524,6 +1525,11 @@ export default {
     onAppearancePreviewClear() {
       // Clear preview when settings dialog closes/cancels/saves
       this.appearancePreview = null;
+    },
+    onConfigureEntityHighlights() {
+      // Triggered from the "Configure highlights" affordance in the entity
+      // tooltip — opens the app config dialog at the scene appearance page.
+      this.openAppConfig('appearance', 'scene');
     },
     openAppConfig(tab, page, item=null) {
       this.$refs.appConfig.show(tab, page, item);

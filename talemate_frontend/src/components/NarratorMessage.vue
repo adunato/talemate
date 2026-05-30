@@ -193,6 +193,10 @@ export default {
       type: [Boolean, String],
       default: false,
     },
+    entityMentions: {
+      type: Array,
+      default: () => [],
+    },
   },
   emits: ['navigate-revision'],
   inject: [
@@ -215,11 +219,12 @@ export default {
         emphasis: sceneConfig.emphasis || narratorStyles,
         parentheses: sceneConfig.parentheses || narratorStyles,
         brackets: sceneConfig.brackets || narratorStyles,
+        entities: sceneConfig.entities,
         default: narratorStyles,
       });
     },
     renderedText() {
-      return this.parser.parse(this.text);
+      return this.parser.parse(this.text, { mentions: this.entityMentions });
     },
     // Asset mixin expects these
     assetId() {

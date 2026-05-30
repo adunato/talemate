@@ -277,12 +277,12 @@
         </v-card>
     </v-dialog>
 
-    <div class="message-container mb-8" ref="messageContainer" style="flex-grow: 1; overflow-y: auto;">
+    <div class="message-container mb-8" ref="messageContainer" style="flex-grow: 1; overflow-y: auto;" @click="onMessageContainerClick">
         <div v-for="(message, index) in messages" :key="message.id != null ? `${message.type}-${message.id}` : `idx-${index}`" class="message-wrapper">
             <div v-if="message.type === 'character' || message.type === 'processing_input'"
                 :class="`message ${message.type}`" :id="`message-${message.id}`" :style="{ borderColor: message.color }">
                 <div class="character-message">
-                    <CharacterMessage :character="message.character" :text="message.text" :color="message.color" :message_id="message.id" :uxLocked="uxLocked" :appBusy="appBusy" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :editorRevisionMethod="editorRevisionMethod" :rev="message.rev || 0" :scene-rev="scene?.data?.rev || 0" :appearanceConfig="appearanceConfig" :scene="scene" :asset_id="message.asset_id" :asset_type="message.asset_type" :disable_avatar_fallback="message.disable_avatar_fallback || false" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionSource="revisionCurrentSource(message)" :revisionReason="revisionCurrentReason(message)" :revisionBusy="message.regenerating || false" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
+                    <CharacterMessage :character="message.character" :text="message.text" :color="message.color" :message_id="message.id" :uxLocked="uxLocked" :appBusy="appBusy" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :editorRevisionMethod="editorRevisionMethod" :rev="message.rev || 0" :scene-rev="scene?.data?.rev || 0" :appearanceConfig="appearanceConfig" :scene="scene" :asset_id="message.asset_id" :asset_type="message.asset_type" :disable_avatar_fallback="message.disable_avatar_fallback || false" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionSource="revisionCurrentSource(message)" :revisionReason="revisionCurrentReason(message)" :revisionBusy="message.regenerating || false" :entityMentions="getEntityMentionsForMessage(message.id)" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
                 </div>
             </div>
             <div v-else-if="message.type === 'request_input' && message.choices">
@@ -324,7 +324,7 @@
             </div>
             <div v-else-if="message.type === 'narrator'" :class="`message ${message.type}`">
                 <div class="narrator-message"  :id="`message-${message.id}`">
-                    <NarratorMessage :text="message.text" :message_id="message.id" :uxLocked="uxLocked" :appBusy="appBusy" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :editorRevisionMethod="editorRevisionMethod" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :rev="message.rev || 0" :scene-rev="scene?.data?.rev || 0" :appearanceConfig="appearanceConfig" :asset_id="message.asset_id" :asset_type="message.asset_type" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionSource="revisionCurrentSource(message)" :revisionReason="revisionCurrentReason(message)" :revisionBusy="message.regenerating || false" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
+                    <NarratorMessage :text="message.text" :message_id="message.id" :uxLocked="uxLocked" :appBusy="appBusy" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :editorRevisionMethod="editorRevisionMethod" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :rev="message.rev || 0" :scene-rev="scene?.data?.rev || 0" :appearanceConfig="appearanceConfig" :asset_id="message.asset_id" :asset_type="message.asset_type" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionSource="revisionCurrentSource(message)" :revisionReason="revisionCurrentReason(message)" :revisionBusy="message.regenerating || false" :entityMentions="getEntityMentionsForMessage(message.id)" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
                 </div>
             </div>
             <div v-else-if="message.type === 'director' && !getMessageTypeHidden(message.type)" :class="`message ${message.type}`">
@@ -349,7 +349,7 @@
             </div>
             <div v-else-if="message.type === 'context_investigation' && !getMessageTypeHidden(message.type)" :class="`message ${message.type}`">
                 <div class="context-investigation-message"  :id="`message-${message.id}`">
-                    <ContextInvestigationMessage :message="message" :uxLocked="uxLocked" :appBusy="appBusy" :isLastMessage="index === messages.length - 1" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :appearanceConfig="appearanceConfig" :asset_id="message.asset_id" :asset_type="message.asset_type" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionSource="revisionCurrentSource(message)" :revisionReason="revisionCurrentReason(message)" :revisionBusy="message.regenerating || false" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
+                    <ContextInvestigationMessage :message="message" :uxLocked="uxLocked" :appBusy="appBusy" :isLastMessage="index === messages.length - 1" :editorRevisionsEnabled="editorRevisionsEnabled" :editorRevisionMethod="editorRevisionMethod" :ttsAvailable="ttsAvailable" :ttsBusy="ttsBusy" :appearanceConfig="appearanceConfig" :asset_id="message.asset_id" :asset_type="message.asset_type" :revisionsCount="(message.revisions && message.revisions.length) || 0" :revisionIndex="message.revision_index || 0" :revisionSource="revisionCurrentSource(message)" :revisionReason="revisionCurrentReason(message)" :revisionBusy="message.regenerating || false" :entityMentions="getEntityMentionsForMessage(message.id)" @navigate-revision="(dir) => navigateRevision(message.id, dir)" />
                 </div>
             </div>
 
@@ -357,6 +357,15 @@
                 {{ message.text }}
             </div>
         </div>
+        <EntityTooltip
+            :model-value="entityTooltip.open"
+            :activator="entityTooltip.activator"
+            :entity="entityTooltip.entity"
+            @update:model-value="onEntityTooltipUpdate"
+            @configure-highlights="onConfigureEntityHighlights"
+            @examine="triggerExamineEntity"
+            @look-at="triggerLookAtEntity"
+        />
     </div>
 </template>
 
@@ -373,6 +382,7 @@ import ContextInvestigationMessage from './ContextInvestigationMessage.vue';
 import SystemMessage from './SystemMessage.vue';
 import VisualReferenceCarousel from './VisualReferenceCarousel.vue';
 import ConfirmActionPrompt from './ConfirmActionPrompt.vue';
+import EntityHighlightMixin from './EntityHighlightMixin.js';
 import VisualAssetsMixin from './VisualAssetsMixin.js';
 import RevisionStackMixin from './RevisionStackMixin.js';
 import { isVisualAgentReady, VIS_TYPE } from '@/constants/visual';
@@ -473,7 +483,7 @@ const ASSET_SELECT_DIALOG_KEYS = Object.values(ASSET_SELECT_TYPES).map(t => t.di
 
 export default {
     name: 'SceneMessages',
-    mixins: [VisualAssetsMixin, RevisionStackMixin],
+    mixins: [VisualAssetsMixin, RevisionStackMixin, EntityHighlightMixin],
     props: {
         appearanceConfig: {
             type: Object,
@@ -510,7 +520,7 @@ export default {
         VisualReferenceCarousel,
         ConfirmActionPrompt,
     },
-    emits: ['cancel-audio-queue'],
+    emits: ['cancel-audio-queue', 'configure-entity-highlights'],
     data() {
         return {
             primaryModifierLabel,
@@ -1752,6 +1762,15 @@ export default {
                 return
             }
 
+            // `world_state` fires twice per request_update cycle: once with
+            // status="requested" carrying the *previous* state (drives the
+            // sidebar spinner), then with the default status carrying the
+            // fresh snapshot. We only care about the fresh one.
+            if (data.type === 'world_state' && data.status !== 'requested' && data.data) {
+                this.rebuildWorldStateEntities(data.data);
+                return;
+            }
+
             if (data.type === 'world_state_manager' && data.action === 'character_color_updated') {
                 // find the message by id and update the color
                 for (i = 0; i < this.messages.length; i++) {
@@ -2004,6 +2023,23 @@ export default {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+}
+
+/* Inline entity highlights rendered by SceneTextParser inside v-html'd
+   message bodies. Subtle dotted underline + hover affordance signals
+   "this message has examinables; others won't have any". The text color
+   is set inline from appearance.scene.entities; the underline
+   inherits via currentColor so it always matches the resolved color. */
+.message-container :deep(.scene-entity) {
+    cursor: pointer;
+    text-decoration: underline dotted currentColor;
+    text-underline-offset: 3px;
+    transition: background-color 0.15s ease;
+    border-radius: 2px;
+}
+
+.message-container :deep(.scene-entity:hover) {
+    background-color: rgba(var(--v-theme-highlight5), 0.15);
 }
 
 </style>

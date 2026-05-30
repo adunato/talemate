@@ -46,6 +46,7 @@ Override example:
 {# VOLATILE CONTEXT (for budget calculation) #}
 {% set volatile_context_text %}
 {% include "memory-context.jinja2" %}
+{% include "world-state-snapshot.jinja2" %}
 {% include "extra-context-dynamic.jinja2" %}
 {% endset -%}
 {# END VOLATILE CONTEXT #}
@@ -78,6 +79,7 @@ Override example:
 
 {# FINAL ACTING INSTRUCTIONS #}
 {% set acting_instructions -%}
+<|SECTION:ACTING INSTRUCTIONS|>
 **TENSE**: Examine the existing conversation history and maintain the EXACT same tense (past/present) used in previous messages. **NEVER switch tenses mid-conversation**.
 {% if resolved_perspective -%}
 **PERSPECTIVE**: The narrative perspective for this scene is — {{ resolved_perspective }}. Apply it consistently to {{ talking_character.name }}'s actions and thoughts.
@@ -98,6 +100,7 @@ Override example:
 {% if direct_instruction -%}
 (Instructions for {{ talking_character.name }}'s next part in the scene: {{ direct_instruction }})
 {% endif -%}
+<|CLOSE_SECTION|>
 {% endset %}
 {# END FINAL ACTING INSTRUCTIONS #}
 

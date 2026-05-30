@@ -261,8 +261,9 @@ class TestRequestWorldState:
         scene.intro = ""
         scene.history = []
         # active_characters is empty by default
-        result = await agent.request_world_state()
-        assert result is None
+        response = await agent.request_world_state()
+        assert response.world_state is None
+        assert response.anchor_message_ids == []
 
 
 # ---------------------------------------------------------------------------

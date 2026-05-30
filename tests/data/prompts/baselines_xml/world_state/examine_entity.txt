@@ -1,0 +1,36 @@
+<CLASSIFICATION>
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: Third person limited, past tense.
+</CLASSIFICATION>
+
+Scenario Premise:
+A peaceful clearing in the heart of an ancient forest.
+
+<STORY_SO_FAR>
+Elena: Hello there, traveler.
+The sun filters through the leaves above.
+Marcus: What brings you to these woods?
+</STORY_SO_FAR>
+
+<SEED_MATERIAL>
+Snapshot:
+A modest silver dagger with worn leather wrapping the hilt; unremarkable until you notice the faintly etched sigil on the pommel.
+</SEED_MATERIAL>
+
+<TASK>
+Write what the player observes when they take a closer look at the item "The Silver Dagger" *at this moment in the scene*. This is an in-fiction examination result, not canonical lore — what surfaces here is true at this point in time, anchored to the current beat.
+
+The result should:
+- Be grounded, in-world prose (not a bulleted list).
+- Faithfully incorporate every concrete detail from the SEED MATERIAL. The snapshot is the source of truth for what is now noticed about this item.
+- Stay consistent with anything established in the STORY SO FAR. Never contradict it.
+- Extend the snapshot — surface texture, function, history, significance, or sensory detail beyond what the snapshot already names. Give the player something to chew on.
+- Be written in the same narrative voice and tone as the rest of the scene.
+- Avoid meta-commentary, headings, or fourth-wall references. Just the in-world description of what's observed.
+
+Wrap your response in <EXAMINE> tags like this: <EXAMINE>your examination text here</EXAMINE>
+</TASK>
+
+The length of your response must fit within 4 paragraphs.
+<|BOT|><EXAMINE>

@@ -1,0 +1,134 @@
+## Classification
+Content Classification: Fantasy adventure story
+
+Narrative Perspective: Third person limited, past tense.
+
+Scenario Premise:
+A peaceful clearing in the heart of an ancient forest.
+
+## Cast
+Player character: Hero
+Other major characters:
+- Elena
+
+## Story so far
+Elena: Hello there, traveler.
+The sun filters through the leaves above.
+Marcus: What brings you to these woods?
+
+## Current focus
+Line 1: The clearing opens onto a moss-covered shrine.
+---
+Line 2: Elena: Have you seen markings like these before?
+---
+Line 3: Hero: Not since the road to Aldermere.
+---
+
+## Current state
+```json
+{
+    "characters": {
+        "Elena": {
+            "emotion": "curious",
+            "snapshot": "A healer who recognizes shrine markings."
+        }
+    },
+    "items": {
+        "Moss-Covered Shrine": {
+            "snapshot": "A stone shrine half-reclaimed by moss; its carvings hint at an older language."
+        }
+    },
+    "location": "Forest clearing with the shrine",
+    "places": {
+        "Aldermere Road": {
+            "snapshot": "A trade road south of the forest, known for similar markings on its waystones."
+        }
+    }
+}
+```
+
+## Example
+
+```json
+{
+    "characters": {
+        "Existing character (already in CURRENT STATE)": {
+            "emotion": "anxious",
+            "mentions": ["verbatim noun phrase from CURRENT FOCUS"]
+        }
+    },
+    "items": {
+        "New item to add": {
+            "snapshot": "Concrete fact about the item — function, history, condition, peril, hidden mechanism.",
+            "mentions": ["verbatim noun phrase from CURRENT FOCUS"]
+        },
+        "Existing item to drop": null
+    }
+}
+```
+
+The example demonstrates all four operations — a partial update (existing key, only the changed fields), an add (new key, full data), a drop (`null`), and two buckets implicitly omitted (places + location → "no change"). Most refresh passes look like this or smaller. The example is shape, not target — bucket counts and entry counts are decided entirely by what actually changed in the CURRENT FOCUS.
+
+## Task
+Produce the "examine" data for the CURRENT FOCUS — the kind of short factual flavor a reader gets when they click on a notable thing in the scene to look closer at it. Treat the CURRENT FOCUS as one continuous moment; line 3 is the most recent beat, the rest is its immediate run-up.
+
+For every candidate entity, apply this test:
+**If a reader clicked this in the scene, would the description tell them a *factual* something the surface prose doesn't already make obvious — not a thematic reading?**
+
+If yes, include it. If no — if the surface prose already spells out everything there is to know, or if all you have to offer is a metaphor — skip it.
+
+How the response is applied:
+Your response is treated as a Python-style dict merge against the CURRENT STATE block above (entity by entity, field by field).
+
+- **Add an entity** — include a new key with full data (emotion if character, snapshot, mentions).
+- **Update an entity already in CURRENT STATE** — use its existing key verbatim and include only the fields that change. Omitted fields stay as they are. To refresh how the entity is highlighted, always include `mentions` with the verbatim phrases from the CURRENT FOCUS.
+- **Drop an entity** — set its value to `null`. The entity is removed from the world state. Drop entities whose presence is no longer load-bearing for the active scene (they left, were destroyed, or have stopped being relevant).
+- **Leave an entity unchanged** — omit it entirely. Silence means "no change." Most CURRENT STATE entries should be silently carried forward each pass; only emit them when something actually changes.
+- **`location`** follows the same rules as an entity: emit a new string only when the scene has actually moved to a new place, set to `null` to clear it, otherwise omit it entirely.
+
+Snapshot evolution: when the CURRENT FOCUS shows an entity's state changing materially (a door now broken open, a character now wounded), emit it with a fresh `snapshot` reflecting the new state. Otherwise leave snapshot alone.
+
+If CURRENT STATE is empty or absent (fresh scene or post-scene-cut), treat every relevant entity as new.
+
+What to extract:
+Scan the CURRENT FOCUS for noun-phrase candidates and apply the examine test to each.
+
+**Worth extracting:**
+- A character whose state in the focus has texture — physical posture, hidden tension, strain, a reaction the prose only hints at. The player character (POV "I"/"me"/"my") qualifies under the same test as anyone else; narrative voice alone doesn't include or exclude them.
+- An object named in the focus with function, history, condition, peril, or sensory detail. A scuffed pair of boots scraping a metal floor, a melted tablet wedged into a door, a panel with exposed wiring — all candidates.
+- A place named in the focus but distinct from the current location — a destination, a referenced room, a region whose atmosphere is worth painting.
+
+**Not worth extracting:**
+- Pure ambient scenery the camera moves past (a generic hum, a faint glow, a corridor wall) unless the focus dwells on it as load-bearing flavor.
+- Sub-components of a larger named entity. A door's pneumatic seal goes inside the door's snapshot, not its own item entry.
+- Entities that appear only in STORY SO FAR. That block is background to understand what entities *are*, not extraction material.
+- Entities the surface prose has already fully painted. If everything interesting is already on the page, there is nothing left to reveal — skip.
+
+**Possessive constructions ("X's Y")** belong to Y, not X. "Elmer's boots" is a candidate for an items entry (boots), not a mention of Elmer. Treat the head noun as the entity.
+
+**No fabricated aggregates.** Bucket keys come from the focus prose. If two distinct items each pass the examine test, give them separate entries — do not invent a parent ("Emergency Tools", "Loose Equipment") that the prose never names.
+
+The STORY SO FAR is background to help you understand what each extracted entity *is*. Do **not** extract entities that only appear there — extract only what is named in the CURRENT FOCUS.
+
+Snapshot quality:
+- Give the reader a **fact** worth discovering — function, history, mechanism, hidden condition, peril, sensory detail, lore that adds texture. The snapshot should describe the *object/character/place itself*, not what it *means* about someone else.
+- Draw from established context where it gives you something to work with; invent freely beyond it — but invent **concrete facts**, not mood or symbolism. "The capacitor inside is on a dying charge" is a reveal. "A beacon that marks the boundary between his obligations and his sanctuary" is not.
+- **Metaphor-only snapshots fail the test.** If the strongest thing you can say about an entity is a thematic interpretation or what it symbolizes for its owner, you have no factual reveal — drop the entity rather than fill the bucket with literary flourish.
+- Never contradict a fact already established in STORY SO FAR or the CURRENT FOCUS. Inventing detail in the gaps is fine; rewriting what's already there is not.
+- One to three sentences.
+
+Building `mentions`:
+Each mention is a **verbatim noun phrase or proper name** copied literally from the CURRENT FOCUS for that entity.
+
+- **No pronouns.** "him", "her", "it", "they", "this one" are never mentions. If the focus only refers to an entity by pronoun, leave its mentions empty.
+- **No possessive bindings.** "Elmer's boots" is a mention of the boots entity, never of Elmer. Only bare "Elmer" (and other verbatim Elmer-naming phrases) belongs in Elmer's mentions.
+- If the same entity appears under multiple verbatim phrasings, list every one ("the auxiliary maintenance locker", "the locker", "the recessed steel vault" all under one entry).
+- A mention must appear literally in the focus. No paraphrasing, recasing, or pluralization.
+- Keys are reader-friendly title case ("Manual override panel", not "manual_override_panel").
+
+Required response: valid json matching the example shape (delta-merge semantics above).
+
+## Updated world state
+
+Start your response with: ```json
+{ "characters": {

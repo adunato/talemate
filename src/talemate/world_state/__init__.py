@@ -12,19 +12,47 @@ from talemate.prompts import Prompt
 from talemate.exceptions import GenerationCancelled
 import talemate.game.focal.schema as focal_schema
 from talemate.game.schema import ConditionGroup
+from talemate.world_state.merge import apply_bucket_patch, has_time_passage_boundary
+from talemate.world_state.schema import (
+    CharacterState,
+    ObjectState,
+    PlaceState,
+)
+
+__all__ = [
+    "CharacterState",
+    "ObjectState",
+    "PlaceState",
+    "WorldStateResponse",
+    "WorldState",
+    "Reinforcement",
+    "ContextPin",
+    "ManualContext",
+    "Suggestion",
+    "InsertionMode",
+    "ANY_CHARACTER",
+]
 
 ANY_CHARACTER = "__any_character__"
 
 log = structlog.get_logger("talemate")
 
 
-class CharacterState(BaseModel):
-    snapshot: Union[str, None] = None
-    emotion: Union[str, None] = None
+class WorldStateResponse(BaseModel):
+    """
+    Result of WorldStateAgent.request_world_state.
 
+    `world_state` is the raw parsed JSON payload from the LLM (or None if
+    the agent short-circuited because nothing in the scene could be
+    snapshotted). `anchor_message_ids` is the list of scene history message
+    ids the snapshot was generated against — every one of them is a valid
+    inline-highlight target. The list is empty when the snapshot was
+    generated against the scene intro (intro is not a real message and has
+    no id, so highlights don't render inline in that case).
+    """
 
-class ObjectState(BaseModel):
-    snapshot: Union[str, None] = None
+    world_state: Union[dict, None] = None
+    anchor_message_ids: list[int] = Field(default_factory=list)
 
 
 class InsertionMode(str, Enum):
@@ -112,8 +140,15 @@ class WorldState(BaseModel):
     # objects in the scene by name
     items: dict[str, ObjectState] = {}
 
+    # places referenced in the scene by name (distinct from `location`)
+    places: dict[str, PlaceState] = {}
+
     # location description
     location: Union[str, None] = None
+
+    # ids of the scene history messages the snapshot was generated against;
+    # every one of these can render inline entity highlights in the UI.
+    anchor_message_ids: list[int] = Field(default_factory=list)
 
     # reinforcers
     reinforce: list[Reinforcement] = []
@@ -190,14 +225,16 @@ class WorldState(BaseModel):
 
     def reset(self):
         """
-        Resets the WorldState instance to its initial state by clearing characters, items, and location.
+        Resets the WorldState instance to its initial state by clearing characters, items, places, location, and anchor.
 
         Arguments:
         - None
         """
         self.characters = {}
         self.items = {}
+        self.places = {}
         self.location = None
+        self.anchor_message_ids = []
 
     def emit(self, status="update"):
         """
@@ -225,10 +262,25 @@ class WorldState(BaseModel):
             self.emit()
             return
 
+        # TimePassageMessage past the prior anchors is a scene cut: wipe the
+        # snapshot before showing it to the LLM so the next pass extracts
+        # fresh against an empty baseline. Durable mode only — legacy
+        # wholesale doesn't need a separate cut because it rewrites every
+        # pass anyway.
+        scene = self.agent.scene
+        if self.agent.update_world_state_durable_snapshot and has_time_passage_boundary(
+            scene.history, self.anchor_message_ids
+        ):
+            self.characters = {}
+            self.items = {}
+            self.places = {}
+            self.location = None
+            self.anchor_message_ids = []
+
         self.emit(status="requested")
 
         try:
-            world_state = await self.agent.request_world_state()
+            response = await self.agent.request_world_state()
         except GenerationCancelled:
             self.emit()
             return
@@ -239,97 +291,98 @@ class WorldState(BaseModel):
             )
             return
 
-        if world_state is None:
+        if response.world_state is None:
             self.emit()
             return
 
-        previous_characters = self.characters
-        scene = self.agent.scene
+        world_state = response.world_state
         character_names = scene.character_names
-        self.characters = {}
-        self.items = {}
 
-        # if characters is not set or empty, make sure its at least a dict
-        if not world_state.get("characters"):
-            world_state["characters"] = {}
-
-        for character_name, character in world_state.get("characters", {}).items():
-            character_name = self.normalize_name(character_name)
-            # if character name is an alias, we need to convert it to the main name
-            # if it exists in the mappings
-
+        # Normalize bucket keys against canonical scene names. Values stay
+        # as raw dicts (or None) so the delta-merge path can preserve the
+        # null-to-drop semantic.
+        char_patch: dict[str, Any] = {}
+        for raw_name, payload in (world_state.get("characters") or {}).items():
+            name = self.normalize_name(raw_name)
             for main_name, synonyms in self.character_name_mappings.items():
-                if character_name.lower() in synonyms:
-                    log.debug(
-                        "world_state adjusting character name (via mapping)",
-                        from_name=character_name,
-                        to_name=main_name,
-                    )
-                    character_name = main_name
+                if name.lower() in synonyms:
+                    name = main_name
                     break
-
-            # character name may not always come back exactly as we have
-            # it defined in the scene. We assign the correct name by checking occurences
-            # of both names in each other.
-
-            if character_name not in character_names:
-                for _character_name in character_names:
+            if name not in character_names:
+                for canonical in character_names:
                     if (
-                        _character_name.lower() in character_name.lower()
-                        or character_name.lower() in _character_name.lower()
+                        canonical.lower() in name.lower()
+                        or name.lower() in canonical.lower()
                     ):
-                        log.debug(
-                            "world_state adjusting character name",
-                            from_name=character_name,
-                            to_name=_character_name,
-                        )
-                        character_name = _character_name
+                        name = canonical
                         break
+            char_patch[name] = payload
 
-            if not character:
-                continue
+        item_patch: dict[str, Any] = {
+            self.normalize_name(name): payload
+            for name, payload in (world_state.get("items") or {}).items()
+        }
+        place_patch: dict[str, Any] = {
+            self.normalize_name(name): payload
+            for name, payload in (world_state.get("places") or {}).items()
+        }
 
-            # if emotion is not set, see if a previous state exists
-            # and use that emotion
+        if self.agent.update_world_state_durable_snapshot:
+            # Delta merge: apply patch on top of current state. None values
+            # drop the entity; partial dicts patch fields; omitted keys are
+            # untouched. Entries the agent leaves untouched for
+            # `eviction_threshold` consecutive passes age out automatically.
+            eviction_threshold = self.agent.update_world_state_eviction_threshold
+            self.characters = apply_bucket_patch(
+                self.characters, char_patch, CharacterState, eviction_threshold
+            )
+            self.items = apply_bucket_patch(
+                self.items, item_patch, ObjectState, eviction_threshold
+            )
+            self.places = apply_bucket_patch(
+                self.places, place_patch, PlaceState, eviction_threshold
+            )
+        else:
+            # Legacy wholesale: drop None entries (no delete semantic),
+            # construct full state classes, replace entire buckets. Preserve
+            # emotion when the new pass omits it.
+            new_chars: dict[str, CharacterState] = {}
+            for name, payload in char_patch.items():
+                if not payload or not isinstance(payload, dict):
+                    continue
+                char_kwargs = dict(payload)
+                if not char_kwargs.get("emotion") and name in self.characters:
+                    char_kwargs["emotion"] = self.characters[name].emotion
+                try:
+                    new_chars[name] = CharacterState(**char_kwargs)
+                except Exception as e:
+                    log.error("world_state.request_update", error=e, character=name)
+            new_items: dict[str, ObjectState] = {}
+            for name, payload in item_patch.items():
+                if not payload or not isinstance(payload, dict):
+                    continue
+                try:
+                    new_items[name] = ObjectState(**payload)
+                except Exception as e:
+                    log.error("world_state.request_update", error=e, item=name)
+            new_places: dict[str, PlaceState] = {}
+            for name, payload in place_patch.items():
+                if not payload or not isinstance(payload, dict):
+                    continue
+                try:
+                    new_places[name] = PlaceState(**payload)
+                except Exception as e:
+                    log.error("world_state.request_update", error=e, place=name)
+            self.characters = new_chars
+            self.items = new_items
+            self.places = new_places
 
-            if "emotion" not in character:
-                log.debug(
-                    "emotion not set",
-                    character_name=character_name,
-                    character=character,
-                    characters=previous_characters,
-                )
-                if character_name in previous_characters:
-                    character["emotion"] = previous_characters[character_name].emotion
-            try:
-                self.characters[character_name] = CharacterState(**character)
-            except Exception as e:
-                log.error(
-                    "world_state.request_update",
-                    error=e,
-                    traceback=traceback.format_exc(),
-                    character=character,
-                )
+        if "location" in world_state and isinstance(
+            world_state["location"], (str, type(None))
+        ):
+            self.location = world_state["location"]
 
-            log.debug("world_state", character=character)
-
-        # if items is not set or empty, make sure its at least a dict
-        if not world_state.get("items"):
-            world_state["items"] = {}
-
-        for item_name, item in world_state.get("items", {}).items():
-            item_name = self.normalize_name(item_name)
-            if not item:
-                continue
-            try:
-                self.items[item_name] = ObjectState(**item)
-            except Exception as e:
-                log.error(
-                    "world_state.request_update",
-                    error=e,
-                    traceback=traceback.format_exc(),
-                )
-            log.debug("world_state", item=item)
+        self.anchor_message_ids = list(response.anchor_message_ids)
 
         # deactivate persiting for now
         # await self.persist()

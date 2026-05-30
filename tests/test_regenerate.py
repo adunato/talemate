@@ -442,6 +442,47 @@ class TestRegenerateMessageNonCharacter:
         assert result[0].sub_type == "query"
 
     @pytest.mark.asyncio
+    async def test_examine_entity_dispatch_passes_full_arguments(
+        self, scene, register_agent
+    ):
+        """Regression for the world_state examine_entity flow. Covers the
+        public stamp path (set_source) and the dispatcher path
+        (regenerate_message -> _dispatch_agent_regeneration) together: if
+        either side drops a kwarg between SOURCE_ARGS and the agent method,
+        captured won't match.
+        """
+        captured = {}
+
+        class _WorldStateAgent:
+            async def examine_entity(self, **kwargs):
+                captured.update(kwargs)
+                return "regenerated examine text"
+
+        register_agent("world_state", _WorldStateAgent())
+
+        SOURCE_ARGS = {
+            "entity_name": "The Silver Dagger",
+            "entity_kind": "item",
+            "snapshot_text": "A worn silver dagger with an etched pommel sigil.",
+        }
+
+        original = ContextInvestigationMessage(message="prior examine text")
+        original.sub_type = "examine"
+        # Production write path: handle_examine_entity calls set_source the
+        # same way. Exercising it here means a drop/rename inside set_source
+        # itself would also fail this test.
+        original.set_source("world_state", "examine_entity", **SOURCE_ARGS)
+
+        result = await regenerate_message(original, scene)
+
+        assert result and isinstance(result[0], ContextInvestigationMessage)
+        assert result[0].sub_type == "examine"
+        assert result[0].message == "regenerated examine text"
+        # All three arguments stamped by handle_examine_entity must reach
+        # the agent method on regeneration.
+        assert captured == SOURCE_ARGS
+
+    @pytest.mark.asyncio
     async def test_returns_none_when_agent_function_returns_none(
         self, scene, register_agent
     ):

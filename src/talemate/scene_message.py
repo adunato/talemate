@@ -615,6 +615,7 @@ class ContextInvestigationMessage(SceneMessage):
         - visual-character
         - visual-scene
         - query
+        - examine
 
         A natural language title will be generated based on the sub_type
         """
@@ -625,6 +626,9 @@ class ContextInvestigationMessage(SceneMessage):
             return "Visual description of the current moment"
         elif self.sub_type == "query":
             return f"Query: {self.query}"
+        elif self.sub_type == "examine":
+            entity = self.source_arguments.get("entity_name", "entity")
+            return f"Closer look at {entity}"
         return "Internal note"
 
     def __str__(self):

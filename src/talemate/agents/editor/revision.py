@@ -29,6 +29,7 @@ from talemate.agents.summarize.layered_history import LayeredHistoryFinalizeEmis
 from talemate.events import HistoryEvent
 from talemate.scene_message import (
     CharacterMessage,
+    ContextInvestigationMessage,
     NarratorMessage,
     SceneMessage,
 )
@@ -315,6 +316,11 @@ class RevisionMixin:
                                 "label": "Narration Messages",
                                 "value": "narrator",
                                 "help": "Automatically revise narrator actions.",
+                            },
+                            {
+                                "label": "Context Investigations",
+                                "value": "context_investigation",
+                                "help": "Automatically revise context-investigation messages (look-at, query, examine, etc).",
                             },
                             {
                                 "label": "Contextual generation",
@@ -637,14 +643,16 @@ class RevisionMixin:
         message has already been rewritten.
 
         Gating mirrors ``revision_on_generation``: only fires for
-        ``CharacterMessage`` / ``NarratorMessage`` when the corresponding
-        ``automatic_revision_targets`` flag is set and revision is enabled
-        / automatic / not disabled by context.
+        ``CharacterMessage`` / ``NarratorMessage`` / ``ContextInvestigationMessage``
+        when the corresponding ``automatic_revision_targets`` flag is set
+        and revision is enabled / automatic / not disabled by context.
         """
         if isinstance(message, CharacterMessage):
             target = "character"
         elif isinstance(message, NarratorMessage):
             target = "narrator"
+        elif isinstance(message, ContextInvestigationMessage):
+            target = "context_investigation"
         else:
             return False
 
@@ -685,15 +693,16 @@ class RevisionMixin:
 
     async def revision_on_push(self, event: HistoryEvent):
         """
-        Run auto-revision on the first CharacterMessage / NarratorMessage
-        being pushed to scene history. When the revision rewrites the
-        text, a new ``"revision"`` version is appended to the message's
-        stack — the original is already at index 0 from construction, so
-        the wire emit picks up both atomically when push_history returns.
+        Run auto-revision on the first CharacterMessage / NarratorMessage /
+        ContextInvestigationMessage being pushed to scene history. When the
+        revision rewrites the text, a new ``"revision"`` version is appended
+        to the message's stack — the original is already at index 0 from
+        construction, so the wire emit picks up both atomically when
+        push_history returns.
 
         Only the first matching message is processed — push_history events
-        rarely batch character/narrator messages, and revision is a
-        single-target operation.
+        rarely batch revisable messages, and revision is a single-target
+        operation.
 
         Cancellation: the message is already committed to ``scene.history``
         by the time this fires, and callers emit the wire message *after*
@@ -706,7 +715,10 @@ class RevisionMixin:
         UX — equivalent to "revision aborted, keep the original".
         """
         for message in event.messages:
-            if not isinstance(message, (CharacterMessage, NarratorMessage)):
+            if not isinstance(
+                message,
+                (CharacterMessage, NarratorMessage, ContextInvestigationMessage),
+            ):
                 continue
             # The message is already in scene history by the time the
             # push_history signal fires, so scope the revision context to
@@ -733,7 +745,10 @@ class RevisionMixin:
     async def revision_collect_repetition_range(self) -> list[str]:
         """
         Collect the range of text to revise against by going through the scene's
-        history and collecting narrator and character messages
+        history and collecting narrator, character, and context-investigation
+        messages. CIMs are included regardless of whether they're an
+        automatic-revision target so the corpus reflects everything the player
+        sees in the narrative flow.
         """
 
         scene: "Scene" = self.scene
@@ -741,7 +756,7 @@ class RevisionMixin:
         ctx = revision_context.get()
 
         messages = scene.collect_messages(
-            typ=["narrator", "character"],
+            typ=["narrator", "character", "context_investigation"],
             max_messages=self.revision_repetition_range,
             start_idx=scene.message_index(ctx.message_id) - 1
             if ctx.message_id

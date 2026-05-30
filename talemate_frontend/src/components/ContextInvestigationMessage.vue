@@ -60,10 +60,12 @@
         :editing="editing"
         :ux-locked="uxLocked"
         :app-busy="appBusy"
+        :is-last-message="isLastMessage"
+        :editor-revisions-enabled="editorRevisionsEnabled"
+        :editor-revision-method="editorRevisionMethod"
         :tts-available="ttsAvailable"
         :tts-busy="ttsBusy"
         :show-pin="false"
-        :show-revision="false"
         :show-fork="false"
         :show-time-passage="false"
       />
@@ -129,6 +131,8 @@ export default {
           return "Observing the moment.";
         case "query":
           return this.message.source_arguments.query;
+        case "examine":
+          return `Closer look at ${this.message.source_arguments.entity_name}`;
       }
       return "";
     },
@@ -140,6 +144,8 @@ export default {
           return "mdi-image-frame";
         case "query":
           return "mdi-text-search";
+        case "examine":
+          return "mdi-magnify";
       }
       return "mdi-text-search";
     },
@@ -153,12 +159,15 @@ export default {
         emphasis: sceneConfig.emphasis || contextStyles,
         parentheses: sceneConfig.parentheses || contextStyles,
         brackets: sceneConfig.brackets || contextStyles,
+        entities: sceneConfig.entities,
         default: contextStyles,
         messageType: 'context_investigation',
       });
     },
     renderedText() {
-      return this.parser.parse(this.message.text);
+      return this.parser.parse(this.message.text, {
+        mentions: this.entityMentions,
+      });
     },
     // Asset mixin expects these
     assetId() {
@@ -182,6 +191,14 @@ export default {
       default: false,
     },
     isLastMessage: Boolean,
+    editorRevisionsEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    editorRevisionMethod: {
+      type: String,
+      default: null,
+    },
     ttsAvailable: {
       type: Boolean,
       default: false,
@@ -221,6 +238,10 @@ export default {
     revisionBusy: {
       type: [Boolean, String],
       default: false,
+    },
+    entityMentions: {
+      type: Array,
+      default: () => [],
     },
   },
   emits: ['navigate-revision'],

@@ -205,6 +205,10 @@ export default {
       type: [Boolean, String],
       default: false,
     },
+    entityMentions: {
+      type: Array,
+      default: () => [],
+    },
   },
   emits: ['navigate-revision'],
   inject: [
@@ -231,11 +235,12 @@ export default {
         emphasis: sceneConfig.emphasis,
         parentheses: sceneConfig.parentheses,
         brackets: sceneConfig.brackets,
+        entities: sceneConfig.entities,
         default: defaultStyles,
       });
     },
     renderedText() {
-      return this.parser.parse(this.text);
+      return this.parser.parse(this.text, { mentions: this.entityMentions });
     },
     characterData() {
       if (!this.scene || !this.scene.data || !this.scene.data.characters) {
