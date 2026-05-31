@@ -126,8 +126,22 @@ export default {
             this.openEntityTooltip(span, entity);
         },
 
+        // True when `name` is a live Scene actor (active or inactive roster).
+        characterIsKnown(name) {
+            return isKnownSceneCharacter(this.scene?.data, name);
+        },
+
         openEntityTooltip(activator, entity) {
-            this.entityTooltip = { open: true, activator, entity };
+            // Stamp whether a character entity is a live Scene actor. Existing
+            // characters have their own detail surfaces (sheet, attributes,
+            // progression), so Add Detail is hidden for them — but background
+            // characters (named in narrative, not actors) have no other
+            // fleshing-out path, so they keep it like items and places do.
+            const enriched =
+                entity?.kind === 'character'
+                    ? { ...entity, isKnownCharacter: this.characterIsKnown(entity.name) }
+                    : entity;
+            this.entityTooltip = { open: true, activator, entity: enriched };
         },
 
         // Flip the menu closed but keep `activator` and `entity` populated —
@@ -180,10 +194,7 @@ export default {
             dispatchLookAtEntity(this.getWebsocket(), {
                 name: entity.name,
                 kind: entity.kind,
-                isKnownCharacter: isKnownSceneCharacter(
-                    this.scene?.data,
-                    entity.name,
-                ),
+                isKnownCharacter: this.characterIsKnown(entity.name),
             });
         },
     },

@@ -54,7 +54,7 @@
 
                                 </template>
                             </v-tooltip>
-                            <v-tooltip v-if="character.snapshot" :text="'Add detail to '+name">
+                            <v-tooltip v-if="character.snapshot && !characterIsKnown(name)" :text="'Add detail to '+name">
                                 <template v-slot:activator="{ props }">
                                     <v-btn size="x-small" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="examineCharacter(name, character.snapshot)" icon="mdi-plus"></v-btn>
 
@@ -318,10 +318,7 @@ export default {
             dispatchLookAtEntity(this.getWebsocket(), {
                 name,
                 kind: 'character',
-                isKnownCharacter: isKnownSceneCharacter(
-                    this.sceneData?.data,
-                    name,
-                ),
+                isKnownCharacter: this.characterIsKnown(name),
             });
         },
         persistCharacter(name) {
@@ -435,6 +432,13 @@ export default {
                 }
             }
             return false;
+        },
+        // Exact-match roster check (active + inactive) for the Add Detail gate.
+        // Distinct from characterExists (fuzzy/active-only), which the
+        // persist/manage buttons rely on; the Add Detail gate needs the precise
+        // "is this the same character that already has a sheet" answer.
+        characterIsKnown(name) {
+            return isKnownSceneCharacter(this.sceneData?.data, name);
         },
         getCharacterData(name) {
             if (!this.sceneData || !this.sceneData.data || !this.sceneData.data.characters) {

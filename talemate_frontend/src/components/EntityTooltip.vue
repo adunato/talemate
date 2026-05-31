@@ -57,7 +57,7 @@
                         Look at
                     </v-btn>
                     <v-btn
-                        v-if="entity?.snapshot"
+                        v-if="entity?.snapshot && !(entity?.kind === 'character' && entity?.isKnownCharacter)"
                         size="small"
                         variant="tonal"
                         color="primary"
