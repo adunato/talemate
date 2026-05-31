@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import io
+import os
 import re
 from pathlib import Path
 
@@ -85,8 +86,8 @@ Talemate includes a few example prompt WAV files in `tts/voice/pocket_tts/` (cop
 If the **voice cloning** model download is blocked by Hugging Face, you need to:
 1. Log in to Hugging Face and accept the model terms on the Pocket TTS model page.
 2. Create a Hugging Face token.
-3. Set it in your environment as `HF_TOKEN`.
-4. Restart Talemate and try again.
+3. Paste it into the **HuggingFace Token** field below (or set it in your environment as `HF_TOKEN`).
+4. Try again.
 
 Commands / links:
 - Accept terms: https://huggingface.co/kyutai/pocket-tts
@@ -191,6 +192,13 @@ class PocketTTSMixin:
             label="Pocket TTS",
             description="Pocket TTS is a local CPU text-to-speech model (voice cloning via audio prompt).",
             config={
+                "api_key": AgentActionConfig(
+                    type="unified_api_key",
+                    value="huggingface.api_key",
+                    label="HuggingFace Token",
+                    description="Optional. Only needed if downloading the voice cloning model is gated by Hugging Face. Used as the HF_TOKEN for model downloads.",
+                    scene_overridable=False,
+                ),
                 "variant": AgentActionConfig(
                     type="text",
                     value="english",
@@ -327,6 +335,16 @@ class PocketTTSMixin:
         return None if value <= 0 else value
 
     @property
+    def pocket_tts_hf_token(self) -> str | None:
+        return self.config.huggingface.api_key
+
+    def _pocket_tts_apply_hf_token(self):
+        """Export the configured HF token as HF_TOKEN so huggingface_hub can fetch gated weights; falls back to any existing env var."""
+        token = self.pocket_tts_hf_token
+        if token:
+            os.environ["HF_TOKEN"] = token
+
+    @property
     def pocket_tts_configured(self) -> bool:
         try:
             _import_heavy_deps()
@@ -389,6 +407,7 @@ class PocketTTSMixin:
 
     def _pocket_tts_generate_wav_bytes(self, chunk: Chunk) -> bytes:
         _import_heavy_deps()
+        self._pocket_tts_apply_hf_token()
 
         if not chunk.voice:
             raise ValueError("Pocket TTS requires a voice prompt (voice.provider_id).")

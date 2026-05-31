@@ -328,6 +328,24 @@
                                         </v-row>
                                     </div>
 
+                                    <!-- HUGGINGFACE API -->
+                                    <div v-if="applicationPageSelected === 'huggingface_api'">
+                                        <v-alert color="white" variant="text" icon="mdi-api" density="compact">
+                                            <v-alert-title>HuggingFace</v-alert-title>
+                                            <div class="text-grey">
+                                                <p class="mb-1">Access token used to download gated model weights (e.g. for Pocket TTS voice cloning).</p>
+                                                Create a token at <a href="https://huggingface.co/settings/tokens" target="_blank">https://huggingface.co/settings/tokens</a>. A read token is sufficient.
+                                            </div>
+                                        </v-alert>
+                                        <v-divider class="mb-2"></v-divider>
+                                        <v-row>
+                                            <v-col cols="12">
+                                                <v-text-field type="password" v-model="app_config.huggingface.api_key"
+                                                    label="HuggingFace Token"></v-text-field>
+                                            </v-col>
+                                        </v-row>
+                                    </div>
+
 
                                 </v-col>
                             </v-row>
@@ -472,6 +490,7 @@ export default {
                     {title: 'ElevenLabs', icon: 'mdi-api', value: 'elevenlabs_api'},
                     {title: 'Google', icon: 'mdi-api', value: 'google_api'},
                     {title: 'groq', icon: 'mdi-api', value: 'groq_api'},
+                    {title: 'HuggingFace', icon: 'mdi-api', value: 'huggingface_api'},
                     {title: 'mistral.ai', icon: 'mdi-api', value: 'mistralai_api'},
                     {title: 'OpenAI', icon: 'mdi-api', value: 'openai_api'},
                     {title: 'OpenRouter', icon: 'mdi-api', value: 'openrouter_api'},

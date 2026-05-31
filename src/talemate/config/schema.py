@@ -281,6 +281,10 @@ class CoquiConfig(pydantic.BaseModel):
     api_key: Union[str, None] = None
 
 
+class HuggingFaceConfig(pydantic.BaseModel):
+    api_key: Union[str, None] = None
+
+
 class GoogleConfig(pydantic.BaseModel):
     gcloud_credentials_path: Union[str, None] = None
     gcloud_location: Union[str, None] = None
@@ -656,6 +660,8 @@ class Config(pydantic.BaseModel):
     elevenlabs: ElevenLabsConfig = ElevenLabsConfig()
 
     coqui: CoquiConfig = CoquiConfig()
+
+    huggingface: HuggingFaceConfig = HuggingFaceConfig()
 
     recent_scenes: RecentScenes = RecentScenes()
 
