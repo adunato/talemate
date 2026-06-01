@@ -1,16 +1,26 @@
 from __future__ import annotations
 
+import asyncio
 import time
+import traceback
+from typing import Any, TYPE_CHECKING
 
 import structlog
 
 import talemate.emit.async_signals
 from talemate.emit import emit
 from talemate.events import GameLoopActorIterEvent
+from talemate.exceptions import GenerationCancelled
 from talemate.prompts import Prompt
 from talemate.prompts.response import AnchorExtractor, ResponseSpec
 from talemate.scene_message import TimePassageMessage
 from talemate.world_state import WorldStateResponse
+from talemate.world_state.merge import (
+    apply_bucket_patch,
+    cap_bucket,
+    has_time_passage_boundary,
+)
+from talemate.world_state.schema import CharacterState, ObjectState, PlaceState
 
 from talemate.agents.base import (
     AgentAction,
@@ -18,6 +28,9 @@ from talemate.agents.base import (
     AgentActionConditional,
     set_processing,
 )
+
+if TYPE_CHECKING:
+    from talemate.world_state import WorldState
 
 log = structlog.get_logger("talemate.agents.world_state")
 
@@ -392,6 +405,155 @@ class WorldStateSnapshotMixin:
         return WorldStateResponse(
             world_state=world_state, anchor_message_ids=anchor_message_ids
         )
+
+    async def apply_snapshot_update(self, world_state: "WorldState"):
+        """
+        Generate a fresh world-state snapshot and merge it into ``world_state``.
+
+        Owns the snapshot policy: the scene-cut wipe, the LLM call
+        (``request_world_state``), name normalization, the durable
+        delta-merge vs legacy wholesale-rebuild choice, eviction/capping, and
+        the surrounding ``emit`` status transitions. ``WorldState.request_update``
+        is the thin public entry point that delegates here.
+        """
+        scene = self.scene
+
+        # TimePassageMessage past the prior anchors is a scene cut: wipe the
+        # snapshot before showing it to the LLM so the next pass extracts
+        # fresh against an empty baseline. Durable mode only — legacy
+        # wholesale doesn't need a separate cut because it rewrites every
+        # pass anyway.
+        if self.update_world_state_durable_snapshot and has_time_passage_boundary(
+            scene.history, world_state.anchor_message_ids
+        ):
+            world_state.characters = {}
+            world_state.items = {}
+            world_state.places = {}
+            world_state.location = None
+            world_state.anchor_message_ids = []
+
+        world_state.emit(status="requested")
+
+        try:
+            response = await self.request_world_state()
+        except GenerationCancelled:
+            world_state.emit()
+            return
+        except asyncio.CancelledError:
+            # Background task was cancelled (manual cancel of the in-flight
+            # snapshot). Clear the "requested" status so the UI spinner resolves,
+            # then let the cancellation propagate so the task ends cancelled.
+            world_state.emit()
+            raise
+        except Exception as e:
+            world_state.emit()
+            log.error(
+                "world_state.apply_snapshot_update",
+                error=e,
+                traceback=traceback.format_exc(),
+            )
+            return
+
+        if response.world_state is None:
+            world_state.emit()
+            return
+
+        raw = response.world_state
+        character_names = scene.character_names
+
+        # Normalize bucket keys against canonical scene names. Values stay
+        # as raw dicts (or None) so the delta-merge path can preserve the
+        # null-to-drop semantic.
+        char_patch: dict[str, Any] = {}
+        for raw_name, payload in (raw.get("characters") or {}).items():
+            name = world_state.normalize_name(raw_name)
+            for main_name, synonyms in world_state.character_name_mappings.items():
+                if name.lower() in synonyms:
+                    name = main_name
+                    break
+            if name not in character_names:
+                for canonical in character_names:
+                    if (
+                        canonical.lower() in name.lower()
+                        or name.lower() in canonical.lower()
+                    ):
+                        name = canonical
+                        break
+            char_patch[name] = payload
+
+        item_patch: dict[str, Any] = {
+            world_state.normalize_name(name): payload
+            for name, payload in (raw.get("items") or {}).items()
+        }
+        place_patch: dict[str, Any] = {
+            world_state.normalize_name(name): payload
+            for name, payload in (raw.get("places") or {}).items()
+        }
+
+        if self.update_world_state_durable_snapshot:
+            # Delta merge: apply patch on top of current state. None values
+            # drop the entity; partial dicts patch fields; omitted keys are
+            # untouched. Entries the agent leaves untouched for
+            # `eviction_threshold` consecutive passes age out automatically.
+            eviction_threshold = self.update_world_state_eviction_threshold
+            world_state.characters = apply_bucket_patch(
+                world_state.characters, char_patch, CharacterState, eviction_threshold
+            )
+            world_state.items = apply_bucket_patch(
+                world_state.items, item_patch, ObjectState, eviction_threshold
+            )
+            world_state.places = apply_bucket_patch(
+                world_state.places, place_patch, PlaceState, eviction_threshold
+            )
+            # Cap the items bucket, dropping stalest entries first (highest
+            # `misses`). Durable-only: in legacy mode every item is rebuilt
+            # fresh each pass with misses=0, so "stalest" is meaningless.
+            world_state.items = cap_bucket(
+                world_state.items, self.update_world_state_max_items
+            )
+        else:
+            # Legacy wholesale: drop None entries (no delete semantic),
+            # construct full state classes, replace entire buckets. Preserve
+            # emotion when the new pass omits it.
+            new_chars: dict[str, CharacterState] = {}
+            for name, payload in char_patch.items():
+                if not payload or not isinstance(payload, dict):
+                    continue
+                char_kwargs = dict(payload)
+                if not char_kwargs.get("emotion") and name in world_state.characters:
+                    char_kwargs["emotion"] = world_state.characters[name].emotion
+                try:
+                    new_chars[name] = CharacterState(**char_kwargs)
+                except Exception as e:
+                    log.error(
+                        "world_state.apply_snapshot_update", error=e, character=name
+                    )
+            new_items: dict[str, ObjectState] = {}
+            for name, payload in item_patch.items():
+                if not payload or not isinstance(payload, dict):
+                    continue
+                try:
+                    new_items[name] = ObjectState(**payload)
+                except Exception as e:
+                    log.error("world_state.apply_snapshot_update", error=e, item=name)
+            new_places: dict[str, PlaceState] = {}
+            for name, payload in place_patch.items():
+                if not payload or not isinstance(payload, dict):
+                    continue
+                try:
+                    new_places[name] = PlaceState(**payload)
+                except Exception as e:
+                    log.error("world_state.apply_snapshot_update", error=e, place=name)
+            world_state.characters = new_chars
+            world_state.items = new_items
+            world_state.places = new_places
+
+        if "location" in raw and isinstance(raw["location"], (str, type(None))):
+            world_state.location = raw["location"]
+
+        world_state.anchor_message_ids = list(response.anchor_message_ids)
+
+        world_state.emit()
 
     @set_processing
     async def examine_entity(

@@ -33,8 +33,8 @@ hard scene-cut — callers should wipe the state before showing it to the
 LLM so the patch is applied against an empty baseline.
 
 The ``location`` field (a bare string) is patched inline by the caller
-in ``WorldState.request_update`` — it has no bucket of its own, so it
-does not flow through ``apply_bucket_patch``.
+in ``WorldStateSnapshotMixin.apply_snapshot_update`` — it has no bucket of
+its own, so it does not flow through ``apply_bucket_patch``.
 """
 
 import structlog
