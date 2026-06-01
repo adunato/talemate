@@ -31,8 +31,13 @@ WORLD_STATE_SNAPSHOT_IGNORE = [
     "director",
     "context_investigation",
 ]
+
 from talemate.util.response import extract_list
 from talemate.world_state import WorldStateResponse
+
+# Opaque key for the world state snapshot's tracked single-flight task
+# (Agent.run_tracked_task) — internal, not user-facing.
+SNAPSHOT_TASK = "world_state_update"
 
 
 from talemate.agents.base import (
@@ -384,8 +389,6 @@ class WorldStateAgent(MemoryRAGMixin, CharacterProgressionMixin, AvatarMixin, Ag
             turns=self.update_world_state_turns,
         )
 
-        scene = self.scene
-
         if (
             self.next_update % self.update_world_state_turns != 0
             or self.next_update == 0
@@ -393,8 +396,59 @@ class WorldStateAgent(MemoryRAGMixin, CharacterProgressionMixin, AvatarMixin, Ag
             self.next_update += 1
             return
 
+        # Single-flight: if a snapshot is still generating, leave the counter at
+        # its due value and retry next turn rather than starting an overlapping
+        # run (which would race on scene.world_state and double the eviction
+        # counter). dispatch returns False when one is already in flight.
+        if not await self.dispatch_world_state_update():
+            return
+
         self.next_update = 0
-        await scene.world_state.request_update()
+
+    @property
+    def snapshot_runs_in_background(self) -> bool:
+        """
+        Whether the snapshot should run as a true background task. Only when the
+        linked client can handle a concurrent request — otherwise a background
+        snapshot would just contend with the main generation on the same client,
+        so we run it synchronously (foreground) instead.
+        """
+        return bool(self.client and self.client.supports_concurrent_inference)
+
+    async def dispatch_world_state_update(self, cancel_in_flight: bool = False) -> bool:
+        """
+        Run the world state snapshot as a single-flight tracked task. Returns
+        True if a generation was started, False if one was already in flight.
+
+        Runs in the background (status "busy_bg", non-blocking UI) when the
+        linked client supports concurrent inference; otherwise in the foreground
+        (status "busy") so the user doesn't queue an action behind it on a client
+        that can't serve concurrent requests. Either way the call is non-blocking.
+
+        ``cancel_in_flight=True`` cancels a running snapshot and starts a fresh
+        one — used by the manual refresh, where the user's explicit action
+        (especially a reset) should take priority over an in-progress run.
+        """
+        task = await self.run_tracked_task(
+            SNAPSHOT_TASK,
+            lambda: self.scene.world_state.request_update(),
+            background=self.snapshot_runs_in_background,
+            cancel_in_flight=cancel_in_flight,
+            error_handler=self.on_world_state_error,
+        )
+        return task is not None
+
+    def cancel_world_state_update(self) -> bool:
+        """
+        Cancel an in-flight snapshot. Returns True if one was running and got
+        cancelled. request_update clears the "requested" status on cancellation
+        so the UI spinner resolves.
+        """
+        return self.cancel_tracked_task(SNAPSHOT_TASK)
+
+    async def on_world_state_error(self, error: Exception):
+        emit("status", "World state update failed.", status="error")
+        log.error("update_world_state", error=error)
 
     @set_processing
     async def request_world_state(self) -> WorldStateResponse:

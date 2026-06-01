@@ -1556,10 +1556,13 @@ export default {
 
     isInputDisabled() {
 
-      // if any client is active and busy, disable input
-      if (this.$refs.aiClient && this.$refs.aiClient.getActive()) {
+      // Lock interaction while a foreground agent is busy. We deliberately
+      // check agent status (this.busy already excludes busy_bg) rather than
+      // client status: a background agent operation — e.g. the world state
+      // snapshot — keeps the shared client busy but must not lock the input.
+      if (this.busy) {
         return true;
-      } 
+      }
 
       return this.inputDisabled || this.notificatioonBusy;
     },

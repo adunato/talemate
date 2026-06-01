@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import contextvars
 import functools
 import json
 from inspect import signature
@@ -9,7 +10,7 @@ import re
 import traceback
 from abc import ABC
 from functools import wraps
-from typing import Callable, Literal
+from typing import Awaitable, Callable, Literal
 import uuid
 import pydantic
 from pydantic import ConfigDict
@@ -303,6 +304,16 @@ def _agent_action_override_kwargs(agent_type: str, action_name: str) -> dict:
     return kwargs
 
 
+# When True (set by a background dispatcher around asyncio.create_task), a
+# @set_processing action skips its foreground "busy" status emit. The action
+# still establishes its normal client/agent context, but status is left to
+# set_background_processing() so the work reports as "busy_bg" rather than
+# blocking-looking "busy". Default False keeps every other call unchanged.
+background_processing: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "agent_background_processing", default=False
+)
+
+
 def set_processing(fn):
     """
     decorator that emits the agent status as processing while the function
@@ -314,6 +325,9 @@ def set_processing(fn):
 
     @wraps(fn)
     async def wrapper(self, *args, **kwargs):
+        # In background mode the foreground "busy" emit is suppressed; status is
+        # owned by set_background_processing() so the action reports "busy_bg".
+        is_background = background_processing.get()
         with ClientContext():
             scene = active_scene.get()
 
@@ -327,7 +341,8 @@ def set_processing(fn):
                         action_name = args[0].__name__
 
                     self._current_action = action_name
-                    await self.emit_status(processing=True)
+                    if not is_background:
+                        await self.emit_status(processing=True)
 
                     # Now pass the complete args list
                     if getattr(fn, "store_context_state", None) is not None:
@@ -361,7 +376,8 @@ def set_processing(fn):
                 finally:
                     try:
                         self._current_action = None
-                        await self.emit_status(processing=False)
+                        if not is_background:
+                            await self.emit_status(processing=False)
                     except RuntimeError as exc:
                         # not sure why this happens
                         # some concurrency error?
@@ -1154,6 +1170,109 @@ class Agent(ABC):
                 self._handle_background_processing(fut, error_handler)
             )
         )
+
+    # ------------------------------------------------------------------
+    # Tracked single-flight tasks
+    #
+    # A small reuse layer over set_background_processing for "run this agent
+    # operation as a single-flight task, optionally in the background". Each
+    # logical operation is identified by a `key` so an agent can run several
+    # independent ones; per-key only one is ever in flight at a time.
+    #
+    # background=True routes status through set_background_processing ("busy_bg",
+    # non-blocking UI) and sets the background_processing contextvar so the
+    # operation's @set_processing work reports busy_bg too. background=False runs
+    # the same machinery but reports the normal foreground "busy".
+    # ------------------------------------------------------------------
+
+    def _tracked_task(self, key: str) -> "asyncio.Task | None":
+        return getattr(self, "_tracked_tasks", {}).get(key)
+
+    def tracked_task_running(self, key: str) -> bool:
+        """Whether a tracked task under `key` is currently in flight."""
+        task = self._tracked_task(key)
+        return task is not None and not task.done()
+
+    async def run_tracked_task(
+        self,
+        key: str,
+        coro_factory: Callable[[], Awaitable],
+        *,
+        background: bool = True,
+        cancel_in_flight: bool = False,
+        error_handler: Callable | None = None,
+    ) -> "asyncio.Task | None":
+        """
+        Run `coro_factory()` as a single-flight task tracked under `key`.
+
+        Returns the started task, or None if one was already in flight and left
+        to run (single-flight skip — `coro_factory` is not invoked, so a skip
+        never creates an un-awaited coroutine).
+
+        The entry is removed from the table when the task finishes, so the table
+        only ever holds in-flight tasks and never accumulates stale keys (which
+        matters for callers that use dynamic per-item keys).
+
+        `cancel_in_flight=True` cancels a running task under `key` and starts a
+        fresh one. `error_handler` is an async callable invoked with the
+        exception if the task fails.
+        """
+        if not hasattr(self, "_tracked_tasks"):
+            self._tracked_tasks: dict[str, asyncio.Task] = {}
+
+        existing = self._tracked_tasks.get(key)
+        if existing is not None and not existing.done():
+            if not cancel_in_flight:
+                return None
+            existing.cancel()
+
+        # The contextvar is copied into the task by create_task; the set/reset
+        # is synchronous (no await between), so it never leaks to other tasks.
+        token = background_processing.set(True) if background else None
+        try:
+            task = asyncio.create_task(coro_factory())
+        finally:
+            if token is not None:
+                background_processing.reset(token)
+
+        self._tracked_tasks[key] = task
+        task.add_done_callback(lambda fut: self._untrack_task(key, fut))
+
+        if background:
+            await self.set_background_processing(task, error_handler)
+        else:
+            task.add_done_callback(
+                lambda fut: self._on_tracked_task_done(fut, error_handler)
+            )
+        return task
+
+    def _untrack_task(self, key: str, task: asyncio.Task) -> None:
+        # Only drop the entry if it's still this task — a cancel_in_flight
+        # replacement may have already swapped a newer task under the same key.
+        if self._tracked_tasks.get(key) is task:
+            del self._tracked_tasks[key]
+
+    def _on_tracked_task_done(self, task: asyncio.Task, error_handler=None) -> None:
+        # Foreground tasks report "busy" via @set_processing; this callback only
+        # surfaces errors and consumes the result so failures don't go unnoticed.
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc is None:
+            return
+        tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+        log.error("tracked task error", agent=self.agent_type, exc=exc, traceback=tb)
+        if error_handler is not None:
+            asyncio.create_task(error_handler(exc))
+
+    def cancel_tracked_task(self, key: str) -> bool:
+        """Cancel the in-flight tracked task under `key`. Returns True if one
+        was running and got cancelled."""
+        task = self._tracked_task(key)
+        if task is not None and not task.done():
+            task.cancel()
+            return True
+        return False
 
     def connect(self, scene):
         self.scene = scene

@@ -33,14 +33,21 @@ class WorldStateWebsocketHandler(Plugin):
     def agent(self):
         return get_agent("world_state")
 
-    @set_loading("Updating world state", cancellable=True, as_async=True)
     async def handle_request_update(self, data: dict):
         payload = RequestUpdatePayload(**data)
 
         if payload.reset:
             self.scene.world_state.reset()
 
-        await self.scene.world_state.request_update()
+        # Run the snapshot as a background task (status "busy_bg") so the manual
+        # refresh doesn't lock the UI. cancel_in_flight=True so the user's
+        # explicit refresh — especially a reset — takes priority over any
+        # in-progress automatic snapshot.
+        await self.agent.dispatch_world_state_update(cancel_in_flight=True)
+        await self.signal_operation_done(allow_auto_save=False)
+
+    async def handle_cancel_request_update(self, data: dict):
+        self.agent.cancel_world_state_update()
         await self.signal_operation_done(allow_auto_save=False)
 
     @set_loading("Summarizing and pinning", cancellable=True, as_async=True)

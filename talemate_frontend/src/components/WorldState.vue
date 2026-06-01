@@ -2,7 +2,14 @@
 <v-list density="compact">
     <v-list-subheader class="text-uppercase">
         <v-icon class="mr-1">mdi-earth</v-icon>World
-        <v-progress-circular class="ml-1 mr-3" size="14" v-if="requesting" indeterminate="disable-shrink" color="primary"></v-progress-circular>
+        <template v-if="requesting">
+            <v-progress-circular class="ml-1" size="14" indeterminate="disable-shrink" color="primary"></v-progress-circular>
+            <v-tooltip text="Cancel world state update">
+                <template v-slot:activator="{ props }">
+                    <v-btn size="x-small" icon="mdi-close" class="ml-1 mr-1" v-bind="props" variant="text" density="comfortable" rounded="sm" @click.stop="cancelRequest()"></v-btn>
+                </template>
+            </v-tooltip>
+        </template>
         <v-tooltip v-else :text="refreshTooltip">
             <template v-slot:activator="{ props }">
                 <v-btn :disabled="busy"  size="x-small" icon="mdi-refresh" class="mr-1" v-bind="props" variant="tonal" density="comfortable" rounded="sm" @click.stop="refresh($event)"></v-btn>
@@ -359,6 +366,12 @@ export default {
                 type: 'world_state_agent',
                 action: 'request_update',
                 reset,
+            }));
+        },
+        cancelRequest() {
+            this.getWebsocket().send(JSON.stringify({
+                type: 'world_state_agent',
+                action: 'cancel_request_update',
             }));
         },
         trackedCharacterState(name, question) {

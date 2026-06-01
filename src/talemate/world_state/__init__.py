@@ -1,3 +1,4 @@
+import asyncio
 import re
 import traceback
 from enum import Enum
@@ -284,6 +285,12 @@ class WorldState(BaseModel):
         except GenerationCancelled:
             self.emit()
             return
+        except asyncio.CancelledError:
+            # Background task was cancelled (manual cancel of the in-flight
+            # snapshot). Clear the "requested" status so the UI spinner resolves,
+            # then let the cancellation propagate so the task ends cancelled.
+            self.emit()
+            raise
         except Exception as e:
             self.emit()
             log.error(
