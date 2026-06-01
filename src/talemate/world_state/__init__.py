@@ -13,7 +13,11 @@ from talemate.prompts import Prompt
 from talemate.exceptions import GenerationCancelled
 import talemate.game.focal.schema as focal_schema
 from talemate.game.schema import ConditionGroup
-from talemate.world_state.merge import apply_bucket_patch, has_time_passage_boundary
+from talemate.world_state.merge import (
+    apply_bucket_patch,
+    cap_bucket,
+    has_time_passage_boundary,
+)
 from talemate.world_state.schema import (
     CharacterState,
     ObjectState,
@@ -348,6 +352,12 @@ class WorldState(BaseModel):
             )
             self.places = apply_bucket_patch(
                 self.places, place_patch, PlaceState, eviction_threshold
+            )
+            # Cap the items bucket, dropping stalest entries first (highest
+            # `misses`). Durable-only: in legacy mode every item is rebuilt
+            # fresh each pass with misses=0, so "stalest" is meaningless.
+            self.items = cap_bucket(
+                self.items, self.agent.update_world_state_max_items
             )
         else:
             # Legacy wholesale: drop None entries (no delete semantic),

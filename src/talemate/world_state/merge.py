@@ -112,6 +112,24 @@ def apply_bucket_patch(
     return result
 
 
+def cap_bucket(bucket: dict[str, StateT], max_items: int) -> dict[str, StateT]:
+    """
+    Cap a bucket to at most ``max_items`` entries, dropping the stalest
+    entries first — those with the highest ``misses`` count (untouched
+    longest). Ties are broken by insertion order, so among equally-stale
+    entries the earliest-added is dropped first. Returns a new bucket dict
+    preserving the original insertion order of the kept entries.
+
+    ``max_items <= 0`` disables the cap and returns the bucket unchanged.
+    """
+    if max_items <= 0 or len(bucket) <= max_items:
+        return bucket
+    # Ascending by misses keeps the freshest entries; the stable sort
+    # preserves insertion order among ties so we keep the earliest-added.
+    kept = set(sorted(bucket, key=lambda k: bucket[k].misses)[:max_items])
+    return {key: value for key, value in bucket.items() if key in kept}
+
+
 def has_time_passage_boundary(
     scene_history: list[SceneMessage], prior_anchor_ids: list[int]
 ) -> bool:

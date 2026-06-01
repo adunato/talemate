@@ -108,6 +108,19 @@ class WorldStateSnapshotMixin:
                     description="Keep entities and their details across refreshes so the world state builds up over time. When off, every refresh starts from scratch.",
                     value=True,
                 ),
+                "max_items": AgentActionConfig(
+                    type="number",
+                    label="Max items tracked",
+                    description="Maximum number of items the snapshot can hold at once. When a refresh exceeds this, the stalest items are dropped. Set to 0 for no limit.",
+                    value=10,
+                    min=0,
+                    max=30,
+                    step=1,
+                    condition=AgentActionConditional(
+                        attribute="update_world_state.config.durable_snapshot",
+                        value=True,
+                    ),
+                ),
                 "eviction_threshold": AgentActionConfig(
                     type="number",
                     label="Auto-evict stale entries",
@@ -151,6 +164,10 @@ class WorldStateSnapshotMixin:
     @property
     def update_world_state_examine_length(self) -> int:
         return self.resolve_config("update_world_state", "examine_length")
+
+    @property
+    def update_world_state_max_items(self) -> int:
+        return self.resolve_config("update_world_state", "max_items")
 
     @property
     def update_world_state_durable_snapshot(self) -> bool:
