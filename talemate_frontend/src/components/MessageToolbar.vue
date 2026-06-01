@@ -33,6 +33,13 @@
     <!-- type-specific actions (e.g. Continue) -->
     <slot name="extra-actions" />
 
+    <!-- visualize -->
+    <v-chip v-if="showVisualize" size="x-small" class="ml-2" label color="primary" variant="tonal" @click="visualizeMessage(messageId)" :disabled="uxLocked || appBusy || visualizeBusy">
+      <v-icon class="mr-1">mdi-image-plus</v-icon>
+      Visualize
+      <v-progress-circular v-if="visualizeBusy" class="ml-2" size="14" indeterminate="disable-shrink" color="primary"></v-progress-circular>
+    </v-chip>
+
     <!-- generate tts -->
     <v-chip v-if="showTts && ttsAvailable" size="x-small" class="ml-2" label color="secondary" variant="tonal" @click="generateTTS(messageId)" :disabled="uxLocked || appBusy || ttsBusy">
       <v-icon class="mr-1">mdi-account-voice</v-icon>
@@ -134,6 +141,14 @@ export default {
       type: Boolean,
       default: true,
     },
+    showVisualize: {
+      type: Boolean,
+      default: false,
+    },
+    visualizeBusy: {
+      type: Boolean,
+      default: false,
+    },
   },
   inject: [
     'createPin',
@@ -141,6 +156,7 @@ export default {
     'forkSceneInitiate',
     'generateTTS',
     'insertTimePassage',
+    'visualizeMessage',
   ],
   computed: {
     forkable() {

@@ -386,6 +386,7 @@ import EntityHighlightMixin from './EntityHighlightMixin.js';
 import VisualAssetsMixin from './VisualAssetsMixin.js';
 import RevisionStackMixin from './RevisionStackMixin.js';
 import { isVisualAgentReady, VIS_TYPE } from '@/constants/visual';
+import { isKnownSceneCharacter } from '@/utils/entityActions';
 import { primaryModifierLabel } from '@/utils/keyboardModifiers';
 import {
     getMessageColor as resolveMessageColor,
@@ -549,6 +550,10 @@ export default {
             },
             // Track which message IDs are currently processing asset operations
             processingAssetMessageIds: new Set(),
+            // Context-investigation messages awaiting a freshly requested visual.
+            // Drives the toolbar "Visualize" spinner until the asset attaches
+            // (message_asset_update) or the visual operation finishes.
+            visualizingMessageIds: new Set(),
             // Avatar selection dialog state
             avatarSelectDialog: {
                 show: false,
@@ -657,6 +662,9 @@ export default {
             markAssetProcessing: this.markAssetProcessing,
             // Provide method to open insert time passage dialog
             insertTimePassage: this.insertTimePassage,
+            // Generate a visual asset for a context-investigation message
+            visualizeMessage: this.visualizeMessage,
+            isMessageVisualizing: this.isMessageVisualizing,
         }
     },
     methods: {
@@ -745,7 +753,15 @@ export default {
                     }
                     // Clear processing state for this message
                     this.processingAssetMessageIds.delete(data.message_id);
+                    this.visualizingMessageIds.delete(data.message_id);
                 }
+            }
+
+            // The visual operation finished — clear any toolbar "Visualize"
+            // spinners that won't be cleared by an asset attaching (e.g.
+            // prompt-only mode or a generation error).
+            if (data.type === 'visual' && data.action === 'operation_done' && this.visualizingMessageIds.size) {
+                this.visualizingMessageIds.clear();
             }
             
             // Handle determine_avatar_noop - world state agent decided no action needed
@@ -1151,6 +1167,69 @@ export default {
             this.insertTimePassageAmount = 1;
             this.insertTimePassageUnit = 'hours';
             this.insertTimePassageDialog = true;
+        },
+
+        isMessageVisualizing(messageId) {
+            return this.visualizingMessageIds.has(messageId);
+        },
+
+        // Map a context-investigation message to the visual type that best
+        // fits its subject, plus the instructions/character to seed the prompt.
+        // Returns null for messages that have no fitting visual subject.
+        buildVisualizeRequest(message) {
+            const args = message.source_arguments || {};
+            const instructions = message.text || "";
+            switch (message.sub_type) {
+                case 'examine': {
+                    const kind = args.entity_kind;
+                    const name = args.entity_name;
+                    if (kind === 'item') return { vis_type: VIS_TYPE.OBJECT_ILLUSTRATION, instructions };
+                    if (kind === 'place') return { vis_type: VIS_TYPE.SCENE_BACKGROUND, instructions };
+                    if (kind === 'character') {
+                        // Only real scene actors have the character data the
+                        // CHARACTER_CARD generation requires; background
+                        // characters fall back to a scene illustration.
+                        if (isKnownSceneCharacter(this.scene?.data, name)) {
+                            return { vis_type: VIS_TYPE.CHARACTER_CARD, character_name: name, instructions };
+                        }
+                        return { vis_type: VIS_TYPE.SCENE_ILLUSTRATION, instructions };
+                    }
+                    return null;
+                }
+                case 'visual-character':
+                    return { vis_type: VIS_TYPE.CHARACTER_CARD, character_name: args.character, instructions };
+                case 'visual-scene':
+                    return { vis_type: VIS_TYPE.SCENE_ILLUSTRATION, instructions };
+                default:
+                    return null;
+            }
+        },
+
+        visualizeMessage(message_id) {
+            const message = this.messages.find(m => m.id === message_id);
+            if (!message) return;
+            const request = this.buildVisualizeRequest(message);
+            if (!request) return;
+
+            this.visualizingMessageIds.add(message_id);
+
+            const payload = {
+                type: 'visual',
+                action: 'visualize',
+                vis_type: request.vis_type,
+                prompt_only: !this.visualAgentReady,
+                save_asset: true,
+                asset_allow_override: true,
+                asset_allow_auto_attach: true,
+                message_ids: [message_id],
+            };
+            if (request.character_name) {
+                payload.character_name = request.character_name;
+            }
+            if (request.instructions) {
+                payload.instructions = request.instructions;
+            }
+            this.getWebsocket().send(JSON.stringify(payload));
         },
 
         submitInsertTimePassage() {
@@ -1656,6 +1735,7 @@ export default {
                 this.lastEffectiveAssetIdByScope = {};
                 this.assetCache = {};
                 this.processingAssetMessageIds.clear();
+                this.visualizingMessageIds.clear();
                 // Clear UX interaction tracking
                 if (this.clearUxInteractions) {
                     this.clearUxInteractions();
@@ -1730,6 +1810,7 @@ export default {
                 this.lastEffectiveAssetIdByScope = {};
                 this.assetCache = {};
                 this.processingAssetMessageIds.clear();
+                this.visualizingMessageIds.clear();
                 return;
             }
 

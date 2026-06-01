@@ -68,6 +68,8 @@
         :show-pin="false"
         :show-fork="false"
         :show-time-passage="false"
+        :show-visualize="showVisualize"
+        :visualize-busy="visualizeBusy"
       />
     </v-sheet>
     <div v-else style="height:24px">
@@ -179,6 +181,17 @@ export default {
     messageAsset() {
       return (this.asset_id && this.asset_type) ? this.asset_id : null;
     },
+    // Visualizable context investigations can generate an image into the
+    // message. `query` is excluded (no fitting visual subject); the button
+    // hides once an asset is already attached (regeneration is then handled
+    // by the asset image itself).
+    showVisualize() {
+      const visualizable = ['examine', 'visual-scene', 'visual-character'];
+      return visualizable.includes(this.message.sub_type) && !this.messageAsset;
+    },
+    visualizeBusy() {
+      return this.isMessageVisualizing ? this.isMessageVisualizing(this.message.id) : false;
+    },
     autocompleting() {
       return this.autocompleteField?.state.autocompleting || false;
     },
@@ -245,7 +258,7 @@ export default {
     },
   },
   emits: ['navigate-revision'],
-  inject: ['requestDeleteMessage', 'getWebsocket', 'autocompleteRequest', 'autocompleteInfoMessage', 'getMessageStyle', 'getMessageColor'],
+  inject: ['requestDeleteMessage', 'getWebsocket', 'autocompleteRequest', 'autocompleteInfoMessage', 'getMessageStyle', 'getMessageColor', 'isMessageVisualizing'],
   methods: {
     toggle() {
       if (!this.editing) {
