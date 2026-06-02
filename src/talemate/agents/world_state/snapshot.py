@@ -224,7 +224,7 @@ class WorldStateSnapshotMixin:
         if self.get_scene_state("inital_update_done"):
             return
 
-        await self.scene.world_state.request_update()
+        await self.dispatch_world_state_update()
         self.set_scene_states(inital_update_done=True)
 
     async def on_game_loop_actor_iter(self, emission: GameLoopActorIterEvent):
