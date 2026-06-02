@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import shutil
@@ -34,6 +35,7 @@ from talemate.scene.schema import ScenePerspectives
 from talemate.history import validate_history
 import talemate.agents.tts.voice_library as voice_library
 from talemate.path import SCENES_DIR
+from talemate.util.gpu import release_cuda_cache
 from talemate.changelog import _get_overall_latest_revision
 from talemate.shared_context import SharedContext
 from talemate.scene_agent_settings import AGENT_SETTINGS_DIRNAME, resolve_link_on_load
@@ -182,6 +184,18 @@ async def load_scene(
     """
 
     exc = None
+
+    # Release the previous scene's reserved GPU memory before loading the next.
+    # Local CUDA work (embedding re-commits, TTS) leaves PyTorch's caching
+    # allocator sitting on the high-water-mark of its largest batch, which only
+    # frees on process exit; returning it here gives the upcoming scene's
+    # re-embed maximum headroom — on native Linux, where CUDA has no sysmem
+    # fallback, that headroom is the difference between loading and an OOM. Done
+    # once per scene load (not per commit) so we don't thrash the allocator
+    # cache during gameplay. No-op off CUDA, or when disabled in config.
+    if get_config().game.general.release_gpu_cache_on_scene_load:
+        await asyncio.to_thread(release_cuda_cache)
+
     try:
         with SceneIsLoading(scene):
             if file_path == "$NEW_SCENE$":

@@ -70,7 +70,12 @@
                                             <v-col cols="12">
                                                 <v-checkbox color="primary" v-model="app_config.game.general.show_agent_activity_bar" label="Show agent activity bar" messages="Display active agent actions in a horizontal bar above scene controls"></v-checkbox>
                                             </v-col>
-                                        </v-row>        
+                                        </v-row>
+                                        <v-row>
+                                            <v-col cols="12">
+                                                <v-checkbox color="primary" v-model="app_config.game.general.release_gpu_cache_on_scene_load" label="Release GPU cache on scene load" messages="Hand idle GPU memory reserved by local CUDA embeddings/TTS back to the driver when switching scenes, so it doesn't pile up and eventually leave too little VRAM to load another scene. Disable only if you have VRAM to spare and would rather keep it reserved."></v-checkbox>
+                                            </v-col>
+                                        </v-row>
                                     </div>
                                     <div v-else-if="gamePageSelected === 'character'">
                                         <v-alert color="white" variant="text" icon="mdi-human-edit" density="compact">

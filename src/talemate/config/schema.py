@@ -188,6 +188,7 @@ class General(pydantic.BaseModel):
     max_backscroll: int = 100
     add_default_character: bool = True
     show_agent_activity_bar: bool = True
+    release_gpu_cache_on_scene_load: bool = True
 
 
 class StateReinforcementTemplate(pydantic.BaseModel):

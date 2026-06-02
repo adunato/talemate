@@ -33,6 +33,7 @@ from talemate.agents.memory.exceptions import (
     SetDBError,
 )
 from talemate.agents.memory.schema import MemoryDocument
+from talemate.util.gpu import release_cuda_cache
 
 import talemate.agents.memory.nodes  # noqa: F401
 
@@ -1062,13 +1063,14 @@ class ChromaDBMemoryAgent(MemoryAgent):
         """Release an embedding model and free GPU memory if applicable."""
         try:
             import torch
-
-            if torch.cuda.is_available():
-                model.to("cpu")
-                del model
-                torch.cuda.empty_cache()
         except ImportError:
-            pass
+            return
+
+        if torch.cuda.is_available():
+            model.to("cpu")
+            del model
+
+        release_cuda_cache()
 
     def _add(self, text, character=None, uid=None, ts: str = None, **kwargs):
         metadatas = []
