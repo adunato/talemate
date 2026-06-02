@@ -99,6 +99,12 @@ class WorldStateSnapshotMixin:
                     description="When on, Look at and Add Detail messages also count as part of the current moment and can show inline highlights.",
                     value=False,
                 ),
+                "custom_instructions": AgentActionConfig(
+                    type="blob",
+                    label="Custom instructions",
+                    description="Custom instructions to add to the world state snapshot generation.",
+                    value="",
+                ),
                 "examine_length": AgentActionConfig(
                     type="number",
                     label="Add Detail length",
@@ -177,6 +183,10 @@ class WorldStateSnapshotMixin:
     @property
     def update_world_state_examine_length(self) -> int:
         return self.resolve_config("update_world_state", "examine_length")
+
+    @property
+    def update_world_state_custom_instructions(self) -> str:
+        return self.resolve_config("update_world_state", "custom_instructions")
 
     @property
     def update_world_state_max_items(self) -> int:
@@ -392,6 +402,7 @@ class WorldStateSnapshotMixin:
                 "include_scenario_premise": True,
                 "durable_snapshot": durable_snapshot,
                 "current_state_payload": current_state_payload,
+                "custom_instructions": self.update_world_state_custom_instructions,
             },
         )
 
