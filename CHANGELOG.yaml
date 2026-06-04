@@ -49,6 +49,7 @@
   - "Scene Forking: Fixed forks and rollbacks created from the changelog UI sometimes failing to load with a 'message Field required' error. Affected history entries are now repaired during reconstruction so the scene loads."
   - "GPU VRAM: Switching scenes now releases the GPU memory that local CUDA work (embeddings, TTS) leaves reserved, instead of holding it for the rest of the session where it could leave too little VRAM to load another scene. Can be turned off under Settings → Game → General."
   - "Autocomplete: Fixed contextual autocomplete (character attributes, world entries, scene intros, and similar fields) sometimes repeating the text you had already typed instead of only continuing from where you left off."
+  - "HuggingFace Prompt Template Lookup: Fixed automatic prompt-template detection hanging indefinitely when HuggingFace can't be reached (e.g. network or IPv6 routing issues). The lookup now times out, logs a warning, and lets startup continue instead of stalling silently."
 0.37.1:
   fixes:
   - "Scene History: Fixed a crash when generating dialogue in long scenes that combine layered history with pre-established (static) history entries. The affected scene could become unplayable until its layered history was manually edited."
