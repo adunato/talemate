@@ -34,6 +34,7 @@
   - "HuggingFace Token: Added a HuggingFace access token to the application settings for downloading gated model weights such as the Pocket TTS voice-cloning model. It can also be set directly in the Pocket TTS agent config."
   - "Inference Presets: Added an 'Apply to all' action to the inference parameter editor that copies the current preset's values to every other preset in the group. The Reset action now asks for confirmation as well."
   - "Inference Presets: Widened the adjustable range and refined the step increments on several inference parameter sliders so presets can be tuned more precisely."
+  - "Dialogue Example Autocomplete: The character actor's Add Dialogue Example field now supports autocomplete (Ctrl+Enter), with the same hint and Redo/Undo affordances as other generated fields."
   changes:
   - "World State Snapshot Cadence: The snapshot now refreshes per individual character turn rather than per full scene round. The default interval was raised from 5 to 10 to keep the effective cadence comparable."
   fixes:

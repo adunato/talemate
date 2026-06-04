@@ -447,7 +447,11 @@ class AssistantMixin:
             except Exception as e:
                 log.warning("Failed to extract list", error=e)
                 content = "[]"
-        elif context_typ == "character dialogue":
+        elif context_typ == "character dialogue" and not generation_context.partial:
+            # Full-line generation: format as a complete "Name: ..." example.
+            # A partial continuation skips this and falls through to the generic
+            # path below, which returns only the continuation (no name prepend,
+            # no sentence trimming) so it joins cleanly onto the user's draft.
             if not content.startswith(generation_context.character + ":"):
                 content = generation_context.character + ": " + content
             content = util.strip_partial_sentences(content)

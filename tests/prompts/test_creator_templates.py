@@ -701,6 +701,52 @@ class TestCreatorContextualGenerateMethod:
         assert resp == "skilled healer"
 
     @pytest.mark.asyncio
+    async def test_contextual_generate_dialogue_partial_returns_continuation_only(
+        self, active_context
+    ):
+        """Dialogue-example autocomplete returns only the continuation — no speaker
+        prepend, leading whitespace preserved — so it joins onto the user's draft
+        instead of fusing/inserting the name (e.g. 'She' + 'Elena: taps')."""
+        creator = active_context
+        creator.client.can_be_coerced = False
+        creator.client.send_prompt.return_value = (
+            "<COMPLETION> taps the console, frowning.</COMPLETION>"
+        )
+
+        generation_context = ContentGenerationContext(
+            context="character dialogue:",
+            character="Elena",
+            partial='"That\'s unfortunate." She',
+            length=192,
+        )
+
+        resp = await creator.contextual_generate(generation_context)
+
+        assert resp == " taps the console, frowning."
+        assert not resp.startswith("Elena")
+
+    @pytest.mark.asyncio
+    async def test_contextual_generate_dialogue_full_prepends_speaker(
+        self, active_context
+    ):
+        """Full dialogue-example generation (no partial) still formats as a
+        complete 'Name: ...' line."""
+        creator = active_context
+        creator.client.send_prompt.return_value = (
+            '<DIALOGUE>Elena: "Hello there."</DIALOGUE>'
+        )
+
+        generation_context = ContentGenerationContext(
+            context="character dialogue:",
+            character="Elena",
+            length=192,
+        )
+
+        resp = await creator.contextual_generate(generation_context)
+
+        assert resp == 'Elena: "Hello there."'
+
+    @pytest.mark.asyncio
     async def test_contextual_generate_static_history_frames_instructions_as_seed(
         self, active_context
     ):
