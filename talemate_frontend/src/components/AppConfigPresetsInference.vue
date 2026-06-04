@@ -84,9 +84,9 @@
                         </v-card-title>
 
                         <v-card-text overflow-y-visible>
-                            <v-slider thumb-label="always" density="compact" v-model="selectedPreset.temperature" min="0.1" max="2.0" step="0.05" label="Temperature" @update:model-value="setPresetChanged()"></v-slider>
+                            <v-slider thumb-label="always" density="compact" v-model="selectedPreset.temperature" min="0.1" max="2.0" step="0.01" label="Temperature" @update:model-value="setPresetChanged()"></v-slider>
 
-                            <v-slider thumb-label="always" density="compact" v-model="selectedPreset.top_p" min="0.1" max="1.0" step="0.05" label="Top P" @update:model-value="setPresetChanged()"></v-slider>
+                            <v-slider thumb-label="always" density="compact" v-model="selectedPreset.top_p" min="0.1" max="1.0" step="0.01" label="Top P" @update:model-value="setPresetChanged()"></v-slider>
 
                             <v-slider thumb-label="always" density="compact" v-model="selectedPreset.top_k" min="0" max="1024" step="1" label="Top K" @update:model-value="setPresetChanged()"></v-slider>
 
@@ -103,7 +103,7 @@
                                     <v-slider thumb-label="always" density="compact" v-model="selectedPreset.repetition_penalty" min="1.0" max="1.20" step="0.01" label="Repetition Penalty" @update:model-value="setPresetChanged()"></v-slider>
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-slider thumb-label="always" density="compact" v-model="selectedPreset.repetition_penalty_range" min="0" max="4096" step="256" label="Range" @update:model-value="setPresetChanged()"></v-slider>
+                                    <v-slider thumb-label="always" density="compact" v-model="selectedPreset.repetition_penalty_range" min="0" max="16384" step="256" label="Range" @update:model-value="setPresetChanged()"></v-slider>
                                 </v-col>
                             </v-row>
 
