@@ -123,7 +123,7 @@ class AssistantPlugin(Plugin):
         data = ContentGenerationContext(**data)
         try:
             creator = get_agent("creator")
-            context_type, context_name = data.computed_context
+            context_type, _ = data.computed_context
 
             if context_type == "dialogue":
                 if not data.character:
@@ -151,11 +151,11 @@ class AssistantPlugin(Plugin):
             log.info(
                 "Autocomplete for contextual generation complete", completion=completion
             )
-            completion = (
-                completion.replace(f"{context_name}: {data.partial}", "")
-                .lstrip(".")
-                .strip()
-            )
+
+            # On the coerced path the completion is prefilled with the partial; strip
+            # it so only the continuation is appended in the UI.
+            if data.partial and completion.startswith(data.partial):
+                completion = completion[len(data.partial) :]
 
             emit("autocomplete_suggestion", completion)
         except GenerationCancelled:

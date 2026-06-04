@@ -644,6 +644,116 @@ class TestCreatorContextualGenerateMethod:
         assert "EDITOR HINTS" not in prompt_text
 
     @pytest.mark.asyncio
+    async def test_contextual_generate_partial_noncoerce_uses_draft_completion(
+        self, active_context
+    ):
+        """No-prefill partial continuation renders DRAFT/COMPLETION and returns
+        only the continuation (no echo of the partial)."""
+        creator = active_context
+        creator.client.can_be_coerced = False
+        creator.client.send_prompt.return_value = (
+            "<COMPLETION> road, his cane tapping.</COMPLETION>"
+        )
+
+        generation_context = ContentGenerationContext(
+            context="character attribute:occupation",
+            character="Elena",
+            partial="the dusty",
+            length=192,
+        )
+
+        resp = await creator.contextual_generate(generation_context)
+
+        prompt_text = str(creator.client.send_prompt.call_args[0][0])
+        # Existing text presented as a DRAFT, output requested in a COMPLETION block
+        assert "<DRAFT>the dusty</DRAFT>" in prompt_text
+        assert "<COMPLETION>" in prompt_text
+        # The per-type "wrapped in <ATTRIBUTE>" footer is suppressed on this path
+        assert "wrapped in <ATTRIBUTE>" not in prompt_text
+        # Only the continuation is returned, leading whitespace preserved, no echo
+        assert resp == " road, his cane tapping."
+        assert "the dusty" not in resp
+
+    @pytest.mark.asyncio
+    async def test_contextual_generate_partial_coerce_includes_partial(
+        self, active_context
+    ):
+        """Coerced partial continuation prefills <TAG>+partial, so the extracted
+        value includes the partial (stripping is the autocomplete server's job)."""
+        creator = active_context
+        creator.client.can_be_coerced = True
+        creator.client.send_prompt.return_value = " healer</ATTRIBUTE>"
+
+        generation_context = ContentGenerationContext(
+            context="character attribute:occupation",
+            character="Elena",
+            partial="skilled",
+            length=192,
+        )
+
+        resp = await creator.contextual_generate(generation_context)
+
+        prompt_text = str(creator.client.send_prompt.call_args[0][0])
+        # Coerced path keeps the per-type tag and does NOT use DRAFT/COMPLETION
+        assert "wrapped in <ATTRIBUTE>" in prompt_text
+        assert "<DRAFT>" not in prompt_text
+        # Extracted value carries the prefilled partial plus the continuation
+        assert resp == "skilled healer"
+
+    @pytest.mark.asyncio
+    async def test_contextual_generate_static_history_frames_instructions_as_seed(
+        self, active_context
+    ):
+        """Static history with instructions frames them as the entry's seed, not
+        as the generic 'describe some event from the timeline' fallback."""
+        creator = active_context
+        creator.client.send_prompt.return_value = (
+            "<ENTRY>The temple was found.</ENTRY>"
+        )
+
+        generation_context = ContentGenerationContext(
+            context="static history:entry",
+            instructions="The party discovered a hidden temple beneath the lake",
+            length=192,
+        )
+
+        await creator.contextual_generate(generation_context)
+
+        prompt = str(creator.client.send_prompt.call_args[0][0])
+        # Task body anchors the entry to the instruction
+        assert "based on the editorial instruction below" in prompt
+        # Footer reframes the instruction as the seed (per-type instructions_intro)
+        assert "seed for the entry" in prompt
+        # Generic "discrete event from the timeline" framing is dropped when seeded
+        assert (
+            "discrete event or state that occurred in the scene timeline"
+            not in prompt
+        )
+
+    @pytest.mark.asyncio
+    async def test_contextual_generate_static_history_without_instructions_is_generic(
+        self, active_context
+    ):
+        """Without instructions, static history keeps the generic framing and the
+        default footer lead-in is not added (no instructions section)."""
+        creator = active_context
+        creator.client.send_prompt.return_value = (
+            "<ENTRY>A storm passed through.</ENTRY>"
+        )
+
+        generation_context = ContentGenerationContext(
+            context="static history:entry",
+            length=192,
+        )
+
+        await creator.contextual_generate(generation_context)
+
+        prompt = str(creator.client.send_prompt.call_args[0][0])
+        assert "discrete event or state that occurred in the scene timeline" in prompt
+        assert "seed for the entry" not in prompt
+        assert "user-provided instruction and/or seed material" not in prompt
+
+    @pytest.mark.asyncio
     async def test_generate_character_attribute_wrapper(
         self, active_context, mock_scene
     ):

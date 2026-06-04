@@ -471,7 +471,12 @@ class AssistantMixin:
         if content.lower().startswith(context_name + ": "):
             content = content[len(context_name) + 2 :]
 
-        emission.response = content.strip().strip("*").strip()
+        if generation_context.partial:
+            # Preserve leading whitespace so a continuation joins cleanly onto the
+            # partial (e.g. "the dusty" + " road") instead of fusing words.
+            emission.response = content.rstrip().rstrip("*").rstrip()
+        else:
+            emission.response = content.strip().strip("*").strip()
 
         await async_signals.get("agent.creator.contextual_generate.after").send(
             emission
