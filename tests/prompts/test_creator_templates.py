@@ -753,9 +753,7 @@ class TestCreatorContextualGenerateMethod:
         """Static history with instructions frames them as the entry's seed, not
         as the generic 'describe some event from the timeline' fallback."""
         creator = active_context
-        creator.client.send_prompt.return_value = (
-            "<ENTRY>The temple was found.</ENTRY>"
-        )
+        creator.client.send_prompt.return_value = "<ENTRY>The temple was found.</ENTRY>"
 
         generation_context = ContentGenerationContext(
             context="static history:entry",
@@ -772,8 +770,7 @@ class TestCreatorContextualGenerateMethod:
         assert "seed for the entry" in prompt
         # Generic "discrete event from the timeline" framing is dropped when seeded
         assert (
-            "discrete event or state that occurred in the scene timeline"
-            not in prompt
+            "discrete event or state that occurred in the scene timeline" not in prompt
         )
 
     @pytest.mark.asyncio
