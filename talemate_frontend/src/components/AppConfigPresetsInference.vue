@@ -15,7 +15,7 @@
                 <v-col cols="4">
                     <v-select v-model="group" :items="groupItems" label="Group" variant="underlined">
                         <template v-slot:append-inner>
-                            <v-icon color="delete" v-if="group !== ''" @click="deleteGroup()">mdi-close-circle-outline</v-icon>
+                            <v-icon color="delete" v-if="group !== ''" @click="$refs.confirmDeleteGroup.initiateAction({group: group})">mdi-close-circle-outline</v-icon>
                         </template>
                     </v-select>
                 </v-col>
@@ -74,11 +74,12 @@
                     <v-card>
                         <v-card-title>
                             <v-row no-gutters>
-                                <v-col cols="8">
+                                <v-col cols="6">
                                     {{ toLabel(selected[0]) }}
                                 </v-col>
-                                <v-col cols="4" class="text-right">
-                                    <v-btn variant="text" size="small" color="warning" prepend-icon="mdi-refresh" @click="reset">Reset</v-btn>
+                                <v-col cols="6" class="text-right">
+                                    <v-btn variant="text" size="small" color="primary" prepend-icon="mdi-content-copy" @click="$refs.confirmApplyToAll.initiateAction({preset: toLabel(selected[0])})">Apply to all</v-btn>
+                                    <v-btn variant="text" size="small" color="warning" prepend-icon="mdi-refresh" @click="$refs.confirmReset.initiateAction({preset: toLabel(selected[0])})">Reset</v-btn>
                                 </v-col>
                             </v-row>
                         </v-card-title>
@@ -186,12 +187,21 @@
         </v-col>
     </v-row>
 
+    <ConfirmActionPrompt ref="confirmApplyToAll" @confirm="applyToAll" actionLabel="Apply to all presets" icon="mdi-content-copy" color="primary" confirmText="Apply" cancelText="Cancel" :maxWidth="400" description="Apply the parameter values of {preset} to all other presets in this group? This will overwrite their current values." />
+
+    <ConfirmActionPrompt ref="confirmReset" @confirm="reset" actionLabel="Reset preset" icon="mdi-refresh" color="warning" confirmText="Reset" cancelText="Cancel" :maxWidth="400" description="Reset {preset} to its default values?" />
+
+    <ConfirmActionPrompt ref="confirmDeleteGroup" @confirm="deleteGroup" actionLabel="Delete group" icon="mdi-close-circle-outline" confirmText="Delete" cancelText="Cancel" :maxWidth="400" description="Are you sure you want to delete the {group} group?" />
+
 </template>
 <script>
+
+import ConfirmActionPrompt from './ConfirmActionPrompt.vue';
 
 export default {
     name: 'AppConfigPresets',
     components: {
+        ConfirmActionPrompt,
     },
     props: {
         immutableConfig: Object,
@@ -211,10 +221,7 @@ export default {
             return items;
         },
         selectedPreset() {
-            if(this.group && this.group !== "") {
-                return this.config.inference_groups[this.group].presets[this.selected[0]];
-            }
-            return this.config.inference[this.selected[0]];
+            return this.presetsScope()[this.selected[0]];
         },
     },
     watch: {
@@ -258,21 +265,30 @@ export default {
             return JSON.parse(JSON.stringify(obj));
         },
 
-        deleteGroup(confirmed) {
-            if(!confirmed) {
-                if(!confirm("Are you sure you want to delete this group?")) {
-                    return;
-                }
-            }
+        deleteGroup() {
             delete this.config.inference_groups[this.group];
-            this.group = '';0
+            this.group = '';
+        },
+
+        presetsScope() {
+            if(this.group && this.group !== "") {
+                return this.config.inference_groups[this.group].presets;
+            }
+            return this.config.inference;
         },
 
         reset() {
-            if(this.group !== "") {
-                this.config.inference_groups[this.group].presets[this.selected[0]] = {...this.immutableConfig.presets.inference_defaults[this.selected[0]]}
-            } else {
-                this.config.inference[this.selected[0]] = {...this.immutableConfig.presets.inference_defaults[this.selected[0]]}
+            this.presetsScope()[this.selected[0]] = {...this.immutableConfig.presets.inference_defaults[this.selected[0]]}
+        },
+
+        applyToAll() {
+            const presets = this.presetsScope();
+            const source = this.deepCopy(presets[this.selected[0]]);
+            for(const key in presets) {
+                if(key === this.selected[0]) {
+                    continue;
+                }
+                presets[key] = {...source, changed: true};
             }
         },
 
@@ -284,7 +300,7 @@ export default {
                 return;
             }
 
-            const toCopy = (this.group !== "") ? this.config.inference_groups[this.group].presets : this.config.inference;
+            const toCopy = this.presetsScope();
 
             this.config.inference_groups[this.newGroupName] = {
                 name: this.newGroupName,
