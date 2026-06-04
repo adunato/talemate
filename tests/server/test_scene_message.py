@@ -78,28 +78,46 @@ def plugin(scene_with_message, monkeypatch):
         "edit": [],
         "append_version": [],
         "swap_revision": [],
+        "delete": [],
     }
+    # Linear log capturing inter-call ordering across spies (e.g. mutate
+    # then autosave). Each entry is a (name, payload) tuple.
+    order: list[tuple[str, object]] = []
 
     def _spy_edit(message_id, text):
-        calls["edit"].append({"message_id": message_id, "text": text})
+        entry = {"message_id": message_id, "text": text}
+        calls["edit"].append(entry)
+        order.append(("edit", entry))
 
     def _spy_append(message_id, text, source, reason=None):
-        calls["append_version"].append(
-            {
-                "message_id": message_id,
-                "text": text,
-                "source": source,
-                "reason": reason,
-            }
-        )
+        entry = {
+            "message_id": message_id,
+            "text": text,
+            "source": source,
+            "reason": reason,
+        }
+        calls["append_version"].append(entry)
+        order.append(("append_version", entry))
 
     def _spy_swap(message_id, index):
-        calls["swap_revision"].append({"message_id": message_id, "index": index})
+        entry = {"message_id": message_id, "index": index}
+        calls["swap_revision"].append(entry)
+        order.append(("swap_revision", entry))
+
+    def _spy_delete(message_id):
+        calls["delete"].append(message_id)
+        order.append(("delete", message_id))
+
+    async def _spy_auto_save():
+        order.append(("auto_save", None))
 
     monkeypatch.setattr(scene, "edit_message", _spy_edit)
     monkeypatch.setattr(scene, "append_message_version", _spy_append)
     monkeypatch.setattr(scene, "set_message_active_version", _spy_swap)
+    monkeypatch.setattr(scene, "delete_message", _spy_delete)
+    monkeypatch.setattr(scene, "attempt_auto_save", _spy_auto_save)
     plug._spy_calls = calls
+    plug._spy_order = order
     return plug
 
 
@@ -195,3 +213,53 @@ class TestSceneMessagePluginHandleSwapRevision:
         assert plugin._spy_calls["swap_revision"] == [
             {"message_id": msg.id, "index": 2}
         ]
+
+
+class TestSceneMessagePluginHandleDelete:
+    @pytest.mark.asyncio
+    async def test_delete_forwards_id(self, plugin, scene_with_message):
+        _, msg = scene_with_message
+        await plugin.handle_delete({"id": msg.id})
+
+        assert plugin._spy_calls["delete"] == [msg.id]
+
+
+class TestSceneMessagePluginAutosavesAfterMutation:
+    """All four mutation handlers must autosave AFTER their mutation so the
+    change reaches the on-disk changelog — forks taken from the changelog
+    UI read from disk, not from scene memory.
+    """
+
+    @pytest.mark.asyncio
+    async def test_delete(self, plugin, scene_with_message):
+        _, msg = scene_with_message
+        await plugin.handle_delete({"id": msg.id})
+
+        names = [name for name, _ in plugin._spy_order]
+        assert names == ["delete", "auto_save"]
+
+    @pytest.mark.asyncio
+    async def test_edit(self, plugin, scene_with_message):
+        _, msg = scene_with_message
+        await plugin.handle_edit({"id": msg.id, "text": "Alice: Hi."})
+
+        names = [name for name, _ in plugin._spy_order]
+        assert names == ["edit", "auto_save"]
+
+    @pytest.mark.asyncio
+    async def test_append_version(self, plugin, scene_with_message):
+        _, msg = scene_with_message
+        await plugin.handle_append_version(
+            {"id": msg.id, "text": "Alice: more.", "source": "continue"}
+        )
+
+        names = [name for name, _ in plugin._spy_order]
+        assert names == ["append_version", "auto_save"]
+
+    @pytest.mark.asyncio
+    async def test_swap_revision(self, plugin, scene_with_message):
+        _, msg = scene_with_message
+        await plugin.handle_swap_revision({"id": msg.id, "index": 2})
+
+        names = [name for name, _ in plugin._spy_order]
+        assert names == ["swap_revision", "auto_save"]

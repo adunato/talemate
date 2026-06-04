@@ -55,6 +55,7 @@ class SceneMessagePlugin(Plugin):
         """
         payload = DeletePayload(**data)
         self.scene.delete_message(payload.id)
+        await self.scene.attempt_auto_save()
 
     async def handle_edit(self, data: dict):
         """
@@ -92,6 +93,7 @@ class SceneMessagePlugin(Plugin):
             )
 
         self.scene.edit_message(payload.id, new_text)
+        await self.scene.attempt_auto_save()
         await self.signal_operation_done(signal_only=True)
 
     async def handle_append_version(self, data: dict):
@@ -115,6 +117,7 @@ class SceneMessagePlugin(Plugin):
             source=payload.source,
             reason=payload.reason,
         )
+        await self.scene.attempt_auto_save()
         await self.signal_operation_done(signal_only=True)
 
     async def handle_swap_revision(self, data: dict):
@@ -138,4 +141,5 @@ class SceneMessagePlugin(Plugin):
                 f"Revision index {payload.index} out of range"
             )
             return
+        await self.scene.attempt_auto_save()
         await self.signal_operation_done(signal_only=True)
