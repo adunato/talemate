@@ -104,7 +104,7 @@
                                     <v-slider thumb-label="always" density="compact" v-model="selectedPreset.repetition_penalty" min="1.0" max="1.20" step="0.01" label="Repetition Penalty" @update:model-value="setPresetChanged()"></v-slider>
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-slider thumb-label="always" density="compact" v-model="selectedPreset.repetition_penalty_range" min="0" max="16384" step="256" label="Range" @update:model-value="setPresetChanged()"></v-slider>
+                                    <v-slider thumb-label="always" density="compact" v-model="selectedPreset.repetition_penalty_range" min="0" max="8192" step="256" label="Range" @update:model-value="setPresetChanged()"></v-slider>
                                 </v-col>
                             </v-row>
 
