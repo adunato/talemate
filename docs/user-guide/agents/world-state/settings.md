@@ -1,8 +1,8 @@
 # Settings
 
-## General
+## Update World State
 
-![World state agent settings](/talemate/img/0.38.0/world-state-general-settings.png)
+![World state agent update world state settings](/talemate/img/0.38.0/world-state-update-world-state-settings.png)
 
 ##### Update world state
 
