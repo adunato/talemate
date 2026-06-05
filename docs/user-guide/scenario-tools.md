@@ -37,6 +37,9 @@ This will regenerate the most recent message, if it is an AI generated message.
     If you hold `ctrl+alt` when clicking this button you will be prompted to supply some instructions for the
     regeneration while keeping the original message as context. This is useful for rewrites.
 
+!!! info "Previous versions are kept"
+    Regenerating doesn't throw away the old message -- each result is added to the message's revision history, which you can browse with the paginator above the message. See [Message revision history](/talemate/user-guide/interacting#message-revision-history).
+
 #### :material-nuke: Regenerate AI Response (nuke option)
 
 This will regenerate the most recent message, if it is an AI generated message, but with a higher temperature and repetition penalties applied, which can lead to more creative responses. Use this to break out of repetitive loops.

@@ -1,6 +1,8 @@
 <!--- --8<-- [start:generate] -->
 !!! tip "Generate using AI"
     **:material-auto-fix: Generate** - press the **generate** button on top of the input field to let the AI generate the content based on the existing details.
+
+    Hold `ctrl` (or `cmd` on macOS) while clicking to add your own [instructions](/talemate/user-guide/world-editor/generation-settings/#generation-instructions). What you type is used as instruction and seed material the AI must reflect in the result.
 <!--- --8<-- [end:generate] -->
 
 <!--- --8<-- [start:autocomplete] -->
@@ -11,7 +13,9 @@
 <!--- --8<-- [start:generate_and_autocomplete] -->
 !!! tip "Generate using AI"
     **:material-auto-fix: Generate** - press the **generate** button on top of the input field to let the AI generate the content based on the existing details.
-    
+
+    Hold `ctrl` (or `cmd` on macOS) while clicking to add your own [instructions](/talemate/user-guide/world-editor/generation-settings/#generation-instructions). What you type is used as instruction and seed material the AI must reflect in the result.
+
     **:material-auto-fix: Autocomplete** - press `ctrl+Enter` (or `cmd+Enter` on macOS) while the cursor is in the input field to use AI to autocomplete the current content, you 
 <!--- --8<-- [end:generate_and_autocomplete] -->
 

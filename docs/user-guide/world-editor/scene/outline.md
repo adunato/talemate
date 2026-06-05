@@ -6,7 +6,7 @@ Click on the :material-earth-box: **World Editor** to open the world editor.
 
 In the world editor the :material-script: **Scene** tab should be selected, if not, click on it.
 
-![World editor scene outline 1](/talemate/img/0.26.0/world-editor-scene-outline-1.png)
+![World editor scene outline 1](/talemate/img/0.38.0/world-editor-scene-outline-1.png)
 
 ### Title
 
@@ -16,9 +16,9 @@ The scene title as it will be shown to the user. Currently this should be `New S
 
 > The Forgotten House
 
-### Content Context
+### Content Classification
 
-The `Content Context` is used to set the tone and expectation of the generated content, it can strongly influence the AI's responses.
+The `Content Classification` is used to set the tone and expectation of the generated content, it can strongly influence the AI's responses.
 
 You can type in a value or pick something from the list. 
 
