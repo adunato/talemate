@@ -99,15 +99,18 @@ class Client(pydantic.BaseModel):
     # Controls whether token caps and/or response length instructions are
     # sent with prompts. Options:
     #   "uncapped" - no token cap, no instructions
-    #   "cap_tokens_and_instructions" - cap tokens + append instructions (default)
+    #   "cap_tokens_and_instructions" - cap tokens + append instructions
     #   "cap_tokens" - cap tokens only, no instructions
     #   "instructions" - append instructions only, no token cap
+    #   "adaptive" - "instructions" when reasoning is enabled, otherwise
+    #                "cap_tokens_and_instructions" (default)
     enforce_response_length: Literal[
         "uncapped",
         "cap_tokens_and_instructions",
         "cap_tokens",
         "instructions",
-    ] = "cap_tokens_and_instructions"
+        "adaptive",
+    ] = "adaptive"
 
     @pydantic.field_validator("lock_template", mode="before")
     @classmethod
@@ -139,6 +142,11 @@ class Client(pydantic.BaseModel):
                 "label": "Send instructions",
                 "value": "instructions",
                 "help": "Appends length instructions without limiting tokens",
+            },
+            {
+                "label": "Adaptive",
+                "value": "adaptive",
+                "help": "Sends instructions only when reasoning is enabled, otherwise limits tokens and sends instructions",
             },
         ],
     }

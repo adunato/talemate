@@ -434,13 +434,40 @@ class ClientBase:
         return self.client_config.dedupe_enabled
 
     @property
-    def enforce_response_length(self) -> str:
+    def enforce_response_length(
+        self,
+    ) -> Literal[
+        "uncapped",
+        "cap_tokens_and_instructions",
+        "cap_tokens",
+        "instructions",
+        "adaptive",
+    ]:
         return self.client_config.enforce_response_length
+
+    @property
+    def enforce_response_length_resolved(
+        self,
+    ) -> Literal[
+        "uncapped",
+        "cap_tokens_and_instructions",
+        "cap_tokens",
+        "instructions",
+    ]:
+        """The effective mode, resolving "adaptive" based on runtime reasoning state.
+
+        "adaptive" sends instructions only when reasoning is enabled, otherwise
+        caps tokens and sends instructions.
+        """
+        mode = self.enforce_response_length
+        if mode == "adaptive":
+            return "instructions" if self.reason_enabled else "cap_tokens_and_instructions"
+        return mode
 
     @property
     def enforce_response_length_cap_tokens(self) -> bool:
         """Whether the current mode should cap tokens (send max_tokens to the API)."""
-        return self.enforce_response_length in (
+        return self.enforce_response_length_resolved in (
             "cap_tokens_and_instructions",
             "cap_tokens",
         )
@@ -448,7 +475,7 @@ class ClientBase:
     @property
     def enforce_response_length_instructions(self) -> bool:
         """Whether the current mode should append human-readable length instructions."""
-        return self.enforce_response_length in (
+        return self.enforce_response_length_resolved in (
             "cap_tokens_and_instructions",
             "instructions",
         )
