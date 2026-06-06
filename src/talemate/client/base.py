@@ -461,7 +461,9 @@ class ClientBase:
         """
         mode = self.enforce_response_length
         if mode == "adaptive":
-            return "instructions" if self.reason_enabled else "cap_tokens_and_instructions"
+            return (
+                "instructions" if self.reason_enabled else "cap_tokens_and_instructions"
+            )
         return mode
 
     @property
