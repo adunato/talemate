@@ -628,7 +628,7 @@ class ContextInvestigationMessage(SceneMessage):
             return f"Query: {self.query}"
         elif self.sub_type == "examine":
             entity = self.source_arguments.get("entity_name", "entity")
-            return f"Closer look at {entity}"
+            return f"Added detail to {entity}"
         return "Internal note"
 
     def __str__(self):

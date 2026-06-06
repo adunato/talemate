@@ -134,7 +134,7 @@ export default {
         case "query":
           return this.message.source_arguments.query;
         case "examine":
-          return `Closer look at ${this.message.source_arguments.entity_name}`;
+          return `Added detail to ${this.message.source_arguments.entity_name}`;
       }
       return "";
     },

@@ -13,7 +13,7 @@
         {{ sourceLabel }}
       </v-chip>
     </template>
-    <v-chip v-if="busy" size="small" variant="text" class="revision-busy-chip" color="primary">
+    <v-chip v-if="busy" size="small" variant="text" class="revision-busy-chip" :class="{ 'revision-busy-standalone': count <= 1 }" color="primary">
       <v-progress-circular indeterminate size="16" width="2" color="primary" class="mr-2" />
       {{ busyLabel }}
     </v-chip>
@@ -113,6 +113,17 @@ export default {
 
 .revision-busy-chip {
   margin-left: 4px;
+}
+
+/* When no pagination is present the busy chip is the only element, so drop
+   the leading margin and the chip's internal left padding to keep the spinner
+   flush with the left edge of the message below. */
+.revision-busy-chip.revision-busy-standalone {
+  margin-left: 0;
+}
+
+.revision-nav :deep(.revision-busy-chip.revision-busy-standalone.v-chip) {
+  padding-left: 0;
 }
 
 .revision-nav :deep(.revision-source-chip.v-chip) {
