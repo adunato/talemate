@@ -313,7 +313,7 @@ export default {
           rate_limit: null,
           data_format: null,
           section_format: null,
-          enforce_response_length: 'cap_tokens_and_instructions',
+          enforce_response_length: 'adaptive',
           data: {
             has_prompt_template: false,
           }
@@ -403,7 +403,7 @@ export default {
         api_url: 'http://localhost:8080',
         model_name: '',
         max_token_length: 8192,
-        enforce_response_length: 'cap_tokens_and_instructions',
+        enforce_response_length: 'adaptive',
         data: {
           has_prompt_template: false,
         },

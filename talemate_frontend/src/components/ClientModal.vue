@@ -531,6 +531,7 @@ export default {
         { label: 'Limit tokens and send instructions', value: 'cap_tokens_and_instructions', help: 'Limits the API token budget and appends length instructions' },
         { label: 'Limit tokens', value: 'cap_tokens', help: 'Limits the API token budget without length instructions' },
         { label: 'Send instructions', value: 'instructions', help: 'Appends length instructions without limiting tokens' },
+        { label: 'Adaptive', value: 'adaptive', help: 'Sends instructions only when reasoning is enabled, otherwise limits tokens and sends instructions' },
       ];
     },
   },
@@ -605,7 +606,7 @@ export default {
         this.client.lock_template = defaults.lock_template || false;
         this.client.optimize_prompt_caching = defaults.optimize_prompt_caching || false;
         this.client.dedupe_enabled = defaults.dedupe_enabled || false;
-        this.client.enforce_response_length = defaults.enforce_response_length || 'cap_tokens_and_instructions';
+        this.client.enforce_response_length = defaults.enforce_response_length || 'adaptive';
         this.client.template_file = defaults.template_file || null;
         // loop and build name from prefix, checking against current clients
         let name = this.clientTypes[this.client.type].name_prefix;
