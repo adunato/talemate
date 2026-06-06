@@ -72,6 +72,7 @@ def _raise_exception(msg):
 class PromptSpec(pydantic.BaseModel):
     template: str | None = None
     reasoning_pattern: str | None = None
+    reasoning_validation_pattern: str | None = None
 
     def set_spec(self, key: str, value: Any):
         setattr(self, key, value)

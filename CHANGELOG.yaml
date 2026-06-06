@@ -36,6 +36,7 @@
   - "Inference Presets: Widened the adjustable range and refined the step increments on several inference parameter sliders so presets can be tuned more precisely."
   - "More Autocomplete Fields: The character actor's Add Dialogue Example field and the world editor's World information field now support autocomplete (Ctrl+Enter), with the same hint and Redo/Undo affordances as other generated fields."
   - "Response Length Enforcement: Added an Adaptive option to the client's response-length setting, now the default. When reasoning is enabled it relies on length instructions alone, which reasoning models follow well, and drops the token cap that could otherwise cut a response off while the model is still thinking. With reasoning off it falls back to capping tokens and sending instructions."
+  - "Reasoning Validation Pattern: Clients can now define a pattern marking the start of a model's reasoning, alongside the existing strip pattern. When a model doesn't actually reason (as can happen with abliterated variants), its response is accepted as-is instead of erroring out. Built-in templates for Qwen, Gemma, GPT-OSS, and Seed set it automatically."
   changes:
   - "World State Snapshot Cadence: The snapshot now refreshes per individual character turn rather than per full scene round. The default interval was raised from 5 to 10 to keep the effective cadence comparable."
   fixes:

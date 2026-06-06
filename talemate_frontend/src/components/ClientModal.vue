@@ -202,18 +202,21 @@
                     </v-col>
                     <v-col cols="12" v-if="client.reason_enabled && client.requires_reasoning_pattern">
                       <v-sheet class="text-caption text-right">
-                        <!-- default / blank -->
-                        <v-btn @click.stop="client.reason_response_pattern=''" size="small" color="primary" variant="text">{{ 'Default' }}</v-btn>
-                        <!-- gpt-oss -->
-                        <v-btn @click.stop="client.reason_response_pattern='.*?final<\\|message\\|>'" size="small" color="primary" variant="text">{{ 'gpt-oss' }}</v-btn>
-                        <!-- gemma-4 -->
-                        <v-btn @click.stop="client.reason_response_pattern='.*?<channel\\|>'" size="small" color="primary" variant="text">{{ 'gemma-4' }}</v-btn>
-                        <!-- ◁/think▷ -->
-                        <v-btn @click.stop="client.reason_response_pattern='.*?◁/think▷'" size="small" color="primary" variant="text">{{ '.*?◁/think▷' }}</v-btn>
-                        <!-- </think> -->
-                        <v-btn @click.stop="client.reason_response_pattern='.*?</think>'" size="small" color="primary" variant="text">{{ '.*?</think>' }}</v-btn>
+                        <!-- each preset sets BOTH the strip and validation patterns for that model -->
+                        <v-btn @click.stop="applyReasoningPreset('', '')" size="small" color="primary" variant="text">{{ 'Default' }}</v-btn>
+                        <v-btn @click.stop="applyReasoningPreset('.*?final<\\|message\\|>', '<\\|channel\\|>analysis')" size="small" color="primary" variant="text">{{ 'gpt-oss' }}</v-btn>
+                        <v-btn @click.stop="applyReasoningPreset('.*?<channel\\|>', '<\\|channel>thought')" size="small" color="primary" variant="text">{{ 'gemma-4' }}</v-btn>
+                        <v-btn @click.stop="applyReasoningPreset('.*?◁/think▷', '◁think▷')" size="small" color="primary" variant="text">{{ '◁think▷' }}</v-btn>
+                        <v-btn @click.stop="applyReasoningPreset('.*?</think>', '<think>')" size="small" color="primary" variant="text">{{ '<think>' }}</v-btn>
                       </v-sheet>
-                      <v-text-field v-model="client.reason_response_pattern" label="Pattern to strip from the response if the model is reasoning" hint="This is a regular expression that will be used to strip out the thinking tokens from the response." :placeholder="client.data && client.data.reason_response_pattern_default ? client.data.reason_response_pattern_default : '.*?</think>'"></v-text-field>
+                      <v-row>
+                        <v-col cols="12" md="6">
+                          <v-text-field v-model="client.reason_response_pattern" label="Strip pattern" hint="Regular expression used to strip the thinking tokens out of the response." :placeholder="client.data && client.data.reason_response_pattern_default ? client.data.reason_response_pattern_default : '.*?</think>'"></v-text-field>
+                        </v-col>
+                        <v-col cols="12" md="6">
+                          <v-text-field v-model="client.reason_validation_pattern" label="Validation pattern (reasoning start)" hint="Optional. Matches the START of the reasoning tokens. If set and not found in the response (and not prefilled), the model never reasoned and the response is returned as-is instead of failing." :placeholder="client.data && client.data.reason_validation_pattern_default ? client.data.reason_validation_pattern_default : ''"></v-text-field>
+                        </v-col>
+                      </v-row>
                     </v-col>
                   </v-row>
                   <v-row v-if="client.reason_enabled && client.requires_reasoning_pattern">
@@ -601,6 +604,7 @@ export default {
         this.client.reason_tokens = defaults.reason_tokens || 0;
         this.client.min_reason_tokens = defaults.min_reason_tokens || 0;
         this.client.reason_response_pattern = defaults.reason_response_pattern || null;
+        this.client.reason_validation_pattern = defaults.reason_validation_pattern || null;
         this.client.reason_prefill = defaults.reason_prefill || null;
         this.client.requires_reasoning_pattern = defaults.requires_reasoning_pattern || false;
         this.client.lock_template = defaults.lock_template || false;
@@ -640,6 +644,10 @@ export default {
     openLLMTemplates() {
       this.close();
       this.navigateToLLMTemplates();
+    },
+    applyReasoningPreset(stripPattern, validationPattern) {
+      this.client.reason_response_pattern = stripPattern;
+      this.client.reason_validation_pattern = validationPattern;
     },
     save() {
 
@@ -717,6 +725,9 @@ export default {
         this.client.data.template_file = data.data.template_file;
         if (data.data.reason_response_pattern_default !== undefined) {
           this.client.data.reason_response_pattern_default = data.data.reason_response_pattern_default;
+        }
+        if (data.data.reason_validation_pattern_default !== undefined) {
+          this.client.data.reason_validation_pattern_default = data.data.reason_validation_pattern_default;
         }
         this.waitingForTemplateSelection = false;
       } else if (data.type === 'config' && data.action === 'std_llm_templates') {

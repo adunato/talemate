@@ -142,6 +142,7 @@ class CommonDefaults(pydantic.BaseModel):
     reason_enabled: bool = False
     reason_tokens: int = 1024
     reason_response_pattern: str | None = None
+    reason_validation_pattern: str | None = None
     reason_prefill: str | None = None
     dedupe_enabled: bool = False
 
@@ -412,6 +413,12 @@ class ClientBase:
     @property
     def reason_response_pattern(self) -> str:
         return self.client_config.reason_response_pattern or DEFAULT_REASONING_PATTERN
+
+    @property
+    def reason_validation_pattern(self) -> str | None:
+        # No default - validation is opt-in. When unset, reasoning is never
+        # treated as "did not happen" based on a start pattern.
+        return self.client_config.reason_validation_pattern
 
     @property
     def reason_prefill(self) -> str:
@@ -753,14 +760,31 @@ class ClientBase:
             spec=spec,
         )[0]
 
-        if (
-            spec.reasoning_pattern
-            and spec.reasoning_pattern != self.client_config.reason_response_pattern
-        ):
-            log.info("reasoning pattern determined from prompt template", spec=spec)
-            self.client_config.reason_response_pattern = spec.reasoning_pattern
+        self._apply_spec_pattern(
+            spec.reasoning_pattern, "reason_response_pattern", spec
+        )
+        self._apply_spec_pattern(
+            spec.reasoning_validation_pattern, "reason_validation_pattern", spec
+        )
 
         return prompt
+
+    def _apply_spec_pattern(
+        self, spec_value: str | None, config_attr: str, spec: PromptSpec
+    ):
+        """
+        Applies a reasoning pattern determined by the prompt template to the
+        client config, overriding the configured value when the template
+        provides a different one.
+        """
+        if spec_value and spec_value != getattr(self.client_config, config_attr):
+            log.info(
+                "reasoning pattern determined from prompt template",
+                attr=config_attr,
+                value=spec_value,
+                spec=spec,
+            )
+            setattr(self.client_config, config_attr, spec_value)
 
     def prompt_template_example(self) -> tuple[str | None, str | None, PromptSpec]:
         if not getattr(self, "model_name", None):
@@ -968,6 +992,9 @@ class ClientBase:
             "reason_response_pattern_default": (
                 prompt_template_spec.reasoning_pattern or DEFAULT_REASONING_PATTERN
             ),
+            "reason_validation_pattern_default": (
+                prompt_template_spec.reasoning_validation_pattern
+            ),
             "meta": self.Meta().model_dump(),
             "error_action": None,
             "double_coercion": self.double_coercion,
@@ -1020,6 +1047,7 @@ class ClientBase:
             "reason_tokens": self.reason_tokens,
             "min_reason_tokens": self.min_reason_tokens,
             "reason_response_pattern": self.client_config.reason_response_pattern,
+            "reason_validation_pattern": self.client_config.reason_validation_pattern,
             "reason_prefill": self.reason_prefill,
             "reason_failure_behavior": self.reason_failure_behavior,
             "requires_reasoning_pattern": self.requires_reasoning_pattern,
@@ -1389,6 +1417,23 @@ class ClientBase:
 
         if not self.requires_reasoning_pattern:
             # reasoning handled automatically during streaming
+            return response, None
+
+        # If a reasoning-start validation pattern is set but absent from the
+        # response, the model never reasoned, so return it as-is instead of
+        # failing on the strip pattern (see reason_validation_pattern in the
+        # config schema). Skipped when prefilled, as the start then lives in the
+        # prompt rather than the response.
+        validation_pattern = self.reason_validation_pattern
+        if (
+            validation_pattern
+            and not self.reason_prefill
+            and not re.search(validation_pattern, response, re.DOTALL)
+        ):
+            log.debug(
+                "reasoning validation pattern not found - model did not reason",
+                pattern=validation_pattern,
+            )
             return response, None
 
         pattern = self.reason_response_pattern

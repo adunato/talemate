@@ -62,7 +62,14 @@ class Client(pydantic.BaseModel):
     reason_tokens: int = 0
 
     # regex to strip from the response if the model is reasoning
-    reason_response_pattern: Union[str, None] = None
+    reason_response_pattern: str | None = None
+
+    # regex matching the START of the reasoning tokens, used to validate that
+    # the model actually reasoned. Some models (e.g. abliterated variants) do
+    # not always reason. If set and NOT found in the response (and reasoning was
+    # not prefilled), the model never reasoned and the response is treated the
+    # same as when reason_failure_behavior is "ignore".
+    reason_validation_pattern: str | None = None
 
     # reason prefill - will be prepended to the prompt if the model is reasoning
     # this is mostly for base models that don't hhave reas
