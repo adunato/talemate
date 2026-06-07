@@ -41,6 +41,7 @@
   changes:
   - "World State Snapshot Cadence: The snapshot now refreshes per individual character turn rather than per full scene round. The default interval was raised from 5 to 10 to keep the effective cadence comparable."
   fixes:
+  - "Google Client: Fixed the 'Setup incomplete' status leaking into the client's model name. Removing then re-adding the API key could persist 'Setup incomplete' as the model, leaving the client looking configured while every request failed with HTTP 400. The incomplete-setup state is now reported as an error message without overwriting the model, and a client that already has the bad value persisted is healed to report 'No model loaded' instead of sending the invalid model to Google."
   - "Anthropic / OpenRouter Clients: Fixed the 'Optimize for Prompt Caching' toggle not actually enabling caching on Anthropic — the required `cache_control` parameter was never sent. It is now sent when the toggle is on, and the OpenRouter client does the same for `anthropic/*` models. Note: enabling caching for Anthropic via OpenRouter forces routing to direct Anthropic."
   - "Game Loop Event: Fixed an internal scene-loop event being constructed with the wrong scene reference, surfaced by the pydantic migration."
   - "Conversation Agent: Stopped injecting `#` into the LLM stop-sequence list on every conversation turn."
