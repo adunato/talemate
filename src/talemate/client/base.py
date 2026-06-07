@@ -992,7 +992,13 @@ class ClientBase:
             "reason_response_pattern_default": (
                 prompt_template_spec.reasoning_pattern or DEFAULT_REASONING_PATTERN
             ),
+            "reason_response_pattern_from_template": bool(
+                prompt_template_spec.reasoning_pattern
+            ),
             "reason_validation_pattern_default": (
+                prompt_template_spec.reasoning_validation_pattern
+            ),
+            "reason_validation_pattern_from_template": bool(
                 prompt_template_spec.reasoning_validation_pattern
             ),
             "meta": self.Meta().model_dump(),

@@ -211,9 +211,23 @@
                       </v-sheet>
                       <v-row>
                         <v-col cols="12" md="6">
+                          <v-chip v-if="client.data && client.data.reason_response_pattern_from_template && !client.reason_response_pattern"
+                            size="small" label color="primary" variant="text" prepend-icon="mdi-file-cog-outline" class="mb-1">
+                            Template default: {{ client.data.reason_response_pattern_default }}
+                            <v-tooltip activator="parent" location="top" max-width="300">
+                              This strip pattern is provided by the model's prompt template{{ client.data.template_file ? ' (' + client.data.template_file + ')' : '' }} and is currently in effect because you haven't set a custom value. Enter a pattern below to override it.
+                            </v-tooltip>
+                          </v-chip>
                           <v-text-field v-model="client.reason_response_pattern" label="Strip pattern" hint="Regular expression used to strip the thinking tokens out of the response." :placeholder="client.data && client.data.reason_response_pattern_default ? client.data.reason_response_pattern_default : '.*?</think>'"></v-text-field>
                         </v-col>
                         <v-col cols="12" md="6">
+                          <v-chip v-if="client.data && client.data.reason_validation_pattern_from_template && !client.reason_validation_pattern"
+                            size="small" label color="primary" variant="text" prepend-icon="mdi-file-cog-outline" class="mb-1">
+                            Template default: {{ client.data.reason_validation_pattern_default }}
+                            <v-tooltip activator="parent" location="top" max-width="300">
+                              This validation pattern is provided by the model's prompt template{{ client.data.template_file ? ' (' + client.data.template_file + ')' : '' }} and is currently in effect because you haven't set a custom value. Enter a pattern below to override it.
+                            </v-tooltip>
+                          </v-chip>
                           <v-text-field v-model="client.reason_validation_pattern" label="Validation pattern (reasoning start)" hint="Optional. Matches the START of the reasoning tokens. If set and not found in the response (and not prefilled), the model never reasoned and the response is returned as-is instead of failing." :placeholder="client.data && client.data.reason_validation_pattern_default ? client.data.reason_validation_pattern_default : ''"></v-text-field>
                         </v-col>
                       </v-row>
@@ -728,6 +742,12 @@ export default {
         }
         if (data.data.reason_validation_pattern_default !== undefined) {
           this.client.data.reason_validation_pattern_default = data.data.reason_validation_pattern_default;
+        }
+        if (data.data.reason_response_pattern_from_template !== undefined) {
+          this.client.data.reason_response_pattern_from_template = data.data.reason_response_pattern_from_template;
+        }
+        if (data.data.reason_validation_pattern_from_template !== undefined) {
+          this.client.data.reason_validation_pattern_from_template = data.data.reason_validation_pattern_from_template;
         }
         this.waitingForTemplateSelection = false;
       } else if (data.type === 'config' && data.action === 'std_llm_templates') {

@@ -271,7 +271,13 @@ class ConfigPlugin(Plugin):
                     "reason_response_pattern_default": (
                         spec.reasoning_pattern or DEFAULT_REASONING_PATTERN
                     ),
+                    "reason_response_pattern_from_template": bool(
+                        spec.reasoning_pattern
+                    ),
                     "reason_validation_pattern_default": (
+                        spec.reasoning_validation_pattern
+                    ),
+                    "reason_validation_pattern_from_template": bool(
                         spec.reasoning_validation_pattern
                     ),
                 },
