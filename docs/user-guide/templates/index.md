@@ -1,6 +1,6 @@
-# World Editor Templates
+# Templates
 
-Open the **:material-earth-box: World Editor** and select the **:material-cube-scan: Templates** tab to manage templates.
+Click the **:material-cube-scan: Templates** tab in the top navigation bar to manage templates.
 
 These templates are used to facilitate the generation of content for your game. They can be used to define character attributes, character details, writing styles, and automated world or character state tracking.
 

@@ -4,7 +4,7 @@ Spice collections are used to define a set of instructions that can be applied d
 
 ## Creating a spice collection
 
-Fist, if you have not done so, [create a template group](/talemate/user-guide/world-editor/templates/groups) to store the template in.
+Fist, if you have not done so, [create a template group](/talemate/user-guide/templates/groups) to store the template in.
 
 Then select the group you want to add the template to and click the **:material-plus: Create Template** button.
 

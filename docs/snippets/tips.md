@@ -21,7 +21,7 @@
 
 <!--- --8<-- [start:generation_templates_and_settings] -->
 !!! tip "Generation settings and managing templates"
-    Find out more about content generation, managing templates and how to apply randomization and specific writing styles in [Templates](/talemate/user-guide/world-editor/templates/) and [Generation settings](/talemate/user-guide/world-editor/generation-settings).
+    Find out more about content generation, managing templates and how to apply randomization and specific writing styles in [Templates](/talemate/user-guide/templates/) and [Generation settings](/talemate/user-guide/world-editor/generation-settings).
 <!--- --8<-- [end:generation_templates_and_settings] -->
 
 <!--- --8<-- [start:tracked_state] -->

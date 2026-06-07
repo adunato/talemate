@@ -197,7 +197,7 @@ Allows you to quickly set up tracked character and world states.
 
 !!! info "What is a tracked state?"
 
-    --8<-- "docs/talemate/user-guide/tracking-a-state.md:what-is-a-tracked-state"
+    --8<-- "docs/user-guide/tracking-a-state.md:what-is-a-tracked-state"
 
 Please refer to the [World State](/talemate/user-guide/world-state) section for more information on how set up custom states to track.
 <!--- --8<-- [start:quick-apply-favorite-state] -->
@@ -286,7 +286,7 @@ Write direction on how you want the character to enter the scene.
 
 ##### Templates
 
-Control attribute generation using your existing [World State Templates](/talemate/user-guide/world-editor/templates).
+Control attribute generation using your existing [World State Templates](/talemate/user-guide/templates).
 
 ![Select templates](/talemate/img/0.30.0/scene-tool-intro-char-templates.png)
 

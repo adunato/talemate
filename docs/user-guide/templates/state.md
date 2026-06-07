@@ -7,7 +7,7 @@ They are used in the [Character Editor - Tracked States](/talemate/user-guide/wo
 
 ## Creating a state reinforcement template
 
-Fist, if you have not done so, [create a template group](/talemate/user-guide/world-editor/templates/groups) to store the template in.
+Fist, if you have not done so, [create a template group](/talemate/user-guide/templates/groups) to store the template in.
 
 Then select the group you want to add the template to and click the **:material-plus: Create Template** button.
 
@@ -61,7 +61,7 @@ Specifies what type of object the state is attached to, currently this can be
 
 ### Context Attachment Method
 
---8<-- "docs/talemate/user-guide/tracking-a-state.md:context-attachment-method"
+--8<-- "docs/user-guide/tracking-a-state.md:context-attachment-method"
 
 ### Update every `N` turns
 

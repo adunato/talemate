@@ -30,7 +30,7 @@ When a **:material-image-auto-adjust: state reinforcment** is updated the value 
 
 ### :material-image-auto-adjust: [Tracked states](/talemate/user-guide/world-editor/characters/states)
 
---8<-- "docs/talemate/user-guide/tracking-a-state.md:what-is-a-tracked-state"
+--8<-- "docs/user-guide/tracking-a-state.md:what-is-a-tracked-state"
 
 ### :material-bullhorn: [Actor management](/talemate/user-guide/world-editor/characters/actor)
 

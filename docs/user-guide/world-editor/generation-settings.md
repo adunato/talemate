@@ -70,7 +70,7 @@ The remembered lengths include:
 
 Allows you to apply a writing style to AI generated content.
 
-Writing styles are managed through [:material-script-text: writing style templates](/talemate/user-guide/world-editor/templates/writing-style). 
+Writing styles are managed through [:material-script-text: writing style templates](/talemate/user-guide/templates/writing-style). 
 
 Once there is a writing style template available, you can select it from the dropdown list.
 
@@ -80,7 +80,7 @@ Once there is a writing style template available, you can select it from the dro
 
 Spice is a way to add some controlled randomness to AI generated content.
 
-Spices are managed through [:material-chili-mild: spice collection templates](/talemate/user-guide/world-editor/templates/spice).
+Spices are managed through [:material-chili-mild: spice collection templates](/talemate/user-guide/templates/spice).
 
 Once there is a spice template available, you can select it from the dropdown list.
 

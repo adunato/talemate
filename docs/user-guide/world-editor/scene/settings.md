@@ -6,7 +6,7 @@ The `Settings` tab allows you to configure various settings for the scene.
 
 ### Writing Style
 
-If you have any [writing style templates](/talemate/user-guide/world-editor/templates/writing-style/) set up, you can select one here. Some agents may use this to influence their output.
+If you have any [writing style templates](/talemate/user-guide/templates/writing-style/) set up, you can select one here. Some agents may use this to influence their output.
 
 ### Locked save file
 
