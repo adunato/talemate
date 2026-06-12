@@ -47,7 +47,7 @@ The snapshot can also be pinned into the conversation, narrator, and scene-analy
 
 - Autocomplete accepts a free-form {...} hint block at the end of the input to steer the continuation; the block is stripped when accepted.
 - A chip beside the field now offers Redo and Undo after an autocomplete suggestion is applied.
-- The Add Dialogue Example field now supports autocomplete (Ctrl+Enter), with the same hint and Redo/Undo affordances.
+- The Add Dialogue Example and World information fields now support autocomplete (Ctrl+Enter), with the same hint and Redo/Undo affordances.
 - Instructions you provide when generating field content are now followed more reliably, with static history entries treating your instruction as the seed to expand on.
 
 **Clients & Generation**
@@ -55,6 +55,13 @@ The snapshot can also be pinned into the conversation, narrator, and scene-analy
 - OpenAI Compatible client gains a Parameters tab with individual toggles for temperature, top_p, and presence_penalty, so unsupported parameters can be omitted entirely.
 - llama.cpp client adds a Concurrent Inference toggle so batch operations can run requests in parallel against a single server. Off by default.
 - Added a HuggingFace access token to application settings for downloading gated model weights such as the Pocket TTS voice-cloning model.
+- Response length gains an Adaptive option (now the default) that drops the token cap when reasoning is enabled, so responses aren't cut off mid-thought.
+- Clients can now define a reasoning-start pattern so models that skip reasoning are accepted as-is instead of erroring; built-in Qwen, Gemma, GPT-OSS, and Seed templates set it automatically.
+- The client's Reasoning tab now shows a Template default chip when the prompt template supplies a strip or validation pattern, clarifying where the value comes from.
+
+**Installation & Tooling**
+
+- The frontend now installs dependencies with pnpm for supply-chain hardening, provisioned automatically through Corepack; the install, update, and Docker scripts provision Node.js 22.
 
 **Inference Presets**
 
@@ -79,6 +86,7 @@ The snapshot can also be pinned into the conversation, narrator, and scene-analy
 
 **Backends**
 
+- Google: an incomplete setup no longer overwrites the client's model name, which left the client looking configured while every request failed; existing bad values are repaired automatically.
 - Anthropic: the Optimize for Prompt Caching toggle now actually enables caching by sending the required parameter when on.
 - OpenRouter applies the same caching for anthropic/* models; note that enabling it forces routing to direct Anthropic.
 - Conversation agent no longer injects # into the stop-sequence list on every turn.
