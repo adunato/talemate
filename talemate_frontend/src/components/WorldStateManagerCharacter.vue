@@ -201,23 +201,11 @@
                                 <!-- DELETE CHARACTER -->
                         
                                 <v-list-item>
-                                    <v-tooltip  v-if="confirmDelete === null"  max-width="300" :text="`Permanently delete ${character.name} - will ask for confirmation and cannot be undone.`">
+                                    <v-tooltip max-width="300" :text="`Permanently delete ${character.name}. This cannot be undone.`">
                                         <template v-slot:activator="{ props }">
-                                            <v-btn @click.stop="confirmDelete=''; $nextTick(() => { $refs.confirmDeleteInput.focus() })" variant="tonal" v-bind="props" block color="red-darken-2" prepend-icon="mdi-close-box-outline">Delete</v-btn>
+                                            <v-btn :disabled="deleteBusy" @click.stop="deleteCharacter" variant="tonal" v-bind="props" block color="red-darken-2" prepend-icon="mdi-close-box-outline">Delete</v-btn>
                                         </template>
                                     </v-tooltip>
-                        
-                                    <div v-else class="mt-2">
-                                        <v-list-item-subtitle>Confirm Deletion</v-list-item-subtitle>
-                                        <p class="text-grey text-caption">
-                                            Confirm that you want to delete <span class="text-primary">{{ character.name }}</span>, by
-                                            typing the character name and clicking <span class="text-red-darken-2">Delete</span> once more.
-                                            This cannot be undone.
-                                        </p>
-                                        <v-text-field ref="confirmDeleteInput" :disabled="deleteBusy" v-model="confirmDelete" color="red-darken-2" hide-details @keydown.enter="deleteCharacter" />
-                                        <v-btn v-if="confirmDelete !== character.name" :disabled="deleteBusy" variant="tonal" block color="secondary" prepend-icon="mdi-cancel" @click.stop="confirmDelete = null">Cancel</v-btn>
-                                        <v-btn v-else :disabled="deleteBusy" variant="tonal" block color="red-darken-2" prepend-icon="mdi-close-box-outline" @click.stop="deleteCharacter">Delete</v-btn>
-                                    </div>
                                 </v-list-item>
 
                                 <!-- SHARED CONTEXT -->
@@ -436,7 +424,6 @@ export default {
             page: 'description',
             selected: null,
             character: null,
-            confirmDelete: null,
             deleteBusy: false,
             coverImageBusy: false,
             characterColorPicker: false,
@@ -635,14 +622,12 @@ export default {
         },
 
         deleteCharacter() {
-            if (this.confirmDelete === this.character.name) {
-                this.deleteBusy = true;
-                this.getWebsocket().send(JSON.stringify({
-                    type: 'world_state_manager',
-                    action: 'delete_character',
-                    name: this.character.name,
-                }));
-            }
+            this.deleteBusy = true;
+            this.getWebsocket().send(JSON.stringify({
+                type: 'world_state_manager',
+                action: 'delete_character',
+                name: this.character.name,
+            }));
         },
         deactivateCharacter() {
             this.getWebsocket().send(JSON.stringify({
@@ -719,7 +704,6 @@ export default {
                     this.reset();
                 }
                 this.deleteBusy = false;
-                this.confirmDelete = null;
             } else if(message.action === 'character_deactivated' || message.action === 'character_activated') {
                 if(this.selected === message.data.name) {
                     this.loadCharacter(this.selected)
