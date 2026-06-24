@@ -13,6 +13,7 @@ logs/
 .cursor
 .claude
 .coverage
+.worktrees/
 
 # uv
 .venv/
