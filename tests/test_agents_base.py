@@ -8,6 +8,7 @@ contract of the base class.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Optional
 
@@ -799,6 +800,156 @@ class TestSetProcessingDecorator:
         prefix = f"{a.agent_type}__"
         assert state[f"{prefix}x"] == 5
         assert state[f"{prefix}extra_marker"] == "here"
+
+    @pytest.mark.asyncio
+    async def test_foreground_action_waits_for_background_action(self):
+        a = _MinimalAgent()
+        started = asyncio.Event()
+        release = asyncio.Event()
+        foreground_ran = asyncio.Event()
+
+        @set_processing
+        async def background_action(self_):
+            started.set()
+            await release.wait()
+
+        @set_processing
+        async def foreground_action(self_):
+            foreground_ran.set()
+
+        task = await a.run_background_action(
+            "background_action",
+            lambda: background_action(a),
+        )
+        await started.wait()
+
+        foreground_task = asyncio.create_task(foreground_action(a))
+        await asyncio.sleep(0)
+
+        assert not foreground_ran.is_set()
+        assert a.status == "busy_bg"
+        assert a.meta["background_waiters"] == 1
+
+        release.set()
+        await task
+        await foreground_task
+        await asyncio.sleep(0)
+
+        assert foreground_ran.is_set()
+        assert a.meta["background_waiters"] == 0
+
+    @pytest.mark.asyncio
+    async def test_second_background_request_runs_synchronously_after_first(self):
+        a = _MinimalAgent()
+        started = asyncio.Event()
+        release = asyncio.Event()
+        calls = []
+
+        async def first_action():
+            calls.append("first-start")
+            started.set()
+            await release.wait()
+            calls.append("first-end")
+
+        async def second_action():
+            calls.append("second")
+            return "second-result"
+
+        first_task = await a.run_background_action("first", first_action)
+        await started.wait()
+
+        second_request = asyncio.create_task(
+            a.run_background_action("second", second_action)
+        )
+        await asyncio.sleep(0)
+        assert calls == ["first-start"]
+
+        release.set()
+        await first_task
+        assert await second_request == "second-result"
+        assert calls == ["first-start", "first-end", "second"]
+
+    def test_action_execution_defaults_to_blocking(self):
+        a = _MinimalAgent()
+        assert a.action_execution("missing") == "blocking"
+
+        a.actions["automatic"] = AgentAction(
+            label="Automatic",
+            config={
+                "execution": AgentActionConfig(
+                    type="text",
+                    label="Execution",
+                    value="background",
+                )
+            },
+        )
+        assert a.action_execution("automatic") == "background"
+
+    @pytest.mark.asyncio
+    async def test_configured_actions_group_background_work(self):
+        a = _MinimalAgent()
+        release = asyncio.Event()
+        calls = []
+
+        a.actions = {
+            "blocking": AgentAction(
+                label="Blocking",
+                config={
+                    "execution": AgentActionConfig(
+                        type="text",
+                        label="Execution",
+                        value="blocking",
+                    )
+                },
+            ),
+            "background_one": AgentAction(
+                label="Background one",
+                config={
+                    "execution": AgentActionConfig(
+                        type="text",
+                        label="Execution",
+                        value="background",
+                    )
+                },
+            ),
+            "background_two": AgentAction(
+                label="Background two",
+                config={
+                    "execution": AgentActionConfig(
+                        type="text",
+                        label="Execution",
+                        value="background",
+                    )
+                },
+            ),
+        }
+
+        async def blocking():
+            calls.append("blocking")
+
+        async def background_one():
+            calls.append("background-one")
+            await release.wait()
+
+        async def background_two():
+            calls.append("background-two")
+
+        results = await a.run_configured_actions(
+            [
+                ("background_one", background_one),
+                ("blocking", blocking),
+                ("background_two", background_two),
+            ]
+        )
+
+        assert calls == ["blocking"]
+        background_task = results[-1]
+        await asyncio.sleep(0)
+        assert calls == ["blocking", "background-one"]
+
+        release.set()
+        await background_task
+        assert calls == ["blocking", "background-one", "background-two"]
 
 
 # ---------------------------------------------------------------------------

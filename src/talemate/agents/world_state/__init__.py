@@ -103,6 +103,17 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
                         max=100,
                         step=1,
                     ),
+                    "execution": AgentActionConfig(
+                        type="text",
+                        label="Execution",
+                        description="Run automatic world-state updates as blocking work or in the background.",
+                        value="blocking",
+                        choices=[
+                            {"label": "Blocking", "value": "blocking"},
+                            {"label": "Background", "value": "background"},
+                        ],
+                        title="Scheduling",
+                    ),
                 },
             ),
             "update_reinforcements": AgentAction(
@@ -110,7 +121,19 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
                 can_be_disabled=True,
                 label="Update state reinforcements",
                 description="Will attempt to update any due state reinforcements.",
-                config={},
+                config={
+                    "execution": AgentActionConfig(
+                        type="text",
+                        label="Execution",
+                        description="Run automatic reinforcement updates as blocking work or in the background.",
+                        value="blocking",
+                        choices=[
+                            {"label": "Blocking", "value": "blocking"},
+                            {"label": "Background", "value": "background"},
+                        ],
+                        title="Scheduling",
+                    ),
+                },
             ),
             "check_pin_conditions": AgentAction(
                 enabled=True,
@@ -126,7 +149,18 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
                         min=1,
                         max=100,
                         step=1,
-                    )
+                    ),
+                    "execution": AgentActionConfig(
+                        type="text",
+                        label="Execution",
+                        description="Run automatic conditional-pin checks as blocking work or in the background.",
+                        value="blocking",
+                        choices=[
+                            {"label": "Blocking", "value": "blocking"},
+                            {"label": "Background", "value": "background"},
+                        ],
+                        title="Scheduling",
+                    ),
                 },
             ),
         }
@@ -209,7 +243,10 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
         if self.get_scene_state("inital_update_done"):
             return
 
-        await self.scene.world_state.request_update()
+        await self.run_configured_action(
+            "update_world_state",
+            self.scene.world_state.request_update,
+        )
         self.set_scene_states(inital_update_done=True)
 
     async def on_game_loop(self, emission: GameLoopEvent):
@@ -220,9 +257,18 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
         if not self.enabled:
             return
 
-        await self.update_world_state()
-        await self.auto_update_reinforcments()
-        await self.auto_check_pin_conditions()
+        actions = [
+            ("update_world_state", self.update_world_state),
+        ]
+        if self.actions["update_reinforcements"].enabled:
+            actions.append(("update_reinforcements", self.update_reinforcements))
+        if self.actions["check_pin_conditions"].enabled:
+            actions.append(("check_pin_conditions", self.auto_check_pin_conditions))
+
+        await self.run_configured_actions(
+            actions,
+            background_action_name="automatic_world_state_updates",
+        )
 
     async def auto_update_reinforcments(self):
         if not self.enabled:
@@ -655,6 +701,18 @@ class WorldStateAgent(CharacterProgressionMixin, AvatarMixin, Agent):
         )
 
         answer = extracted["response"]
+
+        _, current_reinforcement = await self.scene.world_state.find_reinforcement(
+            question,
+            character,
+        )
+        if current_reinforcement is not reinforcement:
+            log.info(
+                "discarding completed reinforcement update because target was removed",
+                question=question,
+                character=character,
+            )
+            return
 
         reinforcement.answer = answer
         reinforcement.due = reinforcement.interval

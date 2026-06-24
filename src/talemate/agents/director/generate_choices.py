@@ -86,6 +86,17 @@ class GenerateChoicesMixin:
                     description="Provide some instructions to the director for generating actions.",
                     value="",
                 ),
+                "execution": AgentActionConfig(
+                    type="text",
+                    label="Execution",
+                    description="Generate automatic player choices as blocking work or in the background.",
+                    value="blocking",
+                    choices=[
+                        {"label": "Blocking", "value": "blocking"},
+                        {"label": "Background", "value": "background"},
+                    ],
+                    title="Scheduling",
+                ),
             },
         )
 
@@ -141,7 +152,10 @@ class GenerateChoicesMixin:
                     break
 
             if random.random() < self.generate_choices_chance:
-                await self.generate_choices()
+                await self.run_configured_action(
+                    "_generate_choices",
+                    self.generate_choices,
+                )
 
     # methods
 

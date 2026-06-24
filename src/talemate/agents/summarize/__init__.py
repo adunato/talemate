@@ -144,6 +144,17 @@ class SummarizeAgent(
                         description="Optional instructions to guide the summarization process.",
                         value="",
                     ),
+                    "execution": AgentActionConfig(
+                        type="text",
+                        label="Execution",
+                        description="Run automatic summarisation as blocking work or in the background.",
+                        value="blocking",
+                        choices=[
+                            {"label": "Blocking", "value": "blocking"},
+                            {"label": "Background", "value": "background"},
+                        ],
+                        title="Scheduling",
+                    ),
                 },
             ),
         }
@@ -198,7 +209,13 @@ class SummarizeAgent(
             writing_style=self.scene.writing_style,
         )
 
-        await self.build_archive(self.scene, generation_options=generation_options)
+        await self.run_configured_action(
+            "archive",
+            lambda: self.build_archive(
+                self.scene,
+                generation_options=generation_options,
+            ),
+        )
 
     def clean_result(self, result):
         if "#" in result:

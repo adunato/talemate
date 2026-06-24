@@ -9,7 +9,7 @@ import re
 import traceback
 from abc import ABC
 from functools import wraps
-from typing import Callable, Literal
+from typing import Awaitable, Callable, Literal
 import uuid
 import pydantic
 from pydantic import ConfigDict
@@ -283,6 +283,9 @@ def set_processing(fn):
 
     @wraps(fn)
     async def wrapper(self, *args, **kwargs):
+        await self.wait_for_background_processing()
+        is_background = self.is_background_task()
+
         with ClientContext():
             scene = active_scene.get()
 
@@ -290,13 +293,17 @@ def set_processing(fn):
                 scene.continue_actions()
 
             with ActiveAgent(self, fn, args, kwargs) as active_agent_context:
+                previous_action = self._current_action
                 try:
                     action_name = fn.__name__
                     if action_name == "delegate":
                         action_name = args[0].__name__
 
                     self._current_action = action_name
-                    await self.emit_status(processing=True)
+                    if is_background:
+                        await self.emit_status()
+                    else:
+                        await self.emit_status(processing=True)
 
                     # Now pass the complete args list
                     if getattr(fn, "store_context_state", None) is not None:
@@ -320,8 +327,11 @@ def set_processing(fn):
                     return await fn(self, *args, **kwargs)
                 finally:
                     try:
-                        self._current_action = None
-                        await self.emit_status(processing=False)
+                        self._current_action = previous_action
+                        if is_background:
+                            await self.emit_status()
+                        else:
+                            await self.emit_status(processing=False)
                     except RuntimeError as exc:
                         # not sure why this happens
                         # some concurrency error?
@@ -347,6 +357,9 @@ class Agent(ABC):
     _emit_status_debounce_task: asyncio.Task | None = None
 
     _current_action: str | None = None
+    _background_task: asyncio.Task | None = None
+    _background_action: str | None = None
+    _background_waiters: int = 0
 
     @classmethod
     def init_actions(
@@ -499,7 +512,8 @@ class Agent(ABC):
     def meta(self):
         meta = {
             "essential": self.essential,
-            "current_action": self._current_action,
+            "current_action": self._current_action or self._background_action,
+            "background_waiters": getattr(self, "_background_waiters", 0),
         }
 
         return meta
@@ -1007,6 +1021,148 @@ class Agent(ABC):
             self.processing_bg -= 1
             await self.emit_status()
 
+    @property
+    def background_task(self) -> asyncio.Task | None:
+        return getattr(self, "_background_task", None)
+
+    def is_background_task(self) -> bool:
+        task = getattr(self, "_background_task", None)
+        return task is not None and task is asyncio.current_task()
+
+    async def wait_for_background_processing(self):
+        task = self.background_task
+        if not task or task is asyncio.current_task():
+            return
+
+        self._background_waiters = getattr(self, "_background_waiters", 0) + 1
+        await self.emit_status()
+        try:
+            await asyncio.gather(task, return_exceptions=True)
+        finally:
+            self._background_waiters = max(0, self._background_waiters - 1)
+            await self.emit_status()
+
+    async def _handle_single_background_task(
+        self,
+        task: asyncio.Task,
+        error_handler=None,
+    ):
+        try:
+            if not task.cancelled() and task.exception():
+                exc = task.exception()
+                log.error(
+                    "background agent action failed",
+                    agent=self.agent_type,
+                    action=self._background_action,
+                    exc=exc,
+                    traceback="".join(
+                        traceback.format_exception(
+                            type(exc), exc, exc.__traceback__
+                        )
+                    ),
+                )
+                if error_handler:
+                    await error_handler(exc)
+        finally:
+            if getattr(self, "_background_task", None) is task:
+                self._background_task = None
+                self._background_action = None
+                self.processing_bg = max(0, getattr(self, "processing_bg", 0) - 1)
+                await self.emit_status()
+
+    async def run_background_action(
+        self,
+        action_name: str,
+        action: Callable[[], Awaitable],
+        error_handler=None,
+    ):
+        """
+        Run one non-blocking action for this agent.
+
+        If another background action is already active, wait for it and execute
+        the requested action synchronously instead of creating a second task.
+        """
+        if self.background_task:
+            await self.wait_for_background_processing()
+            return await action()
+
+        task = asyncio.create_task(
+            action(),
+            name=f"talemate:{self.agent_type}:{action_name}",
+        )
+        self._background_task = task
+        self._background_action = action_name
+        self.processing_bg = getattr(self, "processing_bg", 0) + 1
+        await self.emit_status()
+        task.add_done_callback(
+            lambda fut: asyncio.create_task(
+                self._handle_single_background_task(fut, error_handler)
+            )
+        )
+        return task
+
+    def action_execution(self, action_name: str) -> str:
+        action = getattr(self, "actions", {}).get(action_name)
+        if not action or not action.config:
+            return "blocking"
+        config = action.config.get("execution")
+        return config.value if config else "blocking"
+
+    async def run_configured_action(
+        self,
+        action_name: str,
+        action: Callable[[], Awaitable],
+        error_handler=None,
+    ):
+        if self.action_execution(action_name) == "background":
+            return await self.run_background_action(
+                action_name,
+                action,
+                error_handler=error_handler,
+            )
+        return await action()
+
+    async def run_configured_actions(
+        self,
+        actions: list[tuple[str, Callable[[], Awaitable]]],
+        background_action_name: str = "background_updates",
+        error_handler=None,
+    ):
+        """
+        Run blocking actions first, then group all background-configured actions
+        into this agent's single background task.
+        """
+        blocking_actions = []
+        background_actions = []
+
+        for action_name, action in actions:
+            if self.action_execution(action_name) == "background":
+                background_actions.append(action)
+            else:
+                blocking_actions.append(action)
+
+        results = []
+        for action in blocking_actions:
+            results.append(await action())
+
+        if background_actions:
+
+            async def run_background_actions():
+                background_results = []
+                for action in background_actions:
+                    background_results.append(await action())
+                return background_results
+
+            results.append(
+                await self.run_background_action(
+                    background_action_name,
+                    run_background_actions,
+                    error_handler=error_handler,
+                )
+            )
+
+        return results
+
     async def set_background_processing(self, task: asyncio.Task, error_handler=None):
         log.info("set_background_processing", agent=self.agent_type)
         if not hasattr(self, "processing_bg"):
@@ -1022,6 +1178,9 @@ class Agent(ABC):
         )
 
     def connect(self, scene):
+        background_task = self.background_task
+        if background_task and getattr(self, "scene", None) is not scene:
+            background_task.cancel()
         self.scene = scene
         talemate.emit.async_signals.get("game_loop_start").connect(
             self.on_game_loop_start

@@ -64,6 +64,17 @@ class CharacterProgressionMixin:
                     min=1,
                     max=5,
                 ),
+                "execution": AgentActionConfig(
+                    type="text",
+                    label="Execution",
+                    description="Run automatic character-progression checks as blocking work or in the background.",
+                    value="blocking",
+                    choices=[
+                        {"label": "Blocking", "value": "blocking"},
+                        {"label": "Background", "value": "background"},
+                    ],
+                    title="Scheduling",
+                ),
             },
         )
 
@@ -120,6 +131,12 @@ class CharacterProgressionMixin:
 
         self.set_scene_states(rounds_since_last_character_progression_check=0)
 
+        await self.run_configured_action(
+            "character_progression",
+            self._run_character_progression,
+        )
+
+    async def _run_character_progression(self):
         for character in self.scene.characters:
             if character.is_player and not self.character_progression_player_character:
                 continue
@@ -127,6 +144,12 @@ class CharacterProgressionMixin:
             calls: list[focal.Call] = await self.determine_character_development(
                 character
             )
+            if self.scene.get_character(character.name) is not character:
+                log.info(
+                    "discarding character progression because target was removed",
+                    character=character.name,
+                )
+                continue
             await self.character_progression_process_calls(
                 character=character,
                 calls=calls,

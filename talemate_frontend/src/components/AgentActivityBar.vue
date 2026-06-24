@@ -14,6 +14,9 @@
           <span v-if="getActionDescription(agent)" class="ml-1 text-muted">
             · {{ getActionDescription(agent) }}
           </span>
+          <span v-if="getWaitingCount(agent)" class="ml-1 text-warning">
+            · {{ getWaitingCount(agent) }} waiting
+          </span>
         </v-chip>
       </transition-group>
     </div>
@@ -76,6 +79,9 @@ export default {
           .replace(/\b\w/g, char => char.toUpperCase());
       }
       return "Processing";
+    },
+    getWaitingCount(agent) {
+      return agent.meta?.background_waiters || 0;
     }
   }
 };
