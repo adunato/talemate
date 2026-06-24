@@ -271,6 +271,7 @@ async def load_scene_from_data(
     memory = instance.get_agent("memory")
 
     migrate_character_data(scene_data)
+    normalize_character_names(scene_data)
     migrate_director_chat_state(scene_data)
 
     scene.description = scene_data.get("description", "")
@@ -893,6 +894,54 @@ def migrate_character_data(scene_data: dict):
     for character in scene_data.get("characters", []):
         scene_data["character_data"][character["name"]] = character
         scene_data["active_characters"].append(character["name"])
+
+
+def normalize_character_names(scene_data: dict) -> dict[str, str]:
+    """
+    Repair stale character keys and references created by legacy rename paths.
+
+    Returns a mapping of stored names to their normalized model names.
+    """
+    character_data = scene_data.get("character_data", {})
+    mappings: dict[str, str] = {}
+    normalized_character_data: dict[str, dict] = {}
+
+    for stored_name, character in character_data.items():
+        model_name = (character.get("name") or stored_name).strip()
+        character["name"] = model_name
+
+        if stored_name != model_name:
+            mappings[stored_name] = model_name
+
+        if model_name in normalized_character_data:
+            raise ValueError(f"Duplicate character name after normalization: {model_name}")
+        normalized_character_data[model_name] = character
+
+    scene_data["character_data"] = normalized_character_data
+
+    active_characters: list[str] = []
+    for name in scene_data.get("active_characters", []):
+        normalized_name = mappings.get(name, name.strip())
+        if (
+            normalized_name in normalized_character_data
+            and normalized_name not in active_characters
+        ):
+            active_characters.append(normalized_name)
+    scene_data["active_characters"] = active_characters
+
+    world_state = scene_data.get("world_state", {})
+    world_state_characters = world_state.get("characters", {})
+    for old_name, new_name in mappings.items():
+        if old_name in world_state_characters:
+            world_state_characters[new_name] = world_state_characters.pop(old_name)
+        for reinforcement in world_state.get("reinforce", []):
+            if reinforcement.get("character") == old_name:
+                reinforcement["character"] = new_name
+
+    if mappings:
+        log.warning("Normalized stale character names", mappings=mappings)
+
+    return mappings
 
 
 def migrate_director_chat_state(scene_data: dict):

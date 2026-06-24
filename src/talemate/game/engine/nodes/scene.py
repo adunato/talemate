@@ -476,7 +476,7 @@ class UpdateCharacterData(Node):
         if self.is_set(description):
             character.update(description=description)
         if self.is_set(name):
-            character.rename(name)
+            active_scene.get().rename_character(character, name)
         if self.is_set(color):
             character.color = color
 

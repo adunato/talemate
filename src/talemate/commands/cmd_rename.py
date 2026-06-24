@@ -38,7 +38,10 @@ class CmdRename(TalemateCommand):
 
         name = await wait_for_input("Enter new name: ")
 
-        character.rename(name)
+        try:
+            self.scene.rename_character(character, name)
+        except ValueError as exc:
+            self.system_message(str(exc))
         await asyncio.sleep(0)
 
         return True

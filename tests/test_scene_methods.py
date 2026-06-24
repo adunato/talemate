@@ -29,6 +29,7 @@ from talemate.scene_message import (
     reset_message_id,
 )
 from talemate.tale_mate import Actor, Player, Scene
+from talemate.world_state import Reinforcement
 
 
 # ---------------------------------------------------------------------------
@@ -254,6 +255,37 @@ class TestAddActorAndCharacterLookups:
 
 
 class TestCharacterAccessors:
+    def test_rename_character_updates_all_name_indexes(self, real_scene):
+        character = _add_char(real_scene, "Alice")
+        real_scene.world_state.characters["Alice"] = object()
+        real_scene.world_state.reinforce.append(
+            Reinforcement(question="Mood?", character="Alice")
+        )
+
+        real_scene.rename_character(character, "Alicia")
+
+        assert character.name == "Alicia"
+        assert "Alice" not in real_scene.character_data
+        assert real_scene.character_data["Alicia"] is character
+        assert real_scene.active_characters == ["Alicia"]
+        assert "Alice" not in real_scene.world_state.characters
+        assert "Alicia" in real_scene.world_state.characters
+        assert real_scene.world_state.reinforce[0].character == "Alicia"
+
+    def test_normalize_character_state_repairs_legacy_rename(self, real_scene):
+        character = _add_char(real_scene, "Old Name")
+        character.name = "New Name "
+        real_scene.world_state.reinforce.append(
+            Reinforcement(question="Mood?", character="Old Name")
+        )
+
+        mappings = real_scene.normalize_character_state()
+
+        assert mappings == {"Old Name": "New Name"}
+        assert real_scene.character_data == {"New Name": character}
+        assert real_scene.active_characters == ["New Name"]
+        assert real_scene.world_state.reinforce[0].character == "New Name"
+
     def test_get_character_exact_match_case_insensitive(self, real_scene):
         _add_char(real_scene, "Alice")
         assert real_scene.get_character("alice").name == "Alice"

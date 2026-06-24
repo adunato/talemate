@@ -397,41 +397,7 @@ class WorldStateManager:
             character_name: The character's current name.
             new_name: The new, validated character name.
         """
-        character = self.scene.get_character(character_name)
-        if not character:
-            raise ValueError("Character not found")
-
-        existing = next(
-            (
-                candidate
-                for candidate in self.scene.character_data.values()
-                if candidate is not character
-                and candidate.name.casefold() == new_name.casefold()
-            ),
-            None,
-        )
-        if existing:
-            raise ValueError("A character with that name already exists")
-
-        old_name = character.name
-        if old_name == new_name:
-            return
-
-        character.rename(new_name)
-
-        # character_data is serialized with the character name as its key.
-        # Re-key it so saves and later removal use the renamed character.
-        self.scene.character_data = {
-            new_name if value is character else key: value
-            for key, value in self.scene.character_data.items()
-        }
-        self.scene.active_characters = [
-            new_name if name == old_name else name
-            for name in self.scene.active_characters
-        ]
-        for reinforcement in self.world_state.reinforce:
-            if reinforcement.character == old_name:
-                reinforcement.character = new_name
+        self.scene.rename_character(character_name, new_name)
 
     async def rename_character_folder(self, old_name: str, new_name: str):
         """

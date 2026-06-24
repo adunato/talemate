@@ -48,9 +48,23 @@ class ConversationWebsocketHandler(Plugin):
 
         if payload.character:
             character = self.scene.get_character(payload.character)
+            if not character or not self.scene.character_is_active(character):
+                log.error(
+                    "handle_request_actor_action: Character is not active",
+                    character=payload.character,
+                )
+                return
             actor = character.actor
         else:
-            actor = random.choice(list(self.scene.get_npc_characters())).actor
+            characters = [
+                character
+                for character in self.scene.get_npc_characters()
+                if self.scene.character_is_active(character)
+            ]
+            if not characters:
+                log.error("handle_request_actor_action: No active actor found")
+                return
+            actor = random.choice(characters).actor
 
             if not actor:
                 log.error("handle_request_actor_action: No actor found")

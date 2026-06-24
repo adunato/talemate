@@ -153,7 +153,7 @@
 
                 <!-- actor actions -->
 
-                <SceneToolsActor :disabled="appBusy || !appReady" :npc-characters="npc_characters" />
+                <SceneToolsActor :disabled="appBusy || !appReady" :npc-characters="deactivatableCharacters" />
 
                 <!-- narrator actions -->
 

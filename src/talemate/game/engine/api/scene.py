@@ -285,7 +285,7 @@ def create(scene: "Scene") -> "ScopedAPI":
             if not character:
                 raise UnknownCharacter(validated.character_name)
 
-            character.rename(validated.new_name)
+            scene.rename_character(character, validated.new_name)
 
         def set_description(self, description: str):
             """

@@ -1069,7 +1069,111 @@ class Scene(Emitter):
         if character is None:
             return False
 
-        return character.name in self.character_names
+        return character.name in self.active_characters
+
+    def normalize_character_state(self) -> dict[str, str]:
+        """
+        Repair name-indexed character state and return old-to-new name mappings.
+
+        Character names are stored both on the Character model and in scene-level
+        indexes. Older rename paths only updated the model, which could leave
+        ``character_data`` and ``active_characters`` pointing at stale names.
+        """
+        name_mappings: dict[str, str] = {}
+        normalized_character_data: dict[str, Character] = {}
+
+        for stored_name, character in self.character_data.items():
+            normalized_name = character.name.strip()
+            if not normalized_name:
+                normalized_name = stored_name.strip()
+
+            if character.name != normalized_name:
+                character.name = normalized_name
+                character.memory_dirty = True
+
+            if stored_name != normalized_name:
+                name_mappings[stored_name] = normalized_name
+
+            existing = normalized_character_data.get(normalized_name)
+            if existing is not None and existing is not character:
+                raise ValueError(
+                    f"Cannot normalize duplicate character name: {normalized_name}"
+                )
+            normalized_character_data[normalized_name] = character
+
+        self.character_data = normalized_character_data
+
+        active_names: list[str] = []
+        for name in self.active_characters:
+            normalized_name = name_mappings.get(name, name.strip())
+            if (
+                normalized_name in self.character_data
+                and normalized_name not in active_names
+            ):
+                active_names.append(normalized_name)
+
+        self.active_characters = active_names
+
+        for old_name, new_name in name_mappings.items():
+            if old_name in self.world_state.characters:
+                self.world_state.characters[new_name] = self.world_state.characters.pop(
+                    old_name
+                )
+            for reinforcement in self.world_state.reinforce:
+                if reinforcement.character == old_name:
+                    reinforcement.character = new_name
+
+        return name_mappings
+
+    def rename_character(self, character: "Character | str", new_name: str):
+        """Rename a character while preserving every scene-level name index."""
+        if isinstance(character, str):
+            character = self.get_character(character)
+
+        if character is None:
+            raise ValueError("Character not found")
+
+        new_name = new_name.strip()
+        if not new_name:
+            raise ValueError("Character name cannot be empty")
+
+        existing = next(
+            (
+                candidate
+                for candidate in self.character_data.values()
+                if candidate is not character
+                and candidate.name.casefold() == new_name.casefold()
+            ),
+            None,
+        )
+        if existing:
+            raise ValueError("A character with that name already exists")
+
+        old_name = character.name
+        if old_name == new_name:
+            self.normalize_character_state()
+            return character
+
+        character.rename(new_name)
+        self.character_data = {
+            new_name if value is character else key: value
+            for key, value in self.character_data.items()
+        }
+        self.active_characters = [
+            new_name if name == old_name else name
+            for name in self.active_characters
+        ]
+
+        if old_name in self.world_state.characters:
+            self.world_state.characters[new_name] = self.world_state.characters.pop(
+                old_name
+            )
+        for reinforcement in self.world_state.reinforce:
+            if reinforcement.character == old_name:
+                reinforcement.character = new_name
+
+        self.normalize_character_state()
+        return character
 
     def get_character(self, character_name: str, partial: bool = False):
         """
