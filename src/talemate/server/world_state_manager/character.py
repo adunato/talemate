@@ -6,6 +6,7 @@ from talemate.util.strings import normalize_name
 log = structlog.get_logger("talemate.server.world_state_manager.character")
 
 FOLDER_NAME_MAX_LENGTH = 29
+CHARACTER_NAME_MAX_LENGTH = 100
 
 
 def _normalize_folder_name(raw: str | None) -> str | None:
@@ -60,6 +61,13 @@ class RenameCharacterFolderPayload(pydantic.BaseModel):
     """Payload for renaming a character folder (bulk)."""
 
     old_name: str
+    new_name: str
+
+
+class RenameCharacterPayload(pydantic.BaseModel):
+    """Payload for renaming a character."""
+
+    name: str
     new_name: str
 
 
@@ -253,6 +261,47 @@ class CharacterMixin:
 
         await self.handle_get_character_list({})
         await self.handle_get_character_details({"name": payload.name})
+        await self.signal_operation_done()
+        self.scene.emit_status()
+
+    async def handle_rename_character(self, data: dict):
+        """Rename a character and refresh the character editor state."""
+        try:
+            payload = RenameCharacterPayload(**data)
+        except pydantic.ValidationError as e:
+            log.error("Invalid payload for rename_character", error=e)
+            await self.signal_operation_failed(str(e))
+            return
+
+        new_name = normalize_name(payload.new_name, CHARACTER_NAME_MAX_LENGTH)
+        if not new_name:
+            await self.signal_operation_failed("Character name cannot be empty")
+            return
+
+        character = self.scene.get_character(payload.name)
+        if not character:
+            await self.signal_operation_failed("Character not found")
+            return
+
+        old_name = character.name
+        try:
+            await self.world_state_manager.rename_character(old_name, new_name)
+        except ValueError as e:
+            await self.signal_operation_failed(str(e))
+            return
+
+        self.websocket_handler.queue_put(
+            {
+                "type": "world_state_manager",
+                "action": "character_renamed",
+                "data": {
+                    "old_name": old_name,
+                    "new_name": new_name,
+                },
+            }
+        )
+        await self.handle_get_character_list({})
+        await self.handle_get_character_details({"name": new_name})
         await self.signal_operation_done()
         self.scene.emit_status()
 

@@ -255,6 +255,47 @@ class TestUpdateCharacterScalars:
         await manager.update_character_folder("Ghost", "Heroes")
 
     @pytest.mark.asyncio
+    async def test_rename_character_updates_scene_indexes(self, scene, manager):
+        character = make_actor(scene, "Alice")
+        character.description = "Alice is ready."
+        await scene.world_state.add_reinforcement(
+            question="What is Alice's mood?", character="Alice", answer="ready"
+        )
+
+        await manager.rename_character("Alice", "Alicia")
+
+        assert character.name == "Alicia"
+        assert character.description == "Alicia is ready."
+        assert "Alice" not in scene.character_data
+        assert scene.character_data["Alicia"] is character
+        assert scene.active_characters == ["Alicia"]
+        assert scene.get_character("Alicia") is character
+        assert scene.world_state.reinforce[0].character == "Alicia"
+
+    @pytest.mark.asyncio
+    async def test_rename_inactive_character_updates_scene_key(self, scene, manager):
+        from talemate.character import Character
+
+        character = Character(name="Ghost")
+        scene.character_data["Ghost"] = character
+
+        await manager.rename_character("Ghost", "Spirit")
+
+        assert scene.character_data == {"Spirit": character}
+        assert scene.active_characters == []
+        assert scene.get_character("Spirit") is character
+
+    @pytest.mark.asyncio
+    async def test_rename_character_rejects_duplicate_case_insensitively(
+        self, scene, manager
+    ):
+        make_actor(scene, "Alice")
+        make_actor(scene, "Bob")
+
+        with pytest.raises(ValueError, match="already exists"):
+            await manager.rename_character("Alice", "bob")
+
+    @pytest.mark.asyncio
     async def test_update_character_visual_rules(self, scene, manager):
         ch = make_actor(scene, "Alice")
         await manager.update_character_visual_rules("Alice", "tall, blonde")

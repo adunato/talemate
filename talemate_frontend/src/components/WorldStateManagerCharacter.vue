@@ -6,6 +6,18 @@
             <v-card-title>
                 <v-icon size="small">mdi-account</v-icon>
                 {{ character.name }}
+                <v-tooltip text="Rename character">
+                    <template v-slot:activator="{ props }">
+                        <v-btn
+                            v-bind="props"
+                            class="ml-1"
+                            icon="mdi-pencil"
+                            size="x-small"
+                            variant="text"
+                            @click.stop="openRenameDialog"
+                        />
+                    </template>
+                </v-tooltip>
                 <v-chip size="x-small" v-if="character.is_player === false" color="warning" label>AI</v-chip>
                 <v-chip size="x-small" v-if="character.is_player === true" color="info" label>Player</v-chip>
                 <v-chip size="x-small" class="ml-1" v-if="character.active === true && character.is_player === false" color="success" label>Active</v-chip>
@@ -64,6 +76,39 @@
 
                 <v-dialog v-model="characterColorPicker" scrollable width="300">
                     <v-color-picker v-model="character.color" @update:model-value="onCharacterColorChange"></v-color-picker>
+                </v-dialog>
+
+                <v-dialog v-model="renameDialog.open" max-width="400" @keydown.enter.prevent="submitRename">
+                    <v-card>
+                        <v-card-title>
+                            <v-icon class="mr-2">mdi-account-edit</v-icon>
+                            Rename character
+                        </v-card-title>
+                        <v-card-text>
+                            <v-text-field
+                                ref="renameInput"
+                                v-model="renameDialog.newName"
+                                label="Character name"
+                                maxlength="100"
+                                autofocus
+                                :disabled="renameDialog.busy"
+                                :error-messages="renameDialog.error ? [renameDialog.error] : []"
+                            />
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-spacer />
+                            <v-btn variant="text" :disabled="renameDialog.busy" @click="closeRenameDialog">Cancel</v-btn>
+                            <v-btn
+                                color="primary"
+                                variant="tonal"
+                                prepend-icon="mdi-check"
+                                :loading="renameDialog.busy"
+                                @click="submitRename"
+                            >
+                                Rename
+                            </v-btn>
+                        </v-card-actions>
+                    </v-card>
                 </v-dialog>
             </v-card-title>
 
@@ -395,6 +440,12 @@ export default {
             deleteBusy: false,
             coverImageBusy: false,
             characterColorPicker: false,
+            renameDialog: {
+                open: false,
+                newName: '',
+                busy: false,
+                error: '',
+            },
             folderInput: '',
             folderMenuOpen: false,
             MAX_CONTENT_WIDTH,
@@ -515,6 +566,52 @@ export default {
             }));
         },
 
+        openRenameDialog() {
+            this.renameDialog = {
+                open: true,
+                newName: this.character.name,
+                busy: false,
+                error: '',
+            };
+            this.$nextTick(() => {
+                this.$refs.renameInput?.focus();
+                this.$refs.renameInput?.$el?.querySelector('input')?.select();
+            });
+        },
+        closeRenameDialog() {
+            if (!this.renameDialog.busy) {
+                this.renameDialog.open = false;
+            }
+        },
+        submitRename() {
+            const newName = (this.renameDialog.newName || '').trim();
+            if (!newName) {
+                this.renameDialog.error = 'Character name cannot be empty.';
+                return;
+            }
+            if (newName === this.character.name) {
+                this.renameDialog.open = false;
+                return;
+            }
+            const duplicate = Object.values(this.characterList?.characters || {}).some(
+                (candidate) => candidate.name !== this.character.name
+                    && candidate.name.toLocaleLowerCase() === newName.toLocaleLowerCase()
+            );
+            if (duplicate) {
+                this.renameDialog.error = 'A character with that name already exists.';
+                return;
+            }
+
+            this.renameDialog.error = '';
+            this.renameDialog.busy = true;
+            this.getWebsocket().send(JSON.stringify({
+                type: 'world_state_manager',
+                action: 'rename_character',
+                name: this.character.name,
+                new_name: newName,
+            }));
+        },
+
         applyFolder(folder) {
             let normalized = null;
             if (typeof folder === 'string') {
@@ -607,6 +704,16 @@ export default {
             else if (message.action === 'character_details') {
                 this.character = message.data;
                 this.$emit('selected-character', this.character)
+            } else if (message.action === 'character_renamed') {
+                if (this.selected === message.data.old_name) {
+                    this.selected = message.data.new_name;
+                    this.renameDialog.open = false;
+                    this.renameDialog.busy = false;
+                    this.$emit('require-scene-save');
+                }
+            } else if (message.action === 'operation_done' && this.renameDialog.busy && message.error) {
+                this.renameDialog.busy = false;
+                this.renameDialog.error = message.error.message || 'Unable to rename character.';
             } else if(message.action === 'character_deleted') {
                 if(this.selected === message.data.name) {
                     this.reset();
