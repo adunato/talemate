@@ -38,4 +38,5 @@ SET "HF_HUB_DISABLE_SYMLINKS_WARNING=1"
 
 REM Use embedded Python's uv to run with proper dependency resolution
 if "%TALEMATE_BACKEND_PORT%"=="" set TALEMATE_BACKEND_PORT=5050
-embedded_python\python.exe -m uv run src\talemate\server\run.py runserver --host 0.0.0.0 --port %TALEMATE_BACKEND_PORT%
+if "%TALEMATE_FRONTEND_PORT%"=="" set TALEMATE_FRONTEND_PORT=8082
+embedded_python\python.exe -m uv run src\talemate\server\run.py runserver --host 0.0.0.0 --port %TALEMATE_BACKEND_PORT% --frontend-host 0.0.0.0 --frontend-port %TALEMATE_FRONTEND_PORT%
