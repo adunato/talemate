@@ -1657,10 +1657,17 @@ export default {
 
     isInputDisabled() {
 
-      // if any client is active and busy, disable input
-      if (this.$refs.aiClient && this.$refs.aiClient.getActive()) {
+      // A busy client normally means foreground generation is in progress.
+      // Background agents use the same client status, so do not lock input
+      // when the active client is accounted for by a busy_bg agent.
+      const activeClient = this.$refs.aiClient?.getActive();
+      const clientIsBackgroundOnly = activeClient && Object.values(this.agentStatus).some(agent => {
+        return agent.busy_bg && agent.details === activeClient.name;
+      });
+
+      if (activeClient && !clientIsBackgroundOnly) {
         return true;
-      } 
+      }
 
       return this.inputDisabled || this.notificatioonBusy;
     },
