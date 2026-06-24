@@ -77,6 +77,18 @@
   
       <v-spacer></v-spacer>
 
+      <v-tooltip text="Characters" location="top">
+        <template v-slot:activator="{ props }">
+          <v-app-bar-nav-icon
+            v-if="sceneActive"
+            @click="toggleNavigation('characters')"
+            v-bind="props"
+          >
+            <v-icon>mdi-account-group</v-icon>
+          </v-app-bar-nav-icon>
+        </template>
+      </v-tooltip>
+
       <DirectorConsoleWidget :scene-active="sceneActive" @open-director-console="toggleNavigation('directorConsole')" />
 
       <VoiceLibrary :scene-active="sceneActive" :scene="scene" :app-busy="busy" :app-ready="ready" v-if="agentStatus.tts?.available"/>
@@ -198,6 +210,11 @@
       <!-- director console navigation drawer -->
       <v-navigation-drawer v-model="directorConsoleDrawer" app location="right" :width="directorConsoleWidth" disable-resize-watcher>
         <DirectorConsole :scene="scene" v-if="sceneActive" :app-busy="busy" :app-ready="ready" :open="directorConsoleDrawer" />
+      </v-navigation-drawer>
+
+      <!-- character panel navigation drawer -->
+      <v-navigation-drawer v-model="characterPanelDrawer" app location="right" width="400" disable-resize-watcher>
+        <CharacterPanel v-if="sceneActive" :open="characterPanelDrawer" />
       </v-navigation-drawer>
 
       <!-- debug tools navigation drawer -->
@@ -402,6 +419,7 @@ import IntroView from './IntroView.vue';
 import NodeEditor from './NodeEditor.vue';
 import DirectorConsole from './DirectorConsole.vue';
 import DirectorConsoleWidget from './DirectorConsoleWidget.vue';
+import CharacterPanel from './CharacterPanel.vue';
 import PackageManager from './PackageManager.vue';
 import PackageManagerMenu from './PackageManagerMenu.vue';
 import Templates from './Templates.vue';
@@ -436,6 +454,7 @@ export default {
     WorldStateManagerMenu,
     NodeEditor,
     DirectorConsole,
+    CharacterPanel,
     RateLimitAlert,
     GenerationErrorDialog,
     VersionMismatchAlert,
@@ -531,6 +550,7 @@ export default {
       sceneDrawer: true,
       debugDrawer: false,
       directorConsoleDrawer: false,
+      characterPanelDrawer: false,
       websocket: null,
       inputDisabled: false,
       waitingForInput: false,
@@ -650,6 +670,9 @@ export default {
       // debounce onNodeEditorContainerResize
       // to prevent resizing the node editor
       // too often
+      debounce(this.onNodeEditorContainerResize, 250)();
+    },
+    characterPanelDrawer() {
       debounce(this.onNodeEditorContainerResize, 250)();
     },
     
@@ -886,6 +909,7 @@ export default {
         this.sceneDrawer = false;
         this.drawer = false;
         this.directorConsoleDrawer = false;
+        this.characterPanelDrawer = false;
         this.debugDrawer = false;
       }
 
@@ -1437,12 +1461,39 @@ export default {
     toggleNavigation(navigation, open) {
       if (navigation == "game")
         this.sceneDrawer = open || !this.sceneDrawer;
-      else if (navigation == "settings")
-        this.drawer = open || !this.drawer;
-      else if (navigation == "debug")
-        this.debugDrawer = open || !this.debugDrawer;
-      else if (navigation == "directorConsole")
-        this.directorConsoleDrawer = open || !this.directorConsoleDrawer;
+      else if (navigation == "settings") {
+        const next = open || !this.drawer;
+        this.drawer = next;
+        if (next) {
+          this.debugDrawer = false;
+          this.directorConsoleDrawer = false;
+          this.characterPanelDrawer = false;
+        }
+      } else if (navigation == "debug") {
+        const next = open || !this.debugDrawer;
+        this.debugDrawer = next;
+        if (next) {
+          this.drawer = false;
+          this.directorConsoleDrawer = false;
+          this.characterPanelDrawer = false;
+        }
+      } else if (navigation == "directorConsole") {
+        const next = open || !this.directorConsoleDrawer;
+        this.directorConsoleDrawer = next;
+        if (next) {
+          this.drawer = false;
+          this.debugDrawer = false;
+          this.characterPanelDrawer = false;
+        }
+      } else if (navigation == "characters") {
+        const next = open || !this.characterPanelDrawer;
+        this.characterPanelDrawer = next;
+        if (next) {
+          this.drawer = false;
+          this.debugDrawer = false;
+          this.directorConsoleDrawer = false;
+        }
+      }
     },
     openDirectorWithChat() {
       this.toggleNavigation('directorConsole', true);
