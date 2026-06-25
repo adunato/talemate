@@ -99,6 +99,11 @@ Do not commit generated frontend build output, virtual environments, embedded ru
 - Never discard, reset, clean, or overwrite user changes without explicit approval.
 - Before committing, inspect the staged diff and run `git diff --cached --check`.
 
+## Browser cleanup
+
+- Close all browser tabs and browser instances opened for repository work before finishing the task, unless the user explicitly asks to keep them open.
+- When testing Talemate in the Codex browser, verify that no Codex-owned WebSocket connection to the Talemate backend remains after browser cleanup; an empty automation tab list does not guarantee that the browser renderer has closed.
+
 ## Implementation expectations
 
 - Trace existing behavior before changing it.
