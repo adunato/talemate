@@ -1772,6 +1772,7 @@ export default {
 
       this.prompts.unshift({
         prompt: data.prompt,
+        system_prompt: data.system_prompt ?? '',
         response: data.response,
         kind: data.kind,
         response_tokens: data.response_tokens,
@@ -1788,6 +1789,7 @@ export default {
         inference_preset: data.inference_preset,
         original_generation_parameters: JSON.parse(JSON.stringify(data.generation_parameters)),
         original_prompt: data.prompt,
+        original_system_prompt: data.system_prompt ?? '',
         original_response: data.response,
         reasoning: data.reasoning,
         template_uid: data.template_uid,

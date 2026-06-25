@@ -10,7 +10,7 @@ The Debug Tools panel slides in from the right side of the screen and contains s
 
 ### :material-post-outline: Prompts
 
-The Prompts tab shows a log of all AI prompts that have been sent during your session. Click on any prompt to inspect its full content. This is useful for understanding what information is being sent to the AI and debugging unexpected AI responses.
+The Prompts tab shows a log of all AI prompts that have been sent during your session. Click any prompt to inspect and temporarily edit its separate system and user messages. **Test Changes** sends both edited messages as a test request without changing the saved client or template configuration.
 
 For headless captures or longer-running debug sessions, the same prompt records can also be streamed to a file — see [Prompt Logging](../getting-started/advanced/prompt-logging.md).
 

@@ -280,7 +280,18 @@ class TestPromptData:
         # serializable
         dumped = pd.model_dump()
         assert dumped["client_name"] == "c"
+        assert dumped["system_prompt"] is None
         assert dumped["template_uid"] is None
+
+
+class TestSystemMessageOverride:
+    def test_override_is_request_scoped(self, stub_client):
+        original = stub_client.get_system_message("conversation")
+
+        with base_module.override_system_message("custom system prompt"):
+            assert stub_client.get_system_message("conversation") == "custom system prompt"
+
+        assert stub_client.get_system_message("conversation") == original
 
 
 class TestErrorAction:

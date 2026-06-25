@@ -102,26 +102,53 @@
                 </v-list>
             </v-col>
 
-            <!-- Prompt Editor -->
+            <!-- Prompt Editors -->
             <v-col :cols="details ? 6 : 7">
                 <v-card flat style="overflow-y:auto; max-height: calc(80vh - 200px);">
-                    <v-card-title>
-                        Prompt
-                        <v-btn
-                            size="x-small"
-                            variant="text"
-                            v-if="promptHasDirtyPrompt"
-                            color="orange"
-                            @click.stop="resetPrompt"
-                            prepend-icon="mdi-restore"
-                        >Reset</v-btn>
-                    </v-card-title>
-                    <v-card-text ref="codeMirrorContainer">
-                        <Codemirror
-                            v-model="localPrompt.prompt"
-                            :extensions="extensions"
-                        ></Codemirror>
-                    </v-card-text>
+                    <v-tabs v-model="promptTab">
+                        <v-tab value="system">System Prompt</v-tab>
+                        <v-tab value="user">User Prompt</v-tab>
+                    </v-tabs>
+                    <v-window v-model="promptTab">
+                        <v-window-item value="system">
+                            <v-card-title>
+                                System Prompt
+                                <v-btn
+                                    size="x-small"
+                                    variant="text"
+                                    v-if="promptHasDirtySystemPrompt"
+                                    color="orange"
+                                    @click.stop="resetSystemPrompt"
+                                    prepend-icon="mdi-restore"
+                                >Reset</v-btn>
+                            </v-card-title>
+                            <v-card-text>
+                                <Codemirror
+                                    v-model="localPrompt.system_prompt"
+                                    :extensions="extensions"
+                                ></Codemirror>
+                            </v-card-text>
+                        </v-window-item>
+                        <v-window-item value="user">
+                            <v-card-title>
+                                User Prompt
+                                <v-btn
+                                    size="x-small"
+                                    variant="text"
+                                    v-if="promptHasDirtyPrompt"
+                                    color="orange"
+                                    @click.stop="resetPrompt"
+                                    prepend-icon="mdi-restore"
+                                >Reset</v-btn>
+                            </v-card-title>
+                            <v-card-text ref="codeMirrorContainer">
+                                <Codemirror
+                                    v-model="localPrompt.prompt"
+                                    :extensions="extensions"
+                                ></Codemirror>
+                            </v-card-text>
+                        </v-window-item>
+                    </v-window>
                 </v-card>
             </v-col>
 
@@ -216,6 +243,7 @@ export default {
             localPrompt: null,
             details: false,
             busy: false,
+            promptTab: 'system',
             responseTab: 'response',
         }
     },
@@ -239,12 +267,16 @@ export default {
             if (!this.localPrompt) return false;
             return this.localPrompt.prompt !== this.localPrompt.original_prompt;
         },
+        promptHasDirtySystemPrompt() {
+            if (!this.localPrompt) return false;
+            return this.localPrompt.system_prompt !== this.localPrompt.original_system_prompt;
+        },
         promptHasDirtyResponse() {
             if (!this.localPrompt) return false;
             return this.localPrompt.response !== this.localPrompt.original_response;
         },
         isDirty() {
-            return this.promptHasDirtyParams || this.promptHasDirtyPrompt || this.promptHasDirtyResponse;
+            return this.promptHasDirtyParams || this.promptHasDirtyPrompt || this.promptHasDirtySystemPrompt || this.promptHasDirtyResponse;
         },
         toggleDetailsLabel() {
             return this.details ? 'Hide Details' : 'Show Details';
@@ -289,6 +321,10 @@ export default {
             this.localPrompt.prompt = this.localPrompt.original_prompt;
         },
 
+        resetSystemPrompt() {
+            this.localPrompt.system_prompt = this.localPrompt.original_system_prompt;
+        },
+
         resetResponse() {
             this.localPrompt.response = this.localPrompt.original_response;
         },
@@ -315,6 +351,7 @@ export default {
             this.busy = true;
             this.$emit('test-changes', {
                 prompt: this.localPrompt.prompt,
+                system_prompt: this.localPrompt.system_prompt,
                 generation_parameters: this.localPrompt.generation_parameters,
                 kind: this.localPrompt.kind,
                 client_name: this.localPrompt.client_name,
@@ -325,6 +362,7 @@ export default {
                 type: "devtools",
                 action: "test_prompt",
                 prompt: this.localPrompt.prompt,
+                system_prompt: this.localPrompt.system_prompt,
                 generation_parameters: this.localPrompt.generation_parameters,
                 kind: this.localPrompt.kind,
                 client_name: this.localPrompt.client_name,

@@ -122,10 +122,10 @@ The **Prompts** tab lists all prompts that have been sent to the LLM during the 
 Selecting a prompt opens a three-pane detail view:
 
 - **Left pane** -- the agent stack that generated the prompt, along with generation parameters
-- **Center pane** -- the full prompt text in an editor
+- **Center pane** -- separate editable **System Prompt** and **User Prompt** tabs
 - **Right pane** -- the AI response (and reasoning, if available)
 
-A **Test Changes** button allows you to re-send the prompt with local edits to iterate on prompt wording without re-triggering the full agent pipeline.
+A **Test Changes** button allows you to re-send both prompt roles with local edits to iterate on prompt wording without re-triggering the full agent pipeline. System prompt edits are temporary and apply only to that test request; they do not change the client's saved system prompt configuration.
 
 ### Recently Rendered Templates
 

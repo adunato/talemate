@@ -11,6 +11,8 @@ import time
 import traceback
 import asyncio
 import uuid
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Callable, Union, Literal, TYPE_CHECKING
 
 import pydantic
@@ -65,6 +67,19 @@ INDIRECT_COERCION_PROMPT_REASONING = (
 
 DEFAULT_REASONING_PATTERN = r".*?</think>"
 
+system_message_override: ContextVar[str | None] = ContextVar(
+    "system_message_override", default=None
+)
+
+
+@contextmanager
+def override_system_message(system_message: str | None):
+    token = system_message_override.set(system_message)
+    try:
+        yield
+    finally:
+        system_message_override.reset(token)
+
 
 class ClientDisabledError(OSError):
     def __init__(self, client: "ClientBase"):
@@ -82,6 +97,7 @@ class PromptData(pydantic.BaseModel):
     client_name: str
     client_type: str
     time: Union[float, int]
+    system_prompt: str | None = None
     agent_stack: list[str] = pydantic.Field(default_factory=list)
     generation_parameters: dict = pydantic.Field(default_factory=dict)
     inference_preset: str = None
@@ -822,6 +838,10 @@ class ClientBase:
 
         - kind: the kind of generation
         """
+        overridden_system_message = system_message_override.get()
+        if overridden_system_message is not None:
+            return overridden_system_message
+
         config: Config = get_config()
         personas: dict | None = None
 
@@ -1553,9 +1573,8 @@ class ClientBase:
             else:
                 coercion_prompt = None
 
-            finalized_prompt = self.prompt_template(
-                self.get_system_message(kind), prompt
-            ).strip(" ")
+            system_prompt = self.get_system_message(kind)
+            finalized_prompt = self.prompt_template(system_prompt, prompt).strip(" ")
 
             finalized_prompt = self.finalize(prompt_param, finalized_prompt)
 
@@ -1633,6 +1652,7 @@ class ClientBase:
             prompt_data = PromptData(
                 kind=kind,
                 prompt=finalized_prompt,
+                system_prompt=system_prompt,
                 response=response,
                 prompt_tokens=self._returned_prompt_tokens or token_length,
                 response_tokens=self._returned_response_tokens

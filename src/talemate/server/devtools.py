@@ -3,7 +3,7 @@ import json
 import pydantic
 import structlog
 from talemate.instance import get_client
-from talemate.client.base import ClientBase
+from talemate.client.base import ClientBase, override_system_message
 from talemate.path import LOGS_DIR
 from talemate.scene.state_editor import SceneStateEditor
 from talemate.scene.schema import SceneState
@@ -16,6 +16,7 @@ log = structlog.get_logger("talemate.server.devtools")
 
 class TestPromptPayload(pydantic.BaseModel):
     prompt: str
+    system_prompt: str | None = None
     generation_parameters: dict
     client_name: str
     kind: str
@@ -68,11 +69,12 @@ class DevToolsPlugin(Plugin):
             },
         )
 
-        response = await client.generate(
-            payload.prompt,
-            payload.generation_parameters,
-            payload.kind,
-        )
+        with override_system_message(payload.system_prompt):
+            response = await client.generate(
+                payload.prompt,
+                payload.generation_parameters,
+                payload.kind,
+            )
 
         self.websocket_handler.queue_put(
             {
@@ -80,6 +82,7 @@ class DevToolsPlugin(Plugin):
                 "action": "test_prompt_response",
                 "data": {
                     "prompt": payload.prompt,
+                    "system_prompt": payload.system_prompt,
                     "generation_parameters": payload.generation_parameters,
                     "client_name": payload.client_name,
                     "kind": payload.kind,

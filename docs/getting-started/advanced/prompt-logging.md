@@ -79,6 +79,7 @@ Each line in `prompt_log.jsonl` is a single JSON object with the fields below. F
 | `time` | number | Wall-clock seconds spent on the generation, measured around the backend call. |
 | `agent_stack` | list of strings | The agent call stack at the time of the prompt, outermost first. The final entry is the agent that actually issued the call (e.g. `["director", "conversation"]`). Empty if no agent context was active. |
 | `generation_parameters` | object | Final generation parameters passed to the backend for this call (temperature, top-p, max tokens, etc. — contents vary by client type). |
+| `system_prompt` | string or null | Resolved system message sent separately from the rendered user prompt when the client supports system-role messages. |
 | `inference_preset` | string or null | Name of the active inference preset, if any. |
 | `preset_group` | string or null | Preset group the client is using, if any. |
 | `reasoning` | string or null | The extracted reasoning / thinking trace for this response, when the client supports reasoning tokens. |
