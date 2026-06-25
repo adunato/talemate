@@ -62,7 +62,8 @@ REPLACE_SMART_QUOTES = True
 
 INDIRECT_COERCION_PROMPT = "\nStart your response with: "
 INDIRECT_COERCION_PROMPT_REASONING = (
-    "\nAfter thinking about it, start your answer with: "
+    "\nEnsure your output is in the response body, not just your thinking output. "
+    "After thinking about it, start your answer with: "
 )
 
 DEFAULT_REASONING_PATTERN = r".*?</think>"
