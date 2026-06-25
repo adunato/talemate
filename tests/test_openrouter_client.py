@@ -1,4 +1,5 @@
 import pytest
+import httpx
 
 from talemate.config import get_config
 from talemate.client.openrouter import ClientConfig, OpenRouterClient
@@ -8,6 +9,8 @@ from talemate.client.openrouter import ClientConfig, OpenRouterClient
 def openrouter_client():
     name = "OpenRouter Reason Prefill Test"
     config = get_config()
+    original_api_key = config.openrouter.api_key
+    config.openrouter.api_key = "test-api-key"
     config.clients[name] = ClientConfig(
         type="openrouter",
         name=name,
@@ -19,6 +22,7 @@ def openrouter_client():
         yield client
     finally:
         config.clients.pop(name, None)
+        config.openrouter.api_key = original_api_key
 
 
 def test_openrouter_supports_reason_prefill(openrouter_client):
@@ -70,3 +74,86 @@ def test_non_reasoning_coercion_keeps_existing_prefix_behavior(openrouter_client
         "content": "assistant prefix",
         "prefix": True,
     }
+
+
+class MockStreamResponse:
+    status_code = 200
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, traceback):
+        return False
+
+    async def aiter_text(self):
+        yield "data: [DONE]\n"
+
+
+class MockAsyncClient:
+    def __init__(self, captured_payload):
+        self.captured_payload = captured_payload
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, traceback):
+        return False
+
+    def stream(self, method, url, **kwargs):
+        self.captured_payload.update(kwargs["json"])
+        return MockStreamResponse()
+
+
+@pytest.mark.asyncio
+async def test_budget_reasoning_sends_max_tokens(
+    openrouter_client, monkeypatch
+):
+    captured_payload = {}
+    openrouter_client.client_config.reason_enabled = True
+    openrouter_client.client_config.reason_tokens = 2048
+    openrouter_client.client_config.reasoning_effort = "budget"
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda: MockAsyncClient(captured_payload),
+    )
+
+    await openrouter_client.generate("user prompt", {}, "conversation")
+
+    assert captured_payload["reasoning"] == {"max_tokens": 2048}
+
+
+@pytest.mark.asyncio
+async def test_reasoning_effort_replaces_token_budget(
+    openrouter_client, monkeypatch
+):
+    captured_payload = {}
+    openrouter_client.client_config.reason_enabled = True
+    openrouter_client.client_config.reason_tokens = 2048
+    openrouter_client.client_config.reasoning_effort = "high"
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda: MockAsyncClient(captured_payload),
+    )
+
+    await openrouter_client.generate("user prompt", {}, "conversation")
+
+    assert captured_payload["reasoning"] == {"effort": "high"}
+
+
+@pytest.mark.asyncio
+async def test_disabled_reasoning_omits_reasoning_parameter(
+    openrouter_client, monkeypatch
+):
+    captured_payload = {}
+    openrouter_client.client_config.reason_enabled = False
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda: MockAsyncClient(captured_payload),
+    )
+
+    await openrouter_client.generate("user prompt", {}, "conversation")
+
+    assert "reasoning" not in captured_payload

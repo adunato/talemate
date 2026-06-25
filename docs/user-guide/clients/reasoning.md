@@ -78,6 +78,15 @@ For example, some models may use:
 
 The required value and whether assistant prefilling is supported depend on the selected model and provider. OpenRouter clients expose this setting, but an upstream provider may still reject or ignore the prefill.
 
+## OpenRouter Reasoning Effort
+
+OpenRouter clients expose a **Reasoning Effort** setting:
+
+- **budget** uses the configured **Reasoning Tokens** value and sends it as `reasoning.max_tokens`.
+- **minimal**, **low**, **medium**, **high**, **xhigh**, and **max** send the selected value as `reasoning.effort`.
+
+OpenRouter treats token budget and effort as alternative reasoning-strength controls, so Talemate sends only the selected form. Model and provider support varies. The reasoning token setting still reserves additional output allowance when an effort level is selected, helping leave room for both reasoning and the visible response.
+
 ## Model Compatibility
 
 Not all models support reasoning. This feature works best with:

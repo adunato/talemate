@@ -3,6 +3,7 @@ import structlog
 import httpx
 import asyncio
 import json
+from typing import Literal
 
 from talemate.client.base import (
     ClientBase,
@@ -163,11 +164,15 @@ class Defaults(CommonDefaults, pydantic.BaseModel):
     model: str = DEFAULT_MODEL
     provider_only: list[str] = pydantic.Field(default_factory=list)
     provider_ignore: list[str] = pydantic.Field(default_factory=list)
+    reasoning_effort: str = "budget"
 
 
 class ClientConfig(ConcurrentInference, BaseClientConfig):
     provider_only: list[str] = pydantic.Field(default_factory=list)
     provider_ignore: list[str] = pydantic.Field(default_factory=list)
+    reasoning_effort: Literal[
+        "budget", "minimal", "low", "medium", "high", "xhigh", "max"
+    ] = "budget"
 
 
 PROVIDER_FIELD_GROUP = FieldGroup(
@@ -207,6 +212,28 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
         def _build_extra_fields():
             """Build extra_fields dynamically so choices reflect current AVAILABLE_PROVIDERS"""
             fields = {
+                "reasoning_effort": ExtraField(
+                    name="reasoning_effort",
+                    type="select",
+                    label="Reasoning Effort",
+                    choices=[
+                        "budget",
+                        "minimal",
+                        "low",
+                        "medium",
+                        "high",
+                        "xhigh",
+                        "max",
+                    ],
+                    description="'budget' uses the Reasoning Tokens setting. Other values send OpenRouter's reasoning.effort control instead. Model and provider support varies.",
+                    group=FieldGroup(
+                        name="reasoning",
+                        label="Reasoning",
+                        description="",
+                        icon="mdi-brain",
+                    ),
+                    required=False,
+                ),
                 "provider_only": ExtraField(
                     name="provider_only",
                     type="flags",
@@ -260,6 +287,10 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
     @property
     def supports_reason_prefill(self) -> bool:
         return True
+
+    @property
+    def reasoning_effort(self) -> str:
+        return self.client_config.reasoning_effort
 
     @property
     def min_reason_tokens(self) -> int:
@@ -388,12 +419,18 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
         payload = {
             "model": self.model_name,
             "messages": messages,
-            "reasoning": {
-                "max_tokens": self.validated_reason_tokens,
-            },
             "stream": True,
             **parameters,
         }
+        if self.reason_enabled:
+            if self.reasoning_effort == "budget":
+                payload["reasoning"] = {
+                    "max_tokens": self.validated_reason_tokens,
+                }
+            else:
+                payload["reasoning"] = {
+                    "effort": self.reasoning_effort,
+                }
 
         self.log.debug(
             "generate",
