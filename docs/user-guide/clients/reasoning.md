@@ -66,6 +66,18 @@ When the configured reasoning pattern is not found in a response, you can contro
 - **Fail** (default) - Raises an error, causing the request to fail. Use this when you expect the model to always include reasoning tokens and want to be alerted if it doesn't.
 - **Ignore** - Returns the response as-is without stripping anything. Use this when the model may sometimes respond without reasoning tokens (e.g., for simple queries).
 
+## Assistant Reasoning Prefill
+
+Clients that support assistant prefilling expose an **Assistant Reasoning Prefill** field while reasoning is enabled. The configured text is sent as a trailing assistant message before generation.
+
+For example, some models may use:
+
+```text
+<think>
+```
+
+The required value and whether assistant prefilling is supported depend on the selected model and provider. OpenRouter clients expose this setting, but an upstream provider may still reject or ignore the prefill.
+
 ## Model Compatibility
 
 Not all models support reasoning. This feature works best with:
@@ -76,7 +88,7 @@ Not all models support reasoning. This feature works best with:
 
 ## Important Notes
 
-- **Coercion Disabled**: When reasoning is enabled, LLM coercion (pre-filling responses) is automatically disabled since reasoning models need to generate their complete thought process
+- **General Coercion Disabled**: Normal response coercion remains disabled while reasoning is enabled. The dedicated **Assistant Reasoning Prefill** is handled separately for clients that support it.
 - **Response Time**: Reasoning models may take longer to respond as they work through their thinking process
 
 ## Troubleshooting

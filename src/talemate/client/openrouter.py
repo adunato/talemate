@@ -258,6 +258,10 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
         return False
 
     @property
+    def supports_reason_prefill(self) -> bool:
+        return True
+
+    @property
     def min_reason_tokens(self) -> int:
         return MIN_THINKING_TOKENS
 
@@ -331,26 +335,25 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
 
         self.emit_status()
 
-    async def generate(self, prompt: str, parameters: dict, kind: str):
-        """
-        Generates text from the given prompt and parameters using OpenRouter API.
-        """
-
-        if not self.openrouter_api_key:
-            raise Exception("No OpenRouter API key set")
-
+    def build_messages(self, prompt: str, kind: str) -> list[dict]:
+        coercion_prompt = None
         if self.can_be_coerced:
             prompt, coercion_prompt = self.split_prompt_for_coercion(prompt)
-        else:
-            coercion_prompt = None
 
-        # Prepare messages for chat completion
         messages = [
             {"role": "system", "content": self.get_system_message(kind)},
             {"role": "user", "content": prompt.strip()},
         ]
 
-        if coercion_prompt:
+        reason_prefill = self.reason_prefill.strip()
+        if self.reason_enabled and reason_prefill:
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": reason_prefill,
+                }
+            )
+        elif coercion_prompt:
             log.debug("Adding coercion pre-fill", coercion_prompt=coercion_prompt)
             messages.append(
                 {
@@ -359,6 +362,18 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
                     "prefix": True,
                 }
             )
+
+        return messages
+
+    async def generate(self, prompt: str, parameters: dict, kind: str):
+        """
+        Generates text from the given prompt and parameters using OpenRouter API.
+        """
+
+        if not self.openrouter_api_key:
+            raise Exception("No OpenRouter API key set")
+
+        messages = self.build_messages(prompt, kind)
 
         provider = {}
         if self.provider_only:

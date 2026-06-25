@@ -64,8 +64,7 @@ class Client(pydantic.BaseModel):
     # regex to strip from the response if the model is reasoning
     reason_response_pattern: Union[str, None] = None
 
-    # reason prefill - will be prepended to the prompt if the model is reasoning
-    # this is mostly for base models that don't hhave reas
+    # Optional assistant prefill used to start the model's reasoning response.
     reason_prefill: str | None = None
 
     # behavior when reasoning pattern is not found in the response

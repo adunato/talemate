@@ -600,6 +600,10 @@ class ClientBase:
     def requires_reasoning_pattern(self) -> bool:
         return True
 
+    @property
+    def supports_reason_prefill(self) -> bool:
+        return self.requires_reasoning_pattern
+
     async def enable(self):
         self.client_config.enabled = True
         self.emit_status()
@@ -1001,6 +1005,7 @@ class ClientBase:
             "reason_prefill": self.reason_prefill,
             "reason_failure_behavior": self.reason_failure_behavior,
             "requires_reasoning_pattern": self.requires_reasoning_pattern,
+            "supports_reason_prefill": self.supports_reason_prefill,
             "reason_locked": self.reason_locked,
             "reasoning_display": self.reasoning_display.model_dump()
             if self.reasoning_display

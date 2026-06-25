@@ -559,6 +559,7 @@ export default {
           client.reason_enabled = data.data.reason_enabled;
           client.reason_locked = data.data.reason_locked;
           client.requires_reasoning_pattern = data.data.requires_reasoning_pattern;
+          client.supports_reason_prefill = data.data.supports_reason_prefill;
           client.reasoning_display = data.data.reasoning_display;
           client.lock_template = data.data.lock_template;
           client.max_token_length = data.max_token_length;
@@ -620,6 +621,7 @@ export default {
             reason_enabled: data.data.reason_enabled,
             reason_locked: data.data.reason_locked,
             requires_reasoning_pattern: data.data.requires_reasoning_pattern,
+            supports_reason_prefill: data.data.supports_reason_prefill,
             reasoning_display: data.data.reasoning_display,
             dedicated_default_template: data.data.dedicated_default_template,
             optimize_prompt_caching: data.data.optimize_prompt_caching,

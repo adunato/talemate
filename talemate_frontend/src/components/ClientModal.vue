@@ -230,11 +230,11 @@
                       ></v-select>
                     </v-col>
                   </v-row>
-                  <v-row v-if="client.reason_enabled && client.requires_reasoning_pattern">
+                  <v-row v-if="client.reason_enabled && client.supports_reason_prefill">
                     <v-col cols="12">
-                      <v-text-field v-model="client.reason_prefill" label="Reason Prefill"></v-text-field>
+                      <v-text-field v-model="client.reason_prefill" label="Assistant Reasoning Prefill" placeholder="<think>"></v-text-field>
                       <v-alert color="muted" variant="text" class="text-caption">
-                        This is mostly for base models that don't have reasoning built in, but were fine-tuned for reasoning. For example add <code class="text-primary">&lt;think&gt;</code> here to force the model to reason. Assuming <code class="text-primary">&lt;think&gt;</code> is the actual start of the thinking process, this may vary depending on the model.
+                        Sends this text as a trailing assistant message before generation. For example, <code class="text-primary">&lt;think&gt;</code> may start the model's reasoning process. Support and expected syntax vary by model and provider.
                       </v-alert>
                     </v-col>
                   </v-row>
