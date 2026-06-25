@@ -33,6 +33,11 @@ Custom instructions for the summarization agent. These instructions are included
 
 Writing style instructions are also included during summarization to maintain consistency with your scene's chosen writing style.
 
+###### Execution
+
+- `Blocking` waits for automatic summarization before the triggering workflow continues.
+- `Background` allows the triggering workflow to continue while summarization runs. Additional automatic summary checks are combined into one pending check rather than delaying conversation generation.
+
 ## Layered History
 
 Settings for the layered history summarization.
