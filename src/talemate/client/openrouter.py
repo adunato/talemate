@@ -165,6 +165,7 @@ class Defaults(CommonDefaults, pydantic.BaseModel):
     provider_only: list[str] = pydantic.Field(default_factory=list)
     provider_ignore: list[str] = pydantic.Field(default_factory=list)
     reasoning_effort: str = "budget"
+    promote_reasoning_on_empty_response: bool = False
 
 
 class ClientConfig(ConcurrentInference, BaseClientConfig):
@@ -173,6 +174,7 @@ class ClientConfig(ConcurrentInference, BaseClientConfig):
     reasoning_effort: Literal[
         "budget", "minimal", "low", "medium", "high", "xhigh", "max"
     ] = "budget"
+    promote_reasoning_on_empty_response: bool = False
 
 
 PROVIDER_FIELD_GROUP = FieldGroup(
@@ -226,6 +228,19 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
                         "max",
                     ],
                     description="'budget' uses the Reasoning Tokens setting. Other values send OpenRouter's reasoning.effort control instead. Model and provider support varies.",
+                    group=FieldGroup(
+                        name="reasoning",
+                        label="Reasoning",
+                        description="",
+                        icon="mdi-brain",
+                    ),
+                    required=False,
+                ),
+                "promote_reasoning_on_empty_response": ExtraField(
+                    name="promote_reasoning_on_empty_response",
+                    type="bool",
+                    label="Use Reasoning as Empty Response Fallback",
+                    description="If OpenRouter returns no visible response but provides reasoning text, move that reasoning text into the response body instead of reporting an empty response.",
                     group=FieldGroup(
                         name="reasoning",
                         label="Reasoning",
@@ -291,6 +306,10 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
     @property
     def reasoning_effort(self) -> str:
         return self.client_config.reasoning_effort
+
+    @property
+    def promote_reasoning_on_empty_response(self) -> bool:
+        return self.client_config.promote_reasoning_on_empty_response
 
     @property
     def min_reason_tokens(self) -> int:
@@ -540,6 +559,18 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
 
                     # Extract the response content
                     response_content = response_text
+                    if (
+                        self.promote_reasoning_on_empty_response
+                        and not response_content.strip()
+                        and reasoning_text.strip()
+                    ):
+                        self.log.warning(
+                            "promoting reasoning to empty response",
+                            reasoning_length=len(reasoning_text),
+                        )
+                        response_content = reasoning_text
+                        reasoning_text = ""
+
                     self._returned_prompt_tokens = prompt_tokens
                     self._returned_response_tokens = completion_tokens
                     self._reasoning_response = reasoning_text

@@ -79,6 +79,9 @@ def test_non_reasoning_coercion_keeps_existing_prefix_behavior(openrouter_client
 class MockStreamResponse:
     status_code = 200
 
+    def __init__(self, response_chunks=None):
+        self.response_chunks = response_chunks or ["data: [DONE]\n"]
+
     async def __aenter__(self):
         return self
 
@@ -86,12 +89,14 @@ class MockStreamResponse:
         return False
 
     async def aiter_text(self):
-        yield "data: [DONE]\n"
+        for chunk in self.response_chunks:
+            yield chunk
 
 
 class MockAsyncClient:
-    def __init__(self, captured_payload):
+    def __init__(self, captured_payload, response_chunks=None):
         self.captured_payload = captured_payload
+        self.response_chunks = response_chunks
 
     async def __aenter__(self):
         return self
@@ -101,7 +106,7 @@ class MockAsyncClient:
 
     def stream(self, method, url, **kwargs):
         self.captured_payload.update(kwargs["json"])
-        return MockStreamResponse()
+        return MockStreamResponse(self.response_chunks)
 
 
 @pytest.mark.asyncio
@@ -157,3 +162,73 @@ async def test_disabled_reasoning_omits_reasoning_parameter(
     await openrouter_client.generate("user prompt", {}, "conversation")
 
     assert "reasoning" not in captured_payload
+
+
+@pytest.mark.asyncio
+async def test_reasoning_promoted_when_response_is_empty(
+    openrouter_client, monkeypatch
+):
+    captured_payload = {}
+    response_chunks = [
+        'data: {"choices":[{"delta":{"reasoning":"Visible answer"}}]}\n',
+        "data: [DONE]\n",
+    ]
+    openrouter_client.client_config.reason_enabled = True
+    openrouter_client.client_config.promote_reasoning_on_empty_response = True
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda: MockAsyncClient(captured_payload, response_chunks),
+    )
+
+    response = await openrouter_client.generate("user prompt", {}, "conversation")
+
+    assert response == "Visible answer"
+    assert openrouter_client.reasoning_response == ""
+
+
+@pytest.mark.asyncio
+async def test_reasoning_not_promoted_when_fallback_is_disabled(
+    openrouter_client, monkeypatch
+):
+    captured_payload = {}
+    response_chunks = [
+        'data: {"choices":[{"delta":{"reasoning":"Internal analysis"}}]}\n',
+        "data: [DONE]\n",
+    ]
+    openrouter_client.client_config.reason_enabled = True
+    openrouter_client.client_config.promote_reasoning_on_empty_response = False
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda: MockAsyncClient(captured_payload, response_chunks),
+    )
+
+    response = await openrouter_client.generate("user prompt", {}, "conversation")
+
+    assert response == ""
+    assert openrouter_client.reasoning_response == "Internal analysis"
+
+
+@pytest.mark.asyncio
+async def test_reasoning_not_promoted_when_response_has_content(
+    openrouter_client, monkeypatch
+):
+    captured_payload = {}
+    response_chunks = [
+        'data: {"choices":[{"delta":{"reasoning":"Internal analysis"}}]}\n',
+        'data: {"choices":[{"delta":{"content":"Visible answer"}}]}\n',
+        "data: [DONE]\n",
+    ]
+    openrouter_client.client_config.reason_enabled = True
+    openrouter_client.client_config.promote_reasoning_on_empty_response = True
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda: MockAsyncClient(captured_payload, response_chunks),
+    )
+
+    response = await openrouter_client.generate("user prompt", {}, "conversation")
+
+    assert response == "Visible answer"
+    assert openrouter_client.reasoning_response == "Internal analysis"

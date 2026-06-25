@@ -87,6 +87,12 @@ OpenRouter clients expose a **Reasoning Effort** setting:
 
 OpenRouter treats token budget and effort as alternative reasoning-strength controls, so Talemate sends only the selected form. Model and provider support varies. The reasoning token setting still reserves additional output allowance when an effort level is selected, helping leave room for both reasoning and the visible response.
 
+### Empty Response Fallback
+
+Some OpenRouter model and provider combinations may return generated content entirely through the reasoning channel while leaving the visible response empty. Enable **Use Reasoning as Empty Response Fallback** to move that reasoning text into the response body instead of showing an empty-response error.
+
+This option is disabled by default because reasoning may contain internal analysis that is not intended for display. The fallback only applies when the visible response is blank and the reasoning channel contains nonblank text. Normal responses are unchanged.
+
 ## Model Compatibility
 
 Not all models support reasoning. This feature works best with:
