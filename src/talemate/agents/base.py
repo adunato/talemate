@@ -359,6 +359,9 @@ class Agent(ABC):
     _current_action: str | None = None
     _background_task: asyncio.Task | None = None
     _background_action: str | None = None
+    _pending_background_action: (
+        tuple[str, Callable[[], Awaitable], Callable | None] | None
+    ) = None
     _background_waiters: int = 0
 
     @classmethod
@@ -1045,15 +1048,35 @@ class Agent(ABC):
     async def _handle_single_background_task(
         self,
         task: asyncio.Task,
+    ):
+        if not task.cancelled():
+            task.exception()
+        if getattr(self, "_background_task", None) is task:
+            self._background_task = None
+            self._background_action = None
+            self._pending_background_action = None
+            self.processing_bg = max(0, getattr(self, "processing_bg", 0) - 1)
+            await self.emit_status()
+
+    async def _run_background_action_queue(
+        self,
+        action_name: str,
+        action: Callable[[], Awaitable],
         error_handler=None,
     ):
-        try:
-            if not task.cancelled() and task.exception():
-                exc = task.exception()
+        first_error = None
+
+        while True:
+            self._background_action = action_name
+            try:
+                await action()
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
                 log.error(
                     "background agent action failed",
                     agent=self.agent_type,
-                    action=self._background_action,
+                    action=action_name,
                     exc=exc,
                     traceback="".join(
                         traceback.format_exception(
@@ -1063,12 +1086,18 @@ class Agent(ABC):
                 )
                 if error_handler:
                     await error_handler(exc)
-        finally:
-            if getattr(self, "_background_task", None) is task:
-                self._background_task = None
-                self._background_action = None
-                self.processing_bg = max(0, getattr(self, "processing_bg", 0) - 1)
-                await self.emit_status()
+                if first_error is None:
+                    first_error = exc
+
+            pending = self._pending_background_action
+            self._pending_background_action = None
+            if not pending:
+                break
+
+            action_name, action, error_handler = pending
+
+        if first_error:
+            raise first_error
 
     async def run_background_action(
         self,
@@ -1079,15 +1108,26 @@ class Agent(ABC):
         """
         Run one non-blocking action for this agent.
 
-        If another background action is already active, wait for it and execute
-        the requested action synchronously instead of creating a second task.
+        If another background action is already active, coalesce the requested
+        action into one pending rerun and return immediately.
         """
-        if self.background_task:
-            await self.wait_for_background_processing()
-            return await action()
+        task = self.background_task
+        if task and not task.done():
+            self._pending_background_action = (
+                action_name,
+                action,
+                error_handler,
+            )
+            return task
+        if task:
+            await self._handle_single_background_task(task)
 
         task = asyncio.create_task(
-            action(),
+            self._run_background_action_queue(
+                action_name,
+                action,
+                error_handler=error_handler,
+            ),
             name=f"talemate:{self.agent_type}:{action_name}",
         )
         self._background_task = task
@@ -1096,7 +1136,7 @@ class Agent(ABC):
         await self.emit_status()
         task.add_done_callback(
             lambda fut: asyncio.create_task(
-                self._handle_single_background_task(fut, error_handler)
+                self._handle_single_background_task(fut)
             )
         )
         return task

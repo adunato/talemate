@@ -25,6 +25,7 @@ prompt machinery. Other LLM paths that depend on full template rendering
 are left for higher-level integration tests.
 """
 
+import asyncio
 from unittest.mock import patch
 
 import pytest
@@ -475,6 +476,43 @@ class TestOnPushHistory:
         assert called["scene"] is scene
         # generation_options is constructed with the scene's writing_style.
         assert called["generation_options"] is not None
+
+    async def test_background_trigger_does_not_wait_for_running_summary(
+        self, summarizer_scene
+    ):
+        scene, summarizer = summarizer_scene
+        summarizer.actions["archive"].config["execution"].value = "background"
+        started = asyncio.Event()
+        release = asyncio.Event()
+        calls = []
+
+        async def stub_build_archive(scene_arg, generation_options=None):
+            calls.append("start")
+            if len(calls) == 1:
+                started.set()
+                await release.wait()
+            calls.append("end")
+
+        summarizer.build_archive = stub_build_archive
+        emission = HistoryEvent(
+            scene=scene, event_type="push_history.after", messages=[]
+        )
+
+        await summarizer.on_push_history(emission)
+        await started.wait()
+
+        await asyncio.wait_for(
+            summarizer.on_push_history(emission),
+            timeout=0.1,
+        )
+
+        assert calls == ["start"]
+        assert summarizer.meta["background_waiters"] == 0
+
+        release.set()
+        await summarizer.background_task
+
+        assert calls == ["start", "end", "start", "end"]
 
 
 # ---------------------------------------------------------------------------

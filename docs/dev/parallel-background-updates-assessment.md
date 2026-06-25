@@ -5,7 +5,8 @@
 Talemate can support non-blocking maintenance updates with a relatively small scheduling change:
 
 - Each agent may run at most one background task.
-- If that agent receives another request while its background task is running, the new request waits for the task to finish and then runs normally.
+- Repeated background requests for that agent are coalesced into one pending rerun.
+- Foreground work that needs the same agent waits for its background task.
 - Different agents may work at the same time.
 - Conversation and scene-content generation remain asynchronous and serial.
 
@@ -36,12 +37,12 @@ When an activity is configured as **Background**:
 
 1. If the agent is idle, schedule the activity and return control to the scene.
 2. Mark the agent as `busy_bg`.
-3. While the task runs, any new call to that agent waits on the agent lock.
-4. When the background task finishes, waiting calls continue in arrival order.
+3. While the task runs, another background request replaces the pending rerun and returns immediately.
+4. Foreground calls to the same agent wait for the background task and its pending rerun.
 
 When an activity is configured as **Blocking**, it behaves as it does today.
 
-This means background work is non-blocking for the scene until another part of the scene actually needs the same agent. For example, background archive summarisation may continue while the player reads or types, but conversation generation will wait if it requires scene analysis from the summarizer before the archive task has completed.
+This means background work is non-blocking for the scene until another part of the scene actually needs the same agent. For example, repeated history updates do not wait for background archive summarisation, but conversation generation still waits if it requires scene analysis from the summarizer before the archive task has completed.
 
 ## Data integrity
 

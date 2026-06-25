@@ -839,7 +839,7 @@ class TestSetProcessingDecorator:
         assert a.meta["background_waiters"] == 0
 
     @pytest.mark.asyncio
-    async def test_second_background_request_runs_synchronously_after_first(self):
+    async def test_second_background_request_is_coalesced_without_waiting(self):
         a = _MinimalAgent()
         started = asyncio.Event()
         release = asyncio.Event()
@@ -858,16 +858,47 @@ class TestSetProcessingDecorator:
         first_task = await a.run_background_action("first", first_action)
         await started.wait()
 
-        second_request = asyncio.create_task(
-            a.run_background_action("second", second_action)
+        returned_task = await asyncio.wait_for(
+            a.run_background_action("second", second_action),
+            timeout=0.1,
         )
-        await asyncio.sleep(0)
+        assert returned_task is first_task
         assert calls == ["first-start"]
+        assert a.meta["background_waiters"] == 0
 
         release.set()
         await first_task
-        assert await second_request == "second-result"
         assert calls == ["first-start", "first-end", "second"]
+
+    @pytest.mark.asyncio
+    async def test_repeated_background_requests_keep_latest_pending_action(self):
+        a = _MinimalAgent()
+        started = asyncio.Event()
+        release = asyncio.Event()
+        calls = []
+
+        async def first_action():
+            calls.append("first-start")
+            started.set()
+            await release.wait()
+            calls.append("first-end")
+
+        async def stale_action():
+            calls.append("stale")
+
+        async def latest_action():
+            calls.append("latest")
+
+        task = await a.run_background_action("first", first_action)
+        await started.wait()
+
+        await a.run_background_action("stale", stale_action)
+        await a.run_background_action("latest", latest_action)
+
+        release.set()
+        await task
+
+        assert calls == ["first-start", "first-end", "latest"]
 
     def test_action_execution_defaults_to_blocking(self):
         a = _MinimalAgent()
