@@ -158,6 +158,35 @@ async def on_config_saved(config):
 handlers["talemate_started"].connect(on_talemate_started)
 async_signals.get("config.saved").connect(on_config_saved)
 
+CHAT_MESSAGE_TEMPLATE_CURRENT = "system-user-assistant"
+CHAT_MESSAGE_TEMPLATE_USER_SYSTEM_ASSISTANT = "user-system-assistant"
+DEFAULT_CHAT_MESSAGE_TEMPLATE = json.dumps(
+    [
+        {"slot": "system_prompt", "role": "system"},
+        {"slot": "user_prompt", "role": "user"},
+        {"slot": "assistant_prefill", "role": "assistant"},
+    ],
+    indent=2,
+)
+CHAT_MESSAGE_TEMPLATES = {
+    CHAT_MESSAGE_TEMPLATE_CURRENT: [
+        {"slot": "system_prompt", "role": "system"},
+        {"slot": "user_prompt", "role": "user"},
+        {"slot": "assistant_prefill", "role": "assistant"},
+    ],
+    CHAT_MESSAGE_TEMPLATE_USER_SYSTEM_ASSISTANT: [
+        {"slot": "user_prompt", "role": "user"},
+        {"slot": "system_prompt", "role": "system"},
+        {"slot": "assistant_prefill", "role": "assistant"},
+    ],
+}
+CHAT_MESSAGE_TEMPLATE_ROLES = {"system", "user", "assistant"}
+CHAT_MESSAGE_TEMPLATE_SLOTS = {
+    "system_prompt",
+    "user_prompt",
+    "assistant_prefill",
+}
+
 
 class Defaults(CommonDefaults, pydantic.BaseModel):
     max_token_length: int = 16384
@@ -166,6 +195,7 @@ class Defaults(CommonDefaults, pydantic.BaseModel):
     provider_ignore: list[str] = pydantic.Field(default_factory=list)
     reasoning_effort: str = "budget"
     promote_reasoning_on_empty_response: bool = False
+    chat_message_template: str = DEFAULT_CHAT_MESSAGE_TEMPLATE
 
 
 class ClientConfig(ConcurrentInference, BaseClientConfig):
@@ -175,6 +205,7 @@ class ClientConfig(ConcurrentInference, BaseClientConfig):
         "budget", "minimal", "low", "medium", "high", "xhigh", "max"
     ] = "budget"
     promote_reasoning_on_empty_response: bool = False
+    chat_message_template: str = DEFAULT_CHAT_MESSAGE_TEMPLATE
 
 
 PROVIDER_FIELD_GROUP = FieldGroup(
@@ -249,6 +280,20 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
                     ),
                     required=False,
                 ),
+                "chat_message_template": ExtraField(
+                    name="chat_message_template",
+                    type="blob",
+                    label="Chat Message Template",
+                    choices=None,
+                    description="JSON array of chat message template entries. Each entry needs a slot and role.",
+                    group=FieldGroup(
+                        name="chat",
+                        label="Chat",
+                        description="Configure how Talemate orders and assigns roles to OpenRouter chat-completion messages.",
+                        icon="mdi-message-text",
+                    ),
+                    required=False,
+                ),
                 "provider_only": ExtraField(
                     name="provider_only",
                     type="flags",
@@ -310,6 +355,69 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
     @property
     def promote_reasoning_on_empty_response(self) -> bool:
         return self.client_config.promote_reasoning_on_empty_response
+
+    @property
+    def chat_message_template(self) -> str:
+        return self.client_config.chat_message_template
+
+    def parse_chat_message_template(self) -> list[dict]:
+        """
+        Returns a normalized OpenRouter chat message template.
+
+        The current UI stores editable JSON. The two original named presets are
+        still accepted as aliases for configs created by older builds.
+        """
+
+        raw_template = self.chat_message_template or DEFAULT_CHAT_MESSAGE_TEMPLATE
+        if raw_template in CHAT_MESSAGE_TEMPLATES:
+            return CHAT_MESSAGE_TEMPLATES[raw_template]
+
+        try:
+            template = json.loads(raw_template)
+        except json.JSONDecodeError as exc:
+            log.warning(
+                "invalid OpenRouter chat message template; using default",
+                error=str(exc),
+            )
+            return CHAT_MESSAGE_TEMPLATES[CHAT_MESSAGE_TEMPLATE_CURRENT]
+
+        if not isinstance(template, list):
+            log.warning("OpenRouter chat message template must be a list; using default")
+            return CHAT_MESSAGE_TEMPLATES[CHAT_MESSAGE_TEMPLATE_CURRENT]
+
+        normalized = []
+        for index, entry in enumerate(template):
+            if not isinstance(entry, dict):
+                log.warning(
+                    "invalid OpenRouter chat message template entry; skipping",
+                    index=index,
+                )
+                continue
+
+            slot = entry.get("slot")
+            role = entry.get("role")
+            if slot not in CHAT_MESSAGE_TEMPLATE_SLOTS:
+                log.warning(
+                    "invalid OpenRouter chat message template slot; skipping",
+                    index=index,
+                    slot=slot,
+                )
+                continue
+            if role not in CHAT_MESSAGE_TEMPLATE_ROLES:
+                log.warning(
+                    "invalid OpenRouter chat message template role; skipping",
+                    index=index,
+                    role=role,
+                )
+                continue
+
+            normalized.append({"slot": slot, "role": role})
+
+        if not normalized:
+            log.warning("OpenRouter chat message template is empty; using default")
+            return CHAT_MESSAGE_TEMPLATES[CHAT_MESSAGE_TEMPLATE_CURRENT]
+
+        return normalized
 
     @property
     def min_reason_tokens(self) -> int:
@@ -390,28 +498,36 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
         if self.can_be_coerced:
             prompt, coercion_prompt = self.split_prompt_for_coercion(prompt)
 
-        messages = [
-            {"role": "system", "content": self.get_system_message(kind)},
-            {"role": "user", "content": prompt.strip()},
-        ]
-
         reason_prefill = self.reason_prefill.strip()
+        assistant_prefill = None
         if self.reason_enabled and reason_prefill:
-            messages.append(
-                {
-                    "role": "assistant",
-                    "content": reason_prefill,
-                }
-            )
+            assistant_prefill = {"role": "assistant", "content": reason_prefill}
         elif coercion_prompt:
             log.debug("Adding coercion pre-fill", coercion_prompt=coercion_prompt)
-            messages.append(
-                {
-                    "role": "assistant",
-                    "content": coercion_prompt.strip(),
-                    "prefix": True,
-                }
-            )
+            assistant_prefill = {
+                "role": "assistant",
+                "content": coercion_prompt.strip(),
+                "prefix": True,
+            }
+
+        slot_messages = {
+            "system_prompt": {
+                "role": "system",
+                "content": self.get_system_message(kind),
+            },
+            "user_prompt": {
+                "role": "user",
+                "content": prompt.strip(),
+            },
+            "assistant_prefill": assistant_prefill,
+        }
+
+        messages = []
+        for entry in self.parse_chat_message_template():
+            message = slot_messages.get(entry["slot"])
+            if message and message["content"]:
+                message = {**message, "role": entry["role"]}
+                messages.append(message)
 
         return messages
 

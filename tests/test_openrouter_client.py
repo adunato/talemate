@@ -1,3 +1,5 @@
+import json
+
 import pytest
 import httpx
 
@@ -39,6 +41,86 @@ def test_reason_prefill_is_trailing_assistant_message(openrouter_client):
         {"role": "system", "content": "system prompt"},
         {"role": "user", "content": "user prompt"},
         {"role": "assistant", "content": "<think>"},
+    ]
+
+
+def test_user_system_chat_message_template_reorders_messages(openrouter_client):
+    openrouter_client.client_config.chat_message_template = json.dumps(
+        [
+            {"slot": "user_prompt", "role": "user"},
+            {"slot": "system_prompt", "role": "system"},
+            {"slot": "assistant_prefill", "role": "assistant"},
+        ]
+    )
+    openrouter_client.client_config.reason_enabled = True
+    openrouter_client.client_config.reason_prefill = "<think>"
+
+    messages = openrouter_client.build_messages("user prompt", "conversation")
+
+    assert messages == [
+        {"role": "user", "content": "user prompt"},
+        {"role": "system", "content": "system prompt"},
+        {"role": "assistant", "content": "<think>"},
+    ]
+
+
+def test_user_system_template_keeps_coercion_prefill_prefix(openrouter_client):
+    openrouter_client.client_config.chat_message_template = json.dumps(
+        [
+            {"slot": "user_prompt", "role": "user"},
+            {"slot": "system_prompt", "role": "system"},
+            {"slot": "assistant_prefill", "role": "assistant"},
+        ]
+    )
+    openrouter_client.client_config.reason_enabled = False
+
+    messages = openrouter_client.build_messages(
+        "user prompt<|BOT|>assistant prefix",
+        "conversation",
+    )
+
+    assert messages == [
+        {"role": "user", "content": "user prompt"},
+        {"role": "system", "content": "system prompt"},
+        {"role": "assistant", "content": "assistant prefix", "prefix": True},
+    ]
+
+
+def test_chat_message_template_can_change_roles(openrouter_client):
+    openrouter_client.client_config.chat_message_template = json.dumps(
+        [
+            {"slot": "user_prompt", "role": "user"},
+            {"slot": "system_prompt", "role": "user"},
+        ]
+    )
+
+    messages = openrouter_client.build_messages("user prompt", "conversation")
+
+    assert messages == [
+        {"role": "user", "content": "user prompt"},
+        {"role": "user", "content": "system prompt"},
+    ]
+
+
+def test_legacy_chat_message_template_name_still_works(openrouter_client):
+    openrouter_client.client_config.chat_message_template = "user-system-assistant"
+
+    messages = openrouter_client.build_messages("user prompt", "conversation")
+
+    assert messages == [
+        {"role": "user", "content": "user prompt"},
+        {"role": "system", "content": "system prompt"},
+    ]
+
+
+def test_invalid_chat_message_template_falls_back(openrouter_client):
+    openrouter_client.client_config.chat_message_template = "not json"
+
+    messages = openrouter_client.build_messages("user prompt", "conversation")
+
+    assert messages == [
+        {"role": "system", "content": "system prompt"},
+        {"role": "user", "content": "user prompt"},
     ]
 
 
