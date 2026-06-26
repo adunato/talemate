@@ -1787,6 +1787,7 @@ export default {
         num: this.promptTotal++,
         generation_parameters: data.generation_parameters,
         inference_preset: data.inference_preset,
+        request_payload: data.request_payload,
         original_generation_parameters: JSON.parse(JSON.stringify(data.generation_parameters)),
         original_prompt: data.prompt,
         original_system_prompt: data.system_prompt ?? '',

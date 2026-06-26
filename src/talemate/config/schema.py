@@ -67,6 +67,10 @@ class Client(pydantic.BaseModel):
     # Optional assistant prefill used to start the model's reasoning response.
     reason_prefill: str | None = None
 
+    # Named chat message ordering template for chat-completion clients that
+    # support role-preserving message construction.
+    chat_message_template: str | None = None
+
     # behavior when reasoning pattern is not found in the response
     # "fail" - raise an error (default, current behavior)
     # "ignore" - return response as is

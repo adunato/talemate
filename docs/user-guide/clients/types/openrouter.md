@@ -44,6 +44,35 @@ Choose any model available via your OpenRouter account. Talemate dynamically fet
 
 Maximum context length (in tokens) that OpenRouter should consider. If you are not sure leave the default value.
 
+##### Chat Message Template
+
+Controls the order and role of chat messages sent to OpenRouter. The value is a JSON array. Each entry has:
+
+- `slot`: one of `system_prompt`, `user_prompt`, or `assistant_prefill`
+- `role`: one of `system`, `user`, or `assistant`
+
+The default template matches Talemate's previous OpenRouter behavior:
+
+```json
+[
+  { "slot": "system_prompt", "role": "system" },
+  { "slot": "user_prompt", "role": "user" },
+  { "slot": "assistant_prefill", "role": "assistant" }
+]
+```
+
+To send the user prompt before the system prompt, change it to:
+
+```json
+[
+  { "slot": "user_prompt", "role": "user" },
+  { "slot": "system_prompt", "role": "system" },
+  { "slot": "assistant_prefill", "role": "assistant" }
+]
+```
+
+Some OpenRouter models or upstream providers may treat system messages specially or expect them before user messages. If a model starts ignoring instructions or rejecting requests, switch back to the default template.
+
 !!! note "Available models are fetched automatically"
     Talemate fetches the list of available OpenRouter models when you save the configuration (if a valid API key is present). If you add or remove models to your account later, simply click **Save** in the application settings again to refresh the list. 
 --8<-- "docs/snippets/common.md:client-response-length"

@@ -108,6 +108,7 @@
                     <v-tabs v-model="promptTab">
                         <v-tab value="system">System Prompt</v-tab>
                         <v-tab value="user">User Prompt</v-tab>
+                        <v-tab value="request" v-if="localPrompt.request_payload">Request Payload</v-tab>
                     </v-tabs>
                     <v-window v-model="promptTab">
                         <v-window-item value="system">
@@ -145,6 +146,18 @@
                                 <Codemirror
                                     v-model="localPrompt.prompt"
                                     :extensions="extensions"
+                                ></Codemirror>
+                            </v-card-text>
+                        </v-window-item>
+                        <v-window-item value="request">
+                            <v-card-title>
+                                Request Payload
+                            </v-card-title>
+                            <v-card-text>
+                                <Codemirror
+                                    :model-value="requestPayloadJson"
+                                    :extensions="extensions"
+                                    :disabled="true"
                                 ></Codemirror>
                             </v-card-text>
                         </v-window-item>
@@ -258,6 +271,9 @@ export default {
                 }
             }
             return filtered;
+        },
+        requestPayloadJson() {
+            return JSON.stringify(this.localPrompt.request_payload, null, 2);
         },
         promptHasDirtyParams() {
             if (!this.localPrompt) return false;
