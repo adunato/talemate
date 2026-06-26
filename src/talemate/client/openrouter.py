@@ -2,6 +2,7 @@ import pydantic
 import structlog
 import httpx
 import asyncio
+import copy
 import json
 from typing import Literal
 
@@ -566,6 +567,8 @@ class OpenRouterClient(ConcurrentInferenceMixin, ClientBase):
                 payload["reasoning"] = {
                     "effort": self.reasoning_effort,
                 }
+
+        self._request_payload = copy.deepcopy(payload)
 
         self.log.debug(
             "generate",

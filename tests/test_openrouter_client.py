@@ -208,6 +208,37 @@ async def test_budget_reasoning_sends_max_tokens(
     await openrouter_client.generate("user prompt", {}, "conversation")
 
     assert captured_payload["reasoning"] == {"max_tokens": 2048}
+    assert openrouter_client._request_payload == captured_payload
+
+
+@pytest.mark.asyncio
+async def test_request_payload_preserves_final_chat_message_order(
+    openrouter_client, monkeypatch
+):
+    captured_payload = {}
+    openrouter_client.client_config.chat_message_template = json.dumps(
+        [
+            {"slot": "user_prompt", "role": "user"},
+            {"slot": "system_prompt", "role": "system"},
+            {"slot": "assistant_prefill", "role": "assistant"},
+        ]
+    )
+    openrouter_client.client_config.reason_enabled = True
+    openrouter_client.client_config.reason_prefill = "<think>"
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda: MockAsyncClient(captured_payload),
+    )
+
+    await openrouter_client.generate("user prompt", {}, "conversation")
+
+    assert openrouter_client._request_payload["messages"] == [
+        {"role": "user", "content": "user prompt"},
+        {"role": "system", "content": "system prompt"},
+        {"role": "assistant", "content": "<think>"},
+    ]
+    assert openrouter_client._request_payload == captured_payload
 
 
 @pytest.mark.asyncio

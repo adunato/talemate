@@ -105,6 +105,7 @@ class PromptData(pydantic.BaseModel):
     preset_group: str | None = None
     reasoning: str | None = None
     template_uid: str | None = None
+    request_payload: dict | None = None
 
 
 class ErrorAction(pydantic.BaseModel):
@@ -1528,6 +1529,7 @@ class ClientBase:
             self._returned_prompt_tokens = None
             self._returned_response_tokens = None
             self._reasoning_response = None
+            self._request_payload = None
 
             self.emit_status(processing=True)
             await self.status()
@@ -1672,6 +1674,7 @@ class ClientBase:
                 preset_group=self.preset_group,
                 reasoning=self._reasoning_response,
                 template_uid=active_template_uid.get(),
+                request_payload=self._request_payload,
             )
 
             emit("prompt_sent", data=prompt_data.model_dump())

@@ -84,6 +84,7 @@ Each line in `prompt_log.jsonl` is a single JSON object with the fields below. F
 | `preset_group` | string or null | Preset group the client is using, if any. |
 | `reasoning` | string or null | The extracted reasoning / thinking trace for this response, when the client supports reasoning tokens. |
 | `template_uid` | string or null | UID of the Jinja prompt template that produced the prompt. Useful for correlating a log line back to a specific template in the Prompt Manager. |
+| `request_payload` | object or null | Final provider request body when the client exposes one. For OpenRouter this is the exact JSON body sent to `/chat/completions`, including the final `messages` order and roles. Headers and API keys are not included. |
 
 The record is the same `PromptData` structure that Talemate emits over the websocket to populate the in-app [Debug Tools](../../user-guide/debug-tools.md#prompts) Prompts tab, so anything visible there is also in the log file.
 
