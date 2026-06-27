@@ -277,9 +277,18 @@ async def test_disabled_reasoning_omits_reasoning_parameter(
     assert "reasoning" not in captured_payload
 
 
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "conversation",
+        "edit_add_detail",
+        "create_100",
+        "narrate_256",
+    ],
+)
 @pytest.mark.asyncio
 async def test_reasoning_promoted_when_response_is_empty(
-    openrouter_client, monkeypatch
+    openrouter_client, monkeypatch, kind
 ):
     captured_payload = {}
     response_chunks = [
@@ -294,7 +303,7 @@ async def test_reasoning_promoted_when_response_is_empty(
         lambda: MockAsyncClient(captured_payload, response_chunks),
     )
 
-    response = await openrouter_client.generate("user prompt", {}, "conversation")
+    response = await openrouter_client.generate("user prompt", {}, kind)
 
     assert response == "Visible answer"
     assert openrouter_client.reasoning_response == ""
