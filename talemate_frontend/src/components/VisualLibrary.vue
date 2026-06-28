@@ -1,6 +1,6 @@
 <template>
   <!-- Visual Library Nav Icon -->
-  <v-tooltip text="Visual Library" location="top" v-if="sceneActive">
+  <v-tooltip text="Visual Library" location="top" v-if="sceneActive && showNavIcon">
     <template v-slot:activator="{ props }">
       <v-badge :model-value="newImages" color="info" dot location="top end" offset-x="2" offset-y="2">
         <v-app-bar-nav-icon @click="open" v-bind="props"><v-icon>mdi-image-multiple-outline</v-icon></v-app-bar-nav-icon>
@@ -189,6 +189,10 @@ export default {
     sceneActive: {
       type: Boolean,
       required: true,
+    },
+    showNavIcon: {
+      type: Boolean,
+      default: true,
     },
     scene: {
       type: Object,

@@ -566,6 +566,12 @@ export default {
     .hotbuttons-section-2 .d-flex {
         justify-content: center;
     }
+
+    .hotbuttons-section-1 .v-card-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2px;
+    }
 }
 
 @media (max-width: 480px) {

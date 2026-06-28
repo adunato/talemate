@@ -2,7 +2,7 @@
   <v-app>
 
     <!-- system bar -->
-    <v-system-bar>
+    <v-system-bar v-if="!mobileLimitedMode">
       <v-icon icon="mdi-network-outline"></v-icon>
 
       <span v-for="name in sortedClientNames" :key="name">
@@ -50,8 +50,81 @@
 
     </v-system-bar>
 
+    <div v-if="mobileLimitedMode" class="mobile-service-components">
+      <AudioQueue ref="audioQueue" @message-audio-played="onMessageAudioPlayed" />
+      <VisualLibrary
+        ref="visualLibrary"
+        :scene-active="sceneActive"
+        :scene="scene"
+        :app-busy="busy"
+        :app-ready="ready"
+        :agent-status="agentStatus"
+        :world-state-templates="worldStateTemplates"
+        :show-nav-icon="false"
+      />
+    </div>
+
     <!-- app bar -->
-    <v-app-bar app density="compact">
+    <v-app-bar v-if="mobileLimitedMode" app density="compact" class="mobile-app-bar">
+      <v-app-bar-nav-icon size="small" @click="toggleNavigation('game')">
+        <v-tooltip activator="parent" location="top">Scenes</v-tooltip>
+        <v-icon>mdi-menu</v-icon>
+      </v-app-bar-nav-icon>
+
+      <v-toolbar-title class="mobile-app-title">
+        {{ mobileTitle }}
+      </v-toolbar-title>
+
+      <v-spacer></v-spacer>
+
+      <v-tooltip text="Chat" location="top">
+        <template v-slot:activator="{ props }">
+          <v-app-bar-nav-icon
+            v-bind="props"
+            :disabled="!sceneActive"
+            :color="mobilePanel === null && tab === 'main' ? 'primary' : undefined"
+            @click="openMobileChat"
+          >
+            <v-icon>mdi-message-text-outline</v-icon>
+          </v-app-bar-nav-icon>
+        </template>
+      </v-tooltip>
+
+      <v-tooltip text="Characters" location="top">
+        <template v-slot:activator="{ props }">
+          <v-app-bar-nav-icon
+            v-bind="props"
+            :disabled="!sceneActive"
+            :color="mobilePanel === 'characters' ? 'primary' : undefined"
+            @click="openMobilePanel('characters')"
+          >
+            <v-icon>mdi-account-group</v-icon>
+          </v-app-bar-nav-icon>
+        </template>
+      </v-tooltip>
+
+      <v-tooltip text="Clients / Agents" location="top">
+        <template v-slot:activator="{ props }">
+          <v-app-bar-nav-icon
+            v-bind="props"
+            :color="mobilePanel === 'agents' ? 'primary' : (!ready ? 'red-darken-1' : undefined)"
+            @click="openMobilePanel('agents')"
+          >
+            <v-icon>mdi-application-cog</v-icon>
+          </v-app-bar-nav-icon>
+        </template>
+      </v-tooltip>
+
+      <v-tooltip :text="mobileConnectionLabel" location="top">
+        <template v-slot:activator="{ props }">
+          <v-app-bar-nav-icon v-bind="props" :color="mobileConnectionColor">
+            <v-icon>{{ mobileConnectionIcon }}</v-icon>
+          </v-app-bar-nav-icon>
+        </template>
+      </v-tooltip>
+    </v-app-bar>
+
+    <v-app-bar v-else app density="compact">
       <v-app-bar-nav-icon size="small" @click="toggleNavigation('game')">
         <v-tooltip activator="parent" location="top">Toggle sidebar</v-tooltip>
         <v-icon v-if="sceneDrawer">mdi-arrow-collapse-left</v-icon>
@@ -122,7 +195,12 @@
     <v-main style="height: 100%; display: flex; flex-direction: column;">
 
       <!-- left side navigation drawer -->
-      <v-navigation-drawer v-model="sceneDrawer" app :width="leftDrawerWidth">
+      <v-navigation-drawer
+        v-model="sceneDrawer"
+        app
+        :temporary="mobileLimitedMode"
+        :width="mobileLimitedMode ? '100%' : leftDrawerWidth"
+      >
         <v-alert v-if="!connected" type="error" variant="tonal">
           Not connected to Talemate backend
           <p class="text-body-2" color="white">
@@ -187,7 +265,7 @@
 
       </v-navigation-drawer>
       <!-- right side navigation drawer -->
-      <v-navigation-drawer v-model="drawer" app location="right" width="350" disable-resize-watcher>
+      <v-navigation-drawer v-if="!mobileLimitedMode" v-model="drawer" app location="right" width="350" disable-resize-watcher>
         <v-alert v-if="!connected" type="error" variant="tonal">
           Not connected to Talemate backend
           <p class="text-body-2" color="white">
@@ -198,34 +276,89 @@
           There are some outstanding configuration issues, please ensure that all enabled agents are configured correctly.
         </v-alert>
 
-        <v-list>
-          <AIClient ref="aiClient" @save="saveClients" @error="uxErrorHandler" @clients-updated="saveClients" @client-assigned="saveAgents" @open-app-config="openAppConfig" :immutable-config="appConfig" :app-config="appConfig"></AIClient>
-          <v-divider></v-divider>
-          <v-list-subheader class="text-uppercase"><v-icon>mdi-transit-connection-variant</v-icon> Agents</v-list-subheader>
-          <AIAgent ref="aiAgent" @save="saveAgents" @agents-updated="saveAgents" :agentState="agentState" :templates="worldStateTemplates" :app-config="appConfig"></AIAgent>
-          <!-- More sections can be added here -->
-        </v-list>
+        <AgentPanel
+          ref="agentPanel"
+          :agent-state="agentState"
+          :templates="worldStateTemplates"
+          :app-config="appConfig"
+          @save-clients="saveClients"
+          @clients-updated="saveClients"
+          @client-assigned="saveAgents"
+          @save-agents="saveAgents"
+          @agents-updated="saveAgents"
+          @open-app-config="openAppConfig"
+          @error="uxErrorHandler"
+        />
       </v-navigation-drawer>
 
       <!-- director console navigation drawer -->
-      <v-navigation-drawer v-model="directorConsoleDrawer" app location="right" :width="directorConsoleWidth" disable-resize-watcher>
+      <v-navigation-drawer v-if="!mobileLimitedMode" v-model="directorConsoleDrawer" app location="right" :width="directorConsoleWidth" disable-resize-watcher>
         <DirectorConsole :scene="scene" v-if="sceneActive" :app-busy="busy" :app-ready="ready" :open="directorConsoleDrawer" />
       </v-navigation-drawer>
 
       <!-- character panel navigation drawer -->
-      <v-navigation-drawer v-model="characterPanelDrawer" app location="right" width="400" disable-resize-watcher>
+      <v-navigation-drawer v-if="!mobileLimitedMode" v-model="characterPanelDrawer" app location="right" width="400" disable-resize-watcher>
         <CharacterPanel v-if="sceneActive" :open="characterPanelDrawer" />
       </v-navigation-drawer>
 
       <!-- debug tools navigation drawer -->
-      <v-navigation-drawer v-model="debugDrawer" app location="right" width="400" disable-resize-watcher>
+      <v-navigation-drawer v-if="!mobileLimitedMode" v-model="debugDrawer" app location="right" width="400" disable-resize-watcher>
         <v-list>
           <v-list-subheader class="text-uppercase"><v-icon>mdi-bug</v-icon> Debug Tools</v-list-subheader>
           <DebugTools ref="debugTools" :scene="scene" :prompts="promptsViewPrompts" @clear-prompts="clearPrompts"></DebugTools>
         </v-list>
       </v-navigation-drawer>
 
-      <v-container :class="(sceneActive ? '' : 'backdrop')" fluid style="height: 100%;">
+      <v-navigation-drawer
+        v-if="mobileLimitedMode"
+        v-model="mobilePanelOpen"
+        app
+        location="right"
+        temporary
+        width="100%"
+        class="mobile-right-panel"
+      >
+        <v-toolbar density="compact" flat color="mutedbg">
+          <v-toolbar-title class="text-subtitle-1">
+            <v-icon class="mr-1">{{ mobilePanelIcon }}</v-icon>
+            {{ mobilePanelTitle }}
+          </v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-btn icon variant="text" @click="closeMobilePanel">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-divider></v-divider>
+
+        <div v-show="mobilePanel === 'characters'">
+          <CharacterPanel v-if="sceneActive" :open="mobilePanel === 'characters'" />
+        </div>
+
+        <div v-show="mobilePanel === 'agents'">
+          <AgentPanel
+            ref="agentPanel"
+            :agent-state="agentState"
+            :templates="worldStateTemplates"
+            :app-config="appConfig"
+            @save-clients="saveClients"
+            @clients-updated="saveClients"
+            @client-assigned="saveAgents"
+            @save-agents="saveAgents"
+            @agents-updated="saveAgents"
+            @open-app-config="openAppConfig"
+            @error="uxErrorHandler"
+          />
+        </div>
+      </v-navigation-drawer>
+
+      <v-container
+        :class="[
+          sceneActive ? '' : 'backdrop',
+          { 'mobile-main-container': mobileLimitedMode }
+        ]"
+        fluid
+        style="height: 100%;"
+      >
 
         <v-tabs-window v-model="tab" style="height: 100%;">
           <!-- HOME -->
@@ -256,7 +389,7 @@
                   >
                   </NodeEditor>  
               </v-col>
-              <v-col :cols="creativeMode ? (showSceneView ? 6 : 0) : 12"  :xl="creativeMode ? (showSceneView ? 4 : 12) : 12" :class="{ 'pl-2': true, 'd-none': creativeMode && !showSceneView }">
+              <v-col :cols="creativeMode ? (showSceneView ? 6 : 0) : 12"  :xl="creativeMode ? (showSceneView ? 4 : 12) : 12" :class="{ 'pl-2': !mobileLimitedMode, 'd-none': creativeMode && !showSceneView, 'mobile-scene-col': mobileLimitedMode }">
                 <div style="display: flex; flex-direction: column; height: 100%">
 
                   <div class="scene-container">
@@ -387,14 +520,12 @@
     v-if="connected && appConfig && appConfig.clients"
     :clients="Object.values(appConfig.clients || {})"
     :agents="Object.values(agentStatus || {})"
-    @open-client-modal="(preset) => $refs.aiClient.openModal(preset)"
+    @open-client-modal="openClientModal"
   />
 </template>
   
 <script>
-import AIClient from './AIClient.vue';
 import { primaryModifierLabel } from '@/utils/keyboardModifiers';
-import AIAgent from './AIAgent.vue';
 import AgentActivityBar from './AgentActivityBar.vue';
 import LoadScene from './LoadScene.vue';
 import SceneTools from './SceneTools.vue';
@@ -420,6 +551,7 @@ import NodeEditor from './NodeEditor.vue';
 import DirectorConsole from './DirectorConsole.vue';
 import DirectorConsoleWidget from './DirectorConsoleWidget.vue';
 import CharacterPanel from './CharacterPanel.vue';
+import AgentPanel from './AgentPanel.vue';
 import PackageManager from './PackageManager.vue';
 import PackageManagerMenu from './PackageManagerMenu.vue';
 import Templates from './Templates.vue';
@@ -434,8 +566,7 @@ import { createSceneAssetsRequester } from './VisualAssetsMixin.js';
 
 export default {
   components: {
-    AIClient,
-    AIAgent,
+    AgentPanel,
     AgentActivityBar,
     LoadScene,
     SceneTools,
@@ -609,9 +740,38 @@ export default {
       promptsOutdatedCount: 0,
       // Flag to ensure new-scene navigation only happens once per scene load
       newSceneNavigationPending: false,
+      windowWidth: typeof window !== 'undefined' ? window.innerWidth : 1200,
+      mobilePanel: null,
     }
   },
   watch:{
+    mobileLimitedMode(isMobile) {
+      if (isMobile) {
+        this.drawer = false;
+        this.debugDrawer = false;
+        this.directorConsoleDrawer = false;
+        this.characterPanelDrawer = false;
+        if (this.sceneActive) {
+          this.sceneDrawer = false;
+        }
+        if (this.sceneActive && !['home', 'main'].includes(this.tab)) {
+          this.tab = 'main';
+        }
+      } else {
+        this.mobilePanel = null;
+      }
+    },
+    sceneActive(active) {
+      if (this.mobileLimitedMode && active) {
+        this.sceneDrawer = false;
+        if (this.tab === 'home') {
+          this.tab = 'main';
+        }
+      }
+      if (!active) {
+        this.mobilePanel = null;
+      }
+    },
     availableTabs(tabs) {
       // check if tab still exists
       // in tabs
@@ -718,6 +878,61 @@ export default {
     },
   },
   computed: {
+    mobileLimitedMode() {
+      return this.windowWidth <= 768;
+    },
+    mobilePanelOpen: {
+      get() {
+        return this.mobilePanel !== null;
+      },
+      set(open) {
+        if (!open) {
+          this.mobilePanel = null;
+        }
+      },
+    },
+    mobileTitle() {
+      if (this.sceneActive) {
+        return this.scene.title || 'Untitled Scenario';
+      }
+      return 'Talemate';
+    },
+    mobilePanelTitle() {
+      if (this.mobilePanel === 'characters') {
+        return 'Characters';
+      }
+      if (this.mobilePanel === 'agents') {
+        return 'Clients / Agents';
+      }
+      return '';
+    },
+    mobilePanelIcon() {
+      if (this.mobilePanel === 'characters') {
+        return 'mdi-account-group';
+      }
+      if (this.mobilePanel === 'agents') {
+        return 'mdi-application-cog';
+      }
+      return 'mdi-dock-right';
+    },
+    mobileConnectionColor() {
+      if (this.connecting) {
+        return 'info';
+      }
+      return this.connected ? 'success' : 'error';
+    },
+    mobileConnectionIcon() {
+      if (this.connecting) {
+        return 'mdi-progress-helper';
+      }
+      return this.connected ? 'mdi-checkbox-blank-circle' : 'mdi-progress-close';
+    },
+    mobileConnectionLabel() {
+      if (this.connecting) {
+        return 'connecting';
+      }
+      return this.connected ? 'connected' : 'offline';
+    },
     creativeMode() {
       return this.tab === 'main' && this.sceneActive && this.scene.environment === 'creative';
     },
@@ -803,8 +1018,10 @@ export default {
   mounted() {
     this.connect();
     this.favicon = document.querySelector('link[rel="icon"]');
+    window.addEventListener('resize', this.handleWindowResize);
   },
   beforeUnmount() {
+    window.removeEventListener('resize', this.handleWindowResize);
     // Cleanup scene assets requester (flushes any pending requests)
     if (this._sceneAssetsRequester) {
       this._sceneAssetsRequester.cleanup({ flush: true });
@@ -1453,12 +1670,32 @@ export default {
       this.websocket.send(JSON.stringify({ type: 'request_assets', assets: assets }));
     },
     setNavigation(navigation) {
+      if (this.mobileLimitedMode) {
+        if (navigation === "game") {
+          this.sceneDrawer = true;
+        } else if (navigation === "settings") {
+          this.openMobilePanel('agents');
+        }
+        return;
+      }
+
       if (navigation == "game")
         this.sceneDrawer = true;
       else if (navigation == "settings")
         this.drawer = true;
     },
     toggleNavigation(navigation, open) {
+      if (this.mobileLimitedMode) {
+        if (navigation === 'game') {
+          this.sceneDrawer = open || !this.sceneDrawer;
+        } else if (navigation === 'settings') {
+          this.openMobilePanel('agents');
+        } else if (navigation === 'characters') {
+          this.openMobilePanel('characters');
+        }
+        return;
+      }
+
       if (navigation == "game")
         this.sceneDrawer = open || !this.sceneDrawer;
       else if (navigation == "settings") {
@@ -1503,42 +1740,24 @@ export default {
       this.tab = 'home';
     },
     getClients() {
-      if (!this.$refs.aiClient) {
-        return [];
-      }
-      return this.$refs.aiClient.state.clients;
+      return this.$refs.agentPanel?.getClients() || [];
     },
     getAgents() {
-      if (!this.$refs.aiAgent) {
-        return [];
-      }
-      return this.$refs.aiAgent.state.agents;
+      return this.$refs.agentPanel?.getAgents() || [];
     },
     activeClientName() {
-      if (!this.$refs.aiClient) {
-        return null;
-      }
-
-      let client = this.$refs.aiClient.getActive();
-      if (client) {
-        return client.name;
-      }
-      return null;
+      return this.$refs.agentPanel?.activeClientName() || null;
     },
     activeAgentName() {
-      if (!this.$refs.aiAgent) {
-        return null;
-      }
-
-      let agent = this.$refs.aiAgent.getActive();
-
-      if (agent) {
-        return agent.label;
-      }
-      return null;
+      return this.$refs.agentPanel?.activeAgentName() || null;
     },
     openAgentSettings(agentName, section) {
-      this.$refs.aiAgent.openSettings(agentName, section);
+      if (this.mobileLimitedMode) {
+        this.openMobilePanel('agents');
+      }
+      this.$nextTick(() => {
+        this.$refs.agentPanel?.openAgentSettings(agentName, section);
+      });
     },
     callAgentTool(actionName, args) {
       const dispatch = {
@@ -1553,10 +1772,10 @@ export default {
       }
     },
     configurationRequired() {
-      if (!this.$refs.aiClient || this.connecting || (!this.connecting && !this.connected)) {
+      if (!this.$refs.agentPanel || this.connecting || (!this.connecting && !this.connected)) {
         return false;
       }
-      return this.$refs.aiAgent.configurationRequired();
+      return this.$refs.agentPanel.configurationRequired();
     },
     openCharacterSheet(characterName) {
       this.$refs.characterSheet.openForCharacterName(characterName);
@@ -1573,8 +1792,11 @@ export default {
       });
     },
     onOpenAgentMessages(agent_name) {
+      if (this.mobileLimitedMode) {
+        this.openMobilePanel('agents');
+      }
       this.$nextTick(() => {
-        this.$refs.aiAgent.openMessages(agent_name);
+        this.$refs.agentPanel?.openAgentMessages(agent_name);
       });
     },
     onOpenPackageManager() {
@@ -1660,7 +1882,8 @@ export default {
       // A busy client normally means foreground generation is in progress.
       // Background agents use the same client status, so do not lock input
       // when the active client is accounted for by a busy_bg agent.
-      const activeClient = this.$refs.aiClient?.getActive();
+      const activeClientName = this.$refs.agentPanel?.activeClientName();
+      const activeClient = activeClientName ? { name: activeClientName } : null;
       const clientIsBackgroundOnly = activeClient && Object.values(this.agentStatus).some(agent => {
         return agent.busy_bg && agent.details === activeClient.name;
       });
@@ -1712,6 +1935,41 @@ export default {
       if(this.$refs.audioQueue) {
         this.$refs.audioQueue.stopAndClear();
       }
+    },
+
+    handleWindowResize() {
+      this.windowWidth = window.innerWidth;
+    },
+
+    openMobileChat() {
+      if (!this.sceneActive) {
+        return;
+      }
+      this.mobilePanel = null;
+      this.tab = 'main';
+      this.$nextTick(() => {
+        this.$refs.sceneMessageInput?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    },
+
+    openMobilePanel(panel) {
+      this.mobilePanel = panel;
+      if (this.sceneActive && this.tab !== 'main') {
+        this.tab = 'main';
+      }
+    },
+
+    closeMobilePanel() {
+      this.mobilePanel = null;
+    },
+
+    openClientModal(preset) {
+      if (this.mobileLimitedMode) {
+        this.openMobilePanel('agents');
+      }
+      this.$nextTick(() => {
+        this.$refs.agentPanel?.openClientModal(preset);
+      });
     },
 
     requestNodeEditorExit() {
@@ -1847,5 +2105,36 @@ export default {
 .scene-controls--locked {
   pointer-events: none;
   opacity: 0.6;
+}
+
+.mobile-app-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+
+.mobile-main-container {
+  padding: 6px !important;
+}
+
+.mobile-scene-col {
+  padding-left: 0 !important;
+}
+
+.mobile-right-panel {
+  max-width: 100vw;
+}
+
+.mobile-service-components {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .scene-container {
+    max-width: none;
+    overflow-x: hidden;
+  }
 }
 </style>
