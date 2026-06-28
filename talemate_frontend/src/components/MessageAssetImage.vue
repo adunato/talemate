@@ -5,6 +5,7 @@
       :src="imageSrc" 
       cover 
       :class="assetImageClass"
+      v-primary-modifier-long-press
       @click="handleClick"
       style="cursor: pointer;"
     ></v-img>
@@ -165,7 +166,7 @@ export default {
   },
   methods: {
     handleClick(event) {
-      // Ctrl/Cmd+click directly opens the image view
+      // Ctrl/Cmd+click, or touch long-press, directly opens the image view
       if (isPrimaryModifier(event) && this.imageSrc) {
         this.openAssetView();
         return;

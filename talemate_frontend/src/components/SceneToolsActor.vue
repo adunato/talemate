@@ -8,12 +8,13 @@
         <v-list density="compact">
             <v-list-subheader>Actor Actions</v-list-subheader>
             <v-list-item v-for="npcName in npcCharacters" :key="npcName"
+                v-primary-modifier-long-press
                 @click="(ev) => { actionGenerateActingAction(ev, null, {character: npcName}) }" prepend-icon="mdi-comment-account-outline">
                 <v-list-item-title>Actor Action ({{ npcName }})</v-list-item-title>
                 <v-list-item-subtitle>Generate Actor Action <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">{{ primaryModifierLabel }}: Provide direction</v-chip></v-list-item-subtitle>
             </v-list-item>
 
-            <v-list-item @click="actionGenerateActingAction" prepend-icon="mdi-comment-text-outline">
+            <v-list-item v-primary-modifier-long-press @click="actionGenerateActingAction" prepend-icon="mdi-comment-text-outline">
                 <v-list-item-title>Actor Action</v-list-item-title>
                 <v-list-item-subtitle>Generate Actor Action <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">{{ primaryModifierLabel }}: Provide direction</v-chip></v-list-item-subtitle>
             </v-list-item>

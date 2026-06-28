@@ -12,7 +12,7 @@
                 Visualize
                 <span v-if="visualAgentReady">
                     <v-chip variant="tonal" label color="highlight5" class="ml-1" size="x-small"><strong class="mr-1">ALT:</strong> Prompt Only</v-chip>
-                    <v-chip variant="tonal" label color="highlight5" class="ml-1" size="x-small"><strong class="mr-1">CTRL:</strong> Instructions</v-chip>
+                    <v-chip variant="tonal" label color="highlight5" class="ml-1" size="x-small"><strong class="mr-1">CTRL/long press:</strong> Instructions</v-chip>
                 </span>
             </v-list-subheader>
             <!-- auto attach assets checkbox -->
@@ -32,11 +32,11 @@
                 <v-alert type="warning" density="compact" variant="text" class="mb-3 text-caption">Visual agent is not ready for image generation, will output prompt instead.</v-alert>
             </div>
             <!-- environment -->
-            <v-list-item @click="(event) => handleVisualize(null, event, 'SCENE_CARD')" prepend-icon="mdi-image-filter-hdr">
+            <v-list-item v-primary-modifier-long-press @click="(event) => handleVisualize(null, event, 'SCENE_CARD')" prepend-icon="mdi-image-filter-hdr">
                 <v-list-item-title>Visualize Scene (Card)</v-list-item-title>
                 <v-list-item-subtitle>Generate a cover image of the scene</v-list-item-subtitle>
             </v-list-item>
-            <v-list-item @click="(event) => handleVisualize(null, event, 'SCENE_BACKGROUND')" prepend-icon="mdi-image-filter-hdr">
+            <v-list-item v-primary-modifier-long-press @click="(event) => handleVisualize(null, event, 'SCENE_BACKGROUND')" prepend-icon="mdi-image-filter-hdr">
                 <v-list-item-title>Visualize Scene (Background)</v-list-item-title>
                 <v-list-item-subtitle>Generate a purely environmental image of the scene</v-list-item-subtitle>
             </v-list-item>
@@ -48,18 +48,18 @@
                     </v-list-item>
                 </template>
                 <v-list>
-                    <v-list-item @click="(event) => handleVisualize(character_name, event, 'CHARACTER_CARD')" prepend-icon="mdi-brush">
+                    <v-list-item v-primary-modifier-long-press @click="(event) => handleVisualize(character_name, event, 'CHARACTER_CARD')" prepend-icon="mdi-brush">
                         <v-list-item-title>Card</v-list-item-title>
                         <v-list-item-subtitle>Generate a cover image portrait</v-list-item-subtitle>
                     </v-list-item>
-                    <v-list-item @click="(event) => handleVisualize(character_name, event, 'CHARACTER_PORTRAIT')" prepend-icon="mdi-brush">
+                    <v-list-item v-primary-modifier-long-press @click="(event) => handleVisualize(character_name, event, 'CHARACTER_PORTRAIT')" prepend-icon="mdi-brush">
                         <v-list-item-title>Portrait</v-list-item-title>
                         <v-list-item-subtitle>Generate an image of {{ character_name }}'s face</v-list-item-subtitle>
                     </v-list-item>
                 </v-list>
             </v-menu>
             <!-- scene illustration -->
-            <v-list-item @click="(event) => handleVisualize(null, event, 'SCENE_ILLUSTRATION')" prepend-icon="mdi-image-filter-hdr">
+            <v-list-item v-primary-modifier-long-press @click="(event) => handleVisualize(null, event, 'SCENE_ILLUSTRATION')" prepend-icon="mdi-image-filter-hdr">
                 <v-list-item-title>Visualize Moment (Illustration)</v-list-item-title>
                 <v-list-item-subtitle>Generate an image of the current moment</v-list-item-subtitle>
             </v-list-item>

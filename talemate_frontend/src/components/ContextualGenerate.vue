@@ -65,7 +65,7 @@
         <v-spacer></v-spacer>
         <v-tooltip class="pre-wrap" :text="tooltipText" >
             <template v-slot:activator="{ props }">
-                <v-btn v-bind="props" color="primary" @click.stop="open" variant="text" prepend-icon="mdi-auto-fix" :disabled="disabled">Generate</v-btn>
+                <v-btn v-bind="props" color="primary" v-primary-modifier-long-press @click.stop="open" variant="text" prepend-icon="mdi-auto-fix" :disabled="disabled">Generate</v-btn>
             </template>
         </v-tooltip>
     </v-sheet>
@@ -222,9 +222,9 @@ export default {
 
         tooltipText() {
             if(this.rewriteEnabled)
-                return "Generate "+this.contextTypeLabel+"\n[+ctrl to provide instructions]\n[+alt to rewrite existing content]";
+                return "Generate "+this.contextTypeLabel+"\n[+ctrl or long press to provide instructions]\n[+alt to rewrite existing content]";
             else
-                return "Generate "+this.contextTypeLabel+"\n[+ctrl to provide instructions]";
+                return "Generate "+this.contextTypeLabel+"\n[+ctrl or long press to provide instructions]";
         },
         
         effectiveLength() {

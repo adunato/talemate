@@ -1,8 +1,8 @@
 <template>
     <div v-if="isConnected()">
         <v-list density="compact">
-            <!-- Ctrl + click toggles agent enable/disable when allowed -->
-            <v-list-item  v-for="(agent, index) in state.agents" :key="index" @click="listItemClicked($event, agent, index)">
+            <!-- Ctrl/Cmd + click, or touch long-press, toggles agent enable/disable when allowed -->
+            <v-list-item  v-for="(agent, index) in state.agents" :key="index" v-primary-modifier-long-press @click="listItemClicked($event, agent, index)">
                 <v-list-item-title>
                     <v-progress-circular v-if="agent.status === 'busy'" indeterminate="disable-shrink" color="primary"
                         size="14"></v-progress-circular>
@@ -189,7 +189,7 @@ export default {
          *
          * Behaviour:
          *  - Regular click opens the agent edit modal (existing behaviour).
-         *  - Ctrl-/Cmd-click toggles the agent's enabled state **iff** the agent supports toggling (agent.data.has_toggle).
+         *  - Ctrl-/Cmd-click or touch long-press toggles the agent's enabled state **iff** the agent supports toggling (agent.data.has_toggle).
          */
         listItemClicked(event, agent, index) {
             // If the user is holding Ctrl (Windows/Linux) or Cmd (macOS)

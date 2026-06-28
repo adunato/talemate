@@ -10,6 +10,7 @@
             <!-- Generate dynamic choices  -->
             <v-list-item
                 density="compact"
+                v-primary-modifier-long-press
                 @click="actionRequestDynamicChoices"
                 prepend-icon="mdi-tournament"
             >
@@ -19,6 +20,7 @@
             <!-- Trigger scene direction turn -->
             <v-list-item
                 density="compact"
+                v-primary-modifier-long-press
                 @click="actionSceneDirectionTurn"
                 prepend-icon="mdi-movie-play"
                 :disabled="!sceneDirectionEnabled"

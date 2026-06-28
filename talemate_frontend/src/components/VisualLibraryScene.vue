@@ -40,13 +40,14 @@
             v-if="selectedId"
             :disabled="!analysisAvailable || analyzing" 
             variant="text" 
+            v-primary-modifier-long-press
             @click="handleAnalyzeClick"
             prepend-icon="mdi-image-search" 
             color="primary"
             :loading="analyzing"
           >
             <v-tooltip activator="parent" location="top">
-              Analyze the image using AI. ({{ primaryModifierLabel }}: set instructions)
+              Analyze the image using AI. ({{ primaryModifierLabel }} or long press: set instructions)
             </v-tooltip>
             Analyze
           </v-btn>

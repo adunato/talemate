@@ -112,6 +112,7 @@
                     max-width="300px">
                     <template v-slot:activator="{ props }">
                         <v-btn class="hotkey" v-bind="props" :disabled="appBusy || !appReady"
+                            v-primary-modifier-long-press
                             @click="regenerate" color="primary" icon>
                             <v-icon>mdi-refresh</v-icon>
                         </v-btn>
@@ -124,6 +125,7 @@
                     max-width="300px">
                     <template v-slot:activator="{ props }">
                         <v-btn class="hotkey" v-bind="props" :disabled="appBusy || !appReady"
+                            v-primary-modifier-long-press
                             @click="regenerateNuke" color="primary" icon>
                             <v-icon>mdi-nuke</v-icon>
                         </v-btn>

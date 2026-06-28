@@ -41,6 +41,7 @@
                             'current': currentCoverImageId === asset.id
                         }"
                         v-bind="getActivatorProps(props)"
+                        v-primary-modifier-long-press
                         @click="handleAssetClick($event, asset.id, props.onClick)"
                         elevation="2"
                     >

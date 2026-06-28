@@ -13,18 +13,20 @@
             <!-- Progress Story -->
             <v-list-item 
                 density="compact"
+                v-primary-modifier-long-press
                 @click="actionProgress" 
                 prepend-icon="mdi-script-text-play"
             >
                 <v-list-item-title>Progress Story <v-chip variant="text" color="highlight5" class="ml-1" size="x-small">{{ primaryModifierLabel }}: Provide direction</v-chip></v-list-item-title>
-                <v-btn @click.stop="(e) => { actionProgress(e, PROGRESS_SHORTCUT_MINOR) }" variant="tonal" color="highlight2" class="mr-1" size="x-small" :prepend-icon="'mdi-dice-multiple'">Minor</v-btn>
-                <v-btn @click.stop="(e) => { actionProgress(e, PROGRESS_SHORTCUT_MAJOR) }" variant="tonal" color="highlight2" class="mr-1" size="x-small" :prepend-icon="'mdi-dice-multiple'">Major</v-btn>
-                <v-btn @click.stop="(e) => { actionProgress(e, PROGRESS_SHORTCUT_CURVEBALL) }" variant="tonal" color="highlight2" size="x-small" :prepend-icon="'mdi-dice-multiple'">Curveball</v-btn>
+                <v-btn v-primary-modifier-long-press @click.stop="(e) => { actionProgress(e, PROGRESS_SHORTCUT_MINOR) }" variant="tonal" color="highlight2" class="mr-1" size="x-small" :prepend-icon="'mdi-dice-multiple'">Minor</v-btn>
+                <v-btn v-primary-modifier-long-press @click.stop="(e) => { actionProgress(e, PROGRESS_SHORTCUT_MAJOR) }" variant="tonal" color="highlight2" class="mr-1" size="x-small" :prepend-icon="'mdi-dice-multiple'">Major</v-btn>
+                <v-btn v-primary-modifier-long-press @click.stop="(e) => { actionProgress(e, PROGRESS_SHORTCUT_CURVEBALL) }" variant="tonal" color="highlight2" size="x-small" :prepend-icon="'mdi-dice-multiple'">Curveball</v-btn>
             </v-list-item>
 
             <!-- Environment -->
             <v-list-item 
                 density="compact"
+                v-primary-modifier-long-press
                 @click="actionNarrateEnvironment" 
                 prepend-icon="mdi-waves"
             >
@@ -34,6 +36,7 @@
             <!-- Look at Scene -->
             <v-list-item 
                 density="compact"
+                v-primary-modifier-long-press
                 @click="actionLookAtScene" 
                 prepend-icon="mdi-image-filter-hdr"
             >
@@ -44,6 +47,7 @@
             <v-list-item 
                 v-for="(npc_name, index) in npcCharacters" 
                 :key="index"
+                v-primary-modifier-long-press
                 @click="(ev) => { actionLookAtCharacter(ev, null, {character: npc_name}) }" 
                 prepend-icon="mdi-account-eye"
             >

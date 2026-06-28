@@ -163,6 +163,7 @@
                                         <v-tooltip max-width="300" :text="`Generate change suggestions for ${character.name}. This will provide a list of suggestions for changes to the character, based on the progression of the story thus far. [${primaryModifierLabel}: Provide instructions]`">
                                             <template v-slot:activator="{ props }">
                                                 <v-btn
+                                                v-primary-modifier-long-press
                                                 @click.stop="(event) => { suggestChanges(character.name, isPrimaryModifier(event))}"
                                                 v-bind="props" 
                                                 variant="tonal" 
