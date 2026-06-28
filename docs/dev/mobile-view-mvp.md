@@ -64,6 +64,29 @@ Expected mobile behavior:
 - The message input stays reachable at the bottom of the chat flow.
 - Busy, waiting-for-input, autocomplete, act-as, directed input, audio, and visual status should continue using the existing state and handlers.
 
+### Chat Toolbar
+
+The existing chat toolbar is `SceneTools`. Treat it as part of the mobile chat surface, not as desktop-only navigation.
+
+`SceneTools` currently contains two practical toolbar groups:
+
+| Group | Existing content | Mobile treatment |
+|---|---|---|
+| Immediate controls | Busy/waiting indicator, interrupt, stop audio, regenerate, nuke regenerate, abort command state | Keep visible near the message input whenever possible. These are core chat controls. |
+| Action tools | Actor, narrator, director, time, world, creative, visualizer, and save menus | Keep available, but allow wrapping or a compact overflow pattern if the full row is too wide. |
+
+The MVP should first try to reuse `SceneTools` as-is with mobile CSS adjustments. If the toolbar remains too dense, add a shell-level compact presentation that still delegates actions to the existing `SceneTools*` child components.
+
+Do not split toolbar behavior into a separate mobile implementation. If extraction is needed, split presentation boundaries only. For example, `SceneTools` could expose the immediate controls and action tools as internal sections that both desktop and mobile layouts reuse.
+
+Expected toolbar behavior:
+
+- Interrupt and abort must remain easy to reach during generation or command input.
+- Regenerate and directed-regenerate behavior must remain unchanged.
+- Audio stop should remain visible when TTS is active.
+- Larger action menus may move behind a compact tools button or collapsible row in a later polish pass.
+- Toolbar changes must not alter websocket payloads sent by the existing `SceneTools*` components.
+
 ### Right End Panels
 
 Mobile should support only two right-end panel modes in the MVP:
@@ -117,6 +140,7 @@ Recommended rendering rules:
 4. In mobile mode, render the same chat component stack used by the desktop scene tab.
 5. In mobile mode, mount one right panel host and switch the content between `CharacterPanel` and the existing agent settings content.
 6. Keep websocket message handling, scene status handling, busy state, and input handling in `TalemateApp.vue`.
+7. Keep `SceneTools` in the chat stack, but allow mobile-specific wrapping, density, or section layout around its existing child components.
 
 The agent panel content should be factored only if needed. If reuse inside both desktop and mobile drawers is awkward, extract the current drawer body into a small wrapper component such as `AgentPanel.vue`:
 
@@ -140,7 +164,7 @@ That wrapper should receive the same props and emit the same events as the curre
 
 - Reuse `SceneMessages` for message rendering.
 - Reuse `SceneMessageInput` for input behavior and keyboard/prefix handling.
-- Reuse `SceneTools` for action controls.
+- Reuse `SceneTools` for chat toolbar and action controls.
 - Reuse `CharacterPanel` for character activation state.
 - Reuse `AIClient` and `AIAgent` for client/agent configuration.
 - Keep `TalemateApp.vue` as the coordinator for websocket state, scene state, and drawer/panel selection.
@@ -158,6 +182,7 @@ That wrapper should receive the same props and emit the same events as the curre
 
 - Hide desktop navigation and left drawer in mobile mode.
 - Render the existing scene chat stack full width.
+- Keep the `SceneTools` immediate controls visible and make the action tools wrap or collapse without duplicating action logic.
 - Keep desktop behavior unchanged outside mobile mode.
 
 ### Milestone 3: Character Panel
@@ -192,6 +217,7 @@ Manual browser checks:
 
 - Desktop width: existing tabs, drawers, world editor, prompts, and settings still work.
 - Phone portrait: chat view loads without horizontal overflow.
+- Phone portrait: interrupt, regenerate, abort, and stop-audio controls remain reachable when applicable.
 - Phone portrait: message input can send and skip turns.
 - Phone portrait: character panel opens, closes, activates, and deactivates characters.
 - Phone portrait: agent panel opens, closes, and can save agent/client settings.
@@ -202,5 +228,5 @@ Manual browser checks:
 
 - Breakpoint: use Vuetify's mobile breakpoint or define an explicit Talemate breakpoint such as `smAndDown`.
 - Panel presentation: temporary right drawer versus full-screen dialog.
-- Scene tools density: keep all tools visible with wrapping, or add a later compact tool menu.
+- Chat toolbar density: keep all `SceneTools` actions visible with wrapping, or add a later compact tool menu while keeping immediate controls visible.
 - Agent panel scope: include both clients and agents in MVP, or only agent enablement/client assignment.
