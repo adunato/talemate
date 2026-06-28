@@ -13,13 +13,18 @@ logs/
 .cursor
 .claude
 .coverage
+.codex-remote-attachments/
 .worktrees/
+embedded_node/
+embedded_python/
 
 # uv
 .venv/
 templates/llm-prompt/user/*.jinja2
 templates/llm-prompt/std/user/
+templates/prompts/**/*.jinja2
 templates/world-state/*.yaml
+templates/world-state/**/*.yaml
 tts/voice/piper/*.onnx
 tts/voice/piper/*.json
 tts/voice/kokoro/*.pt
