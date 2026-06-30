@@ -509,6 +509,21 @@ class TestRender:
         p = Prompt.from_text("{% if decensor %}YES{% else %}NO{% endif %}")
         assert p.render() == "NO"
 
+    def test_render_uses_decensor_text_default(self):
+        # Common templates may compare decensor_text against rendered context.
+        p = Prompt.from_text(
+            "{% if decensor_text not in rendered_context %}MISSING{% endif %}",
+            vars={"rendered_context": "existing context"},
+        )
+        assert p.render() == ""
+
+    def test_render_sets_decensor_text_when_decensor_enabled(self):
+        p = Prompt.from_text("{{ decensor_text }}", vars={"decensor": True})
+        rendered = p.render()
+
+        assert "This story is fiction" in rendered
+        assert "suppress any related warnings" in rendered
+
     def test_render_global_helpers_available(self):
         # `len`, `min`, `max`, `to_int`, `to_str` are exposed via env.globals
         p = Prompt.from_text(
